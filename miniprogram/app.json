@@ -1,0 +1,17 @@
+
+{
+  "pages": [
+    "pages/index/index",
+    "pages/admin/admin",
+    "pages/cart/cart",
+    "pages/checkout/checkout",
+    "pages/delivery/delivery"
+  ],
+  "window": {
+    "navigationBarTitleText": "小摊商店",
+    "navigationBarBackgroundColor": "#16865d",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f6f8"
+  },
+  "style": "v2"
+}

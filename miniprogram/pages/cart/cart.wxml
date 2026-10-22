@@ -1,0 +1,58 @@
+
+<view class="page">
+
+<view class="heading">我的购物车</view>
+
+<view wx:if="{{items.length === 0}}" class="empty">
+  购物车还是空的
+</view>
+
+<view
+  wx:for="{{items}}"
+  wx:key="productId"
+  class="cart-item"
+>
+  <view class="product-name">{{item.name}}</view>
+
+  <view class="item-bottom">
+    <view>
+      <view class="price">¥{{item.priceText}}</view>
+      <view class="subtotal">
+        小计：¥{{item.subtotalText}}
+      </view>
+    </view>
+
+    <view class="quantity">
+      <button
+        size="mini"
+        data-id="{{item.productId}}"
+        bindtap="decrease"
+      >-</button>
+
+      <text>{{item.quantity}}</text>
+
+      <button
+        size="mini"
+        data-id="{{item.productId}}"
+        bindtap="increase"
+      >+</button>
+    </view>
+  </view>
+</view>
+
+<view class="footer">
+  <view>
+    <view>共 {{totalCount}} 件商品</view>
+    <view class="total">¥{{totalText}}</view>
+  </view>
+
+  <button
+    type="primary"
+    disabled="{{totalCount === 0}}"
+    bindtap="checkout"
+  >
+    去结算
+  </button>
+</view>
+
+</view>

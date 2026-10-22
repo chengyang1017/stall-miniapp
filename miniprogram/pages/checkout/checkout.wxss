@@ -1,0 +1,73 @@
+page {
+  background: #f5f6f8;
+}
+
+.page {
+  padding: 28rpx;
+  padding-bottom: 70rpx;
+}
+
+.heading {
+  font-size: 38rpx;
+  font-weight: bold;
+  margin-bottom: 28rpx;
+}
+
+.card {
+  background: white;
+  border-radius: 18rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+}
+
+.subheading {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 24rpx;
+}
+
+.field {
+  margin-bottom: 28rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.field text {
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.field input, .field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  background: #f5f6f8;
+  border-radius: 12rpx;
+  padding: 18rpx;
+  font-size: 28rpx;
+}
+
+.field textarea {
+  min-height: 100rpx;
+}
+
+.line {
+  display: flex;
+  justify-content: space-between;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.total {
+  color: #16865d;
+  font-weight: bold;
+}
+
+.hint {
+  color: #888;
+  font-size: 24rpx;
+  line-height: 1.6;
+  margin-top: 18rpx;
+}
+
+.select {background:#f5f6f8;border-radius:12rpx;padding:18rpx;font-size:28rpx;min-height:40rpx;}

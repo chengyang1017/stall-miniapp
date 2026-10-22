@@ -1,0 +1,80 @@
+
+page {
+  background: #f5f6f8;
+}
+
+.page {
+  padding: 28rpx;
+  padding-bottom: 180rpx;
+}
+
+.heading {
+  font-size: 38rpx;
+  font-weight: bold;
+  margin-bottom: 32rpx;
+}
+
+.cart-item {
+  background: white;
+  border-radius: 18rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.product-name {
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.item-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24rpx;
+}
+
+.price {
+  color: #c33232;
+  font-size: 30rpx;
+}
+
+.subtotal {
+  color: #888;
+  font-size: 24rpx;
+  margin-top: 10rpx;
+}
+
+.quantity {
+  display: flex;
+  align-items: center;
+}
+
+.quantity button {
+  margin: 0 12rpx;
+  min-width: 60rpx;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 24rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.total {
+  color: #c33232;
+  font-size: 38rpx;
+  font-weight: bold;
+}
+
+.empty {
+  text-align: center;
+  padding: 80rpx 0;
+  color: #999;
+}
