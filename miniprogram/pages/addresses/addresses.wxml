@@ -1,0 +1,25 @@
+<view class="page">
+  <view class="heading">我的地址</view>
+  <view wx:if="{{addresses.length===0}}" class="empty">尚未保存地址，请先在下面添加</view>
+  <view wx:for="{{addresses}}" wx:key="id" class="card">
+    <view class="address-name">{{item.receiverName}} · {{item.phone}}</view>
+    <view class="address-detail">{{item.area}} {{item.detail}}</view>
+    <view wx:if="{{item.isDefault}}" class="default-tag">默认地址</view>
+    <view class="actions">
+      <button size="mini" data-id="{{item.id}}" bindtap="choose">使用</button>
+      <button size="mini" data-id="{{item.id}}" bindtap="edit">编辑</button>
+      <button wx:if="{{!item.isDefault}}" size="mini" data-id="{{item.id}}" bindtap="setDefault">设为默认</button>
+      <button size="mini" data-id="{{item.id}}" bindtap="remove">删除</button>
+    </view>
+  </view>
+  <view class="card">
+    <view class="subheading">{{editingId ? '编辑地址' : '新增地址'}}</view>
+    <view class="field"><text>收货人姓名 *</text><input value="{{receiverName}}" maxlength="40" placeholder="请输入姓名" bindinput="changeName" /></view>
+    <view class="field"><text>中国大陆手机号 *</text><input value="{{phone}}" type="number" maxlength="11" placeholder="请输入11位手机号" bindinput="changePhone" /></view>
+    <view class="field"><text>配送地区 *</text><picker range="{{areas}}" range-key="name" bindchange="changeArea"><view class="select">{{area || '请选择配送地区'}}</view></picker></view>
+    <view class="field"><text>详细地址 *</text><input value="{{detail}}" maxlength="150" placeholder="楼栋、单元、门牌号" bindinput="changeDetail" /></view>
+    <button type="primary" bindtap="save">保存地址</button>
+    <button wx:if="{{editingId}}" bindtap="clearForm">取消编辑</button>
+  </view>
+  <view class="tip">演示阶段仅保存在当前微信设备本地，不会同步到其他手机。</view>
+</view>

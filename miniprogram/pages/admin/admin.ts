@@ -24,12 +24,12 @@ Page({
         c => c.id === this.data.selectedCategory
       )
         ? this.data.selectedCategory
-        : (store.categories[0]?.id || '')
+        : (store.categories.length > 0 ? store.categories[0].id : '')
   
-    const selectedCategoryName =
-      store.categories.find(
-        c => c.id === selectedCategory
-      )?.name || ''
+    const category = store.categories.find(
+      c => c.id === selectedCategory
+    )
+    const selectedCategoryName = category ? category.name : ''
   
     this.setData({
       categories: store.categories,
@@ -58,7 +58,7 @@ Page({
       if (!res.confirm) return
       store.categories = store.categories.filter(c => c.id !== id)
       saveStore(store)
-      this.setData({ selectedCategory: store.categories[0]?.id || '' })
+      this.setData({ selectedCategory: store.categories.length > 0 ? store.categories[0].id : '' })
       this.refresh()
     } })
   },
@@ -110,9 +110,9 @@ Page({
     if (!p) return
     this.setData({ editId: p.id, productName: p.name, priceText: String(p.price), discountText: p.discountPrice === null ? '' : String(p.discountPrice), selectedCategory: p.categoryId, 
     selectedCategoryName:
-    this.data.categories.find(
+    (this.data.categories.find(
       c => c.id === p.categoryId
-    )?.name || '',
+    ) || { name: '' }).name,
     startText: p.discountStart, endText: p.discountEnd, isAvailable: p.available })
     },
   deleteProduct(e: WechatMiniprogram.TouchEvent) {

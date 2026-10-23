@@ -2,14 +2,15 @@
  <view class="title">配送设置（本地演示）</view>
  <view class="card"><view class="heading">开放地区</view>
   <view wx:for="{{areas}}" wx:key="id" class="line"><text>{{item.name}}</text><switch data-id="{{item.id}}" checked="{{item.enabled}}" bindchange="toggleArea" color="#16865d"/><button size="mini" data-id="{{item.id}}" bindtap="deleteArea">删除</button></view>
-  <input placeholder="例如：阳光小区" value="{{areaName}}" bindinput="areaInput"/><button bindtap="addArea">新增地区</button>
+  <input placeholder="例如：阳光小区" value="{{areaName}}" bindinput="areaInput"/>
+  <button class="delivery-action" catchtap="addArea">新增地区</button>
  </view>
  <view class="card"><view class="heading">每日配送时段</view>
   <view wx:for="{{slots}}" wx:key="id" class="line"><text>{{item.label}} {{item.start}}–{{item.end}}</text><switch data-id="{{item.id}}" checked="{{item.enabled}}" bindchange="toggleSlot" color="#16865d"/><button size="mini" data-id="{{item.id}}" bindtap="deleteSlot">删除</button></view>
   <input placeholder="时段名称，如午间" value="{{slotLabel}}" bindinput="labelInput"/>
   <input placeholder="开始 HH:mm，如 11:00" value="{{slotStart}}" bindinput="startInput"/>
   <input placeholder="结束 HH:mm，如 13:00" value="{{slotEnd}}" bindinput="endInput"/>
-  <button bindtap="addSlot">新增时段</button>
+  <button class="delivery-action" catchtap="addSlot">新增时段</button>
  </view>
  <view class="tip">当前按每天重复的时间段配置。正式运营还需支持特定日期、截单时间、订单容量和服务端校验。</view>
 </view>

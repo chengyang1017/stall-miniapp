@@ -1,31 +1,39 @@
+
 page {
   background: #f5f6f8;
 }
 
 .page {
+  box-sizing: border-box;
   padding: 28rpx;
-  padding-bottom: 70rpx;
+  padding-bottom: 100rpx;
 }
 
+/* 页面标题 */
 .heading {
   font-size: 38rpx;
   font-weight: bold;
   margin-bottom: 28rpx;
+  color: #222;
 }
 
+/* 卡片 */
 .card {
-  background: white;
+  background: #fff;
   border-radius: 18rpx;
   padding: 28rpx;
   margin-bottom: 24rpx;
+  box-sizing: border-box;
 }
 
 .subheading {
   font-size: 32rpx;
   font-weight: bold;
   margin-bottom: 24rpx;
+  color: #222;
 }
 
+/* 表单字段 */
 .field {
   margin-bottom: 28rpx;
   font-size: 28rpx;
@@ -37,32 +45,65 @@ page {
   margin-bottom: 12rpx;
 }
 
-.field input, .field textarea {
+/* 单行输入框：修复文字裁切 */
+.field input {
   box-sizing: border-box;
+  display: block;
   width: 100%;
+  height: 88rpx;
+  padding: 0 20rpx;
   background: #f5f6f8;
   border-radius: 12rpx;
-  padding: 18rpx;
   font-size: 28rpx;
+  color: #222;
 }
 
+/* 多行备注输入框 */
 .field textarea {
-  min-height: 100rpx;
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 140rpx;
+  min-height: 140rpx;
+  padding: 20rpx;
+  background: #f5f6f8;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #222;
 }
 
+/* 地区与配送时段选择框 */
+.select {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 88rpx;
+  padding: 0 20rpx;
+  background: #f5f6f8;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+/* 商品清单 */
 .line {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 16rpx 0;
+  padding: 20rpx 0;
   font-size: 28rpx;
   border-bottom: 1rpx solid #eee;
 }
 
+/* 总金额 */
 .total {
   color: #16865d;
   font-weight: bold;
 }
 
+/* 提示文字 */
 .hint {
   color: #888;
   font-size: 24rpx;
@@ -70,4 +111,14 @@ page {
   margin-top: 18rpx;
 }
 
-.select {background:#f5f6f8;border-radius:12rpx;padding:18rpx;font-size:28rpx;min-height:40rpx;}
+/* 普通提交按钮 */
+.page > button {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 88rpx;
+  margin-top: 24rpx;
+  border-radius: 12rpx;
+  background: #16865d;
+  color: white;
+  font-size: 28rpx;
+}

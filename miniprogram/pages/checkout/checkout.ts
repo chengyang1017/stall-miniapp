@@ -1,3 +1,4 @@
+import { getSelectedAddress } from '../../utils/addresses'
 import { availableAreas, availableSlots } from '../../utils/delivery'
 import { getCartDetails, CartDisplayItem } from '../../utils/cart'
 
@@ -44,11 +45,14 @@ Page({
 
   onShow() {
     const cart = getCartDetails()
+    const savedAddress = getSelectedAddress()
+    const addressData = savedAddress ? {receiverName:savedAddress.receiverName,phone:savedAddress.phone,area:savedAddress.area,address:savedAddress.detail} : {}
+    const currentArea = savedAddress ? savedAddress.area : this.data.area
     const areas = availableAreas()
     const slots = availableSlots()
-    const areaIndex = areas.findIndex(a=>a.name===this.data.area)
+    const areaIndex = areas.findIndex(a=>a.name===currentArea)
     const slotIndex = slots.findIndex(s=>s.id===this.data.selectedSlotId)
-    this.setData({areas,slots,areaIndex,slotIndex,selectedSlotId:slotIndex>=0?slots[slotIndex].id:'',selectedSlotText:slotIndex>=0?`${slots[slotIndex].label} ${slots[slotIndex].start}–${slots[slotIndex].end}`:'',
+    this.setData({...addressData,areas,slots,areaIndex,slotIndex,selectedSlotId:slotIndex>=0?slots[slotIndex].id:'',selectedSlotText:slotIndex>=0?`${slots[slotIndex].label} ${slots[slotIndex].start}–${slots[slotIndex].end}`:'',
       items: cart.items,
       totalText: cart.totalText,
       totalCount: cart.totalCount
@@ -57,6 +61,10 @@ Page({
 
   onUnload() {
     this.saveDraft()
+  },
+
+  openAddresses() {
+    wx.navigateTo({url:'/pages/addresses/addresses'})
   },
 
   updateName(e: WechatMiniprogram.Input) {

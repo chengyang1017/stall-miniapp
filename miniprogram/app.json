@@ -5,7 +5,8 @@
     "pages/admin/admin",
     "pages/cart/cart",
     "pages/checkout/checkout",
-    "pages/delivery/delivery"
+    "pages/delivery/delivery",
+    "pages/addresses/addresses"
   ],
   "window": {
     "navigationBarTitleText": "小摊商店",

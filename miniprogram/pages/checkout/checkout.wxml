@@ -2,6 +2,7 @@
   <view class="heading">确认订单</view>
   <view class="card">
     <view class="subheading">收货信息</view>
+    <button class="address-link" size="mini" bindtap="openAddresses">我的地址 / 新增地址</button>
     <view class="field">
       <text>收货人姓名 *</text>
       <input maxlength="40" placeholder="请输入姓名" value="{{receiverName}}" bindinput="updateName" />
