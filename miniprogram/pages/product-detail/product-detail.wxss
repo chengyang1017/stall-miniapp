@@ -1,0 +1,78 @@
+page {
+  background: #f5f6f8;
+}
+.page {
+  padding-bottom: 260rpx;
+}
+.hero {
+  height: 380rpx;
+  background: #e8eeea;
+}
+.photo { width: 100%; height: 100%; }
+.placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: #81918a; font-size: 29rpx;
+}
+.card {
+  box-sizing: border-box;
+  margin: 18rpx 24rpx;
+  padding: 28rpx;
+  border-radius: 18rpx;
+  background: #fff;
+}
+.category { color: #16865d; font-size: 24rpx; margin-bottom: 12rpx; }
+.name { color: #222; font-size: 38rpx; font-weight: 700; }
+.price { margin-top: 18rpx; font-size: 38rpx; font-weight: 700; color: #16865d; }
+.old { margin-left: 15rpx; font-size: 26rpx; font-weight: 400; color: #aaa; text-decoration: line-through; }
+.sale { margin-top: 8rpx; color: #ef7f3f; font-size: 24rpx; }
+.unavailable { margin-top: 12rpx; color: #a44; font-size: 26rpx; }
+.subtitle { margin-bottom: 15rpx; font-size: 30rpx; font-weight: 700; }
+.description { color: #666; font-size: 27rpx; line-height: 1.7; white-space: pre-wrap; }
+.quantity-row { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; }
+.counter { display: flex; flex-shrink: 0; align-items: center; gap: 12rpx; }
+.counter button {
+  box-sizing: border-box; margin: 0; padding: 0;
+  min-width: 65rpx; width: 65rpx; height: 62rpx;
+  line-height: 60rpx; font-size: 31rpx;
+}
+/* Use two rows so WeChat button default sizing cannot squash the CTAs. */
+.footer {
+  box-sizing: border-box;
+  position: fixed;
+  z-index: 100;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  padding: 18rpx 24rpx;
+  padding-bottom: calc(18rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -4rpx 18rpx rgba(0,0,0,.06);
+}
+.footer > view:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  min-width: 0;
+}
+.label { color: #777; font-size: 24rpx; }
+.total { color: #16865d; font-size: 34rpx; font-weight: 700; }
+.actions { display: flex; width: 100%; gap: 16rpx; }
+.actions button {
+  display: block;
+  box-sizing: border-box;
+  flex: 1 1 0%;
+  width: 0;
+  min-width: 0;
+  height: 82rpx;
+  padding: 0 8rpx;
+  margin: 0;
+  border-radius: 12rpx;
+  line-height: 82rpx;
+  font-size: 28rpx;
+  text-align: center;
+  white-space: nowrap;
+}
+.actions button:first-child { background: #edf6f1; color: #16865d; }
+.actions button[type="primary"] { background: #16865d; color: #fff; }

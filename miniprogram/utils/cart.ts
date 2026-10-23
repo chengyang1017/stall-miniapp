@@ -32,6 +32,7 @@ export function loadCart(): CartItem[] {
 
 export function saveCart(items: CartItem[]): void {
   wx.setStorageSync(CART_KEY, items)
+  syncCartTabBadge()
 }
 
 export function addToCart(productId: string): void {
@@ -80,7 +81,7 @@ export function getCartDetails() {
       p => p.id === entry.productId
     )
 
-    if (!product || !product.available) continue
+    if (!product || !product.available || product.soldOut) continue
 
     const price = effectivePrice(product)
     const subtotal = Math.round(
@@ -115,5 +116,19 @@ export function getCartDetails() {
     totalCount: items.reduce(
       (sum, item) => sum + item.quantity, 0
     )
+  }
+}
+
+// CART_TAB_BADGE_V1
+export function syncCartTabBadge(): void {
+  const rows = wx.getStorageSync('stall_cart_v1')
+  const count = Array.isArray(rows) ? rows.reduce((sum: number, row: any) => {
+    const n = Number(row && row.quantity)
+    return sum + (Number.isFinite(n) && n > 0 ? Math.floor(n) : 0)
+  }, 0) : 0
+  if (count > 0) {
+    wx.setTabBarBadge({ index: 1, text: count > 99 ? '99+' : String(count), fail: () => {} })
+  } else {
+    wx.removeTabBarBadge({ index: 1, fail: () => {} })
   }
 }

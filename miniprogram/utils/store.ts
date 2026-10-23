@@ -2,7 +2,7 @@ export interface Category { id: string; name: string }
 export interface Product {
   id: string; categoryId: string; name: string; price: number;
   discountPrice: number | null; discountStart: string; discountEnd: string;
-  available: boolean
+  available: boolean; soldOut?: boolean; description?: string; imageUrl?: string
 }
 export interface StoreData { categories: Category[]; products: Product[] }
 const KEY = 'stall_demo_v1'

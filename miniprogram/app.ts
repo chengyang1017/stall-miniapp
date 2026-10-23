@@ -1,5 +1,7 @@
+import { syncCartTabBadge } from './utils/cart' // CART_TAB_BADGE_V1
 // app.ts
 App<IAppOption>({
+  onShow() { syncCartTabBadge() },
   globalData: {},
   onLaunch() {
     // 展示本地存储能力

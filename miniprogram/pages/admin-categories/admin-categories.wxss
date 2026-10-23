@@ -1,0 +1,28 @@
+page{background:#f5f7f6}
+.category-page{padding:30rpx 26rpx 90rpx;box-sizing:border-box}
+.page-title{font-size:38rpx;font-weight:700;color:#1d3027;margin-bottom:8rpx}
+.page-subtitle{font-size:24rpx;color:#89988f;margin-bottom:26rpx}
+.panel{background:#fff;border-radius:24rpx;padding:26rpx 22rpx;margin-bottom:22rpx;box-shadow:0 5rpx 22rpx rgba(23,62,45,.04)}
+.panel-title{font-size:30rpx;font-weight:650;color:#263a30;margin-bottom:18rpx}
+.hint{font-size:23rpx;color:#87958d;line-height:1.6;margin-bottom:12rpx}
+.add-row{display:flex;align-items:center;gap:12rpx}
+.name-input{flex:1;min-width:0;box-sizing:border-box;background:#f6f8f7;border:2rpx solid #e6ece8;height:82rpx;border-radius:14rpx;padding:0 18rpx;font-size:26rpx}
+.category-page button::after{border:0}
+.add-btn{margin:0;background:#128459;color:#fff;border-radius:13rpx;height:82rpx;line-height:82rpx;padding:0 26rpx;font-size:26rpx}
+.sort-area{width:100%;position:relative;overflow:hidden}
+.sort-row{box-sizing:border-box;width:100%;position:absolute;left:0;right:0;transition:top .2s ease}
+.cat-row{box-sizing:border-box;width:100%;height:calc(100% - 10rpx);margin:5rpx 0;border:2rpx solid #edf2ee;border-radius:16rpx;background:#fff;display:flex;align-items:center;padding:0 12rpx;gap:8rpx;transition:background .17s,box-shadow .17s,border-color .17s}
+.cat-row.is-editing{background:#f7fbf8;border-color:#c7e6d5}
+.cat-info{flex:1;min-width:0;display:flex;align-items:center;overflow:hidden}
+.cat-name{font-size:28rpx;color:#26382e;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inline-cat-input{width:100%;min-width:0;box-sizing:border-box;background:#fff;border:2rpx solid #169464;border-radius:11rpx;padding:0 12rpx;height:65rpx;font-size:26rpx;color:#233b2c}
+.cat-row button{box-sizing:border-box;margin:0;flex-shrink:0;border-radius:10rpx;height:57rpx;line-height:57rpx;padding:0 11rpx;font-size:21rpx;min-width:0}
+.edit-btn{background:#eaf6ef;color:#147b56}.delete-btn{background:#fff0ee;color:#b55b56}
+.cat-row .save-inline-btn{background:#128459;color:#fff}.cat-row .cancel-inline-btn{background:#edf1ef;color:#53665a}
+.handle{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:38rpx;color:#899a90;font-size:32rpx;height:64rpx}
+.sort-row.is-dragging{z-index:99}
+.is-dragging .cat-row{background:#eef9f3;border-color:#8fd2b1;box-shadow:0 12rpx 29rpx rgba(18,132,89,.17);transform:scale(.987)}
+.empty{padding:25rpx;color:#929c96;text-align:center}
+
+.sort-row.is-dragging{transition:none;z-index:50}
+.handle{touch-action:none;user-select:none}

@@ -18,6 +18,15 @@
     <view class="field"><text>中国大陆手机号 *</text><input value="{{phone}}" type="number" maxlength="11" placeholder="请输入11位手机号" bindinput="changePhone" /></view>
     <view class="field"><text>配送地区 *</text><picker range="{{areas}}" range-key="name" bindchange="changeArea"><view class="select">{{area || '请选择配送地区'}}</view></picker></view>
     <view class="field"><text>详细地址 *</text><input value="{{detail}}" maxlength="150" placeholder="楼栋、单元、门牌号" bindinput="changeDetail" /></view>
+    <view class="field">
+      <text>地图位置（选填）</text>
+      <button size="mini" bindtap="chooseMapLocation">在地图上选择位置</button>
+      <view wx:if="{{mapAddress || locationName}}" class="map-location-preview">
+        <text>{{locationName}}</text>
+        <text>{{mapAddress}}</text>
+        <text>请确认配送地区并另外填写楼栋、单元、门牌号</text>
+      </view>
+    </view>
     <button type="primary" bindtap="save">保存地址</button>
     <button wx:if="{{editingId}}" bindtap="clearForm">取消编辑</button>
   </view>

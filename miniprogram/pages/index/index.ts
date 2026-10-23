@@ -1,3 +1,4 @@
+import { businessState } from '../../utils/storeHours' // STALL_HOURS_V1
 
 import {
   loadStore,
@@ -13,6 +14,7 @@ import {
 interface ProductView {
   id: string
   name: string
+  imageUrl?: string
   original: string
   current: string
   discounted: boolean
@@ -21,6 +23,8 @@ interface ProductView {
 
 Page({
   data: {
+    placeholderStyle: 'premium',
+    customPlaceholderUrl: '',
     categories: [] as Array<{
       id: string
       name: string
@@ -39,7 +43,7 @@ Page({
     this.refresh()
   },
 
-  refresh() {
+  refresh() { this.setData({businessInfo:businessState()});
     const store = loadStore()
 
     const allProducts: ProductView[] =
@@ -49,10 +53,11 @@ Page({
         return {
           id: p.id,
           name: p.name,
+          imageUrl: p.imageUrl || '',
           original: money(p.price),
           current: money(current),
           discounted: current < p.price,
-          available: p.available
+          available: p.available && !p.soldOut
         }
       })
 
@@ -64,7 +69,7 @@ Page({
       )
 
       return selected === 'all' ||
-        original?.categoryId === selected
+        (original && original.categoryId === selected)
     })
 
     const discountedProducts = allProducts.filter(
@@ -74,6 +79,8 @@ Page({
     const cart = getCartDetails()
 
     this.setData({
+      placeholderStyle: wx.getStorageSync('stall_placeholder_style_v1') || 'premium',
+      customPlaceholderUrl: wx.getStorageSync('stall_placeholder_custom_v1') || '',
       categories: store.categories,
       products,
       discountedProducts,
@@ -86,6 +93,8 @@ Page({
     const id = String(e.currentTarget.dataset.id)
 
     this.setData({
+      placeholderStyle: wx.getStorageSync('stall_placeholder_style_v1') || 'premium',
+      customPlaceholderUrl: wx.getStorageSync('stall_placeholder_custom_v1') || '',
       selectedCategory: id
     })
 
@@ -99,7 +108,7 @@ Page({
       p => p.id === id
     )
 
-    if (!product || !product.available) {
+    if (!product || !product.available || product.soldOut) {
       wx.showToast({
         title: '商品已停售',
         icon: 'none'
@@ -116,9 +125,13 @@ Page({
     })
   },
 
+  openProduct(e: WechatMiniprogram.TouchEvent) {
+    const id = String(e.currentTarget.dataset.id || '')
+    if (id) wx.navigateTo({ url: '/pages/product-detail/product-detail?id=' + encodeURIComponent(id) })
+  },
   goCart() {
-    wx.navigateTo({
-      url: '/pages/cart/cart'
+    wx.switchTab({
+url: '/pages/cart/cart'
     })
   },
 

@@ -1,18 +1,56 @@
-
 {
-  "pages": [
-    "pages/index/index",
-    "pages/admin/admin",
-    "pages/cart/cart",
-    "pages/checkout/checkout",
-    "pages/delivery/delivery",
-    "pages/addresses/addresses"
-  ],
-  "window": {
-    "navigationBarTitleText": "小摊商店",
-    "navigationBarBackgroundColor": "#16865d",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#f5f6f8"
-  },
-  "style": "v2"
+    "requiredPrivateInfos":  [
+                                 "chooseLocation"
+                             ],
+    "pages":  [
+                  "pages/index/index",
+                  "pages/admin/admin",
+                  "pages/cart/cart",
+                  "pages/checkout/checkout",
+                  "pages/delivery/delivery",
+                  "pages/addresses/addresses",
+                  "pages/orders/orders",
+                  "pages/admin-orders/admin-orders",
+                  "pages/product-detail/product-detail",
+                  "pages/admin-products/admin-products",
+                  "pages/admin-categories/admin-categories",
+                  "pages/admin-placeholders/admin-placeholders",
+                  "pages/admin-product-form/admin-product-form",
+                  "pages/store-hours/store-hours",
+                  "pages/delivery-proof/delivery-proof",
+                  "pages/order-detail/order-detail"
+              ],
+    "window":  {
+                   "navigationBarTitleText":  "小摊商店",
+                   "navigationBarBackgroundColor":  "#16865d",
+                   "navigationBarTextStyle":  "white",
+                   "backgroundColor":  "#f5f6f8"
+               },
+    "style":  "v2",
+    "tabBar":  {
+                   "color":  "#8b978f",
+                   "selectedColor":  "#16865d",
+                   "backgroundColor":  "#ffffff",
+                   "borderStyle":  "white",
+                   "list":  [
+                                {
+                                    "pagePath":  "pages/index/index",
+                                    "text":  "首页",
+                                    "iconPath":  "assets/tabbar/home.png",
+                                    "selectedIconPath":  "assets/tabbar/home_active.png"
+                                },
+                                {
+                                    "pagePath":  "pages/cart/cart",
+                                    "text":  "购物车",
+                                    "iconPath":  "assets/tabbar/cart.png",
+                                    "selectedIconPath":  "assets/tabbar/cart_active.png"
+                                },
+                                {
+                                    "pagePath":  "pages/orders/orders",
+                                    "text":  "我的订单",
+                                    "iconPath":  "assets/tabbar/orders.png",
+                                    "selectedIconPath":  "assets/tabbar/orders_active.png"
+                                }
+                            ]
+               }
 }

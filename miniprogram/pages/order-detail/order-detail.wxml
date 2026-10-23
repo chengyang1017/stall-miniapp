@@ -1,0 +1,10 @@
+<view class="order-detail-page">
+  <view wx:if="{{!found}}" class="order-detail-empty">找不到该订单，或者订单已被删除</view>
+  <view wx:else>
+    <view class="order-detail-card"><view class="order-detail-title">订单详情</view><view class="order-detail-status">{{statusText}}</view><view class="order-detail-muted">支付状态：{{paymentText}}</view><view class="order-detail-muted">订单编号：{{order.id}}</view><view class="order-detail-muted">下单时间：{{createdText}}</view></view>
+    <view class="order-detail-card"><view class="order-detail-title">商品清单</view><view wx:for="{{items}}" wx:key="productId" class="order-detail-line"><text>{{item.name}} × {{item.quantity}}</text><text>¥{{item.subtotal}}</text></view><view class="order-detail-total">合计 ¥{{order.totalText}}</view></view>
+    <view class="order-detail-card"><view class="order-detail-title">配送信息</view><view class="order-detail-line"><text>收货人</text><text>{{order.receiverName}}</text></view><view class="order-detail-line"><text>联系电话</text><text>{{order.phone}}</text></view><view class="order-detail-line"><text>收货地址</text><text>{{order.area}} {{order.detail}}</text></view><view class="order-detail-line"><text>配送时段</text><text>{{order.slotText}}</text></view><view wx:if="{{order.estimatedArrival}}" class="order-detail-line"><text>预计送达</text><text>{{order.estimatedArrival}}</text></view><view wx:if="{{order.note}}" class="order-detail-muted">顾客备注：{{order.note}}</view></view>
+    <view wx:if="{{issueText}}" class="order-detail-card"><view class="order-detail-title">取消 / 异常原因</view><view class="order-detail-reason">{{issueText}}</view></view>
+    <view wx:if="{{deliveredText || proofImage}}" class="order-detail-card"><view class="order-detail-title">送达凭证</view><view wx:if="{{deliveredText}}" class="order-detail-muted">送达时间：{{deliveredText}}</view><image wx:if="{{proofImage}}" class="order-detail-proof" src="{{proofImage}}" mode="aspectFill" bindtap="previewProof"/><view wx:else class="order-detail-muted">尚无送达照片</view></view>
+  </view>
+</view>

@@ -9,7 +9,41 @@ Page({
  labelInput(e:any) {this.setData({slotLabel:e.detail.value})},
  startInput(e:any) {this.setData({slotStart:e.detail.value})},
  endInput(e:any) {this.setData({slotEnd:e.detail.value})},
- addArea() {
+ setAreaMapCenter(e:any) {
+  const id = String(e.currentTarget.dataset.id)
+  wx.chooseLocation({
+   success: loc => {
+    const lat = Number(loc.latitude), lng = Number(loc.longitude)
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
+    const data = loadDelivery()
+    const item = data.areas.find(x => x.id === id)
+    if (!item) return
+    item.centerLat = lat
+    item.centerLng = lng
+    if (!item.radiusMeters) item.radiusMeters = 1500
+    saveDelivery(data)
+    this.refresh()
+   },
+   fail: err => {
+    if (!String(err.errMsg || '').toLowerCase().includes('cancel')) wx.showToast({title:'地图暂时无法打开',icon:'none'})
+   }
+  })
+ },
+ changeAreaRadius(e:any) {
+  const id = String(e.currentTarget.dataset.id)
+  const n = Number(e.detail.value)
+  if (!Number.isInteger(n) || n < 100 || n > 50000) {
+   wx.showToast({title:'配送半径须在100至50000米之间', icon:'none'})
+   this.refresh()
+   return
+  }
+  const data = loadDelivery()
+  const item = data.areas.find(x => x.id === id)
+  if (!item) return
+  item.radiusMeters = n
+  saveDelivery(data)
+  this.refresh()
+ }, addArea() {
   console.log('[delivery] addArea 点击', this.data.areaName)
   const name=this.data.areaName.trim(); if(!name) return wx.showToast({title:'请输入地区',icon:'none'})
   const data=loadDelivery(); if(data.areas.some(a=>a.name===name)) return wx.showToast({title:'地区已存在',icon:'none'})

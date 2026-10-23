@@ -1,36 +1,25 @@
-<view class="page">
-  <view class="heading">商家管理（本地演示）</view>
-  <navigator url="/pages/delivery/delivery" style="padding:24rpx;background:#fff;margin-bottom:20rpx;color:#16865d;">管理配送地区和配送时段 →</navigator>
-  <view class="card">
-    <view class="subheading">分类管理</view>
-    <view class="inline"><input placeholder="新分类名称" value="{{categoryName}}" bindinput="inputCategory" /><button size="mini" bindtap="addCategory">添加</button></view>
-    <view wx:for="{{categories}}" wx:key="id" class="line"><text>{{item.name}}</text><button size="mini" data-id="{{item.id}}" bindtap="deleteCategory">删除</button></view>
-  </view>
-  <view class="card">
-    <view class="subheading">{{editId ? '编辑商品' : '新增商品'}}</view>
-    <view class="field">商品名称<input placeholder="例如：炒饭" value="{{productName}}" bindinput="inputName" /></view>
-    <view class="field">
-  商品分类
-  <picker
-    range="{{categories}}"
-    range-key="name"
-    bindchange="selectCategory"
-  >
-    <view class="picker">
-      {{selectedCategoryName || '请选择分类'}}
+<view class="page admin-dashboard">
+  <!-- ADMIN_NEW_ORDER_NOTICE_V2 -->
+  <navigator url="/pages/admin-orders/admin-orders" style="display:block;margin:22rpx 24rpx;padding:26rpx 28rpx;background:#fff;border-radius:22rpx;border:2rpx solid #e6eee9;box-sizing:border-box;">
+    <view style="display:flex;justify-content:space-between;align-items:center;">
+      <view style="flex:1;">
+        <view style="font-size:31rpx;font-weight:600;color:#1f332b;">待接单提醒</view>
+        <view style="margin-top:8rpx;font-size:24rpx;color:#74837c;">进入订单管理处理新订单</view>
+      </view>
+      <view wx:if="{{pendingNewOrderCount > 0}}" style="min-width:45rpx;height:45rpx;padding:0 9rpx;line-height:45rpx;text-align:center;color:#fff;background:#e5524a;border-radius:999rpx;font-size:25rpx;font-weight:600;box-sizing:border-box;">{{pendingNewOrderCount}}</view>
+      <view wx:else style="font-size:24rpx;color:#16865d;">0</view>
     </view>
-  </picker>
-</view>
-    <view class="field">原价 ¥<input type="digit" placeholder="例如：15" value="{{priceText}}" bindinput="inputPrice" /></view>
-    <view class="field">折后价 ¥（留空表示无折扣）<input type="digit" placeholder="例如：12" value="{{discountText}}" bindinput="inputDiscount" /></view>
-    <view class="field">折扣开始（可留空）<input placeholder="2026-10-23 10:00" value="{{startText}}" bindinput="inputStart" /></view>
-    <view class="field">折扣结束（可留空）<input placeholder="2026-10-23 18:00" value="{{endText}}" bindinput="inputEnd" /></view>
-    <view class="line"><text>允许销售</text><switch checked="{{isAvailable}}" bindchange="switchAvailable" color="#16865d" /></view>
-    <button type="primary" bindtap="saveProduct">保存商品</button>
-    <button wx:if="{{editId}}" bindtap="resetForm">取消编辑</button>
+  </navigator>
+  <view class="admin-dash-header">
+    <view class="admin-dash-kicker">STORE MANAGEMENT</view>
+    <view class="admin-dash-title">商家管理中心</view>
+    <view class="admin-dash-caption">选择要管理的功能</view>
   </view>
-  <view class="card"><view class="subheading">已保存商品</view>
-    <view wx:for="{{products}}" wx:key="id" class="line"><text>{{item.name}} · ¥{{item.price}}</text><view><button class="small" size="mini" data-id="{{item.id}}" bindtap="editProduct">编辑</button><button class="small" size="mini" data-id="{{item.id}}" bindtap="deleteProduct">删除</button></view></view>
-  </view>
-  <view class="hint">当前数据只存储在本机微信开发者工具中，正式上线前必须接后端并验证商家权限。</view>
+    <navigator class="admin-dash-link" url="/pages/store-hours/store-hours"><view class="admin-dash-icon">⏰</view><view class="admin-dash-info"><view class="admin-dash-name">营业管理</view><view class="admin-dash-desc">营业时间 / 暂停接单 / 店铺公告</view></view><text class="admin-dash-chevron">›</text></navigator>
+<navigator class="admin-dash-link" url="/pages/admin-products/admin-products"><view class="admin-dash-icon">🛍</view><view class="admin-dash-info"><view class="admin-dash-name">商品管理</view><view class="admin-dash-desc">新增、编辑商品 · 已保存商品</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-categories/admin-categories"><view class="admin-dash-icon">🗂</view><view class="admin-dash-info"><view class="admin-dash-name">分类管理</view><view class="admin-dash-desc">添加和删除商品分类</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-placeholders/admin-placeholders"><view class="admin-dash-icon">🖼</view><view class="admin-dash-info"><view class="admin-dash-name">缺图样式</view><view class="admin-dash-desc">五种内置风格 · 上传自定义图片</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-orders/admin-orders"><view class="admin-dash-icon">📦</view><view class="admin-dash-info"><view class="admin-dash-name">订单管理</view><view class="admin-dash-desc">接单、备货和配送</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/delivery/delivery"><view class="admin-dash-icon">🚚</view><view class="admin-dash-info"><view class="admin-dash-name">配送设置</view><view class="admin-dash-desc">配送地区、地图范围和时间段</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <view class="admin-dash-note">当前为本地演示版本。正式上线前需要接入后端和商家权限。</view>
 </view>

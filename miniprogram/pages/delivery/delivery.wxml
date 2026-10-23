@@ -2,6 +2,14 @@
  <view class="title">配送设置（本地演示）</view>
  <view class="card"><view class="heading">开放地区</view>
   <view wx:for="{{areas}}" wx:key="id" class="line"><text>{{item.name}}</text><switch data-id="{{item.id}}" checked="{{item.enabled}}" bindchange="toggleArea" color="#16865d"/><button size="mini" data-id="{{item.id}}" bindtap="deleteArea">删除</button></view>
+    <view wx:for="{{areas}}" wx:key="id" class="area-geo-block">
+    <view>{{item.name}} - GPS</view>
+    <button size="mini" data-id="{{item.id}}" bindtap="setAreaMapCenter">选择配送中心</button>
+    <view wx:if="{{item.centerLat}}">
+      <text>{{item.centerLat}}, {{item.centerLng}}</text>
+      <view>配送半径（米） <input type="number" data-id="{{item.id}}" value="{{item.radiusMeters}}" bindblur="changeAreaRadius" /></view>
+    </view>
+  </view>
   <input placeholder="例如：阳光小区" value="{{areaName}}" bindinput="areaInput"/>
   <button class="delivery-action" catchtap="addArea">新增地区</button>
  </view>

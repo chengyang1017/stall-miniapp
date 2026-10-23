@@ -1,0 +1,17 @@
+<view class="product-manage-page">
+  <view class="product-manage-header">
+    <text class="product-manage-heading">商品管理</text>
+    <button size="mini" type="primary" bindtap="openNewProduct">+ 新增商品</button>
+  </view>
+  <view wx:if="{{products.length === 0}}" class="product-manage-empty">还没有商品，点击右上角新增商品</view>
+  <view wx:for="{{products}}" wx:key="id" class="product-manage-row product-card-click-v1" data-id="{{item.id}}" bindtap="openEditProduct" role="button">
+    <image wx:if="{{item.imageUrl}}" class="product-manage-image" src="{{item.imageUrl}}" mode="aspectFill" />
+    <view wx:else class="product-manage-no-image"><text>暂无图片</text></view>
+    <view class="product-manage-info">
+      <text class="product-manage-name">{{item.name}}</text>
+      <text class="product-manage-price">¥{{item.price}}</text>
+      <text class="product-manage-state">{{item.soldOut ? '已售罄' : (item.available ? '销售中' : '已下架')}}</text>
+    </view>
+    
+  </view>
+</view>

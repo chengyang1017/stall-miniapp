@@ -1,0 +1,59 @@
+<view class="page">
+  <view class="heading">商家订单管理（本机演示）</view>
+  <view class="notice">订单只在当前设备共享。支付状态仍是未支付；以下仅测试配送状态，不可用于真实经营。</view>
+      <!-- ADMIN_ORDER_DATE_FILTER_V1 -->
+  <view class="admin-order-date-bar">
+    <view class="admin-order-date-label">下单日期</view>
+    <!-- ADMIN_ORDER_TODAY_BUTTON_V1 -->
+    <view class="admin-order-today-btn" bindtap="selectTodayOrders">今天</view>
+    <picker mode="date" value="{{orderDateFilter}}" bindchange="selectOrderDate">
+      <view class="admin-order-date-select">{{orderDateFilter || '选择日期'}}　⌄</view>
+    </picker>
+    <view wx:if="{{orderDateFilter}}" class="admin-order-date-clear" bindtap="clearOrderDate">查看全部日期</view>
+  </view>
+  <!-- ORDER_SEARCH_V1 -->
+  <view class="order-search-wrap">
+    <view class="order-search-box">
+      <text class="order-search-icon">⌕</text>
+      <input class="order-search-input" type="text" confirm-type="search" value="{{orderSearchText}}" placeholder="搜索订单号、收货人或电话" bindinput="orderSearchInput" />
+      <text wx:if="{{orderSearchText}}" class="order-search-clear" bindtap="clearOrderSearch">清除</text>
+    </view>
+    <view class="order-search-count">当前筛选：{{dateResults.length}} 单</view>
+  </view>
+  <!-- order-status-tabs-v1 -->
+  <scroll-view scroll-x="true" class="order-tabs-scroll" enable-flex="true">
+    <view class="order-tabs-inner">
+      <view wx:for="{{orderTabs}}" wx:key="key" class="order-tab {{currentTab === item.key ? 'order-tab-active' : ''}}" data-tab="{{item.key}}" bindtap="switchOrderTab">
+        <text>{{item.label}}</text>
+        <text class="order-tab-count">{{item.count}}</text>
+      </view>
+    </view>
+  </scroll-view>
+  <view wx:if="{{dateResults.length === 0}}" class="empty">当前分类暂无订单。</view>
+  <view wx:for="{{dateResults}}" wx:key="id" class="card">
+    <view class="row"><text class="id">{{item.id}}</text><text class="state">{{item.statusText}}</text></view>
+    <view class="muted">{{item.createdText}} · 待支付（演示）</view>
+    <view wx:for="{{item.items}}" wx:for-item="product" wx:key="productId" class="row item"><text>{{product.name}} × {{product.quantity}}</text><text>¥{{product.subtotal}}</text></view>
+        <!-- stallCancelExceptionV1 -->
+    <view wx:if="{{item.issueReason}}" class="muted" style="color:#bf512d;">原因：{{item.issueReason}}</view>
+    <view wx:if="{{item.issueTimeText}}" class="muted">记录时间：{{item.issueTimeText}}</view>
+    <view class="order-issue-actions" style="display:flex;gap:12rpx;flex-wrap:wrap;margin:14rpx 0;">
+      <button wx:if="{{item.allowCancel}}" size="mini" data-id="{{item.id}}" data-type="cancelled" bindtap="recordOrderIssue">取消订单</button>
+      <button wx:if="{{item.allowAbnormal}}" size="mini" data-id="{{item.id}}" data-type="abnormal" bindtap="recordOrderIssue">配送异常</button>
+    </view>
+    <view class="total">合计 ¥{{item.totalText}}</view>
+    <view class="muted">收货人：{{item.receiverName}} · {{item.phone}}</view>
+    <view class="muted">地址：{{item.area}} {{item.detail}}</view>
+    <view class="muted">配送时段：{{item.slotText}}</view>
+    <navigator class="proof-link" url="/pages/delivery-proof/delivery-proof?id={{item.id}}&amp;merchant=1">送达照片 / 完成配送 →</navigator>
+    <view wx:if="{{item.note}}" class="muted">备注：{{item.note}}</view>
+    <view wx:if="{{item.deliveredText}}" class="muted">送达时间：{{item.deliveredText}}</view>
+    <view wx:if="{{item.nextStatus && item.nextStatus !== 'accepted'}}" class="eta">
+      <text>预计送达时间（文字，例如 18:30）</text>
+      <input value="{{item.etaValue}}" maxlength="60" placeholder="请输入预计时间" data-id="{{item.id}}" bindinput="etaInput" />
+      <button size="mini" data-id="{{item.id}}" bindtap="saveEta">保存预计时间</button>
+    </view>
+    <view wx:if="{{item.etaValue}}" class="muted">当前预计：{{item.etaValue}}</view>
+    <button wx:if="{{item.nextStatus}}" class="next" type="primary" data-id="{{item.id}}" data-status="{{item.nextStatus}}" bindtap="next">{{item.nextLabel}}</button>
+  </view>
+</view>

@@ -1,58 +1,46 @@
-
 <view class="page">
+  <view class="heading">我的购物车</view>
 
-<view class="heading">我的购物车</view>
+  <!-- CART_CLEAR_V1 -->
+  <view class="cart-clear-bar" wx:if="{{totalCount > 0}}">
+    <text class="cart-clear-hint">已选购 {{totalCount}} 件商品</text>
+    <view class="cart-clear-action" bindtap="clearCartConfirmed" aria-label="清空购物车">
+      <image class="cart-clear-trash-img" src="/assets/cart-trash-red.png" mode="aspectFit" />
+    </view>
+  </view>
 
-<view wx:if="{{items.length === 0}}" class="empty">
-  购物车还是空的
-</view>
+  <view wx:if="{{items.length === 0}}" class="empty">购物车还是空的</view>
 
-<view
-  wx:for="{{items}}"
-  wx:key="productId"
-  class="cart-item"
->
-  <view class="product-name">{{item.name}}</view>
-
-  <view class="item-bottom">
-    <view>
-      <view class="price">¥{{item.priceText}}</view>
-      <view class="subtotal">
-        小计：¥{{item.subtotalText}}
+  <view wx:for="{{items}}" wx:key="productId" class="cart-item">
+    <!-- CART_THUMB_AND_FOOTER_V1 -->
+    <view class="cart-image-slot">
+      <image wx:if="{{item.imageUrl}}" class="cart-product-image" src="{{item.imageUrl}}" mode="aspectFill" />
+      <view wx:else class="cart-product-image-empty">
+        <text class="cart-image-empty-symbol">▣</text>
+        <text class="cart-image-empty-label">暂无图片</text>
       </view>
     </view>
-
-    <view class="quantity">
-      <button
-        size="mini"
-        data-id="{{item.productId}}"
-        bindtap="decrease"
-      >-</button>
-
-      <text>{{item.quantity}}</text>
-
-      <button
-        size="mini"
-        data-id="{{item.productId}}"
-        bindtap="increase"
-      >+</button>
+    <view class="cart-item-content">
+    <view class="product-name">{{item.name}}</view>
+    <view class="item-bottom">
+      <view>
+        <view class="price">¥{{item.priceText}}</view>
+        <view class="subtotal">小计：¥{{item.subtotalText}}</view>
+      </view>
+      <view class="quantity">
+        <button size="mini" data-id="{{item.productId}}" bindtap="decrease">-</button>
+        <text>{{item.quantity}}</text>
+        <button size="mini" data-id="{{item.productId}}" bindtap="increase">+</button>
+      </view>
+    </view>
     </view>
   </view>
-</view>
 
-<view class="footer">
-  <view>
-    <view>共 {{totalCount}} 件商品</view>
-    <view class="total">¥{{totalText}}</view>
+  <view class="footer cart-footer-compact">
+    <view class="cart-footer-summary">
+      <view class="cart-footer-count">共 {{totalCount}} 件商品</view>
+      <view class="total">¥{{totalText}}</view>
+    </view>
+    <button type="primary" disabled="{{totalCount === 0}}" bindtap="checkout">去结算</button>
   </view>
-
-  <button
-    type="primary"
-    disabled="{{totalCount === 0}}"
-    bindtap="checkout"
-  >
-    去结算
-  </button>
-</view>
-
 </view>

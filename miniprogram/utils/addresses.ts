@@ -5,6 +5,10 @@ export interface SavedAddress {
   area: string
   detail: string
   isDefault: boolean
+  latitude?: number
+  longitude?: number
+  locationName?: string
+  mapAddress?: string
 }
 
 const KEY = 'stall_addresses_v1'

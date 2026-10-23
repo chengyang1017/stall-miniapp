@@ -1,46 +1,37 @@
 <view class="page">
   <view class="heading">确认订单</view>
   <view class="card">
-    <view class="subheading">收货信息</view>
-    <button class="address-link" size="mini" bindtap="openAddresses">我的地址 / 新增地址</button>
-    <view class="field">
-      <text>收货人姓名 *</text>
-      <input maxlength="40" placeholder="请输入姓名" value="{{receiverName}}" bindinput="updateName" />
+    <view class="subheading">收货地址</view>
+    <view class="address-card" bindtap="openAddresses">
+      <view wx:if="{{hasAddress}}" class="address-content">
+        <view class="address-name">{{selectedAddress.receiverName}}　{{selectedAddress.phone}}</view>
+        <view class="address-detail">{{selectedAddress.area}} {{selectedAddress.detail}}</view>
+        <view class="address-hint">点击更换地址或新增地址</view>
+      </view>
+      <view wx:else class="address-placeholder">＋ 请选择或新增收货地址</view>
+      <text class="address-arrow">›</text>
     </view>
-    <view class="field">
-      <text>中国大陆手机号 *</text>
-      <input type="number" maxlength="11" placeholder="请输入11位手机号" value="{{phone}}" bindinput="updatePhone" />
-    </view>
-    <view class="field">
-      <text>所在小区/地区 *</text>
-      <picker range="{{areas}}" range-key="name" value="{{areaIndex}}" bindchange="chooseArea">
-        <view class="select">{{area || '请选择商家开放的小区或地区'}}</view>
-      </picker>
-    </view>
+  </view>
+  <view class="card">
+    <view class="subheading">配送信息</view>
     <view class="field">
       <text>配送时段 *</text>
       <picker range="{{slots}}" range-key="label" value="{{slotIndex}}" bindchange="chooseSlot">
-        <view class="select">{{selectedSlotText || '请选择开放的配送时段'}}</view>
+        <view class="select">{{selectedSlotText || '请选择配送时段'}}</view>
       </picker>
-    </view>
-    <view class="field">
-      <text>详细地址 *</text>
-      <input maxlength="150" placeholder="楼栋、单元、门牌号" value="{{address}}" bindinput="updateAddress" />
     </view>
     <view class="field">
       <text>订单备注（选填）</text>
       <textarea maxlength="200" placeholder="例如：请先电话联系" value="{{note}}" bindinput="updateNote" auto-height />
     </view>
   </view>
-
   <view class="card">
     <view class="subheading">商品清单</view>
     <view wx:for="{{items}}" wx:key="productId" class="line">
-      <text>{{item.name}} × {{item.quantity}}</text>
-      <text>¥{{item.subtotalText}}</text>
+      <text>{{item.name}} × {{item.quantity}}</text><text>¥{{item.subtotalText}}</text>
     </view>
     <view class="line total"><text>商品合计</text><text>¥{{totalText}}</text></view>
-    <view class="hint">配送费和具体日期尚未接入。本页不会创建订单或扣款。</view>
+    <view class="hint">配送费和具体日期尚未接入。订单只在本设备保存，不会扣款。</view>
   </view>
-  <button type="primary" disabled="{{totalCount === 0}}" bindtap="confirmOrder">确认收货信息（演示）</button>
+  <button type="primary" disabled="{{totalCount === 0}}" bindtap="confirmOrder">创建待支付订单（本地演示）</button>
 </view>

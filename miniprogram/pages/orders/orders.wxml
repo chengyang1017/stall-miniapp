@@ -1,0 +1,18 @@
+<view class="customer-orders-page">
+  <view class="customer-orders-title">我的订单</view>
+  <view class="customer-orders-tip">当前为本机演示订单，支付尚未接入。配送状态与支付状态分别显示。</view>
+  <scroll-view class="customer-order-tabs" scroll-x="true">
+    <view class="customer-order-tabs-row">
+      <view wx:for="{{tabs}}" wx:key="key" class="customer-tab {{activeTab === item.key ? 'customer-tab-active' : ''}}" data-tab="{{item.key}}" bindtap="switchTab">{{item.label}} <text class="customer-tab-count">{{item.count}}</text></view>
+    </view>
+  </scroll-view>
+  <view wx:if="{{visibleOrders.length === 0}}" class="customer-orders-empty">这个分类暂时没有订单</view>
+  <view wx:for="{{visibleOrders}}" wx:key="id" class="customer-order-card" data-id="{{item.id}}" bindtap="openOrder">
+    <view class="customer-order-top"><text class="customer-order-number">{{item.id}}</text><text class="customer-order-state">{{item.statusText}}</text></view>
+    <view class="customer-order-items">{{item.itemSummary}}</view>
+    <view class="customer-order-info">{{item.createdText}}</view>
+    <view wx:if="{{item.showEta}}" class="customer-order-info">预计送达：{{item.etaText}}</view>
+    <view wx:if="{{item.other}}" class="customer-order-reason">原因：{{item.issueReason || '详情中查看'}}</view>
+    <view class="customer-order-bottom"><text class="customer-order-payment">{{item.paymentText}}</text><view class="customer-order-total">¥{{item.totalText}}　<text class="customer-order-arrow">›</text></view></view>
+  </view>
+</view>

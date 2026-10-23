@@ -1,121 +1,113 @@
-import { getSelectedAddress } from '../../utils/addresses'
+import { businessState } from '../../utils/storeHours' // STALL_HOURS_V1
+import { isPointDeliverable } from '../../utils/delivery'
+import { getPurchaseDetails, clearDirectPurchase, hasDirectPurchase } from '../../utils/directPurchase'
+import { getSelectedAddress, SavedAddress } from '../../utils/addresses'
 import { availableAreas, availableSlots } from '../../utils/delivery'
-import { getCartDetails, CartDisplayItem } from '../../utils/cart'
+import { getCartDetails, CartDisplayItem, saveCart } from '../../utils/cart'
+import { createDemoOrder } from '../../utils/orders'
 
 const DRAFT_KEY = 'stall_checkout_draft_v1'
-
-interface CheckoutDraft {
-  receiverName: string
-  phone: string
-  area: string
-  address: string
-  note: string
-}
 
 Page({
   data: {
     items: [] as CartDisplayItem[],
     totalText: '0.00',
     totalCount: 0,
-    receiverName: '',
-    phone: '',
-    area: '',
-    address: '',
-    note: '',
-    areas: [] as Array<{id:string;name:string}>,
-    slots: [] as Array<{id:string;label:string;start:string;end:string}>,
-    areaIndex: -1,
+    selectedAddress: null as SavedAddress | null,
+    hasAddress: false,
+    slots: [] as Array<{ id: string; label: string; start: string; end: string }>,
     slotIndex: -1,
     selectedSlotId: '',
-    selectedSlotText: ''
+    selectedSlotText: '',
+    note: ''
   },
-
   onLoad() {
-    const saved = wx.getStorageSync(DRAFT_KEY) as Partial<CheckoutDraft> | ''
-    if (saved && typeof saved === 'object') {
-      this.setData({
-        receiverName: String(saved.receiverName || ''),
-        phone: String(saved.phone || ''),
-        area: String(saved.area || ''),
-        address: String(saved.address || ''),
-        note: String(saved.note || '')
-      })
+    const draft = wx.getStorageSync(DRAFT_KEY) as { note?: string } | undefined
+    if (draft && typeof draft === 'object') {
+      this.setData({ note: String(draft.note || '') })
     }
   },
-
   onShow() {
-    const cart = getCartDetails()
-    const savedAddress = getSelectedAddress()
-    const addressData = savedAddress ? {receiverName:savedAddress.receiverName,phone:savedAddress.phone,area:savedAddress.area,address:savedAddress.detail} : {}
-    const currentArea = savedAddress ? savedAddress.area : this.data.area
-    const areas = availableAreas()
+    const cart = getPurchaseDetails()
+    const selected = getSelectedAddress() || null
     const slots = availableSlots()
-    const areaIndex = areas.findIndex(a=>a.name===currentArea)
-    const slotIndex = slots.findIndex(s=>s.id===this.data.selectedSlotId)
-    this.setData({...addressData,areas,slots,areaIndex,slotIndex,selectedSlotId:slotIndex>=0?slots[slotIndex].id:'',selectedSlotText:slotIndex>=0?`${slots[slotIndex].label} ${slots[slotIndex].start}–${slots[slotIndex].end}`:'',
+    const slotIndex = slots.findIndex(s => s.id === this.data.selectedSlotId)
+    this.setData({
       items: cart.items,
       totalText: cart.totalText,
-      totalCount: cart.totalCount
+      totalCount: cart.totalCount,
+      selectedAddress: selected,
+      hasAddress: !!selected,
+      slots,
+      slotIndex,
+      selectedSlotId: slotIndex >= 0 ? slots[slotIndex].id : '',
+      selectedSlotText: slotIndex >= 0 ? `${slots[slotIndex].label} ${slots[slotIndex].start}–${slots[slotIndex].end}` : ''
     })
   },
-
-  onUnload() {
-    this.saveDraft()
-  },
-
-  openAddresses() {
-    wx.navigateTo({url:'/pages/addresses/addresses'})
-  },
-
-  updateName(e: WechatMiniprogram.Input) {
-    this.setData({ receiverName: e.detail.value })
-  },
-  updatePhone(e: WechatMiniprogram.Input) {
-    this.setData({ phone: e.detail.value })
-  },
-  chooseArea(e: any) {
-    const index=Number(e.detail.value), selected=this.data.areas[index]
-    if(selected)this.setData({area:selected.name,areaIndex:index})
-  },
+  onUnload() { this.saveDraft() },
+  openAddresses() { wx.navigateTo({ url: '/pages/addresses/addresses' }) },
   chooseSlot(e: any) {
-    const index=Number(e.detail.value), selected=this.data.slots[index]
-    if(selected)this.setData({selectedSlotId:selected.id,slotIndex:index,selectedSlotText:`${selected.label} ${selected.start}–${selected.end}`})
+    const index = Number(e.detail.value)
+    const slot = this.data.slots[index]
+    if (!slot) return
+    this.setData({
+      slotIndex: index,
+      selectedSlotId: slot.id,
+      selectedSlotText: `${slot.label} ${slot.start}–${slot.end}`
+    })
   },
-  updateAddress(e: WechatMiniprogram.Input) {
-    this.setData({ address: e.detail.value })
-  },
-  updateNote(e: WechatMiniprogram.Input) {
-    this.setData({ note: e.detail.value })
-  },
-
-  saveDraft() {
-    const { receiverName, phone, area, address, note } = this.data
-    wx.setStorageSync(DRAFT_KEY, { receiverName, phone, area, address, note })
-  },
-
+  updateNote(e: WechatMiniprogram.Input) { this.setData({ note: e.detail.value }) },
+  saveDraft() { wx.setStorageSync(DRAFT_KEY, { note: this.data.note }) },
   confirmOrder() {
-    const { receiverName, phone, area, address } = this.data
-    const cart = getCartDetails()
-    if (!cart.totalCount) {
-      wx.showToast({ title: '购物车为空', icon: 'none' })
+    // STALL_HOURS_V1: local demo guard. Server must recheck before payment.
+    if (!businessState().open) { wx.showToast({title:'当前暂停接单或不在营业时间',icon:'none'}); return }
+
+    const geoAddress = getSelectedAddress()
+    if (geoAddress && !isPointDeliverable(geoAddress.area, geoAddress.latitude, geoAddress.longitude)) {
+      wx.showToast({title:'地址不在配送范围内',icon:'none'})
       return
     }
-    if (!receiverName.trim() || !phone.trim() || !area.trim() || !address.trim()) {
-      wx.showToast({ title: '请填写完整收货信息', icon: 'none' })
-      return
+    const cart = getPurchaseDetails()
+    if (!cart.totalCount) return wx.showToast({ title: '购物车为空', icon: 'none' })
+    const selected = getSelectedAddress()
+    if (!selected) return wx.showToast({ title: '请先选择收货地址', icon: 'none' })
+    if (!selected.receiverName.trim() || !/^1[3-9]\d{9}$/.test(selected.phone.trim()) || !selected.detail.trim()) {
+      return wx.showToast({ title: '收货地址信息不完整，请编辑地址', icon: 'none' })
     }
-    if (!/^1[3-9]\d{9}$/.test(phone.trim())) {
-      wx.showToast({ title: '请填写正确的大陆手机号', icon: 'none' })
-      return
+    if (!availableAreas().some(a => a.name === selected.area)) {
+      return wx.showToast({ title: '该地址已不在配送范围内', icon: 'none' })
     }
-    const configAreas=availableAreas(),configSlots=availableSlots()
-    if(!configAreas.some(a=>a.name===area)) return wx.showToast({title:'该地区不可配送',icon:'none'})
-    if(!configSlots.some(s=>s.id===this.data.selectedSlotId)) return wx.showToast({title:'请选择有效配送时段',icon:'none'})
+    const slot = availableSlots().find(s => s.id === this.data.selectedSlotId)
+    if (!slot) return wx.showToast({ title: '请选择有效配送时段', icon: 'none' })
     this.saveDraft()
     wx.showModal({
-      title: '信息已确认（演示）',
-      content: `收货人：${receiverName.trim()}\n商品：${cart.totalCount} 件\n商品金额：¥${cart.totalText}\n\n配送时段：${this.data.selectedSlotText}\n尚未创建正式订单。`,
-      showCancel: false
+      title: '创建待支付演示订单',
+      content: `收货人：${selected.receiverName}\n地址：${selected.area} ${selected.detail}\n合计：¥${cart.totalText}\n\n仅保存本地演示订单，不会扣款。`,
+      success: result => {
+        if (!result.confirm) return
+        const fresh = getPurchaseDetails()
+        const address = getSelectedAddress()
+        const validSlot = availableSlots().find(s => s.id === this.data.selectedSlotId)
+        if (!fresh.totalCount || !address || !address.receiverName.trim() || !/^1[3-9]\d{9}$/.test(address.phone.trim()) || !address.detail.trim() ||
+          !availableAreas().some(a => a.name === address.area) || !validSlot) {
+          wx.showToast({ title: '商品或地址已变化，请重新确认', icon: 'none' })
+          this.onShow()
+          return
+        }
+        const order = createDemoOrder({
+          items: fresh.items,
+          totalText: fresh.totalText,
+          receiverName: address.receiverName.trim(),
+          phone: address.phone.trim(),
+          area: address.area,
+          detail: address.detail.trim(),
+          note: this.data.note.trim(),
+          slotId: validSlot.id,
+          slotText: `${validSlot.label} ${validSlot.start}–${validSlot.end}`
+        })
+        if (hasDirectPurchase()) clearDirectPurchase(); else saveCart([])
+        wx.redirectTo({ url: `/pages/orders/orders?created=${encodeURIComponent(order.id)}` })
+      }
     })
   }
 })

@@ -122,3 +122,12 @@ page {
   color: white;
   font-size: 28rpx;
 }
+
+/* address-card-phase8 */
+.address-card { display:flex;align-items:center;justify-content:space-between;background:#f4faf7;border:1rpx solid #d7eadf;padding:26rpx;border-radius:14rpx;min-height:96rpx; }
+.address-content { flex:1;min-width:0; }
+.address-name { font-size:30rpx;font-weight:600;color:#202820; }
+.address-detail { font-size:27rpx;color:#424a44;margin-top:12rpx;word-break:break-all; }
+.address-hint { font-size:23rpx;color:#16865d;margin-top:13rpx; }
+.address-placeholder { font-size:28rpx;color:#16865d; }
+.address-arrow { font-size:44rpx;color:#16865d;margin-left:14rpx; }

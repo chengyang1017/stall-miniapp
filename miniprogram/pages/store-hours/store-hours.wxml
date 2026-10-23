@@ -1,0 +1,13 @@
+<view class="hours-page">
+  <view class="hours-card"><view class="hours-row"><text class="hours-heading">接单开关</text><switch color="#16865d" checked="{{accepting}}" bindchange="toggleAccept" /></view><text class="hours-tip">当前状态：{{status}}。暂停时顾客仍可浏览商品，但不能提交新订单。</text></view>
+  <view class="hours-card"><view class="hours-heading">店铺公告</view><textarea maxlength="200" value="{{notice}}" bindinput="changeNotice" placeholder="例如：今日新品、临时休息通知" class="hours-notice"/><button type="primary" bindtap="saveNotice">保存公告</button></view>
+  <view class="hours-card"><view class="hours-heading">每周营业时间</view>
+    <view wx:for="{{days}}" wx:key="name" class="hours-day">
+      <view class="hours-row"><text>{{item.name}}</text><switch data-index="{{index}}" color="#16865d" checked="{{item.enabled}}" bindchange="toggleDay" /></view>
+      <view wx:if="{{item.enabled}}" class="hours-range"><picker mode="time" value="{{item.start}}" data-index="{{index}}" bindchange="editStart"><view class="hours-time">{{item.start}}</view></picker><text>至</text><picker mode="time" value="{{item.end}}" data-index="{{index}}" bindchange="editEnd"><view class="hours-time">{{item.end}}</view></picker></view>
+      <text wx:else class="hours-tip">不营业</text>
+    </view>
+    <button type="primary" bindtap="saveSchedule">保存营业时间</button>
+  </view>
+  <view class="hours-tip">本机演示设置。正式上线需由服务器统一管理和校验营业状态。</view>
+</view>

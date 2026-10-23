@@ -1,0 +1,33 @@
+<view class="product-form-page">
+<view class="card">
+    <view class="subheading">{{editId ? '编辑商品' : '新增商品'}}</view>
+    <view class="field">商品名称<input placeholder="例如：炒饭" value="{{productName}}" bindinput="inputName" /></view>
+    <view class="field">
+  商品分类
+  <picker
+    range="{{categories}}"
+    range-key="name"
+    bindchange="selectCategory"
+  >
+    <view class="picker">
+      {{selectedCategoryName || '请选择分类'}}
+    </view>
+  </picker>
+</view>
+    <view class="field">商品介绍<textarea maxlength="1000" value="{{productDescription}}" placeholder="填写商品介绍" bindinput="inputDescription" auto-height /></view>
+    <view class="field">商品图片
+      <image wx:if="{{productImageUrl}}" src="{{productImageUrl}}" mode="aspectFill" style="display:block;width:240rpx;height:180rpx;border-radius:12rpx;margin:12rpx 0" />
+      <button size="mini" bindtap="chooseProductImage">选择图片</button>
+      <button wx:if="{{productImageUrl}}" size="mini" bindtap="removeProductImage">移除图片</button>
+    </view>
+    <view class="field">原价 ¥<input type="digit" placeholder="例如：15" value="{{priceText}}" bindinput="inputPrice" /></view>
+    <view class="field">折后价 ¥（留空表示无折扣）<input type="digit" placeholder="例如：12" value="{{discountText}}" bindinput="inputDiscount" /></view>
+    <view class="field">折扣开始（可留空）<input placeholder="2026-10-23 10:00" value="{{startText}}" bindinput="inputStart" /></view>
+    <view class="field">折扣结束（可留空）<input placeholder="2026-10-23 18:00" value="{{endText}}" bindinput="inputEnd" /></view>
+    <view class="line"><text>标记售罄</text><switch checked="{{isSoldOut}}" bindchange="switchSoldOut" color="#16865d" /></view>
+    <view class="line"><text>允许销售</text><switch checked="{{isAvailable}}" bindchange="switchAvailable" color="#16865d" /></view>
+    <button type="primary" bindtap="saveFromForm">保存商品</button>
+    <button wx:if="{{editId}}" bindtap="resetForm">取消编辑</button>
+    <button wx:if="{{editId}}" class="product-form-delete-action" bindtap="deleteFromForm" type="warn">删除商品</button>
+  </view>
+</view>

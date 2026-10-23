@@ -1,0 +1,13 @@
+<view class="page admin-dashboard">
+  <view class="admin-dash-header">
+    <view class="admin-dash-kicker">STORE MANAGEMENT</view>
+    <view class="admin-dash-title">商家管理中心</view>
+    <view class="admin-dash-caption">选择要管理的功能</view>
+  </view>
+  <navigator class="admin-dash-link" url="/pages/admin-products/admin-products"><view class="admin-dash-icon">01</view><view class="admin-dash-info"><view class="admin-dash-name">商品管理</view><view class="admin-dash-desc">新增、编辑商品 · 已保存商品</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-categories/admin-categories"><view class="admin-dash-icon">02</view><view class="admin-dash-info"><view class="admin-dash-name">分类管理</view><view class="admin-dash-desc">添加和删除商品分类</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-placeholders/admin-placeholders"><view class="admin-dash-icon">03</view><view class="admin-dash-info"><view class="admin-dash-name">缺图样式</view><view class="admin-dash-desc">五种内置风格 · 上传自定义图片</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-orders/admin-orders"><view class="admin-dash-icon">04</view><view class="admin-dash-info"><view class="admin-dash-name">订单管理</view><view class="admin-dash-desc">接单、备货和配送</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/delivery/delivery"><view class="admin-dash-icon">05</view><view class="admin-dash-info"><view class="admin-dash-name">配送设置</view><view class="admin-dash-desc">配送地区、地图范围和时间段</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <view class="admin-dash-note">当前为本地演示版本。正式上线前需要接入后端和商家权限。</view>
+</view>
