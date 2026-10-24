@@ -1,4 +1,5 @@
 import { loadStore, saveStore, newId, Category, Product } from '../../utils/store'
+import { merchantCloudConfig, merchantCloudProducts } from '../../utils/cloudMerchantProducts'
 
 Page({
   openNewProduct() { wx.navigateTo({ url: '/pages/admin-product-form/admin-product-form' }) },
@@ -30,7 +31,7 @@ Page({
     selectedCategory: '',
     selectedCategoryName: '',
     editId: '',
-    isAvailable: true
+    isAvailable: true, cloudError: '', cloudLoading: false
   },
   toggleAdminSection(e: any) {
     const section = String(e.currentTarget.dataset.section || '')
@@ -75,31 +76,32 @@ Page({
     this.setData({ placeholderStyle: styles[n], placeholderStyleIndex: n })
     wx.showToast({ title: 'Style saved', icon: 'success' })
   },
-  refresh() {
+  async refresh() {
     const styles = ['classic','mountain','bag','playful','premium','custom']
     const savedStyle = String(wx.getStorageSync('stall_placeholder_style_v1') || 'premium')
     const customPlaceholderUrl = String(wx.getStorageSync('stall_placeholder_custom_v1') || '')
     this.setData({ placeholderStyle: savedStyle, placeholderStyleIndex: Math.max(0,styles.indexOf(savedStyle)), customPlaceholderUrl })
+    const cfg = merchantCloudConfig()
+    if (cfg) {
+      this.setData({ products: [], cloudError: '', cloudLoading: true })
+      try {
+        const products = await merchantCloudProducts(cfg)
+        this.setData({ products: products.map(p => ({
+          id: p.id, name: p.name, categoryId: p.categoryId || '',
+          price: (p.priceCents / 100).toFixed(2), soldOut: p.soldOut,
+          available: p.active, imageUrl: p.imageUrl || ''
+        })), cloudError: '', cloudLoading: false })
+      } catch (_) {
+        this.setData({ products: [], cloudError: '商品读取失败，请确认商家已登录且有店铺权限', cloudLoading: false })
+      }
+      return
+    }
     const store = loadStore()
-  
-    const selectedCategory =
-      store.categories.some(
-        c => c.id === this.data.selectedCategory
-      )
-        ? this.data.selectedCategory
-        : (store.categories.length > 0 ? store.categories[0].id : '')
-  
-    const category = store.categories.find(
-      c => c.id === selectedCategory
-    )
-    const selectedCategoryName = category ? category.name : ''
-  
-    this.setData({
-      categories: store.categories,
-      products: store.products,
-      selectedCategory,
-      selectedCategoryName
-    })
+    const selectedCategory = store.categories.some(c => c.id === this.data.selectedCategory)
+      ? this.data.selectedCategory : (store.categories.length > 0 ? store.categories[0].id : '')
+    const category = store.categories.find(c => c.id === selectedCategory)
+    this.setData({ categories: store.categories, products: store.products,
+      selectedCategory, selectedCategoryName: category ? category.name : '', cloudError: '', cloudLoading: false })
   },
   inputCategory(e: any) { this.setData({ categoryName: e.detail.value }) },
   addCategory() {

@@ -1,0 +1,11 @@
+<view class="support-page">
+  <view class="support-tip">本地演示客服：消息只保存在当前设备，商家需要在同一设备的商家管理中心回复。</view>
+  <scroll-view class="support-messages" scroll-y="true" scroll-into-view="{{bottomId}}">
+    <view wx:if="{{messages.length === 0}}" class="support-empty">欢迎咨询商家，请输入你的问题。</view>
+    <view wx:for="{{messages}}" wx:key="id" id="msg-{{item.id}}" class="support-line {{item.mine ? 'mine' : 'other'}}">
+      <view class="support-meta">{{item.mine ? '我' : '商家'}} · {{item.time}}</view>
+      <view class="support-bubble">{{item.content}}</view>
+    </view>
+  </scroll-view>
+  <view class="support-compose"><textarea class="support-input" maxlength="500" auto-height value="{{draft}}" placeholder="输入消息（最多500字）" bindinput="onInput"/><button type="primary" size="mini" bindtap="send">发送</button></view>
+</view>

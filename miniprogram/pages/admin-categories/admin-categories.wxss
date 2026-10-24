@@ -1,28 +1,29 @@
-page{background:#f5f7f6}
-.category-page{padding:30rpx 26rpx 90rpx;box-sizing:border-box}
-.page-title{font-size:38rpx;font-weight:700;color:#1d3027;margin-bottom:8rpx}
-.page-subtitle{font-size:24rpx;color:#89988f;margin-bottom:26rpx}
-.panel{background:#fff;border-radius:24rpx;padding:26rpx 22rpx;margin-bottom:22rpx;box-shadow:0 5rpx 22rpx rgba(23,62,45,.04)}
-.panel-title{font-size:30rpx;font-weight:650;color:#263a30;margin-bottom:18rpx}
-.hint{font-size:23rpx;color:#87958d;line-height:1.6;margin-bottom:12rpx}
-.add-row{display:flex;align-items:center;gap:12rpx}
-.name-input{flex:1;min-width:0;box-sizing:border-box;background:#f6f8f7;border:2rpx solid #e6ece8;height:82rpx;border-radius:14rpx;padding:0 18rpx;font-size:26rpx}
-.category-page button::after{border:0}
-.add-btn{margin:0;background:#128459;color:#fff;border-radius:13rpx;height:82rpx;line-height:82rpx;padding:0 26rpx;font-size:26rpx}
-.sort-area{width:100%;position:relative;overflow:hidden}
-.sort-row{box-sizing:border-box;width:100%;position:absolute;left:0;right:0;transition:top .2s ease}
-.cat-row{box-sizing:border-box;width:100%;height:calc(100% - 10rpx);margin:5rpx 0;border:2rpx solid #edf2ee;border-radius:16rpx;background:#fff;display:flex;align-items:center;padding:0 12rpx;gap:8rpx;transition:background .17s,box-shadow .17s,border-color .17s}
-.cat-row.is-editing{background:#f7fbf8;border-color:#c7e6d5}
-.cat-info{flex:1;min-width:0;display:flex;align-items:center;overflow:hidden}
-.cat-name{font-size:28rpx;color:#26382e;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.inline-cat-input{width:100%;min-width:0;box-sizing:border-box;background:#fff;border:2rpx solid #169464;border-radius:11rpx;padding:0 12rpx;height:65rpx;font-size:26rpx;color:#233b2c}
-.cat-row button{box-sizing:border-box;margin:0;flex-shrink:0;border-radius:10rpx;height:57rpx;line-height:57rpx;padding:0 11rpx;font-size:21rpx;min-width:0}
-.edit-btn{background:#eaf6ef;color:#147b56}.delete-btn{background:#fff0ee;color:#b55b56}
-.cat-row .save-inline-btn{background:#128459;color:#fff}.cat-row .cancel-inline-btn{background:#edf1ef;color:#53665a}
-.handle{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:38rpx;color:#899a90;font-size:32rpx;height:64rpx}
-.sort-row.is-dragging{z-index:99}
-.is-dragging .cat-row{background:#eef9f3;border-color:#8fd2b1;box-shadow:0 12rpx 29rpx rgba(18,132,89,.17);transform:scale(.987)}
-.empty{padding:25rpx;color:#929c96;text-align:center}
-
-.sort-row.is-dragging{transition:none;z-index:50}
-.handle{touch-action:none;user-select:none}
+/* Merchant categories — visual refresh only. All original WXML/TS events retained. */
+page { background: #f3f6f4; }
+.category-page { box-sizing: border-box; min-height: 100vh; padding: 34rpx 28rpx 120rpx; }
+.page-title { font-size: 42rpx; line-height: 1.3; font-weight: 750; letter-spacing: -.5rpx; color: #152b22; margin-bottom: 10rpx; }
+.page-subtitle { font-size: 25rpx; line-height: 1.6; color: #778a80; margin-bottom: 30rpx; }
+.panel { box-sizing: border-box; background: #fff; padding: 30rpx 26rpx; margin-bottom: 22rpx; border-radius: 24rpx; box-shadow: 0 8rpx 28rpx rgba(16,57,37,.035); }
+.panel-title { color: #1b3126; font-size: 30rpx; font-weight: 700; margin-bottom: 22rpx; line-height: 1.3; }
+.hint { color: #83938b; font-size: 23rpx; line-height: 1.6; margin: -4rpx 0 18rpx; }
+.add-row { display: flex; align-items: stretch; gap: 14rpx; }
+.name-input { flex: 1; min-width: 0; height: 88rpx; box-sizing: border-box; border-radius: 14rpx; background: #f5f7f6; border: 2rpx solid #e4ebe7; padding: 0 22rpx; font-size: 27rpx; color: #1c3427; }
+.category-page button::after { border: none; }
+.add-btn { flex-shrink: 0; margin: 0; height: 88rpx; min-width: 112rpx; line-height: 88rpx; box-sizing: border-box; padding: 0 23rpx; font-size: 27rpx; font-weight: 650; border-radius: 14rpx; background: #10865d; color: #fff; }
+.sort-area { width: 100%; position: relative; overflow: hidden; }
+.sort-row { box-sizing: border-box; position: absolute; left: 0; right: 0; width: 100%; transition: top .18s ease; }
+.cat-row { box-sizing: border-box; width: 100%; height: calc(100% - 14rpx); margin: 7rpx 0; display: flex; align-items: center; gap: 10rpx; padding: 0 14rpx 0 24rpx; border: 2rpx solid #edf1ee; border-radius: 18rpx; background: #fff; transition: background .17s, border-color .17s, box-shadow .17s; }
+.cat-row.is-editing { background: #f4faf6; border-color: #a9d9bd; }
+.cat-info { flex: 1; min-width: 0; display: flex; align-items: center; overflow: hidden; }
+.cat-name { font-size: 29rpx; font-weight: 650; color: #20382b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inline-cat-input { width: 100%; min-width: 0; height: 69rpx; box-sizing: border-box; background: #fff; padding: 0 13rpx; border-radius: 12rpx; border: 2rpx solid #178a60; font-size: 26rpx; color: #20382b; }
+.cat-row button { flex-shrink: 0; box-sizing: border-box; min-width: 0; margin: 0; height: 62rpx; line-height: 62rpx; padding: 0 14rpx; font-size: 23rpx; font-weight: 600; border-radius: 11rpx; }
+.edit-btn { color: #137d56; background: #e9f6ee; }
+.delete-btn { color: #be5a57; background: #fff0ef; }
+.cat-row .save-inline-btn { color: #fff; background: #10865d; }
+.cat-row .cancel-inline-btn { color: #55685c; background: #e8efeb; }
+.handle { box-sizing: border-box; flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 46rpx; height: 78rpx; font-size: 35rpx; color: #91a59a; touch-action: none; user-select: none; }
+.sort-row.is-dragging { transition: none; z-index: 50; }
+.is-dragging .cat-row { background: #f0faf4; border-color: #65bd91; box-shadow: 0 12rpx 32rpx rgba(16,134,93,.17); }
+.is-dragging .handle { color: #10865d; }
+.empty { color: #8a9a90; font-size: 25rpx; text-align: center; padding: 48rpx 12rpx; }

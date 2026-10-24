@@ -1,0 +1,19 @@
+# LOCAL DEVELOPMENT ONLY. Never expose port 5432 to the internet.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: stall_dev
+      POSTGRES_PASSWORD: stall_dev_only_change_me
+      POSTGRES_DB: stall_dev
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - stall_dev_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stall_dev -d stall_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+volumes:
+  stall_dev_pgdata:

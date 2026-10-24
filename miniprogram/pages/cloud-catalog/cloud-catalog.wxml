@@ -1,0 +1,88 @@
+<view class="cloud-page">
+  <navigator url="/pages/cloud-shop/cloud-shop" style="padding:22rpx;background:#e8f5ed;border-radius:16rpx;margin-bottom:20rpx;color:#16865d;">打开顾客端云端商品预览（暂不支持下单） ›</navigator>
+  <view class="cloud-card">
+    <view class="cloud-title">云端商品连接测试</view>
+    <view class="cloud-hint">仅测试远程读取，不会覆盖已有本地商品或订单。正式部署请配置微信 request 合法域名。</view>
+    <view class="cloud-label">API HTTPS 地址</view>
+    <input class="cloud-input" placeholder="https://api.example.com" value="{{apiBase}}" bindinput="onApiInput" />
+    <view class="cloud-label">店铺标识（slug）</view>
+    <input class="cloud-input" placeholder="my-store" value="{{storeSlug}}" bindinput="onSlugInput" />
+    <button type="primary" disabled="{{busy}}" bindtap="loadProducts">读取顾客可见商品</button>
+    <view class="cloud-hint">{{status}}</view>
+    <view wx:for="{{products}}" wx:key="id" class="cloud-item"><text>{{item.name}}</text><text>¥{{item.priceText}} {{item.soldOut ? '售罄' : ''}}</text></view>
+  </view>
+  <view class="cloud-card" wx:if="{{devTokenEnabled && storeSlug === 'stall-demo'}}">
+    <view class="cloud-title">仅开发者工具：本地测试店主登录</view>
+    <view class="cloud-hint">使用后端命令生成的15分钟临时会话。不要填写真实微信密钥，不要截图或分享 Token。</view>
+    <input class="cloud-input" password="true" placeholder="粘贴本地测试 Token" value="{{devTokenDraft}}" bindinput="onDevTokenInput" />
+    <button bindtap="loginLocalDev">使用本地测试会话验证商家身份</button>
+  </view>
+  <view class="cloud-card">
+    <view class="cloud-title">商家身份与分类校验</view>
+    <view class="cloud-hint">使用微信登录验证当前账号是否拥有该店铺权限；只有已授权店主或经理可读取商家商品与分类。</view>
+    <button disabled="{{busy}}" bindtap="testMerchant">微信登录并读取商家数据</button>
+    <view class="cloud-hint">{{merchantMessage}}</view>
+    <view wx:for="{{categories}}" wx:key="id" class="cloud-item">分类：{{item.name}}</view>
+  </view>
+  <view class="cloud-hint">本页面供云端商品及分类联调；正式商家商品编辑页、下单和图片上传仍待迁移。</view>
+
+<view class="cloud-card" wx:if="{{merchantReady}}">
+  <view class="cloud-title">云端分类管理</view>
+  <input class="cloud-input" maxlength="100" placeholder="分类名称" value="{{categoryDraft}}" bindinput="inputCategory" />
+  <button type="primary" disabled="{{busy}}" bindtap="saveCategory">{{editingCategoryId ? '保存分类修改' : '新增分类'}}</button>
+  <button wx:if="{{editingCategoryId}}" disabled="{{busy}}" bindtap="clearCategoryEdit">取消编辑</button>
+  <view wx:for="{{categories}}" wx:key="id" class="cloud-item">
+    <text>{{item.name}}</text><view><button size="mini" disabled="{{busy}}" data-id="{{item.id}}" bindtap="editCategory">编辑</button><button size="mini" disabled="{{busy}}" data-id="{{item.id}}" bindtap="deleteCategory">删除</button></view>
+  </view>
+</view>
+<view class="cloud-card" wx:if="{{merchantReady}}">
+  <view class="cloud-title">云端商品管理</view>
+  <input class="cloud-input" maxlength="200" placeholder="商品名称" value="{{productName}}" bindinput="inputProductName" />
+  <input class="cloud-input" type="digit" placeholder="商品价格（例如 12.50）" value="{{productPrice}}" bindinput="inputProductPrice" />
+  <picker range="{{categories}}" range-key="name" bindchange="chooseProductCategory"><view class="cloud-input">分类：{{productCategoryId || '未选择（可不设置）'}}（点击选择）</view></picker>
+  <view class="cloud-item"><text>上架商品</text><switch checked="{{productActive}}" bindchange="toggleProductActive" /></view>
+  <view class="cloud-item"><text>售罄</text><switch checked="{{productSoldOut}}" bindchange="toggleProductSoldOut" /></view>
+  <view class="cloud-hint">商品图片（JPG / PNG / WebP，最多 5MB）</view>
+  <image wx:if="{{productImagePreview}}" class="cloud-preview" src="{{productImagePreview}}" mode="aspectFit" />
+  <view class="cloud-hint">{{imageMessage}}</view>
+  <button disabled="{{busy}}" bindtap="chooseCloudImage">选择并上传图片</button>
+  <button wx:if="{{productImageKey}}" disabled="{{busy}}" bindtap="removeCloudImage">移除当前图片</button>
+  <button type="primary" disabled="{{busy}}" bindtap="saveProduct">{{productId ? '保存商品修改' : '新增云端商品'}}</button>
+  <button wx:if="{{productId}}" disabled="{{busy}}" bindtap="clearProductEdit">取消编辑</button>
+  <view wx:for="{{merchantProducts}}" wx:key="id" class="cloud-item">
+    <view><view>{{item.name}}</view><image wx:if="{{item.imageUrl}}" class="cloud-thumb" src="{{item.imageUrl}}" mode="aspectFill" /><view>¥{{item.priceText}}　{{item.active ? '上架' : '停用'}}</view></view>
+    <view><button size="mini" disabled="{{busy}}" data-id="{{item.id}}" bindtap="editProduct">编辑</button><button size="mini" disabled="{{busy}}" data-id="{{item.id}}" bindtap="disableProduct">停用</button></view>
+  </view>
+</view>
+<view class="cloud-card" wx:if="{{merchantReady}}">
+  <view class="cloud-title">云端订单管理（联调）</view>
+  <view class="cloud-hint">订单来自后端，不影响本地演示订单。未支付订单不能确认送达；配送凭证及支付接入后才开放完整送达流程。</view>
+  <button disabled="{{orderBusy || busy}}" bindtap="refreshCloudOrders">刷新云端订单</button>
+  <view class="cloud-hint">{{orderMessage}}　待接单：{{pendingCloudOrders}}</view>
+  <view wx:for="{{cloudOrders}}" wx:key="id" class="cloud-item" style="display:block;">
+    <view style="font-weight:600;word-break:break-all;">{{item.id}}</view>
+    <view>{{item.createdAt}}　¥{{item.totalText}}</view>
+    <view>{{item.statusText}} · 支付：{{item.paymentStatus}}</view>
+    <button size="mini" disabled="{{orderBusy}}" data-id="{{item.id}}" bindtap="showCloudOrder">商品明细</button>
+    <button wx:if="{{item.nextAction}}" size="mini" type="primary" disabled="{{orderBusy}}" data-id="{{item.id}}" data-next="{{item.nextAction}}" bindtap="changeCloudOrderStatus">{{item.nextLabel}}</button>
+    <button wx:if="{{item.fulfillmentStatus === 'new' || item.fulfillmentStatus === 'accepted' || item.fulfillmentStatus === 'preparing'}}" size="mini" disabled="{{orderBusy}}" data-id="{{item.id}}" data-next="cancelled" bindtap="changeCloudOrderIssue">取消订单</button>
+    <button wx:if="{{item.fulfillmentStatus === 'delivering'}}" size="mini" disabled="{{orderBusy}}" data-id="{{item.id}}" data-next="abnormal" bindtap="changeCloudOrderIssue">配送异常</button>
+  </view>
+  <view wx:if="{{selectedOrderId}}" class="cloud-hint" style="white-space:pre-wrap;">订单 {{selectedOrderId}} 商品明细：
+{{orderDetailText}}</view>
+</view>
+<view class="cloud-card" wx:if="{{merchantReady}}">
+  <view class="cloud-title">云端账单与营业统计（联调）</view>
+  <view class="cloud-hint">订单金额不等于收入。实收仅以服务器已确认支付状态计入；尚未接入支付时通常为 ¥0.00。</view>
+  <view>起始日期 <picker mode="date" value="{{billFrom}}" bindchange="onBillFrom"><view class="cloud-item">{{billFrom || '选择日期'}}</view></picker></view>
+  <view>结束日期 <picker mode="date" value="{{billTo}}" bindchange="onBillTo"><view class="cloud-item">{{billTo || '选择日期'}}</view></picker></view>
+  <button bindtap="refreshBilling" disabled="{{billBusy}}">查询账单</button>
+  <view class="cloud-hint">{{billMessage}}</view>
+  <view wx:if="{{billSummary}}">
+    <view class="cloud-item">订单：{{billSummary.count}} 笔 · 取消：{{billSummary.cancel}} · 已送达：{{billSummary.delivered}}</view>
+    <view class="cloud-item">订单总额：¥{{billSummary.order}}</view>
+    <view class="cloud-item">已标记支付：¥{{billSummary.paid}} · 未支付：¥{{billSummary.unpaid}}</view>
+    <button bindtap="exportBilling" disabled="{{billBusy}}">导出当前日期范围 CSV</button>
+  </view>
+</view>
+</view>

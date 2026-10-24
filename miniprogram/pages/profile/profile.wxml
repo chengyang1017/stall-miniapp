@@ -13,9 +13,9 @@
     <view class="profile-link" bindtap="openOrders">
       <view class="profile-glyph">☷</view><view class="profile-link-content"><view class="profile-title">我的订单</view><view class="profile-desc">查看订单和配送进度</view></view><view class="profile-chevron">›</view>
     </view>
-    <button class="profile-link profile-contact" open-type="contact">
-      <view class="profile-glyph">✉</view><view class="profile-link-content"><view class="profile-title">联系商家</view><view class="profile-desc">客服咨询（需配置微信客服）</view></view><view class="profile-chevron">›</view>
-    </button>
+    <navigator class="profile-link profile-contact" url="/pages/support-chat/support-chat">
+      <view class="profile-glyph">✉</view><view class="profile-link-content"><view class="profile-title">联系商家</view><view class="profile-desc">向商家发送消息</view></view><view class="profile-chevron">›</view>
+    </navigator>
   </view>
   <view class="profile-section">
     <navigator class="profile-link" url="/pages/customer-settings/customer-settings">

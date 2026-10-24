@@ -1,0 +1,16 @@
+<view class="page">
+  <view class="heading">数据备份与恢复</view>
+  <view class="card">
+    <view class="subheading">当前本机数据</view>
+    <view>{{summary}}</view>
+    <view class="hint">备份商品、分类、订单记录和部分商家设置。账单由订单记录计算，无需单独导出账单缓存。</view>
+    <button type="primary" disabled="{{busy}}" bindtap="exportBackup">导出 JSON 备份</button>
+  </view>
+  <view class="card">
+    <view class="subheading">从备份恢复</view>
+    <button disabled="{{busy}}" bindtap="importBackup">选择微信中的 JSON 文件</button>
+    <view wx:if="{{preview}}" class="preview">{{preview}}</view>
+    <button wx:if="{{selected}}" type="warn" disabled="{{busy}}" bindtap="restore">确认覆盖恢复</button>
+  </view>
+  <view class="card hint">注意：商品图片和自定义占位图目前保存在本机文件系统，JSON 只能保存路径，无法跨设备恢复图片。导出的订单数据包含顾客个人信息，请妥善保管。</view>
+</view>

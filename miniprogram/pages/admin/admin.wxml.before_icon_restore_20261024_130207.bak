@@ -1,0 +1,55 @@
+<view class="merchant-page">
+  <view class="merchant-hero">
+    <view class="merchant-eyebrow">MERCHANT CENTER</view>
+    <view class="merchant-hero-row">
+      <view>
+        <view class="merchant-title">商家工作台</view>
+        <view class="merchant-subtitle">日常经营，一处管理</view>
+      </view>
+      <navigator class="merchant-account" url="/pages/merchant-login/merchant-login">账号与权限 <text>›</text></navigator>
+    </view>
+  </view>
+
+  <view class="merchant-content">
+    <navigator class="merchant-pending" url="/pages/admin-orders/admin-orders">
+      <view class="merchant-pending-mark">!</view>
+      <view class="merchant-pending-info">
+        <view class="merchant-pending-title">待处理订单</view>
+        <view class="merchant-pending-sub">查看新订单并及时接单</view>
+      </view>
+      <view wx:if="{{pendingNewOrderCount > 0}}" class="merchant-count">{{pendingNewOrderCount}}</view>
+      <view wx:else class="merchant-count merchant-count-empty">0</view>
+      <text class="merchant-arrow">›</text>
+    </navigator>
+
+    <view class="merchant-section-title">常用操作</view>
+    <view class="merchant-shortcuts">
+      <navigator url="/pages/admin-products/admin-products" class="merchant-shortcut"><view class="merchant-shortcut-icon">品</view><text>商品管理</text></navigator>
+      <navigator url="/pages/admin-orders/admin-orders" class="merchant-shortcut"><view class="merchant-shortcut-icon">单</view><text>订单管理</text></navigator>
+      <navigator url="/pages/store-hours/store-hours" class="merchant-shortcut"><view class="merchant-shortcut-icon">营</view><text>营业管理</text></navigator>
+      <navigator url="/pages/admin-billing/admin-billing" class="merchant-shortcut"><view class="merchant-shortcut-icon">账</view><text>营业账单</text></navigator>
+    </view>
+
+    <view class="merchant-section-title">商品与店铺</view>
+    <view class="merchant-group">
+      <navigator class="merchant-item" url="/pages/admin-categories/admin-categories"><view class="merchant-item-symbol">类</view><view class="merchant-item-text"><view class="merchant-item-name">分类管理</view><view class="merchant-item-desc">整理商品分类与顺序</view></view><text class="merchant-arrow">›</text></navigator>
+      <navigator class="merchant-item" url="/pages/admin-placeholders/admin-placeholders"><view class="merchant-item-symbol">图</view><view class="merchant-item-text"><view class="merchant-item-name">图片显示设置</view><view class="merchant-item-desc">商品缺图时的展示样式</view></view><text class="merchant-arrow">›</text></navigator>
+      <navigator class="merchant-item" url="/pages/delivery/delivery"><view class="merchant-item-symbol">送</view><view class="merchant-item-text"><view class="merchant-item-name">配送设置</view><view class="merchant-item-desc">配送区域、范围及时间</view></view><text class="merchant-arrow">›</text></navigator>
+      <navigator class="merchant-item merchant-last" url="/pages/admin-note-tags/admin-note-tags"><view class="merchant-item-symbol">签</view><view class="merchant-item-text"><view class="merchant-item-name">备注标签</view><view class="merchant-item-desc">管理下单快捷备注</view></view><text class="merchant-arrow">›</text></navigator>
+    </view>
+
+    <view class="merchant-section-title">经营设置</view>
+    <view class="merchant-minimum">
+      <view class="merchant-setting-heading">起送金额</view>
+      <view class="merchant-setting-desc">商品合计达到设定金额才能下单；设为 0 则不限制。</view>
+      <view class="merchant-minimum-row"><text class="merchant-yen">¥</text><input class="merchant-minimum-input" type="digit" value="{{minimumOrderInput}}" bindinput="onMinimumOrderInput" placeholder="0.00" /><button class="merchant-save" size="mini" bindtap="saveMinimumOrder">保存</button></view>
+    </view>
+
+    <view class="merchant-section-title">服务与数据</view>
+    <view class="merchant-group">
+      <navigator class="merchant-item" url="/pages/support-inbox/support-inbox"><view class="merchant-item-symbol">客</view><view class="merchant-item-text"><view class="merchant-item-name">客服消息</view><view class="merchant-item-desc">查看与回复顾客咨询</view></view><text class="merchant-arrow">›</text></navigator>
+      <navigator class="merchant-item merchant-last" url="/pages/admin-backup/admin-backup"><view class="merchant-item-symbol">备</view><view class="merchant-item-text"><view class="merchant-item-name">数据备份与恢复</view><view class="merchant-item-desc">导出与导入商家数据</view></view><text class="merchant-arrow">›</text></navigator>
+    </view>
+    <view class="merchant-footnote">部分功能仍在逐步接入云端；操作结果以实际保存状态为准。</view>
+  </view>
+</view>

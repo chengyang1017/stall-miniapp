@@ -1,0 +1,19 @@
+<view class="merchant-login-page">
+  <view class="merchant-login-card">
+    <view class="merchant-login-title">商家登录</view>
+    <view class="merchant-login-desc">登录后由服务器核实你是否拥有此店铺的管理权限。顾客不能通过这个入口获得商家权限。</view>
+    <view class="merchant-login-label">后端地址</view>
+    <input class="merchant-login-input" value="{{apiBase}}" placeholder="https://api.example.com" bindinput="onBaseInput" />
+    <view class="merchant-login-label">店铺标识</view>
+    <input class="merchant-login-input" value="{{storeSlug}}" placeholder="例如 stall-demo" bindinput="onSlugInput" />
+    <button type="primary" loading="{{busy}}" disabled="{{busy}}" bindtap="loginWechat">微信登录并验证商家身份</button>
+    <view class="merchant-login-result">{{status}}</view>
+    <button wx:if="{{authenticated}}" bindtap="logout">退出本机商家登录</button>
+  </view>
+  <view wx:if="{{showLocalDev}}" class="merchant-login-card">
+    <view class="merchant-login-title">本地开发测试</view>
+    <view class="merchant-login-desc">仅开发者工具连接本机 stall-demo 时显示，不属于正式微信登录。</view>
+    <input class="merchant-login-input" password="true" value="{{devToken}}" bindinput="onTokenInput" placeholder="本地临时测试 Token" />
+    <button loading="{{busy}}" disabled="{{busy}}" bindtap="loginDev">使用本地测试会话验证</button>
+  </view>
+</view>

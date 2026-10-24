@@ -4,9 +4,14 @@
                              ],
     "pages":  [
                   "pages/index/index",
+                  "pages/cloud-shop/cloud-shop",
+                  "pages/cloud-catalog/cloud-catalog",
+                  "pages/admin-backup/admin-backup",
                   "pages/admin/admin",
+                  "pages/merchant-login/merchant-login",
                   "pages/cart/cart",
                   "pages/checkout/checkout",
+                  "pages/admin-billing/admin-billing",
                   "pages/delivery/delivery",
                   "pages/addresses/addresses",
                   "pages/orders/orders",
@@ -21,7 +26,9 @@
                   "pages/order-detail/order-detail",
                   "pages/profile/profile",
                   "pages/customer-settings/customer-settings",
-                  "pages/admin-note-tags/admin-note-tags"
+                  "pages/admin-note-tags/admin-note-tags",
+                  "pages/support-chat/support-chat",
+                  "pages/support-inbox/support-inbox"
               ],
     "window":  {
                    "navigationBarTitleText":  "小摊商店",

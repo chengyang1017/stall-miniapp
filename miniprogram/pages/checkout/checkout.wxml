@@ -36,5 +36,6 @@
     <view class="line total"><text>商品合计</text><text>¥{{totalText}}</text></view>
     <view class="hint">配送费和具体日期尚未接入。订单只在本设备保存，不会扣款。</view>
   </view>
+  <view wx:if="{{minimumOrderText !== '0.00'}}" style="margin:20rpx;color:#666;">起送 ¥{{minimumOrderText}} <text wx:if="{{!minimumReached}}">· 还差 ¥{{minimumRemainingText}}</text><text wx:else> · 已达起送金额</text></view>
   <button type="primary" disabled="{{totalCount === 0}}" bindtap="confirmOrder">创建待支付订单（本地演示）</button>
 </view>

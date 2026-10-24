@@ -93,6 +93,7 @@
       <view class="cart-footer-count">共 {{totalCount}} 件商品</view>
       <view class="total">¥{{totalText}}</view>
     </view>
+    <view wx:if="{{minimumOrderText !== '0.00'}}" style="font-size:24rpx;color:#666;margin-bottom:12rpx;">起送 ¥{{minimumOrderText}} <text wx:if="{{!minimumReached}}">· 还差 ¥{{minimumRemainingText}}</text><text wx:else> · 已达起送金额</text></view>
     <button type="primary" disabled="{{totalCount === 0}}" bindtap="checkout">去结算</button>
   </view>
 </view>

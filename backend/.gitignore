@@ -1,0 +1,7 @@
+.env
+node_modules/
+
+# Database dumps / manifests
+backups/
+*.dump
+*.dump.manifest.json

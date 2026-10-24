@@ -1,0 +1,7 @@
+.page{min-height:100vh;background:#f5f7f6;padding:30rpx;box-sizing:border-box}
+.heading{font-size:38rpx;font-weight:700;margin:22rpx 0 30rpx;color:#1f332b}
+.card{background:#fff;border-radius:20rpx;padding:28rpx;margin-bottom:24rpx;line-height:1.7}
+.subheading{font-size:30rpx;font-weight:600;margin-bottom:18rpx}
+.hint{font-size:24rpx;color:#6d7b73;line-height:1.6;margin:18rpx 0}
+.preview{white-space:pre-wrap;font-size:25rpx;margin:18rpx 0;color:#334}
+button{margin-top:24rpx}

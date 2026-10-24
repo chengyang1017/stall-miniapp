@@ -1,4 +1,5 @@
 import { loadStore } from '../../utils/store'
+import { getMinimumOrder, minimumOrderShortfall } from '../../utils/minimumOrder'
 import { clearDirectPurchase } from '../../utils/directPurchase'
 
 import {
@@ -14,7 +15,10 @@ Page({
     customPlaceholderUrl: '',
     items: [] as CartDisplayItem[],
     totalText: '0.00',
-    totalCount: 0
+    totalCount: 0,
+    minimumOrderText: '0.00',
+    minimumRemainingText: '0.00',
+    minimumReached: true
   },
 
   onShow() {
@@ -35,7 +39,10 @@ Page({
     this.setData({
       items: displayItems,
       totalText: cart.totalText,
-      totalCount: cart.totalCount
+      totalCount: cart.totalCount,
+      minimumOrderText: getMinimumOrder().toFixed(2),
+      minimumRemainingText: minimumOrderShortfall(cart.totalText).toFixed(2),
+      minimumReached: minimumOrderShortfall(cart.totalText) === 0
     })
   },
 
@@ -69,6 +76,12 @@ Page({
   },
   checkout() {
     clearDirectPurchase()
+    const current = getCartDetails()
+    const missing = minimumOrderShortfall(current.totalText)
+    if (current.totalCount && missing > 0) {
+      wx.showToast({ title: `还差¥${missing.toFixed(2)}达到起送金额`, icon: 'none' })
+      return
+    }
     if (this.data.totalCount === 0) {
       wx.showToast({
         title: '购物车为空',

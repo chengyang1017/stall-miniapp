@@ -1,5 +1,10 @@
 
 <view class="page">
+<view wx:if="{{cloudMode}}" style="padding:14rpx 26rpx;color:#537e68;font-size:23rpx;">
+  <text wx:if="{{cloudBusy}}">正在加载商品…</text>
+  <text wx:if="{{cloudStatus}}">{{cloudStatus}}</text>
+  <button wx:if="{{cloudStatus}}" size="mini" bindtap="loadCloudHome">重试</button>
+</view>
 <view class="store-hours-banner" style="padding:18rpx 26rpx;color:#16865d;background:#e8f6ef;font-size:26rpx;">{{businessInfo.label}}<text wx:if="{{businessInfo.notice}}"> · {{businessInfo.notice}}</text></view>
 
 <view class="hero">

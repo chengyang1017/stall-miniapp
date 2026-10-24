@@ -1,4 +1,6 @@
 <view class="product-form-page">
+  <view wx:if="{{cloudError}}" style="padding:22rpx;color:#b33">{{cloudError}}</view>
+  <view wx:if="{{cloudBusy}}" style="padding:22rpx">æ­£åœ¨å¤„ç†â€¦</view>
 <view class="card">
     <view class="subheading">{{editId ? '编辑商品' : '新增商品'}}</view>
     <view class="field">商品名称<input placeholder="例如：炒饭" value="{{productName}}" bindinput="inputName" /></view>

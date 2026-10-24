@@ -1,0 +1,32 @@
+<view class="shop">
+  <view class="panel">
+    <view class="heading">云端商品预览</view>
+    <view class="hint">仅查看服务器商品、价格和购物车预览，不会创建订单或扣款。</view>
+    <view class="hint">{{status}}</view>
+    <view class="hint" wx:if="{{lastUpdated}}">最近同步：{{lastUpdated}}</view>
+    <button disabled="{{busy}}" bindtap="refresh">刷新云端商品</button>
+  </view>
+  <view wx:for="{{products}}" wx:key="id" class="product">
+    <image wx:if="{{item.imageUrl}}" class="thumb" src="{{item.imageUrl}}" mode="aspectFill" data-id="{{item.id}}" bindtap="showDetail" />
+    <view class="product-body">
+      <view class="name" data-id="{{item.id}}" bindtap="showDetail">{{item.name}}</view>
+      <view class="price">¥{{item.priceText}} <text wx:if="{{item.soldOut}}">（售罄）</text></view>
+      <view class="actions">
+        <button size="mini" disabled="{{stale || busy || item.soldOut || item.count === 0}}" data-id="{{item.id}}" data-step="-1" bindtap="changeQuantity">－</button>
+        <text>{{item.count}}</text>
+        <button size="mini" disabled="{{stale || busy || item.soldOut || item.count >= 99}}" data-id="{{item.id}}" data-step="1" bindtap="changeQuantity">＋</button>
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{selected}}" class="panel">
+    <view class="heading">商品详情</view>
+    <image wx:if="{{selected.imageUrl}}" class="detail-image" src="{{selected.imageUrl}}" mode="aspectFit" />
+    <view>{{selected.name}}</view><view class="price">¥{{selected.priceText}}</view>
+    <button bindtap="closeDetail">关闭详情</button>
+  </view>
+  <view class="panel">
+    <view>已选 {{totalCount}} 件 · 商品合计 ¥{{totalText}}</view>
+    <view class="hint">金额为当前读取结果，不是服务端订单报价。</view>
+    <button type="primary" disabled="{{totalCount === 0 || busy || stale}}" bindtap="previewOrder">核对价格（不可下单）</button>
+  </view>
+</view>

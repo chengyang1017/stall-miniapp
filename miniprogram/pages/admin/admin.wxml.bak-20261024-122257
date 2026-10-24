@@ -1,0 +1,40 @@
+<view class="page admin-dashboard">
+  <navigator class="admin-dash-link" url="/pages/merchant-login/merchant-login"><view class="admin-dash-icon">🔐</view><view class="admin-dash-info"><view class="admin-dash-name">商家登录</view><view class="admin-dash-desc">微信身份认证 · 核实店铺管理权限</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/cloud-catalog/cloud-catalog"><view class="admin-dash-icon">☁</view><view class="admin-dash-info"><view class="admin-dash-name">云端商品连接</view><view class="admin-dash-desc">连接后端并验证商品同步</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <!-- ADMIN_NEW_ORDER_NOTICE_V2 -->
+  <navigator url="/pages/admin-orders/admin-orders" style="display:block;margin:22rpx 24rpx;padding:26rpx 28rpx;background:#fff;border-radius:22rpx;border:2rpx solid #e6eee9;box-sizing:border-box;">
+    <view style="display:flex;justify-content:space-between;align-items:center;">
+      <view style="flex:1;">
+        <view style="font-size:31rpx;font-weight:600;color:#1f332b;">待接单提醒</view>
+        <view style="margin-top:8rpx;font-size:24rpx;color:#74837c;">进入订单管理处理新订单</view>
+      </view>
+      <view wx:if="{{pendingNewOrderCount > 0}}" style="min-width:45rpx;height:45rpx;padding:0 9rpx;line-height:45rpx;text-align:center;color:#fff;background:#e5524a;border-radius:999rpx;font-size:25rpx;font-weight:600;box-sizing:border-box;">{{pendingNewOrderCount}}</view>
+      <view wx:else style="font-size:24rpx;color:#16865d;">0</view>
+    </view>
+  </navigator>
+  <view style="margin:20rpx 24rpx;padding:26rpx;background:#fff;border-radius:20rpx;">
+    <view style="font-size:30rpx;font-weight:600;">起送金额设置</view>
+    <view style="font-size:24rpx;color:#777;margin:12rpx 0;">商品合计达到该金额才能下单；设为 0 表示不限起送价。</view>
+    <view style="display:flex;align-items:center;gap:16rpx;">
+      <text>¥</text>
+      <input type="digit" value="{{minimumOrderInput}}" bindinput="onMinimumOrderInput" placeholder="0.00" style="flex:1;border:1rpx solid #ddd;border-radius:12rpx;padding:16rpx;" />
+      <button size="mini" type="primary" bindtap="saveMinimumOrder">保存</button>
+    </view>
+  </view>
+  <navigator class="admin-dash-link" url="/pages/support-inbox/support-inbox"><view class="admin-dash-icon">✉</view><view class="admin-dash-info"><view class="admin-dash-name">客服消息</view><view class="admin-dash-desc">查看顾客咨询并回复（本地演示）</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <view class="admin-dash-header">
+  <navigator class="admin-dash-link" url="/pages/admin-backup/admin-backup"><view class="admin-dash-icon">💾</view><view class="admin-dash-info"><view class="admin-dash-name">数据备份与恢复</view><view class="admin-dash-desc">导出与导入商家数据</view></view><text class="admin-dash-chevron">›</text></navigator>
+    <view class="admin-dash-kicker">STORE MANAGEMENT</view>
+    <view class="admin-dash-title">商家管理中心</view>
+    <view class="admin-dash-caption">选择要管理的功能</view>
+  </view>
+    <navigator class="admin-dash-link" url="/pages/store-hours/store-hours"><view class="admin-dash-icon">⏰</view><view class="admin-dash-info"><view class="admin-dash-name">营业管理</view><view class="admin-dash-desc">营业时间 / 暂停接单 / 店铺公告</view></view><text class="admin-dash-chevron">›</text></navigator>
+<navigator class="admin-dash-link" url="/pages/admin-products/admin-products"><view class="admin-dash-icon">🛍</view><view class="admin-dash-info"><view class="admin-dash-name">商品管理</view><view class="admin-dash-desc">新增、编辑商品 · 已保存商品</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-categories/admin-categories"><view class="admin-dash-icon">🗂</view><view class="admin-dash-info"><view class="admin-dash-name">分类管理</view><view class="admin-dash-desc">添加和删除商品分类</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-placeholders/admin-placeholders"><view class="admin-dash-icon">🖼</view><view class="admin-dash-info"><view class="admin-dash-name">缺图样式</view><view class="admin-dash-desc">五种内置风格 · 上传自定义图片</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-orders/admin-orders"><view class="admin-dash-icon">📦</view><view class="admin-dash-info"><view class="admin-dash-name">订单管理</view><view class="admin-dash-desc">接单、备货和配送</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-billing/admin-billing"><view class="admin-dash-icon">🧾</view><view class="admin-dash-info"><view class="admin-dash-name">账单与营业统计</view><view class="admin-dash-desc">按日期核对订单 · 导出 CSV</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/delivery/delivery"><view class="admin-dash-icon">🚚</view><view class="admin-dash-info"><view class="admin-dash-name">配送设置</view><view class="admin-dash-desc">配送地区、地图范围和时间段</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-note-tags/admin-note-tags"><view class="admin-dash-icon">✎</view><view class="admin-dash-info"><view class="admin-dash-name">备注标签</view><view class="admin-dash-desc">管理顾客快捷备注</view></view><text class="admin-dash-chevron">></text></navigator>
+  <view class="admin-dash-note">当前为本地演示版本。正式上线前需要接入后端和商家权限。</view>
+</view>

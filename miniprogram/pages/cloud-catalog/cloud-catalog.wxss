@@ -1,0 +1,5 @@
+.cloud-page{padding:24rpx;background:#f5f7f6;min-height:100vh;box-sizing:border-box}.cloud-card{background:#fff;border-radius:20rpx;padding:28rpx;margin-bottom:20rpx}.cloud-title{font-size:32rpx;font-weight:600;color:#203329;margin-bottom:16rpx}.cloud-label{font-size:26rpx;color:#293d31;margin:18rpx 0 10rpx}.cloud-input{border:1px solid #dbe6df;border-radius:12rpx;padding:18rpx;font-size:27rpx}.cloud-hint{font-size:24rpx;line-height:1.7;color:#718078;margin:18rpx 0}.cloud-item{display:flex;justify-content:space-between;gap:15rpx;border-top:1px solid #eef0ee;padding:20rpx 0;font-size:26rpx}
+
+.cloud-item button{display:inline-block;margin:4rpx}.cloud-card button{margin-top:12rpx}.cloud-card input{margin:12rpx 0}
+
+.cloud-preview{width:220rpx;height:220rpx;display:block;margin:16rpx 0;background:#f5f7f6;border-radius:12rpx}.cloud-thumb{width:92rpx;height:92rpx;border-radius:10rpx;margin-top:8rpx}

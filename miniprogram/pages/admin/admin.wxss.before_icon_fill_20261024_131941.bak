@@ -1,0 +1,26 @@
+.merchant-page{min-height:100vh;background:#f4f6f5;box-sizing:border-box;padding-bottom:80rpx;color:#1f332c}
+.merchant-hero{background:#13835e;color:#fff;padding:48rpx 36rpx 86rpx}
+.merchant-eyebrow{font-size:20rpx;letter-spacing:3rpx;color:rgba(255,255,255,.7);font-weight:600}
+.merchant-hero-row{display:flex;align-items:flex-end;justify-content:space-between;margin-top:18rpx;gap:12rpx}
+.merchant-title{font-size:48rpx;line-height:1.2;font-weight:700;letter-spacing:1rpx}
+.merchant-subtitle{font-size:24rpx;color:rgba(255,255,255,.8);margin-top:12rpx}
+.merchant-account{font-size:22rpx;color:#fff;border:1rpx solid rgba(255,255,255,.4);border-radius:40rpx;padding:15rpx 19rpx;white-space:nowrap}
+.merchant-account text{font-size:30rpx;margin-left:7rpx}
+.merchant-content{padding:0 26rpx;margin-top:-54rpx}
+.merchant-pending{display:flex;align-items:center;min-height:130rpx;padding:24rpx;border-radius:24rpx;box-sizing:border-box;background:#fff;box-shadow:0 10rpx 32rpx rgba(34,72,55,.09)}
+.merchant-pending-mark{width:56rpx;height:56rpx;border-radius:50%;background:#fff0e8;color:#c65c2c;text-align:center;line-height:56rpx;font-size:32rpx;font-weight:700;margin-right:20rpx}
+.merchant-pending-info{flex:1;min-width:0}.merchant-pending-title{font-size:31rpx;font-weight:700}.merchant-pending-sub{font-size:23rpx;color:#7b8b83;margin-top:8rpx}
+.merchant-count{background:#e75a4d;color:#fff;border-radius:999rpx;min-width:43rpx;height:43rpx;padding:0 8rpx;box-sizing:border-box;text-align:center;line-height:43rpx;font-weight:700;font-size:23rpx}
+.merchant-count-empty{background:#e9f4ed;color:#18805b}.merchant-arrow{color:#b1bbb6;font-size:38rpx;margin-left:14rpx}
+.merchant-section-title{font-size:29rpx;font-weight:700;color:#253a30;margin:43rpx 6rpx 20rpx}
+.merchant-shortcuts{display:flex;justify-content:space-between;background:#fff;border-radius:24rpx;padding:29rpx 8rpx 25rpx;box-shadow:0 4rpx 19rpx rgba(39,64,47,.03)}
+.merchant-shortcut{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;color:#384d41;font-size:23rpx}
+.merchant-shortcut-icon{width:78rpx;height:78rpx;line-height:78rpx;text-align:center;background:#eaf5ef;border-radius:22rpx;color:#14825e;font-size:35rpx;font-weight:700;margin-bottom:17rpx}
+.merchant-group{background:#fff;border-radius:24rpx;padding:0 24rpx;overflow:hidden;box-shadow:0 4rpx 19rpx rgba(39,64,47,.03)}
+.merchant-item{min-height:118rpx;display:flex;align-items:center;border-bottom:1rpx solid #edf1ee;box-sizing:border-box;padding:16rpx 0}
+.merchant-last{border-bottom:none}.merchant-item-symbol{width:67rpx;height:67rpx;border-radius:19rpx;background:#f0f5f1;color:#21805f;font-size:28rpx;line-height:67rpx;text-align:center;font-weight:700;margin-right:19rpx;flex-shrink:0}
+.merchant-item-text{flex:1;min-width:0}.merchant-item-name{font-size:29rpx;color:#25352d;font-weight:600}.merchant-item-desc{font-size:22rpx;color:#93a098;margin-top:7rpx}
+.merchant-minimum{border-radius:24rpx;background:#fff;padding:27rpx 26rpx}.merchant-setting-heading{font-size:30rpx;font-weight:700}.merchant-setting-desc{font-size:23rpx;color:#839289;line-height:1.6;margin-top:9rpx}
+.merchant-minimum-row{display:flex;align-items:center;margin-top:22rpx;gap:12rpx}.merchant-yen{font-size:32rpx;font-weight:600}.merchant-minimum-input{border:1rpx solid #dce5df;border-radius:13rpx;background:#fafcfb;min-width:0;flex:1;height:76rpx;padding:0 18rpx;box-sizing:border-box;font-size:30rpx}
+.merchant-save{background:#15875e!important;color:#fff!important;border-radius:12rpx!important;margin:0!important;height:76rpx!important;line-height:76rpx!important;font-size:25rpx!important;padding:0 28rpx!important}
+.merchant-footnote{font-size:21rpx;line-height:1.7;color:#a1aaa4;text-align:center;padding:30rpx 22rpx}

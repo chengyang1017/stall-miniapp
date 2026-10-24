@@ -1,4 +1,5 @@
 import { businessState } from '../../utils/storeHours' // STALL_HOURS_V1
+import { getMinimumOrder, minimumOrderShortfall } from '../../utils/minimumOrder'
 import { isPointDeliverable } from '../../utils/delivery'
 import { getPurchaseDetails, clearDirectPurchase, hasDirectPurchase } from '../../utils/directPurchase'
 import { getSelectedAddress, SavedAddress } from '../../utils/addresses'
@@ -30,6 +31,9 @@ Page({
     items: [] as CartDisplayItem[],
     totalText: '0.00',
     totalCount: 0,
+    minimumOrderText: '0.00',
+    minimumRemainingText: '0.00',
+    minimumReached: true,
     selectedAddress: null as SavedAddress | null,
     hasAddress: false,
     slots: [] as Array<{ id: string; label: string; start: string; end: string }>,
@@ -57,6 +61,9 @@ Page({
       items: cart.items,
       totalText: cart.totalText,
       totalCount: cart.totalCount,
+      minimumOrderText: getMinimumOrder().toFixed(2),
+      minimumRemainingText: minimumOrderShortfall(cart.totalText).toFixed(2),
+      minimumReached: minimumOrderShortfall(cart.totalText) === 0,
       selectedAddress: selected,
       hasAddress: !!selected,
       slots,
@@ -90,6 +97,8 @@ Page({
     }
     const cart = getPurchaseDetails()
     if (!cart.totalCount) return wx.showToast({ title: '购物车为空', icon: 'none' })
+    const missing = minimumOrderShortfall(cart.totalText)
+    if (missing > 0) return wx.showToast({ title: `还差¥${missing.toFixed(2)}达到起送金额`, icon: 'none' })
     const selected = getSelectedAddress()
     if (!selected) return wx.showToast({ title: '请先选择收货地址', icon: 'none' })
     if (!selected.receiverName.trim() || !/^1[3-9]\d{9}$/.test(selected.phone.trim()) || !selected.detail.trim()) {
@@ -107,6 +116,12 @@ Page({
       success: result => {
         if (!result.confirm) return
         const fresh = getPurchaseDetails()
+        const missing = minimumOrderShortfall(fresh.totalText)
+        if (missing > 0) {
+          wx.showToast({ title: `还差¥${missing.toFixed(2)}达到起送金额`, icon: 'none' })
+          this.onShow()
+          return
+        }
         const address = getSelectedAddress()
         const validSlot = availableSlots().find(s => s.id === this.data.selectedSlotId)
         if (!fresh.totalCount || !address || !address.receiverName.trim() || !/^1[3-9]\d{9}$/.test(address.phone.trim()) || !address.detail.trim() ||

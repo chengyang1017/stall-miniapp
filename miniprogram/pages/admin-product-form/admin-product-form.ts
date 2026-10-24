@@ -1,32 +1,123 @@
 import { loadStore, saveStore, newId, Category, Product } from '../../utils/store'
+import { merchantCloudConfig, merchantCloudProducts, merchantCloudCategories, saveMerchantCloudProduct, archiveMerchantCloudProduct } from '../../utils/cloudMerchantProducts'
+import { uploadMerchantImage } from '../../utils/cloudMerchantImage'
+
+function formatCloudLocalTime(value: string): string {
+  const d = new Date(value)
+  if (!Number.isFinite(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes())
+}
 
 Page({
   deleteFromForm() {
-    const id = String(this.data.editId || '');
-    if (!id) return;
-    wx.showModal({
-      title: '\u5220\u9664\u5546\u54c1',
-      content: '\u786e\u5b9a\u5220\u9664\u8fd9\u4ef6\u5546\u54c1\uff1f',
-      success: (result: any) => {
-        if (!result.confirm) return;
-        const store = loadStore();
-        store.products = store.products.filter((item: any) => item.id !== id);
-        saveStore(store);
-        wx.navigateBack({ delta: 1 });
-      }
-    });
-  },
-  onLoad(options: any) {
-    if (!options || !options.id) return;
-    this.refresh();
-    this.editProduct({ currentTarget: { dataset: { id: decodeURIComponent(String(options.id)) } } } as any);
-  },
-  saveFromForm() {
-    const before = JSON.stringify(loadStore());
-    this.saveProduct();
-    if (JSON.stringify(loadStore()) !== before) {
-      wx.navigateBack({ delta: 1 });
+    const id = String(this.data.editId || '')
+    if (!id) return
+    const cfg = merchantCloudConfig()
+    if (this.data.cloudMode || cfg) {
+      if (!cfg || this.data.cloudBusy) return
+      wx.showModal({ title: '下架商品', content: '云端删除为下架，历史订单仍会保留。确定继续？', success: async r => {
+        if (!r.confirm) return
+        this.setData({ cloudBusy: true })
+        try { await archiveMerchantCloudProduct(cfg, id); wx.showToast({ title: '已下架', icon: 'success' }); wx.navigateBack({ delta: 1 }) }
+        catch (_) { wx.showToast({ title: '下架失败', icon: 'none' }) }
+        finally { this.setData({ cloudBusy: false }) }
+      } })
+      return
     }
+    wx.showModal({ title: '删除商品', content: '确定删除这件商品？', success: (result: any) => {
+      if (!result.confirm) return
+      const store = loadStore()
+      store.products = store.products.filter((item: any) => item.id !== id)
+      saveStore(store)
+      wx.navigateBack({ delta: 1 })
+    } })
+  },
+  async onLoad(options: any) {
+    const id = options && options.id ? decodeURIComponent(String(options.id)) : ''
+    const cfg = merchantCloudConfig()
+    if (!cfg) {
+      if (id) { this.refresh(); this.editProduct({ currentTarget: { dataset: { id } } } as any) }
+      return
+    }
+    this.setData({ cloudMode: true, cloudError: '', cloudBusy: true, editId: id })
+    try {
+      const [categories, products] = await Promise.all([merchantCloudCategories(cfg), merchantCloudProducts(cfg)])
+      const selected = categories.length ? categories[0] : null
+      if (id) {
+        const p = products.find(x => x.id === id)
+        if (!p) throw new Error('product_not_found')
+        const c = categories.find(x => x.id === p.categoryId)
+        this.cloudImageKey = p.imageObjectKey || null
+        this.cloudExistingImageUrl = p.imageUrl || ''
+        this.setData({ categories, editId: id, productName: p.name, priceText: (p.priceCents / 100).toFixed(2),
+          selectedCategory: p.categoryId || '', selectedCategoryName: c ? c.name : '',
+          isAvailable: p.active, isSoldOut: p.soldOut, productImageUrl: p.imageUrl || '',
+          productDescription: p.description || '', discountText: p.discountPriceCents == null ? '' : (p.discountPriceCents / 100).toFixed(2),
+          startText: p.discountStart ? formatCloudLocalTime(p.discountStart) : '',
+          endText: p.discountEnd ? formatCloudLocalTime(p.discountEnd) : '',
+          cloudBusy: false })
+      } else {
+        this.cloudImageKey = null
+        this.cloudExistingImageUrl = ''
+        this.setData({ categories, selectedCategory: selected ? selected.id : '',
+          selectedCategoryName: selected ? selected.name : '', cloudBusy: false })
+      }
+    } catch (_) { this.setData({ cloudError: '云端商品或分类读取失败，请检查商家登录及权限', cloudBusy: false }) }
+  },
+  async saveFromForm() {
+    const cfg = merchantCloudConfig()
+    if (this.data.cloudMode || cfg) {
+      if (!cfg || this.data.cloudBusy || this.data.cloudError) return
+      const name = String(this.data.productName || '').trim()
+      const priceText = String(this.data.priceText || '').trim()
+      const price = Number(priceText)
+      const priceCents = Math.round(price * 100)
+      if (!name || !this.data.selectedCategory || !priceText || !Number.isFinite(price) || price < 0 ||
+          !Number.isSafeInteger(priceCents) || priceCents > 100000000 || Math.abs(price * 100 - priceCents) > 0.00001) {
+        return wx.showToast({ title: '请检查名称、分类和价格（最多两位小数）', icon: 'none' })
+      }
+      // PHASE31_DISCOUNT_CLOUD: preserve existing form validation and serialize times explicitly.
+      const description = String(this.data.productDescription || '').trim()
+      const discountRaw = String(this.data.discountText || '').trim()
+      const discountNumber = Number(discountRaw)
+      const discountCents = Math.round(discountNumber * 100)
+      if (description.length > 1000 || (discountRaw && (!Number.isFinite(discountNumber) || discountNumber < 0 || !Number.isSafeInteger(discountCents) || discountCents >= priceCents || Math.abs(discountNumber * 100 - discountCents) > 0.00001))) {
+        return wx.showToast({ title: 'Please check discount price', icon: 'none' })
+      }
+      const parseLocalTime = (raw: string): string | null | false => {
+        const input = raw.trim()
+        if (!input) return null
+        if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(input)) return false
+        const timestamp = new Date(input.replace(' ', 'T'))
+        if (!Number.isFinite(timestamp.getTime()) || timestamp.getFullYear() !== Number(input.slice(0,4)) || timestamp.getMonth() + 1 !== Number(input.slice(5,7)) || timestamp.getDate() !== Number(input.slice(8,10)) || timestamp.getHours() !== Number(input.slice(11,13)) || timestamp.getMinutes() !== Number(input.slice(14,16))) return false
+        return timestamp.toISOString()
+      }
+      const discountStart = parseLocalTime(String(this.data.startText || ''))
+      const discountEnd = parseLocalTime(String(this.data.endText || ''))
+      if (discountStart === false || discountEnd === false || (discountStart && discountEnd && Date.parse(discountStart) >= Date.parse(discountEnd))) {
+        return wx.showToast({ title: 'Invalid discount time', icon: 'none' })
+      }
+      if (String(this.data.productImageUrl || '') !== this.cloudExistingImageUrl) {
+        return wx.showModal({ title: '图片尚未接通', content: '云端图片上传尚未连接此表单。请先保留原图，或等待图片上传功能完成。', showCancel: false })
+      }
+      this.setData({ cloudBusy: true })
+      try {
+        await saveMerchantCloudProduct(cfg, String(this.data.editId || ''), {
+          name, categoryId: this.data.selectedCategory, priceCents,
+          description, discountPriceCents: discountRaw ? discountCents : null, discountStart, discountEnd,
+          active: !!this.data.isAvailable, soldOut: !!this.data.isSoldOut,
+          imageObjectKey: this.cloudImageKey
+        })
+        wx.showToast({ title: '已保存至云端', icon: 'success' })
+        wx.navigateBack({ delta: 1 })
+      } catch (_) { wx.showToast({ title: '云端保存失败，请检查权限及网络', icon: 'none' }) }
+      finally { this.setData({ cloudBusy: false }) }
+      return
+    }
+    const before = JSON.stringify(loadStore())
+    this.saveProduct()
+    if (JSON.stringify(loadStore()) !== before) wx.navigateBack({ delta: 1 })
   },
   data: {
     showProductForm: false,
@@ -49,8 +140,10 @@ Page({
     selectedCategory: '',
     selectedCategoryName: '',
     editId: '',
-    isAvailable: true
+    isAvailable: true, cloudMode: false, cloudBusy: false, cloudError: ''
   },
+  cloudImageKey: null as string | null,
+  cloudExistingImageUrl: '',
   toggleAdminSection(e: any) {
     const section = String(e.currentTarget.dataset.section || '')
     if (['placeholder', 'categories', 'product', 'saved'].indexOf(section) < 0) return
@@ -62,7 +155,7 @@ Page({
   closeProductForm() {
     this.resetForm()
     this.setData({ showProductForm: false })
-  },  onShow() { this.refresh() },
+  },  onShow() { if (!merchantCloudConfig()) this.refresh() },
   uploadCustomPlaceholder() {
     wx.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], success: (result: any) => {
       const item = result.tempFiles && result.tempFiles[0]
@@ -146,15 +239,44 @@ Page({
   inputDescription(e: any) { this.setData({ productDescription: e.detail.value }) },
   switchSoldOut(e: any) { this.setData({ isSoldOut: e.detail.value }) },
   chooseProductImage() {
-    wx.chooseImage({ count: 1, sizeType: ['compressed'], sourceType: ['album', 'camera'], success: res => {
-      const tempFilePath = res.tempFilePaths[0]
-      if (!tempFilePath) return
-      wx.saveFile({ tempFilePath, success: saved => {
-        this.setData({ productImageUrl: saved.savedFilePath })
-      }, fail: () => wx.showToast({title: '图片保存失败', icon: 'none'}) })
+    const cfg = merchantCloudConfig()
+    if (!cfg) {
+      wx.chooseImage({ count: 1, sizeType: ['compressed'], sourceType: ['album', 'camera'], success: res => {
+        const tempFilePath = res.tempFilePaths[0]
+        if (!tempFilePath) return
+        wx.saveFile({ tempFilePath, success: saved => {
+          this.setData({ productImageUrl: saved.savedFilePath })
+        }, fail: () => wx.showToast({title: '图片保存失败', icon: 'none'}) })
+      } })
+      return
+    }
+    if (this.data.cloudBusy) return
+    wx.chooseImage({ count: 1, sizeType: ['compressed'], sourceType: ['album', 'camera'], success: async res => {
+      const path = res.tempFilePaths && res.tempFilePaths[0]
+      if (!path) return
+      this.setData({ cloudBusy: true })
+      try {
+        const key = await uploadMerchantImage(cfg, path)
+        this.cloudImageKey = key
+        this.cloudExistingImageUrl = path
+        this.setData({ productImageUrl: path })
+        wx.showToast({ title: '图片已上传', icon: 'success' })
+      } catch (err: any) {
+        const message = err && err.message ? String(err.message) : String(err)
+        console.error('Merchant image upload failed', message, err)
+        wx.showModal({ title: 'Image upload failed', content: message.slice(0, 300), showCancel: false })
+      } finally {
+        this.setData({ cloudBusy: false })
+      }
     } })
   },
-  removeProductImage() { this.setData({productImageUrl: ''}) },
+  removeProductImage() {
+    if (merchantCloudConfig()) {
+      this.cloudImageKey = null
+      this.cloudExistingImageUrl = ''
+    }
+    this.setData({productImageUrl: ''})
+  },
   inputPrice(e: any) { this.setData({ priceText: e.detail.value }) },
   inputDiscount(e: any) { this.setData({ discountText: e.detail.value }) },
   inputStart(e: any) { this.setData({ startText: e.detail.value }) },
