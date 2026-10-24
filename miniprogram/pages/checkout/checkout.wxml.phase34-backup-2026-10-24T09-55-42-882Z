@@ -1,0 +1,41 @@
+<view class="page">
+  <view class="heading">确认订单</view>
+  <view class="card">
+    <view class="subheading">收货地址</view>
+    <view class="address-card" bindtap="openAddresses">
+      <view wx:if="{{hasAddress}}" class="address-content">
+        <view class="address-name">{{selectedAddress.receiverName}}　{{selectedAddress.phone}}</view>
+        <view class="address-detail">{{selectedAddress.area}} {{selectedAddress.detail}}</view>
+        <view class="address-hint">点击更换地址或新增地址</view>
+      </view>
+      <view wx:else class="address-placeholder">＋ 请选择或新增收货地址</view>
+      <text class="address-arrow">›</text>
+    </view>
+  </view>
+  <view class="card">
+    <view class="subheading">配送信息</view>
+    <view class="field">
+      <text>配送时段 *</text>
+      <picker range="{{slots}}" range-key="label" value="{{slotIndex}}" bindchange="chooseSlot">
+        <view class="select">{{selectedSlotText || '请选择配送时段'}}</view>
+      </picker>
+    </view>
+    <view class="field">
+      <text>订单备注（选填）</text>
+      <!-- CHECKOUT_NOTE_SHORTCUTS_V1 -->
+      <view wx:if="{{noteShortcuts.length > 0}}" class="checkout-note-presets">
+        <view wx:for="{{noteShortcuts}}" wx:key="label" class="checkout-note-chip" data-label="{{item.label}}" bindtap="toggleNoteShortcut">+ {{item.label}}</view>
+      </view>      <textarea maxlength="200" placeholder="例如：请先电话联系" value="{{note}}" bindinput="updateNote" auto-height />
+    </view>
+  </view>
+  <view class="card">
+    <view class="subheading">商品清单</view>
+    <view wx:for="{{items}}" wx:key="productId" class="line">
+      <text>{{item.name}} × {{item.quantity}}</text><text>¥{{item.subtotalText}}</text>
+    </view>
+    <view class="line total"><text>商品合计</text><text>¥{{totalText}}</text></view>
+    <view class="hint">配送费和具体日期尚未接入。订单只在本设备保存，不会扣款。</view>
+  </view>
+  <view wx:if="{{minimumOrderText !== '0.00'}}" style="margin:20rpx;color:#666;">起送 ¥{{minimumOrderText}} <text wx:if="{{!minimumReached}}">· 还差 ¥{{minimumRemainingText}}</text><text wx:else> · 已达起送金额</text></view>
+  <button type="primary" disabled="{{totalCount === 0}}" bindtap="confirmOrder">创建待支付订单（本地演示）</button>
+</view>

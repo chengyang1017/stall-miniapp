@@ -1,6 +1,8 @@
 <view class="page">
-  <view class="heading">商家订单管理（本机演示）</view>
-  <view class="notice">订单只在当前设备共享。支付状态仍是未支付；以下仅测试配送状态，不可用于真实经营。</view>
+  <view class="heading">商家订单管理</view>
+  <view class="notice" wx:if="{{!cloudMode}}">本地演示订单，未接入实际支付。</view>
+  <view class="notice" wx:if="{{cloudMode}}">云端订单由服务器保存；未接入实际收款。</view>
+  <view class="notice" wx:if="{{cloudError}}">订单读取失败：{{cloudError}}</view>
       <!-- ADMIN_ORDER_DATE_FILTER_V1 -->
   <view class="admin-order-date-bar">
     <view class="admin-order-date-label">下单日期</view>
@@ -32,7 +34,7 @@
   <view wx:if="{{dateResults.length === 0}}" class="empty">当前分类暂无订单。</view>
   <view wx:for="{{dateResults}}" wx:key="id" class="card">
     <view class="row"><text class="id">{{item.id}}</text><text class="state">{{item.statusText}}</text></view>
-    <view class="muted">{{item.createdText}} · 待支付（演示）</view>
+    <view class="muted">{{item.createdText}} · {{item.paymentStatus === 'paid' ? '已付款' : '待支付'}}</view>
     <view wx:for="{{item.items}}" wx:for-item="product" wx:key="productId" class="row item"><text>{{product.name}} × {{product.quantity}}</text><text>¥{{product.subtotal}}</text></view>
         <!-- stallCancelExceptionV1 -->
     <view wx:if="{{item.issueReason}}" class="muted" style="color:#bf512d;">原因：{{item.issueReason}}</view>
@@ -45,10 +47,11 @@
     <view class="muted">收货人：{{item.receiverName}} · {{item.phone}}</view>
     <view class="muted">地址：{{item.area}} {{item.detail}}</view>
     <view class="muted">配送时段：{{item.slotText}}</view>
+    <!-- PHASE39_ORDER_LIST_PROOF_LINK: original photo page now available to authorized cloud merchants. -->
     <navigator class="proof-link" url="/pages/delivery-proof/delivery-proof?id={{item.id}}&amp;merchant=1">送达照片 / 完成配送 →</navigator>
     <view wx:if="{{item.note}}" class="muted">备注：{{item.note}}</view>
     <view wx:if="{{item.deliveredText}}" class="muted">送达时间：{{item.deliveredText}}</view>
-    <view wx:if="{{item.nextStatus && item.nextStatus !== 'accepted'}}" class="eta">
+    <view wx:if="{{(item.nextStatus && item.nextStatus !== 'accepted') || (cloudMode && item.fulfillmentStatus === 'delivering')}}" class="eta">
       <text>预计送达时间（文字，例如 18:30）</text>
       <input value="{{item.etaValue}}" maxlength="60" placeholder="请输入预计时间" data-id="{{item.id}}" bindinput="etaInput" />
       <button size="mini" data-id="{{item.id}}" bindtap="saveEta">保存预计时间</button>

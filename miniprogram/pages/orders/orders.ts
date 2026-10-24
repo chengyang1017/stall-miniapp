@@ -1,3 +1,4 @@
+import { customerOrdersConfig, customerOrdersRequest } from '../../utils/customerOrdersApi' // PHASE35_CUSTOMER_ORDERS
 import { loadWorkflowOrders, chinaTime } from '../../utils/orderWorkflow'
 
 type OrderTab = 'all' | 'unpaid' | 'active' | 'completed' | 'other'
@@ -38,7 +39,7 @@ function normalize(o: any): any {
     ...o,
     id: String(o.id || ''),
     statusText: statusLabel(o),
-    paymentText: paid ? '已付款' : '待付款（演示）',
+    paymentText: paid ? '已付款' : '待付款',
     createdText: created ? chinaTime(created) : '',
     showEta: status === 'delivering' && !!o.estimatedArrival,
     etaText: String(o.estimatedArrival || ''),
@@ -59,7 +60,20 @@ Page({
     this.setData({ createdId: options.created || '' })
   },
   onShow() { this.refresh() },
-  refresh() {
+  async refresh() {
+    const cloud = customerOrdersConfig()
+    if (cloud) {
+      try {
+        const data = await customerOrdersRequest(cloud)
+        const orders = ((data && Array.isArray(data.orders)) ? data.orders : []).map((o:any)=>normalize({
+          ...o, items:Array.isArray(o.items)?o.items:[], totalText:(Number(o.totalCents)/100).toFixed(2) // PHASE39_ORDER_LIST_PROOF_LINK
+        }))
+        this.setData({allOrders:orders,
+          tabs:TABS.map(t=>({...t,count:orders.filter((o:any)=>matched(o,t.key)).length})),
+          visibleOrders:orders.filter((o:any)=>matched(o,this.data.activeTab))})
+      } catch (_) { this.setData({allOrders:[],visibleOrders:[],tabs:TABS.map(t=>({...t,count:0}))}); wx.showToast({title:'订单加载失败，请检查登录',icon:'none'}) }
+      return
+    }
     const orders = (loadWorkflowOrders() as any[]).map(normalize)
     orders.sort((a, b) => (Date.parse(b.createdAt || '') || 0) - (Date.parse(a.createdAt || '') || 0))
     this.setData({

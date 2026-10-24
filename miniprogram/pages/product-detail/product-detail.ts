@@ -1,3 +1,4 @@
+import { cloudCartConfig, changeCloudCart, cloudCartDetails, syncCloudBadge } from '../../utils/cloudCart' // PHASE33_CLOUD_CART
 import { loadStore, effectivePrice, money } from '../../utils/store'
 import { addToCart } from '../../utils/cart'
 import { setDirectPurchase } from '../../utils/directPurchase'
@@ -59,7 +60,12 @@ Page({
   decrease() { if (this.data.quantity <= 1) return; this.setData({ quantity: this.data.quantity - 1 }); this.refresh() },
   increase() { if (this.data.quantity >= 99) return; this.setData({ quantity: this.data.quantity + 1 }); this.refresh() },
   addCart() {
-    if (this.data.cloudMode) return wx.showToast({ title: '云端购物车开发中', icon: 'none' })
+    if (this.data.cloudMode) {
+      const cfg = cloudCartConfig()
+      if (!cfg || this.data.cloudLoading || this.data.cloudError || !this.data.available) return wx.showToast({ title: '商品暂不可购买', icon: 'none' })
+      changeCloudCart(cfg.storeSlug, this.data.productId, this.data.quantity)
+      return wx.showToast({ title: '已加入购物车', icon: 'success' })
+    }
     const product = loadStore().products.find(p => p.id === this.data.productId)
     if (!product || (!product.available || product.soldOut)) return wx.showToast({ title: '商品已停售', icon: 'none' })
     for (let i = 0; i < this.data.quantity; i++) addToCart(product.id)

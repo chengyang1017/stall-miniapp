@@ -1,3 +1,4 @@
+import { cloudCartConfig, changeCloudCart, cloudCartDetails, syncCloudBadge } from '../../utils/cloudCart' // PHASE33_CLOUD_CART
 import { businessState } from '../../utils/storeHours' // STALL_HOURS_V1
 import { getRemoteProducts } from '../../utils/remoteApi'
 
@@ -114,6 +115,16 @@ Page({
     }
   },
 
+  async refreshCloudCartTotal() {
+    const cfg = cloudCartConfig()
+    if (!cfg) return
+    try {
+      const summary = await cloudCartDetails(cfg)
+      this.setData({ cartCount: summary.totalCount, cartTotal: summary.totalText })
+      syncCloudBadge(cfg.storeSlug)
+    } catch (_) { this.setData({ cartCount: 0, cartTotal: '0.00' }) }
+  },
+
   renderCloudProducts() {
     const rows = this.data.remoteRows || []
     // Category names and promotional prices require the dedicated catalog API.
@@ -123,6 +134,7 @@ Page({
         original: (r.priceCents / 100).toFixed(2), current: (r.priceCents / 100).toFixed(2),
         discounted: false, available: !r.soldOut
       }))
+    this.refreshCloudCartTotal()
     this.setData({ categories: [], selectedCategory: 'all', products, discountedProducts: [],
       placeholderStyle: wx.getStorageSync('stall_placeholder_style_v1') || 'premium',
       customPlaceholderUrl: wx.getStorageSync('stall_placeholder_custom_v1') || '' })
@@ -141,7 +153,15 @@ Page({
   },
 
   addCart(e: WechatMiniprogram.TouchEvent) {
-    if (this.data.cloudMode) return wx.showToast({ title: '云端结算开发中', icon: 'none' })
+    if (this.data.cloudMode) {
+      const cfg = cloudCartConfig()
+      const id = String(e.currentTarget.dataset.id || '')
+      const row = (this.data.remoteRows || []).find((p: any) => String(p.id) === id)
+      if (!cfg || !row || row.active === false || row.soldOut) return wx.showToast({ title: '商品已停售', icon: 'none' })
+      changeCloudCart(cfg.storeSlug, id, 1)
+      this.refreshCloudCartTotal()
+      return wx.showToast({ title: '已加入购物车', icon: 'success' })
+    }
     const id = String(e.currentTarget.dataset.id)
 
     const product = loadStore().products.find(
@@ -170,7 +190,7 @@ Page({
     if (id) wx.navigateTo({ url: '/pages/product-detail/product-detail?id=' + encodeURIComponent(id) })
   },
   goCart() {
-    if (this.data.cloudMode) return wx.showToast({ title: '云端购物车开发中', icon: 'none' })
+
     wx.switchTab({
 url: '/pages/cart/cart'
     })

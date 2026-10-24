@@ -1,0 +1,48 @@
+import { getRemoteProducts } from './remoteApi'
+
+export interface CloudCartRow { productId: string; quantity: number }
+const KEY = 'stall_cloud_cart_v1'
+export function cloudCartConfig(): { apiBase: string; storeSlug: string } | null {
+  const cfg = wx.getStorageSync('stall_cloud_catalog_config_v1') as any
+  if (!cfg || typeof cfg.apiBase !== 'string' || typeof cfg.storeSlug !== 'string' || !cfg.apiBase.trim() || !cfg.storeSlug.trim()) return null
+  return { apiBase: cfg.apiBase.trim(), storeSlug: cfg.storeSlug.trim() }
+}
+function storageKey(slug: string): string { return KEY + ':' + slug }
+export function readCloudCart(slug: string): CloudCartRow[] {
+  const rows = wx.getStorageSync(storageKey(slug))
+  if (!Array.isArray(rows)) return []
+  return rows.filter((r: any) => r && typeof r.productId === 'string' && Number.isInteger(r.quantity) && r.quantity > 0 && r.quantity <= 99)
+}
+export function writeCloudCart(slug: string, rows: CloudCartRow[]): void {
+  wx.setStorageSync(storageKey(slug), rows)
+  syncCloudBadge(slug)
+}
+export function syncCloudBadge(slug: string): void {
+  const count = readCloudCart(slug).reduce((n, r) => n + r.quantity, 0)
+  if (count) wx.setTabBarBadge({ index: 1, text: count > 99 ? '99+' : String(count), fail: () => {} })
+  else wx.removeTabBarBadge({ index: 1, fail: () => {} })
+}
+export function changeCloudCart(slug: string, productId: string, delta: number): void {
+  if (!productId || !Number.isSafeInteger(delta)) return
+  const rows = readCloudCart(slug)
+  const row = rows.find(r => r.productId === productId)
+  if (!row && delta > 0) rows.push({ productId, quantity: Math.min(99, delta) })
+  else if (row) row.quantity = Math.max(0, Math.min(99, row.quantity + delta))
+  writeCloudCart(slug, rows.filter(r => r.quantity > 0))
+}
+export async function cloudCartDetails(cfg: { apiBase: string; storeSlug: string }): Promise<any> {
+  // The remote catalog is the price authority for the display, never local demo data.
+  const catalog = await getRemoteProducts(cfg.apiBase, cfg.storeSlug) as any[]
+  const cart = readCloudCart(cfg.storeSlug)
+  const items: any[] = []
+  for (const row of cart) {
+    const p = catalog.find(r => String(r.id) === row.productId)
+    if (!p || p.active === false || p.soldOut) continue
+    const cents = Number(p.effectivePriceCents !== undefined && p.effectivePriceCents !== null ? p.effectivePriceCents : (p.currentPriceCents !== undefined && p.currentPriceCents !== null ? p.currentPriceCents : p.priceCents))
+    if (!Number.isSafeInteger(cents) || cents < 0) throw new Error('invalid_remote_price')
+    items.push({ productId: row.productId, quantity: row.quantity, name: String(p.name || ''), imageUrl: String(p.imageUrl || ''), price: cents / 100, subtotal: cents * row.quantity / 100, priceText: (cents / 100).toFixed(2), subtotalText: (cents * row.quantity / 100).toFixed(2) })
+  }
+  // Keep unavailable items in storage until a later user decision; never silently delete purchases.
+  const totalCents = items.reduce((sum, row) => sum + Math.round(row.subtotal * 100), 0)
+  return { items, totalCount: items.reduce((sum, row) => sum + row.quantity, 0), totalText: (totalCents / 100).toFixed(2) }
+}

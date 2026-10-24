@@ -1,3 +1,4 @@
+import { cloudCartConfig, loadCloudCheckout, loadCloudDelivery, localDate, availableCloudSlots, createCloudOrder } from '../../utils/cloudCheckout' // PHASE34_CLOUD_CHECKOUT
 import { businessState } from '../../utils/storeHours' // STALL_HOURS_V1
 import { getMinimumOrder, minimumOrderShortfall } from '../../utils/minimumOrder'
 import { isPointDeliverable } from '../../utils/delivery'
@@ -28,6 +29,7 @@ Page({
     this.saveDraft()
   },
   data: {
+    cloudMode: false, cloudBusy: false, cloudError: '', deliveryDate: '', deliveryDateMin: '', deliveryDateMax: '', cloudRules: null as any, cloudAreas: [] as Array<{id:string;name:string}>,
     items: [] as CartDisplayItem[],
     totalText: '0.00',
     totalCount: 0,
@@ -50,6 +52,7 @@ Page({
     }
   },
   onShow() {
+    if (cloudCartConfig()) { this.refreshCloudCheckout(); return }
     // MERCHANT_NOTE_TAGS_V1
     const merchantTags = wx.getStorageSync('stall_note_tags_v1')
     this.setData({ noteShortcuts: Array.isArray(merchantTags) ? merchantTags.map((label: string) => ({ label })) : [] })
@@ -72,6 +75,55 @@ Page({
       selectedSlotText: slotIndex >= 0 ? `${slots[slotIndex].label} ${slots[slotIndex].start}–${slots[slotIndex].end}` : ''
     })
   },
+  async refreshCloudCheckout() {
+    const cfg=cloudCartConfig()
+    if (!cfg) return
+    const selected=getSelectedAddress() || null
+    const date=this.data.deliveryDate || localDate()
+    this.setData({cloudMode:true,cloudBusy:true,cloudError:'',items:[],totalText:'0.00',totalCount:0,
+      selectedAddress:selected,hasAddress:!!selected,deliveryDate:date,deliveryDateMin:localDate(),deliveryDateMax:localDate(7)})
+    try {
+      const {cart,rules}=await loadCloudCheckout()
+      const slots=availableCloudSlots(rules,date)
+      const slotIndex=slots.findIndex(s=>s.id===this.data.selectedSlotId)
+      this.setData({items:cart.items,totalText:cart.totalText,totalCount:cart.totalCount,cloudRules:rules,
+        cloudAreas:rules.areas, slots, slotIndex,selectedSlotId:slotIndex>=0?slots[slotIndex].id:'',
+        selectedSlotText:slotIndex>=0?slots[slotIndex].label+' '+slots[slotIndex].start+'–'+slots[slotIndex].end:'',
+        minimumOrderText:'0.00',minimumRemainingText:'0.00',minimumReached:true,cloudBusy:false,
+        cloudError:rules.accepting?'':'店铺当前暂停接单'})
+    } catch(e:any){this.setData({cloudBusy:false,cloudError:'配送或商品信息加载失败：'+String(e&&e.message||e)})}
+  },
+  chooseDeliveryDate(e:any) {
+    const date=String(e.detail.value||'')
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<localDate()||date>localDate(7))return
+    const rules=this.data.cloudRules
+    const slots=rules?availableCloudSlots(rules,date):[]
+    this.setData({deliveryDate:date,slots,slotIndex:-1,selectedSlotId:'',selectedSlotText:''})
+  },
+  async submitCloudOrder() {
+    if(this.data.cloudBusy)return
+    const address=getSelectedAddress()
+    const rules=this.data.cloudRules
+    if(!rules||!rules.accepting)return wx.showToast({title:'店铺暂不接单',icon:'none'})
+    if(!address)return wx.showToast({title:'请选择收货地址',icon:'none'})
+    const area=rules.areas.find((x:any)=>x.name===address.area&&x.enabled)
+    if(!area)return wx.showToast({title:'地址不在云端配送范围',icon:'none'})
+    const date=this.data.deliveryDate
+    if(date<localDate()||date>localDate(7))return wx.showToast({title:'请选择配送日期',icon:'none'})
+    const slots=availableCloudSlots(rules,date)
+    const slot=slots.find(s=>s.id===this.data.selectedSlotId)
+    if(!slot)return wx.showToast({title:'请选择有效配送时段',icon:'none'})
+    if(!address.receiverName.trim()||!address.phone.trim()||!address.detail.trim())return wx.showToast({title:'请补全收货地址',icon:'none'})
+    if(!this.data.totalCount)return wx.showToast({title:'购物车为空',icon:'none'})
+    this.setData({cloudBusy:true})
+    try {
+      const result=await createCloudOrder({address:{receiverName:address.receiverName,phone:address.phone,areaId:area.id,
+        detail:address.detail,latitude:address.latitude,longitude:address.longitude},slot:{id:slot.id,date},note:String(this.data.note||'')})
+      wx.showModal({title:'订单已创建（待支付）',content:'订单号：'+result.orderId+'\n服务端金额：¥'+(Number(result.totalCents)/100).toFixed(2)+'\n尚未扣款，请勿当作付款成功。',showCancel:false,
+        success:()=>wx.switchTab({url:'/pages/cart/cart'})})
+    }catch(e:any){wx.showModal({title:'云端下单失败',content:String(e&&e.message||e).slice(0,200),showCancel:false})}
+    finally{this.setData({cloudBusy:false})}
+  },
   onUnload() { this.saveDraft() },
   openAddresses() { wx.navigateTo({ url: '/pages/addresses/addresses' }) },
   chooseSlot(e: any) {
@@ -87,6 +139,7 @@ Page({
   updateNote(e: WechatMiniprogram.Input) { this.setData({ note: e.detail.value }) },
   saveDraft() { wx.setStorageSync(DRAFT_KEY, { note: this.data.note }) },
   confirmOrder() {
+    if (cloudCartConfig()) { this.submitCloudOrder(); return }
     // STALL_HOURS_V1: local demo guard. Server must recheck before payment.
     if (!businessState().open) { wx.showToast({title:'当前暂停接单或不在营业时间',icon:'none'}); return }
 

@@ -1,3 +1,4 @@
+import { cloudCartConfig, cloudCartDetails, changeCloudCart, writeCloudCart, syncCloudBadge } from '../../utils/cloudCart' // PHASE33_CLOUD_CART
 import { loadStore } from '../../utils/store'
 import { getMinimumOrder, minimumOrderShortfall } from '../../utils/minimumOrder'
 import { clearDirectPurchase } from '../../utils/directPurchase'
@@ -10,6 +11,8 @@ import {
 
 Page({
   data: {
+    cloudMode: false,
+    cloudError: '',
     // UNIFIED_PLACEHOLDER_THUMB_V1
     placeholderStyle: 'premium',
     customPlaceholderUrl: '',
@@ -27,7 +30,21 @@ Page({
     this.refresh()
   },
 
+  async refreshCloud() {
+    const cfg = cloudCartConfig()
+    if (!cfg) return
+    // Avoid displaying stale local items while remote catalog loads.
+    this.setData({ items: [], totalText: '0.00', totalCount: 0, cloudMode: true, cloudError: '' })
+    try {
+      const result = await cloudCartDetails(cfg)
+      this.setData({ items: result.items, totalText: result.totalText, totalCount: result.totalCount, cloudError: '' })
+      syncCloudBadge(cfg.storeSlug)
+    } catch (_) { this.setData({ items: [], totalText: '0.00', totalCount: 0, cloudError: '云端商品读取失败，请稍后再试' }) }
+  },
+
   refresh() {
+    if (cloudCartConfig()) { this.refreshCloud(); return }
+    this.setData({ cloudMode: false, cloudError: '' })
     const cart = getCartDetails()
     // CART_THUMB_AND_FOOTER_V1
     const productImages = loadStore().products
@@ -48,12 +65,16 @@ Page({
 
   increase(e: WechatMiniprogram.TouchEvent) {
     const id = String(e.currentTarget.dataset.id)
+    const cfg = cloudCartConfig()
+    if (cfg) { changeCloudCart(cfg.storeSlug, id, 1); this.refresh(); return }
     changeQuantity(id, 1)
     this.refresh()
   },
 
   decrease(e: WechatMiniprogram.TouchEvent) {
     const id = String(e.currentTarget.dataset.id)
+    const cfg = cloudCartConfig()
+    if (cfg) { changeCloudCart(cfg.storeSlug, id, -1); this.refresh(); return }
     changeQuantity(id, -1)
     this.refresh()
   },
@@ -67,7 +88,9 @@ Page({
       confirmColor: '#d84b47',
       success: (result) => {
         if (!result.confirm) return
-        wx.removeStorageSync('stall_cart_v1')
+        const cfg = cloudCartConfig()
+        if (cfg) writeCloudCart(cfg.storeSlug, [])
+        else wx.removeStorageSync('stall_cart_v1')
         this.refresh()
         try { wx.removeTabBarBadge({ index: 1 }) } catch (_) { /* tab bar not ready */ }
         wx.showToast({ title: '\u5df2\u6e05\u7a7a', icon: 'success' })
@@ -75,6 +98,11 @@ Page({
     })
   },
   checkout() {
+    if (cloudCartConfig()) {
+      if(this.data.cloudError || this.data.totalCount === 0)return wx.showToast({title:'请先加载购物车',icon:'none'})
+      return wx.navigateTo({url:'/pages/checkout/checkout'})
+    }
+    clearDirectPurchase()
     clearDirectPurchase()
     const current = getCartDetails()
     const missing = minimumOrderShortfall(current.totalText)

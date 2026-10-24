@@ -33,8 +33,9 @@ export async function checkoutRoute(req,res,url,pool){
   if(typeof key!=='string'||!keyRe.test(key)||!body||!validItems(body.items)||!validAddress(body.address)||!validSlot(body.slot)){
     reply(res,400,{error:'invalid_checkout'});return true
   }
+  if (typeof body.note !== 'string' || body.note.length > 200) { reply(res,400,{error:'invalid_note'});return true }
   const normalized={items:[...body.items].map(i=>({productId:i.productId.toLowerCase(),quantity:i.quantity})).sort((a,b)=>a.productId.localeCompare(b.productId)),
-    address:{receiverName:body.address.receiverName.trim(),phone:body.address.phone.trim(),areaId:body.address.areaId,latitude:body.address.latitude??null,longitude:body.address.longitude??null,detail:body.address.detail.trim()},slot:{id:body.slot.id,date:body.slot.date}}
+    address:{receiverName:body.address.receiverName.trim(),phone:body.address.phone.trim(),areaId:body.address.areaId,latitude:body.address.latitude??null,longitude:body.address.longitude??null,detail:body.address.detail.trim()},slot:{id:body.slot.id,date:body.slot.date},note:body.note.trim()}
   const fp=fingerprint(normalized)
   const client=await pool.connect()
   try{
@@ -64,7 +65,7 @@ export async function checkoutRoute(req,res,url,pool){
     if(!Number.isSafeInteger(total)||total<0||total>100000000){await client.query('ROLLBACK');reply(res,400,{error:'cart_total_too_large'});return true}
     // Delivery is checked against server-owned rules; payment is not yet implemented. Delivery fee remains zero.
     const inserted=await client.query(`INSERT INTO orders(store_id,customer_subject,subtotal_cents,total_cents,checkout_key,checkout_fingerprint,contact_snapshot,delivery_slot_snapshot)
-      VALUES($1,$2,$3,$3,$4,$5,$6::jsonb,$7::jsonb) RETURNING id`,[storeId,subject,total,key,fp,JSON.stringify(normalized.address),JSON.stringify(delivery.snapshot)])
+      VALUES($1,$2,$3,$3,$4,$5,$6::jsonb,$7::jsonb) RETURNING id`,[storeId,subject,total,key,fp,JSON.stringify({...normalized.address,note:normalized.note}),JSON.stringify(delivery.snapshot)])
     const orderId=inserted.rows[0].id
     for(const line of lines)await client.query('INSERT INTO order_items(order_id,product_id,product_name,unit_price_cents,quantity) VALUES($1,$2,$3,$4,$5)',[orderId,line.productId,line.name,line.priceCents,line.quantity])
     await client.query('COMMIT')

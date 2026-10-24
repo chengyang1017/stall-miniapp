@@ -16,6 +16,16 @@ async function bodyJson(req){
  try{return JSON.parse(raw)}catch{throw new Error('invalid_json')}
 }
 export async function merchantDeliveryRoute(req,res,url,pool){
+  // PHASE34_CLOUD_CHECKOUT: public read-only delivery choices. Server rechecks at order creation.
+  const pub=/^\/v1\/stores\/([a-z0-9][a-z0-9-]{1,62})\/delivery-rules$/.exec(url.pathname)
+  if(pub){
+    if(req.method!=='GET'){response(res,405,{error:'method_not_allowed'});return true}
+    const {rows}=await pool.query('SELECT r.configuration FROM store_delivery_rules r JOIN stores s ON s.id=r.store_id WHERE s.slug=$1 AND s.is_active=true',[pub[1]])
+    if(!rows.length||!validRules(rows[0].configuration)){response(res,200,{configured:false,rules:null});return true}
+    const x=rows[0].configuration
+    response(res,200,{configured:true,rules:{accepting:x.accepting,days:x.days,areas:x.areas.filter(a=>a.enabled).map(a=>({id:a.id,name:a.name,enabled:true})),slots:x.slots.filter(s=>s.enabled).map(s=>({id:s.id,label:s.label,start:s.start,end:s.end,enabled:true}))}});return true
+  }
+
  const m=/^\/v1\/merchant\/stores\/([a-z0-9][a-z0-9-]{1,62})\/delivery-rules$/.exec(url.pathname)
  if(!m)return false
  if(req.method!=='GET'&&req.method!=='PUT'){response(res,405,{error:'method_not_allowed'});return true}

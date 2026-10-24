@@ -1,5 +1,6 @@
 <view class="page">
   <view class="heading">确认订单</view>
+  <view wx:if="{{cloudMode && cloudError}}" class="hint" style="color:#b33;padding:16rpx;">{{cloudError}}</view>
   <view class="card">
     <view class="subheading">收货地址</view>
     <view class="address-card" bindtap="openAddresses">
@@ -15,6 +16,12 @@
   <view class="card">
     <view class="subheading">配送信息</view>
     <view class="field">
+      <view wx:if="{{cloudMode}}" style="margin-bottom:20rpx;">
+        <text>配送日期 *</text>
+        <picker mode="date" value="{{deliveryDate}}" start="{{deliveryDateMin}}" end="{{deliveryDateMax}}" bindchange="chooseDeliveryDate">
+          <view class="select">{{deliveryDate || '请选择日期'}}</view>
+        </picker>
+      </view>
       <text>配送时段 *</text>
       <picker range="{{slots}}" range-key="label" value="{{slotIndex}}" bindchange="chooseSlot">
         <view class="select">{{selectedSlotText || '请选择配送时段'}}</view>
@@ -34,8 +41,10 @@
       <text>{{item.name}} × {{item.quantity}}</text><text>¥{{item.subtotalText}}</text>
     </view>
     <view class="line total"><text>商品合计</text><text>¥{{totalText}}</text></view>
-    <view class="hint">配送费和具体日期尚未接入。订单只在本设备保存，不会扣款。</view>
+    <view class="hint" wx:if="{{cloudMode}}">最终金额以服务器核算为准，当前仅创建待支付订单，不会扣款。</view>
+    <view class="hint" wx:else>配送费和具体日期尚未接入。订单只在本设备保存，不会扣款。</view>
   </view>
   <view wx:if="{{minimumOrderText !== '0.00'}}" style="margin:20rpx;color:#666;">起送 ¥{{minimumOrderText}} <text wx:if="{{!minimumReached}}">· 还差 ¥{{minimumRemainingText}}</text><text wx:else> · 已达起送金额</text></view>
-  <button type="primary" disabled="{{totalCount === 0}}" bindtap="confirmOrder">创建待支付订单（本地演示）</button>
+  <button wx:if="{{cloudMode}}" type="primary" loading="{{cloudBusy}}" disabled="{{totalCount === 0 || cloudBusy || cloudError !== ''}}" bindtap="confirmOrder">创建待支付订单</button>
+  <button wx:else type="primary" disabled="{{totalCount === 0}}" bindtap="confirmOrder">创建待支付订单（本地演示）</button>
 </view>
