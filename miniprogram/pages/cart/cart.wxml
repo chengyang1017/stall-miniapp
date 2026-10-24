@@ -1,6 +1,4 @@
 <view class="page">
-  <view class="heading">我的购物车</view>
-
   <!-- CART_CLEAR_V1 -->
   <view class="cart-clear-bar" wx:if="{{totalCount > 0}}">
     <text class="cart-clear-hint">已选购 {{totalCount}} 件商品</text>
@@ -15,10 +13,64 @@
     <!-- CART_THUMB_AND_FOOTER_V1 -->
     <view class="cart-image-slot">
       <image wx:if="{{item.imageUrl}}" class="cart-product-image" src="{{item.imageUrl}}" mode="aspectFill" />
-      <view wx:else class="cart-product-image-empty">
-        <text class="cart-image-empty-symbol">▣</text>
-        <text class="cart-image-empty-label">暂无图片</text>
-      </view>
+      <!-- UNIFIED_PLACEHOLDER_THUMB_V1 -->
+<view wx:else class="stall-placeholder-choice-shell">
+  <image wx:if="{{(placeholderStyle === 'custom') ? (customPlaceholderUrl) : false}}" class="stall-custom-placeholder-preview" src="{{customPlaceholderUrl}}" mode="aspectFill" />
+  <view wx:if="{{placeholderStyle === 'classic'}}" class="stall-empty-thumb-v4 stall-classic-picker"><view class="stall-classic-icon"><view class="stall-classic-sun"></view><view class="stall-classic-hill"></view></view><text class="stall-classic-text">暂无图片</text></view>
+  <view wx:if="{{placeholderStyle === 'mountain'}}" class="stall-empty-thumb-v4 stall-empty-art-v5">
+    <view class="stall-art-frame-v5">
+      <view class="stall-art-sun-v5"></view>
+      <view class="stall-art-hill-back-v5"></view>
+      <view class="stall-art-hill-front-v5"></view>
+    </view>
+    <text class="stall-art-label-v5">暂无图片</text>
+  </view>
+  <view wx:if="{{placeholderStyle === 'bag'}}" class="stall-empty-thumb-v4 stall-bag-placeholder-v6">
+    <view class="stall-bag-icon-v6">
+      <view class="stall-bag-handle-v6"></view>
+      <view class="stall-bag-body-v6"></view>
+    </view>
+    <text class="stall-bag-label-v6">暂无图片</text>
+  </view>
+  <view wx:if="{{placeholderStyle === 'playful'}}" class="stall-empty-thumb-v4 stall-art-placeholder-v7">
+    <view class="stall-art-glow-v7"></view>
+    <view class="stall-art-spark-v7 stall-art-spark-left-v7"></view>
+    <view class="stall-art-spark-v7 stall-art-spark-right-v7"></view>
+    <view class="stall-art-shadow-v7"></view>
+    <view class="stall-art-box-v7">
+      <view class="stall-art-box-side-v7"></view>
+      <view class="stall-art-box-front-v7"></view>
+      <view class="stall-art-box-top-v7"></view>
+      <view class="stall-art-ribbon-v7"></view>
+      <view class="stall-art-face-left-v7"></view>
+      <view class="stall-art-face-right-v7"></view>
+      <view class="stall-art-smile-v7"></view>
+    </view>
+    <text class="stall-art-caption-v7">暂无图片</text>
+  </view>
+  <view wx:if="{{placeholderStyle === 'premium'}}" class="stall-empty-thumb-v4 stall-premium-art-v8">
+    <view class="spa-v8-background"></view>
+    <view class="spa-v8-halo"></view>
+    <view class="spa-v8-ring"></view>
+    <view class="spa-v8-dot spa-v8-dot-a"></view>
+    <view class="spa-v8-dot spa-v8-dot-b"></view>
+    <view class="spa-v8-star spa-v8-star-a"></view>
+    <view class="spa-v8-star spa-v8-star-b"></view>
+    <view class="spa-v8-shadow"></view>
+    <view class="spa-v8-package">
+      <view class="spa-v8-box-side"></view>
+      <view class="spa-v8-box-front"></view>
+      <view class="spa-v8-box-lid"></view>
+      <view class="spa-v8-ribbon-front"></view>
+      <view class="spa-v8-ribbon-top"></view>
+      <view class="spa-v8-bow spa-v8-bow-left"></view>
+      <view class="spa-v8-bow spa-v8-bow-right"></view>
+      <view class="spa-v8-bow-center"></view>
+      <view class="spa-v8-sticker"><view class="spa-v8-sticker-heart"></view></view>
+    </view>
+    <view class="spa-v8-label"><text>暂无图片</text></view>
+  </view>
+</view>
     </view>
     <view class="cart-item-content">
     <view class="product-name">{{item.name}}</view>

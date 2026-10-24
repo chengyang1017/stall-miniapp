@@ -21,5 +21,6 @@
   <navigator class="admin-dash-link" url="/pages/admin-placeholders/admin-placeholders"><view class="admin-dash-icon">🖼</view><view class="admin-dash-info"><view class="admin-dash-name">缺图样式</view><view class="admin-dash-desc">五种内置风格 · 上传自定义图片</view></view><text class="admin-dash-chevron">›</text></navigator>
   <navigator class="admin-dash-link" url="/pages/admin-orders/admin-orders"><view class="admin-dash-icon">📦</view><view class="admin-dash-info"><view class="admin-dash-name">订单管理</view><view class="admin-dash-desc">接单、备货和配送</view></view><text class="admin-dash-chevron">›</text></navigator>
   <navigator class="admin-dash-link" url="/pages/delivery/delivery"><view class="admin-dash-icon">🚚</view><view class="admin-dash-info"><view class="admin-dash-name">配送设置</view><view class="admin-dash-desc">配送地区、地图范围和时间段</view></view><text class="admin-dash-chevron">›</text></navigator>
+  <navigator class="admin-dash-link" url="/pages/admin-note-tags/admin-note-tags"><view class="admin-dash-icon">✎</view><view class="admin-dash-info"><view class="admin-dash-name">备注标签</view><view class="admin-dash-desc">管理顾客快捷备注</view></view><text class="admin-dash-chevron">></text></navigator>
   <view class="admin-dash-note">当前为本地演示版本。正式上线前需要接入后端和商家权限。</view>
 </view>

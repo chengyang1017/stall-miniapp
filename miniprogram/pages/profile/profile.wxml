@@ -1,0 +1,26 @@
+<view class="profile-page">
+  <view class="profile-hero">
+    <view class="profile-avatar">我</view>
+    <view class="profile-identity">
+      <view class="profile-name">我的</view>
+      <view class="profile-subtitle">订单与配送信息管理</view>
+    </view>
+  </view>
+  <view class="profile-section">
+    <navigator class="profile-link" url="/pages/addresses/addresses">
+      <view class="profile-glyph">⌂</view><view class="profile-link-content"><view class="profile-title">收货地址</view><view class="profile-desc">管理常用配送地址</view></view><view class="profile-chevron">›</view>
+    </navigator>
+    <view class="profile-link" bindtap="openOrders">
+      <view class="profile-glyph">☷</view><view class="profile-link-content"><view class="profile-title">我的订单</view><view class="profile-desc">查看订单和配送进度</view></view><view class="profile-chevron">›</view>
+    </view>
+    <button class="profile-link profile-contact" open-type="contact">
+      <view class="profile-glyph">✉</view><view class="profile-link-content"><view class="profile-title">联系商家</view><view class="profile-desc">客服咨询（需配置微信客服）</view></view><view class="profile-chevron">›</view>
+    </button>
+  </view>
+  <view class="profile-section">
+    <navigator class="profile-link" url="/pages/customer-settings/customer-settings">
+      <view class="profile-glyph">⚙</view><view class="profile-link-content"><view class="profile-title">设置</view><view class="profile-desc">偏好与隐私说明</view></view><view class="profile-chevron">›</view>
+    </navigator>
+  </view>
+  <view class="profile-note">当前为本地演示版，不代表已开通微信用户登录。</view>
+</view>

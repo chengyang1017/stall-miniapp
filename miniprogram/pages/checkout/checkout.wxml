@@ -22,7 +22,10 @@
     </view>
     <view class="field">
       <text>订单备注（选填）</text>
-      <textarea maxlength="200" placeholder="例如：请先电话联系" value="{{note}}" bindinput="updateNote" auto-height />
+      <!-- CHECKOUT_NOTE_SHORTCUTS_V1 -->
+      <view wx:if="{{noteShortcuts.length > 0}}" class="checkout-note-presets">
+        <view wx:for="{{noteShortcuts}}" wx:key="label" class="checkout-note-chip" data-label="{{item.label}}" bindtap="toggleNoteShortcut">+ {{item.label}}</view>
+      </view>      <textarea maxlength="200" placeholder="例如：请先电话联系" value="{{note}}" bindinput="updateNote" auto-height />
     </view>
   </view>
   <view class="card">

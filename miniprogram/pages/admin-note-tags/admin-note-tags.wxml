@@ -1,0 +1,32 @@
+<view class="note-admin-page">
+  <view class="note-intro">
+    <view class="note-title">备注快捷标签</view>
+    <view class="note-desc">顾客结算时可一键添加这些备注。没有设置标签时，只显示自由输入框。</view>
+  </view>
+  <view class="note-panel">
+    <view class="note-section">新增标签</view>
+    <view class="note-add-row">
+      <input class="note-input" maxlength="20" placeholder="输入适合店铺的备注" value="{{draft}}" bindinput="typeDraft" />
+      <button class="note-add" size="mini" bindtap="add">添加</button>
+    </view>
+  </view>
+  <view class="note-panel">
+    <view class="note-section">已设置标签（{{tags.length}}）</view>
+    <view wx:if="{{tags.length === 0}}" class="note-empty">尚未设置快捷标签</view>
+    <view wx:for="{{tags}}" wx:key="*this" class="note-row">
+      <block wx:if="{{editingIndex === index}}">
+        <input class="note-input note-edit-input" maxlength="20" value="{{editingValue}}" bindinput="typeEdit" />
+        <text class="note-action" bindtap="saveEdit">保存</text>
+        <text class="note-action muted" bindtap="cancelEdit">取消</text>
+      </block>
+      <block wx:else>
+        <text class="note-row-name">{{item}}</text>
+        <text class="note-action" data-index="{{index}}" bindtap="edit">编辑</text>
+        <text class="note-action danger" data-index="{{index}}" bindtap="remove">删除</text>
+        <text class="note-action muted" wx:if="{{index > 0}}" data-index="{{index}}" data-step="-1" bindtap="move">↑</text>
+        <text class="note-action muted" wx:if="{{index < tags.length - 1}}" data-index="{{index}}" data-step="1" bindtap="move">↓</text>
+      </block>
+    </view>
+  </view>
+  <view class="note-hint">当前为本机演示。正式上线时需由服务端保存店铺配置。</view>
+</view>

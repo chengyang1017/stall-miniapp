@@ -18,7 +18,10 @@
                   "pages/admin-product-form/admin-product-form",
                   "pages/store-hours/store-hours",
                   "pages/delivery-proof/delivery-proof",
-                  "pages/order-detail/order-detail"
+                  "pages/order-detail/order-detail",
+                  "pages/profile/profile",
+                  "pages/customer-settings/customer-settings",
+                  "pages/admin-note-tags/admin-note-tags"
               ],
     "window":  {
                    "navigationBarTitleText":  "小摊商店",
@@ -47,9 +50,15 @@
                                 },
                                 {
                                     "pagePath":  "pages/orders/orders",
-                                    "text":  "我的订单",
+                                    "text":  "订單",
                                     "iconPath":  "assets/tabbar/orders.png",
                                     "selectedIconPath":  "assets/tabbar/orders_active.png"
+                                },
+                                {
+                                    "pagePath":  "pages/profile/profile",
+                                    "text":  "我的",
+                                    "iconPath":  "assets/tabbar/mine.png",
+                                    "selectedIconPath":  "assets/tabbar/mine_active.png"
                                 }
                             ]
                }

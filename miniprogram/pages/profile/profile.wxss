@@ -1,0 +1,18 @@
+page { background: #f5f6f7; }
+.profile-page { padding: 28rpx 30rpx 50rpx; box-sizing: border-box; }
+.profile-hero { display:flex; align-items:center; gap:24rpx; padding:30rpx 22rpx 34rpx; }
+.profile-avatar { width:110rpx; height:110rpx; border-radius:55rpx; background:#e1f3e9; color:#16865d; font-size:38rpx; font-weight:650; display:flex; align-items:center; justify-content:center; flex:none; }
+.profile-identity { flex:1; }
+.profile-name { font-size:37rpx; font-weight:650; color:#21352c; }
+.profile-subtitle { font-size:24rpx; color:#8b9b91; margin-top:9rpx; }
+.profile-section { background:white; border-radius:24rpx; margin-top:22rpx; overflow:hidden; padding:0 22rpx; }
+.profile-link { display:flex; align-items:center; gap:22rpx; height:128rpx; box-sizing:border-box; border-bottom:1rpx solid #eff2ef; background:transparent; padding:0 8rpx; margin:0; width:100%; text-align:left; color:#1d2e27; }
+.profile-link:last-child { border-bottom:0; }
+.profile-link::after { border:0; }
+.profile-contact { border-radius:0; line-height:normal; font-size:inherit; }
+.profile-glyph { width:72rpx; height:72rpx; background:#ecf7f0; color:#16865d; font-size:40rpx; font-weight:500; border-radius:17rpx; display:flex; align-items:center; justify-content:center; flex:none; }
+.profile-link-content { flex:1; min-width:0; }
+.profile-title { font-size:29rpx; color:#21352c; font-weight:600; }
+.profile-desc { font-size:22rpx; color:#95a19a; margin-top:7rpx; }
+.profile-chevron { font-size:42rpx; color:#a7b8ae; }
+.profile-note { padding:40rpx 12rpx; color:#a0aaa4; font-size:22rpx; line-height:1.6; text-align:center; }

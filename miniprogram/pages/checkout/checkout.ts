@@ -9,6 +9,23 @@ import { createDemoOrder } from '../../utils/orders'
 const DRAFT_KEY = 'stall_checkout_draft_v1'
 
 Page({
+  // CHECKOUT_NOTE_SHORTCUTS_V1
+  toggleNoteShortcut(e: any) {
+    const label = String(e.currentTarget.dataset.label || '')
+    if (!label) return
+    const current = String(this.data.note || '')
+    const parts = current.split(/[\n,\uFF0C\u3001;]/).map(s => s.trim()).filter(Boolean)
+    const at = parts.indexOf(label)
+    if (at >= 0) parts.splice(at, 1)
+    else parts.push(label)
+    const next = parts.join('\uFF0C')
+    if (next.length > 200) {
+      wx.showToast({ title: '\u5907\u6CE8\u4E0D\u80FD\u8D85\u8FC7200\u5B57', icon: 'none' })
+      return
+    }
+    this.setData({ note: next })
+    this.saveDraft()
+  },
   data: {
     items: [] as CartDisplayItem[],
     totalText: '0.00',
@@ -20,7 +37,8 @@ Page({
     selectedSlotId: '',
     selectedSlotText: '',
     note: ''
-  },
+  ,
+    noteShortcuts: [] as Array<{label: string}>,},
   onLoad() {
     const draft = wx.getStorageSync(DRAFT_KEY) as { note?: string } | undefined
     if (draft && typeof draft === 'object') {
@@ -28,6 +46,9 @@ Page({
     }
   },
   onShow() {
+    // MERCHANT_NOTE_TAGS_V1
+    const merchantTags = wx.getStorageSync('stall_note_tags_v1')
+    this.setData({ noteShortcuts: Array.isArray(merchantTags) ? merchantTags.map((label: string) => ({ label })) : [] })
     const cart = getPurchaseDetails()
     const selected = getSelectedAddress() || null
     const slots = availableSlots()

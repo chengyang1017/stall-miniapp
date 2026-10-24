@@ -1,0 +1,16 @@
+<view class="settings-page">
+  <view class="settings-section-title">通知偏好</view>
+  <view class="settings-card">
+    <view class="settings-row">
+      <view class="settings-main"><view class="settings-name">订单提醒偏好</view><view class="settings-desc">仅保存偏好，不会自动发送微信通知</view></view>
+      <switch checked="{{orderNoticeEnabled}}" color="#16865d" bindchange="toggleOrderNotice" />
+    </view>
+  </view>
+  <view class="settings-section-title">关于与隐私</view>
+  <view class="settings-card">
+    <view class="settings-text-title">数据存储</view>
+    <view class="settings-text">目前为本地演示版本，订单、地址和购物车数据主要保存在当前调试环境。请勿输入真实敏感资料。</view>
+    <view class="settings-text-title">订单通知</view>
+    <view class="settings-text">真正的订单通知需要服务端与微信订阅消息授权。</view>
+  </view>
+</view>

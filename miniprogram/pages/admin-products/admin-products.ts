@@ -7,6 +7,9 @@ Page({
     if (id) wx.navigateTo({ url: '/pages/admin-product-form/admin-product-form?id=' + encodeURIComponent(id) });
   },
   data: {
+    // UNIFIED_PLACEHOLDER_THUMB_V1
+    placeholderStyle: 'premium',
+    customPlaceholderUrl: '',
     showProductForm: false,
     adminSection: '',
     placeholderStyle: 'premium',
@@ -40,7 +43,9 @@ Page({
   closeProductForm() {
     this.resetForm()
     this.setData({ showProductForm: false })
-  },  onShow() { this.refresh() },
+  },  onShow() {
+    this.setData({ placeholderStyle: String(wx.getStorageSync('stall_placeholder_style_v1') || 'premium'), customPlaceholderUrl: String(wx.getStorageSync('stall_placeholder_custom_v1') || '') })
+ this.refresh() },
   uploadCustomPlaceholder() {
     wx.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], success: (result: any) => {
       const item = result.tempFiles && result.tempFiles[0]

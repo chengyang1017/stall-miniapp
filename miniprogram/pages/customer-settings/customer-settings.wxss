@@ -1,0 +1,11 @@
+page { background:#f5f6f7; }
+.settings-page { padding:32rpx 28rpx 60rpx; }
+.settings-section-title { margin:28rpx 6rpx 16rpx; font-size:27rpx; font-weight:600; color:#32493b; }
+.settings-card { background:#fff; border-radius:22rpx; padding:25rpx 27rpx; }
+.settings-row { display:flex; align-items:center; gap:20rpx; }
+.settings-main { flex:1; }
+.settings-name,.settings-text-title { font-size:28rpx; color:#21352b; font-weight:600; }
+.settings-desc { font-size:22rpx; line-height:1.5; color:#8a9890; margin-top:10rpx; }
+.settings-text-title { margin-top:16rpx; }
+.settings-text-title:first-child { margin-top:0; }
+.settings-text { font-size:24rpx; line-height:1.75; color:#78877e; margin-top:10rpx; margin-bottom:22rpx; }

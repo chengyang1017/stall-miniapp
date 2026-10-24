@@ -9,12 +9,17 @@ import {
 
 Page({
   data: {
+    // UNIFIED_PLACEHOLDER_THUMB_V1
+    placeholderStyle: 'premium',
+    customPlaceholderUrl: '',
     items: [] as CartDisplayItem[],
     totalText: '0.00',
     totalCount: 0
   },
 
   onShow() {
+    this.setData({ placeholderStyle: String(wx.getStorageSync('stall_placeholder_style_v1') || 'premium'), customPlaceholderUrl: String(wx.getStorageSync('stall_placeholder_custom_v1') || '') })
+
     this.refresh()
   },
 
