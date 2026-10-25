@@ -258,8 +258,6 @@
 </view>
 
 </view>
-<view wx:if="{{canOpenMerchant}}" class="admin-entry" bindtap="goAdmin">
-  商家管理演示
-</view>
+
 
 </view>
