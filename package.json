@@ -2,7 +2,14 @@
   "name": "miniprogram-ts-quickstart",
   "version": "1.0.0",
   "description": "",
-  "scripts": {},
+  "scripts": {
+    "build": "node scripts/build-miniapp.mjs combined",
+    "build:combined": "node scripts/build-miniapp.mjs combined",
+    "build:customer": "node scripts/build-miniapp.mjs customer",
+    "build:merchant": "node scripts/build-miniapp.mjs merchant",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "check:build-output": "node scripts/check-build-output.mjs"
+  },
   "keywords": [],
   "author": "",
   "license": "",

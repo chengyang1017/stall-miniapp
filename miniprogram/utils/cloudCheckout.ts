@@ -1,10 +1,10 @@
 // PHASE34_CLOUD_CHECKOUT
 import { cloudCartConfig, cloudCartDetails, readCloudCart, writeCloudCart,cloudCacheSuffix } from './cloudCart'
-import { supportIdentity } from './supportCloud'
-import { getMerchantSessionToken } from './merchantContext'
-import { CloudBusiness } from './businessCloud'
-import { SpecialDeliveryDate } from './delivery'
-import { PublicDeliveryArea } from './cloudDelivery'
+import { cloudIdentity as supportIdentity } from '../modules/shared/runtime/context'
+import { getSessionToken } from '../modules/shared/runtime/context'
+import { CloudBusiness } from '../modules/shared/domain/business'
+import { SpecialDeliveryDate } from '../modules/customer/demo/settings'
+import { PublicDeliveryArea } from '../modules/shared/domain/delivery'
 export { cloudCartConfig } from './cloudCart'
 
 export interface CloudDeliveryRules {
@@ -74,7 +74,7 @@ export function cloudDeliveryReason(rules:CloudDeliveryRules,date?:string,areaId
   return availableCloudSlots(rules,date,areaId).length?'':'该区域在所选日期没有有效配送时段'
 }
 export async function createCloudOrder(input:{address:{receiverName:string;phone:string;areaId:string;detail:string;latitude?:number;longitude?:number};slot:{id:string;date:string};note:string}):Promise<any> {
-  if(!getMerchantSessionToken())throw Error('login_required')
+  if(!getSessionToken())throw Error('login_required')
   const identity=supportIdentity()
   const cfg=cloudCartConfig();if(!cfg)throw new Error('cloud_not_configured')
   const items=readCloudCart(cfg.storeSlug).map(x=>({productId:x.productId,quantity:x.quantity}))

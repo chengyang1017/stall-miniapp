@@ -1,14 +1,14 @@
 import { PUBLIC_API_BASE } from '../../config/cloud'
-import { getMerchantContext,getMerchantSessionToken } from '../../utils/merchantContext'
-import { supportIdentity } from '../../utils/supportCloud'
+import { getCloudContext, getSessionToken } from '../../modules/shared/runtime/context'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 Page({
  serial:0,context:'',
  data:{cloudMode:false,busy:false,error:'',storeName:'',appId:'',imagePath:''},
- onShow(){this.context=supportIdentity();this.setData({cloudMode:!!getMerchantContext(),imagePath:'',error:'',busy:false});this.readCode(false)},
+ onShow(){this.context=supportIdentity();this.setData({cloudMode:!!getCloudContext(),imagePath:'',error:'',busy:false});this.readCode(false)},
  onHide(){this.serial++;this.setData({imagePath:'',busy:false})},onUnload(){this.serial++},
  generate(){this.readCode(true)},
  async readCode(create:boolean){
-  const cfg=getMerchantContext(),token=getMerchantSessionToken(),context=supportIdentity()
+  const cfg=getCloudContext(),token=getSessionToken(),context=supportIdentity()
   if(!cfg||this.data.busy)return
   if(create&&(!/^https:\/\//.test(PUBLIC_API_BASE)||PUBLIC_API_BASE.replace(/\/+$/,'')!==cfg.apiBase)){this.setData({error:'发布前请配置config/cloud.ts的PUBLIC_API_BASE，并确保与当前店铺API一致；新设备扫码不能依赖商家本机配置。'});return}
   if(!token){this.setData({error:'请先在商家账号与权限页面登录'});return}

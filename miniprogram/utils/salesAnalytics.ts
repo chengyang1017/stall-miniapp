@@ -1,8 +1,8 @@
-import { supportIdentity } from './supportCloud'
-import { authorizedGet } from './authApi'
-import { getMerchantContext } from './merchantContext'
-import { loadWorkflowOrders } from './orderWorkflow'
-import { loadStore } from './store'
+import { cloudIdentity as supportIdentity } from '../modules/shared/runtime/context'
+import { authorizedGet } from '../modules/shared/runtime/auth'
+import { getCloudContext } from '../modules/shared/runtime/context'
+import { loadWorkflowOrders } from '../modules/merchant/demo/orders'
+import { loadStore } from '../modules/merchant/demo/store'
 
 export interface AnalyticsQuery {from:string;to:string;q:string;categoryId:string;rankBy:string;top:number}
 export interface AnalyticsProduct {key:string;productId:string|null;name:string;quantity:number;orderCount:number;orderCents:number;paidCents:number;lastOrderAt:string|null;stockLabel:string;historicalCategories:string;currentName:string}
@@ -28,9 +28,9 @@ export function validAnalyticsRange(from:string,to:string):boolean {
   const valid=(s:string)=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+'T00:00:00Z'))&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s&&s>='2000-01-01'&&s<='2100-12-31'
   return valid(from)&&valid(to)&&from<=to&&Date.parse(to)-Date.parse(from)<366*86400000
 }
-export function analyticsContext():string {const c=getMerchantContext();return c?supportIdentity():'local-demo'}
+export function analyticsContext():string {const c=getCloudContext();return c?supportIdentity():'local-demo'}
 export async function cloudAnalytics(query:AnalyticsQuery,page=1,snapshot=''):Promise<AnalyticsReport> {
-  const cfg=getMerchantContext();if(!cfg)throw Error('missing_cloud_context')
+  const cfg=getCloudContext();if(!cfg)throw Error('missing_cloud_context')
   const r=await authorizedGet(cfg.apiBase,`/v1/merchant/stores/${cfg.storeSlug}/analytics`,{...query,page,...snapshot?{snapshot}:{}})
   if(!r||r.source!=='cloud'||!r.summary||!Array.isArray(r.products)||!Array.isArray(r.daily)||!Array.isArray(r.hourly)||!Array.isArray(r.ranking)||!Array.isArray(r.categories)||typeof r.snapshot!=='string')throw Error('invalid_analytics_response')
   return r
@@ -90,7 +90,7 @@ export function localAnalyticsCsv(report:AnalyticsReport,type:string,query:Analy
   return {csv:'\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n')+'\r\n',filename:`demo-sales-${type}-${query.from}-${query.to}.csv`}
 }
 export async function analyticsExport(query:AnalyticsQuery,type:string,snapshot:string):Promise<{csv:string;filename:string}> {
-  const cfg=getMerchantContext();if(!cfg)throw Error('missing_cloud_context')
+  const cfg=getCloudContext();if(!cfg)throw Error('missing_cloud_context')
   return authorizedGet(cfg.apiBase,`/v1/merchant/stores/${cfg.storeSlug}/analytics/export`,{...query,type,snapshot})
 }
 export async function shareAnalyticsCsv(file:{csv:string;filename:string}):Promise<void> {

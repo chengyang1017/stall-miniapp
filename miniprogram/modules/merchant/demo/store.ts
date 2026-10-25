@@ -1,0 +1,5 @@
+export type { Category,Product,StoreData,InventoryMovement,ProductDraftPayload,ProductDraft,DemoOrder,DemoOrderItem,WorkflowOrder } from '../../shared/domain/demo'
+export { stockAllows } from '../../shared/domain/catalog'
+export { money } from '../../shared/domain/money'
+export { newId,effectivePrice,productIsPublished,productIsPending,MAX_STOCK,inventoryMovement,expireDemoInventory } from '../../shared/domain/demoRules'
+export { loadStore,saveStore } from '../../shared/demo/repository'

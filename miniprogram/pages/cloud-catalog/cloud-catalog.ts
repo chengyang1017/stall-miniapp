@@ -1,7 +1,8 @@
 import { getRemoteProducts, RemoteProduct } from '../../utils/remoteApi'
-import { loginWithWechat, authorizedGet, authorizedMutation, setLocalDevToken, localDevAllowed } from '../../utils/authApi'
-import { supportIdentity } from '../../utils/supportCloud'
-import { getMerchantContext } from '../../utils/merchantContext'
+import { loginWithWechat, authorizedGet, setLocalDevToken, localDevAllowed } from '../../modules/shared/runtime/auth'
+import { authorizedMutation } from '../../modules/merchant/api/mutation'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
+import { getCloudContext } from '../../modules/shared/runtime/context'
 
 const CONFIG_KEY = 'stall_cloud_catalog_config_v1'
 const HTTPS = /^https:\/\/[^\s/]+(?:\:\d+)?(?:\/[^\s]*)?$/
@@ -14,7 +15,7 @@ const SLUG = /^[a-z0-9][a-z0-9-]{1,62}$/
 
 type DisplayProduct = RemoteProduct & { priceText: string }
 Page({
-  onShow(){const c=getMerchantContext();this.setData({merchantReady:false,merchantProducts:[],categories:[],cloudOrders:[],selectedOrderId:'',orderDetailText:'',billSummary:null,productId:'',productName:'',productPrice:'',productImageKey:'',productImagePreview:'',merchantMessage:'维护诊断入口，请重新验证当前身份；日常经营使用商家工作台',...c?{apiBase:c.apiBase,storeSlug:c.storeSlug}:{}})},
+  onShow(){const c=getCloudContext();this.setData({merchantReady:false,merchantProducts:[],categories:[],cloudOrders:[],selectedOrderId:'',orderDetailText:'',billSummary:null,productId:'',productName:'',productPrice:'',productImageKey:'',productImagePreview:'',merchantMessage:'维护诊断入口，请重新验证当前身份；日常经营使用商家工作台',...c?{apiBase:c.apiBase,storeSlug:c.storeSlug}:{}})},
   onHide(){this.setData({merchantReady:false,cloudOrders:[],orderDetailText:'',billSummary:null,merchantProducts:[],categories:[]})},
   data: {
     apiBase: '', storeSlug: '', status: '尚未连接', busy: false,

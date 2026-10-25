@@ -1,6 +1,8 @@
 {
   "requiredPrivateInfos": [
-    "chooseLocation"
+    "chooseLocation",
+    "startLocationUpdate",
+    "onLocationChange"
   ],
   "pages": [
     "pages/index/index",
@@ -30,7 +32,15 @@
     "pages/admin-note-tags/admin-note-tags",
     "pages/support-chat/support-chat",
     "pages/support-inbox/support-inbox",
-    "pages/store-code/store-code"
+    "pages/store-code/store-code",
+    "pages/customer-support-chat/customer-support-chat",
+    "pages/customer-delivery-proof/customer-delivery-proof",
+    "pages/merchant-support-chat/merchant-support-chat",
+    "pages/merchant-delivery-proof/merchant-delivery-proof",
+    "pages/customer-tracking/customer-tracking",
+    "pages/merchant-tracking/merchant-tracking",
+    "pages/customer-reviews/customer-reviews",
+    "pages/merchant-reviews/merchant-reviews"
   ],
   "window": {
     "navigationBarTitleText": "小摊商店",
@@ -70,5 +80,10 @@
         "selectedIconPath": "assets/tabbar/mine_active.png"
       }
     ]
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于主动选择地址或配送区域，以及获指派人员明确开启本单配送期间的前台位置共享"
+    }
   }
 }

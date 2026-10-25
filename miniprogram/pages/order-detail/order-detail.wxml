@@ -1,5 +1,7 @@
 <view class="order-detail-page">
-  <navigator class="order-detail-card" url="/pages/support-chat/support-chat">联系店铺客服 ›</navigator>
+  <navigator wx:if="{{found && cloudMode && order.fulfillmentStatus === 'delivering'}}" class="order-detail-card" url="/pages/customer-tracking/customer-tracking?id={{order.id}}">查看配送位置 ›</navigator>
+  <navigator class="order-detail-card" url="/pages/customer-support-chat/customer-support-chat">联系店铺客服 ›</navigator>
+  <view wx:if="{{found && cloudMode && order.fulfillmentStatus === 'delivered'}}" class="order-detail-card"><view class="order-detail-title">评价商品</view><view class="order-detail-muted">须核验真实支付后才能发表；商家已送达不等于已确认收款。</view><navigator wx:for="{{items}}" wx:key="orderItemId" wx:if="{{item.orderItemId}}" url="/pages/customer-reviews/customer-reviews?orderItemId={{item.orderItemId}}">评价 {{item.name}} ›</navigator></view>
   <view wx:if="{{!found}}" class="order-detail-empty">找不到该订单，或者订单已被删除</view>
   <view wx:else>
     <view class="order-detail-card"><view class="order-detail-title">订单详情</view><view class="order-detail-status">{{statusText}}</view><view class="order-detail-muted">支付状态：{{paymentText}}</view><view class="order-detail-muted">订单编号：{{order.id}}</view><view class="order-detail-muted">下单时间：{{createdText}}</view></view>

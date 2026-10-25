@@ -21,6 +21,7 @@
     <text>购买数量</text>
     <view class="counter"><button size="mini" bindtap="decrease" disabled="{{quantity <= 1}}">−</button><text>{{quantity}}</text><button size="mini" bindtap="increase" disabled="{{quantity >= maxQuantity}}">＋</button></view>
   </view>
+  <product-reviews wx:if="{{cloudMode}}" product-id="{{productId}}" enabled="{{cloudMode}}" />
   <view class="footer">
     <view><view class="label">合计</view><view class="total">¥{{totalText}}</view></view>
     <view class="actions"><button bindtap="addCart" disabled="{{!available || purchaseBusy}}">加入购物车</button><button type="primary" bindtap="buyNow" disabled="{{!available || purchaseBusy}}">{{cloudMode ? '加入并去结算' : '立即购买'}}</button></view>

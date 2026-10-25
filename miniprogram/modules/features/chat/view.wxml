@@ -1,0 +1,19 @@
+<template name="support-view">
+<view class="support-page">
+ <view class="support-tip">{{cloudMode ? (merchantMode ? '云端客服 · 正在回复此会话的顾客' : '店铺云端客服') : '本地演示：消息仅在当前设备保存'}} · 北京时间 UTC+8<text wx:if="{{cloudMode}}"> · 未读 {{unread === null ? '—' : unread}}</text></view>
+ <view wx:if="{{cloudMode && merchantMode}}" class="support-tip">顾客会话 {{conversationLabel}} · 回复仅发送至当前会话</view>
+ <view wx:if="{{error}}" class="support-tip">{{error}}<button size="mini" bindtap="reload" disabled="{{loading}}">重试</button><button wx:if="{{cloudMode}}" size="mini" bindtap="login" disabled="{{loginBusy}}">微信登录</button></view>
+ <scroll-view class="support-messages" scroll-y="true" scroll-into-view="{{bottomId}}">
+  <button wx:if="{{hasOlder}}" size="mini" bindtap="older" loading="{{loading}}" disabled="{{loading}}">加载更早消息</button>
+  <view wx:if="{{loading}}" class="support-empty">正在同步消息…</view>
+  <view wx:if="{{ready && messages.length === 0}}" class="support-empty">暂无消息，请输入咨询内容。</view>
+  <view wx:for="{{messages}}" wx:key="id" id="msg-{{item.id}}" class="support-line {{item.mine ? 'mine' : 'other'}}">
+   <view class="support-meta">{{item.mine ? '我' : (merchantMode ? '顾客' : '商家')}} · {{item.time}} {{cloudMode && item.mine ? (item.read ? '已读' : '未读') : ''}}</view>
+   <view class="support-bubble">{{item.content}}</view>
+  </view>
+ </scroll-view>
+ <view wx:if="{{sendError}}" class="support-tip">{{sendError}}<button size="mini" bindtap="send" disabled="{{sending}}">重试发送</button><button size="mini" bindtap="discard" disabled="{{sending}}">修改内容</button></view>
+ <view class="support-compose"><textarea class="support-input" maxlength="500" auto-height value="{{draft}}" disabled="{{sending || !!sendError}}" placeholder="输入文字（1至500字）" bindinput="onInput"/><button type="primary" size="mini" bindtap="send" loading="{{sending}}" disabled="{{sending}}">{{sending ? '发送中' : '发送'}}</button></view>
+</view>
+
+</template>

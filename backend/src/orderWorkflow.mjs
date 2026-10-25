@@ -172,7 +172,7 @@ export async function orderWorkflowRoute(req, res, url, pool) {
     const {rows} = await pool.query(`SELECT o.id,o.created_at AS "createdAt",o.payment_status AS "paymentStatus",o.fulfillment_status AS "fulfillmentStatus",o.total_cents AS "totalCents",o.delivered_at AS "deliveredAt",o.estimated_arrival AS "estimatedArrival",o.issue_reason AS "issueReason",o.contact_snapshot AS "contactSnapshot",o.delivery_slot_snapshot AS "deliverySlotSnapshot"
       FROM orders o JOIN stores s ON s.id=o.store_id WHERE s.slug=$1 AND o.id=$2 AND o.customer_subject=$3`,[customer[1],customer[2],subject])
     if(!rows.length){reply(res,404,{error:'not_found'});return true}
-    const lines=await pool.query(`SELECT oi.product_id AS "productId",oi.product_name AS "name",oi.unit_price_cents AS "unitPriceCents",oi.quantity,oi.line_total_cents AS "lineTotalCents" FROM order_items oi WHERE oi.order_id=$1 ORDER BY oi.id`,[rows[0].id])
+    const lines=await pool.query(`SELECT oi.id AS "orderItemId",oi.product_id AS "productId",oi.product_name AS "name",oi.unit_price_cents AS "unitPriceCents",oi.quantity,oi.line_total_cents AS "lineTotalCents" FROM order_items oi WHERE oi.order_id=$1 ORDER BY oi.id`,[rows[0].id])
     reply(res,200,{order:rows[0],items:lines.rows});return true
   }
     // PHASE40_ISSUE_REASON: customer-owned order reason is returned above.

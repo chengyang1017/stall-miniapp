@@ -1,12 +1,12 @@
-import { getMerchantContext,getMerchantSessionToken } from './merchantContext'
-import { authorizedGet } from './authApi'
-import { supportIdentity } from './supportCloud'
-export { supportIdentity as archiveContext } from './supportCloud'
-export { supportKey as archiveKey,supportTime as archiveTime } from './supportCloud'
-export const archiveBase=()=>{const c=getMerchantContext();if(!c)throw Error('cloud_not_configured');return `/v1/merchant/stores/${c.storeSlug}/archives`}
-export function archiveGet(tail='',query?:Record<string,string|number>):Promise<any>{const c=getMerchantContext();if(!c)return Promise.reject(Error('cloud_not_configured'));return authorizedGet(c.apiBase,archiveBase()+tail,query)}
+import { getCloudContext, getSessionToken } from '../modules/shared/runtime/context'
+import { authorizedGet } from '../modules/shared/runtime/auth'
+import { cloudIdentity as supportIdentity } from '../modules/shared/runtime/context'
+export { cloudIdentity as archiveContext } from '../modules/shared/runtime/context'
+export { supportKey as archiveKey,supportTime as archiveTime } from '../modules/shared/domain/support'
+export const archiveBase=()=>{const c=getCloudContext();if(!c)throw Error('cloud_not_configured');return `/v1/merchant/stores/${c.storeSlug}/archives`}
+export function archiveGet(tail='',query?:Record<string,string|number>):Promise<any>{const c=getCloudContext();if(!c)return Promise.reject(Error('cloud_not_configured'));return authorizedGet(c.apiBase,archiveBase()+tail,query)}
 export function archivePost(tail:string,data:Record<string,any>):Promise<any>{
- const c=getMerchantContext(),token=getMerchantSessionToken();if(!c||!token)return Promise.reject(Error('not_logged_in'))
+ const c=getCloudContext(),token=getSessionToken();if(!c||!token)return Promise.reject(Error('not_logged_in'))
  return new Promise((resolve,reject)=>wx.request({url:c.apiBase+archiveBase()+tail,method:'POST',data,timeout:60000,header:{Authorization:`Bearer ${token}`,'content-type':'application/json'},success:(r:any)=>r.statusCode===200?resolve(r.data):reject(Error(`http_${r.statusCode}_${r.data&&r.data.error||''}`)),fail:reject}))
 }
 export function archiveErrorText(e:any):string{

@@ -1,7 +1,7 @@
-import { cloudProofUrl } from '../../utils/cloudProofRead' // PHASE38_PROOF_READ
-import { customerOrdersConfig, customerOrdersRequest } from '../../utils/customerOrdersApi' // PHASE35_CUSTOMER_ORDERS
-import { loadWorkflowOrders, chinaTime } from '../../utils/orderWorkflow'
-import { supportIdentity } from '../../utils/supportCloud'
+import { proofUrl } from '../../modules/customer/api/proof' // PHASE38_PROOF_READ
+import { customerOrdersConfig, customerOrdersRequest } from '../../modules/customer/api/orders' // PHASE35_CUSTOMER_ORDERS
+import { loadWorkflowOrders, chinaTime } from '../../modules/customer/demo/orders'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 function workflowText(st: string): string {
   const labels: {[key: string]: string} = {new:'待接单',accepted:'已接单',preparing:'备货中',delivering:'配送中',delivered:'已送达',cancelled:'已取消',canceled:'已取消',abnormal:'配送异常',exception:'配送异常',refunded:'已退款'}
   return labels[st] || '待接单'
@@ -65,7 +65,7 @@ Page({
     const cfg=customerOrdersConfig(),serial=this.detailSerial,identity=supportIdentity(),id=String(this.data.order.id||'')
     if(!cfg||this.data.proofLoading||!this.data.found)return
     this.setData({proofLoading:true,proofError:''})
-    try{const url=await cloudProofUrl(cfg.apiBase,cfg.storeSlug,id,false);if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({proofImage:url})}catch(_){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({proofError:'凭证暂不可用；请检查身份或稍后重新获取。'})}finally{if(serial===this.detailSerial)this.setData({proofLoading:false})}
+    try{const url=await proofUrl(id);if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({proofImage:url})}catch(_){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({proofError:'凭证暂不可用；请检查身份或稍后重新获取。'})}finally{if(serial===this.detailSerial)this.setData({proofLoading:false})}
   },
   async previewProof() {
     if(this.data.cloudMode)await this.renewProof()

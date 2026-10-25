@@ -1,17 +1,18 @@
 // PHASE37B_PROOF: signed R2 upload for the existing delivery-proof page.
-import { getMerchantContext, getMerchantSessionToken, MerchantContext } from './merchantContext'
-import { supportIdentity,supportKey } from './supportCloud'
-type Cfg = MerchantContext
-const config = getMerchantContext
+import { getCloudContext, getSessionToken, CloudContext } from '../modules/shared/runtime/context'
+import { cloudIdentity as supportIdentity } from '../modules/shared/runtime/context'
+import { supportKey } from '../modules/shared/domain/support'
+type Cfg = CloudContext
+const config = getCloudContext
 export function cloudProofConfig():Cfg|null{return config()}
 function request(cfg:Cfg,route:string,body:any):Promise<any>{
- const token=getMerchantSessionToken()
+ const token=getSessionToken()
  if(typeof token!=='string'||!token)return Promise.reject(new Error('not_logged_in'))
  return new Promise((resolve,reject)=>wx.request({url:cfg.apiBase+'/v1/merchant/stores/'+cfg.storeSlug+route,method:'POST',data:body,timeout:20000,header:{Authorization:'Bearer '+token,'content-type':'application/json'},success:(r:any)=>r.statusCode>=200&&r.statusCode<300?resolve(r.data):reject(new Error('http_'+r.statusCode+'_'+String(r.data&&r.data.error||'failed'))),fail:reject}))
 }
 export async function loadProofOrder(id:string):Promise<any>{
  const cfg=config();if(!cfg)throw Error('not_configured')
- const token=getMerchantSessionToken()
+ const token=getSessionToken()
  if(typeof token!=='string'||!token)throw Error('not_logged_in')
  return new Promise((resolve,reject)=>wx.request({url:cfg.apiBase+'/v1/merchant/stores/'+cfg.storeSlug+'/orders/'+encodeURIComponent(id),method:'GET',header:{Authorization:'Bearer '+token},success:(r:any)=>r.statusCode===200?resolve(r.data.order):reject(new Error('http_'+r.statusCode)),fail:reject}))
 }

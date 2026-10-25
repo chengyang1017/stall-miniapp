@@ -1,5 +1,5 @@
-import { getMerchantContext } from '../../utils/merchantContext'
-import { authorizedGet } from '../../utils/authApi'
+import { getCloudContext } from '../../modules/shared/runtime/context'
+import { authorizedGet } from '../../modules/shared/runtime/auth'
 import { shareCsvFile } from '../../utils/shareCsvFile'
 import { archiveGet,archivePost,archiveContext,archiveKey,archiveTime,archiveErrorText,shareArchiveFile,imageCheckSummary } from '../../utils/merchantArchivesCloud'
 const KEYS = [
@@ -47,12 +47,12 @@ Page({
     summary: '', preview: '', selected: null as Backup | null,
     busy: false
   },
-  onShow() {this.visible=true;const context=archiveContext();if(context!==this.context){this.serial++;this.context=context;this.pendingExport=null;this.cursor='';this.setData({history:[],selected:null,preview:'',cloudPreview:'',error:'',hasMore:false,historyLoading:false})}this.setData({cloudMode:!!getMerchantContext()});if(getMerchantContext())this.loadHistory();else this.refresh()},
+  onShow() {this.visible=true;const context=archiveContext();if(context!==this.context){this.serial++;this.context=context;this.pendingExport=null;this.cursor='';this.setData({history:[],selected:null,preview:'',cloudPreview:'',error:'',hasMore:false,historyLoading:false})}this.setData({cloudMode:!!getCloudContext()});if(getCloudContext())this.loadHistory();else this.refresh()},
   onHide(){this.visible=false;this.serial++;this.setData({history:[],selected:null,preview:'',cloudPreview:'',error:'',hasMore:false,historyLoading:false})},
   onUnload(){this.visible=false;this.serial++;this.pendingExport=null},
   current(context:string){return this.visible&&context===this.context&&context===archiveContext()},
   async loadHistory(more=false){
-    if(!getMerchantContext()||this.data.historyLoading)return
+    if(!getCloudContext()||this.data.historyLoading)return
     const context=archiveContext();if(context!==this.context){this.onShow();return}
     const serial=++this.serial;this.setData({historyLoading:true,error:''})
     try{const r=await archiveGet('',more?{before:this.cursor,limit:20}:{limit:20});if(!this.current(context)||serial!==this.serial)return
@@ -62,11 +62,11 @@ Page({
   },
   reloadHistory(){this.loadHistory()},
   moreHistory(){if(this.data.hasMore)this.loadHistory(true)},
-  async onPullDownRefresh(){if(getMerchantContext())await this.loadHistory();else this.refresh();wx.stopPullDownRefresh()},
+  async onPullDownRefresh(){if(getCloudContext())await this.loadHistory();else this.refresh();wx.stopPullDownRefresh()},
   dateFrom(e:any){if(!this.data.busy){this.pendingExport=null;this.setData({from:String(e.detail.value)})}},
   dateTo(e:any){if(!this.data.busy){this.pendingExport=null;this.setData({to:String(e.detail.value)})}},
   async generate(e:any){
-    if(this.data.busy||!getMerchantContext())return
+    if(this.data.busy||!getCloudContext())return
     const kind=String(e.currentTarget.dataset.kind||''),request:Record<string,string>={kind}
     if(['orders-json','archive-json'].includes(kind)){request.from=this.data.from;request.to=this.data.to}
     const context=archiveContext();if(!this.current(context)){this.onShow();return}
@@ -80,18 +80,18 @@ Page({
     finally{this.setData({busy:false})}
   },
   async download(e:any){
-    if(this.data.busy||!getMerchantContext())return
+    if(this.data.busy||!getCloudContext())return
     const id=String(e.currentTarget.dataset.id||''),context=archiveContext();if(!this.current(context))return
     this.setData({busy:true,error:''})
     try{const r=await archiveGet('/'+id+'/download');if(this.current(context))await shareArchiveFile(r.content,r.filename)}catch(e){if(this.current(context))this.setData({error:archiveErrorText(e)})}finally{this.setData({busy:false})}
   },
   async exportBilling(){
-    const c=getMerchantContext(),context=archiveContext();if(!c||this.data.busy||!this.current(context))return
+    const c=getCloudContext(),context=archiveContext();if(!c||this.data.busy||!this.current(context))return
     this.setData({busy:true,error:''})
     try{const r=await authorizedGet(c.apiBase,`/v1/merchant/stores/${c.storeSlug}/billing/export`,{from:this.data.from,to:this.data.to,format:'json'});if(this.current(context))await shareCsvFile(r.csv,r.filename)}catch(e){if(this.current(context))this.setData({error:archiveErrorText(e)})}finally{this.setData({busy:false})}
   },
   preflight(){
-    if(this.data.busy||!getMerchantContext())return
+    if(this.data.busy||!getCloudContext())return
     const context=archiveContext();if(!this.current(context))return
     this.setData({busy:true,error:'',cloudPreview:''})
     wx.chooseMessageFile({count:1,type:'file',extension:['json'],success:r=>{
@@ -102,12 +102,12 @@ Page({
     },fail:()=>this.setData({busy:false})})
   },
   refresh() {
-    if(getMerchantContext())return
+    if(getCloudContext())return
     const c = count(snapshot())
     this.setData({ summary: `商品 ${c.products} · 分类 ${c.categories} · 订单 ${c.orders}` })
   },
   exportBackup() {
-    if(getMerchantContext())return
+    if(getCloudContext())return
     if (this.data.busy) return
     const backup = snapshot()
     const content = JSON.stringify(backup, null, 2)
@@ -129,15 +129,15 @@ Page({
     })
   },
   importBackup() {
-    if(getMerchantContext())return
+    if(getCloudContext())return
     if (this.data.busy) return
     wx.chooseMessageFile({ count: 1, type: 'file', extension: ['json'], success: r => {
-      if(getMerchantContext())return
+      if(getCloudContext())return
       const file = r.tempFiles && r.tempFiles[0]
       if (!file || file.size > MAX_BYTES) { wx.showToast({ title: '文件超出大小限制', icon: 'none' }); return }
       const fs = wx.getFileSystemManager()
       fs.readFile({ filePath: file.path, encoding: 'utf8', success: result => {
-        if(getMerchantContext())return
+        if(getCloudContext())return
         try {
           const parsed = JSON.parse(String(result.data))
           if (!validate(parsed)) throw new Error('invalid backup')
@@ -149,13 +149,13 @@ Page({
     } })
   },
   restore() {
-    if(getMerchantContext())return
+    if(getCloudContext())return
     const backup = this.data.selected
     if (!backup || !validate(backup) || this.data.busy) return
     wx.showModal({ title: '确认覆盖本机数据？',
       content: '这会覆盖备份中包含的商品、设置及订单记录。无法撤销。请先导出当前数据；不会恢复图片实体文件。',
       confirmColor: '#d9534f', success: r => {
-        if (!r.confirm || getMerchantContext()) return
+        if (!r.confirm || getCloudContext()) return
         this.setData({ busy: true })
         // Capture current values first, so partial write failures can be rolled back.
         const old: Record<string, any> = {}

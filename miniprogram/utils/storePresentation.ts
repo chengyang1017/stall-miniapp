@@ -1,16 +1,16 @@
-import { getMerchantContext } from './merchantContext'
-import { publicBusiness } from './businessCloud'
-import { supportIdentity } from './supportCloud'
+import { getCloudContext } from '../modules/shared/runtime/context'
+import { publicBusiness } from '../modules/shared/api/business'
+import { cloudIdentity as supportIdentity } from '../modules/shared/runtime/context'
 export const placeholderStyles=['classic','mountain','bag','playful','premium','custom']
 let cacheKey='',cached={placeholderStyle:'none',customPlaceholderUrl:''}
 const requests=new WeakMap<object,number>()
 export function currentPresentation():{placeholderStyle:string;customPlaceholderUrl:string}{
- const cfg=getMerchantContext();if(!cfg)return {placeholderStyle:String(wx.getStorageSync('stall_placeholder_style_v1')||'premium'),customPlaceholderUrl:String(wx.getStorageSync('stall_placeholder_custom_v1')||'')}
+ const cfg=getCloudContext();if(!cfg)return {placeholderStyle:String(wx.getStorageSync('stall_placeholder_style_v1')||'premium'),customPlaceholderUrl:String(wx.getStorageSync('stall_placeholder_custom_v1')||'')}
  return cacheKey===cfg.apiBase+'/'+cfg.storeSlug?cached:{placeholderStyle:'none',customPlaceholderUrl:''}
 }
 export async function refreshPagePresentation(page:{setData:(value:any)=>void}):Promise<void>{
  const serial=(requests.get(page)||0)+1;requests.set(page,serial)
- const cfg=getMerchantContext(),context=supportIdentity();page.setData({...currentPresentation(),presentationError:''})
+ const cfg=getCloudContext(),context=supportIdentity();page.setData({...currentPresentation(),presentationError:''})
  if(!cfg)return
  try{const r=await publicBusiness(cfg);if(context!==supportIdentity()||requests.get(page)!==serial)return
   if(!r.placeholderStyle||!placeholderStyles.includes(r.placeholderStyle))throw Error('presentation_api_required')

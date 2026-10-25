@@ -1,0 +1,9 @@
+page { background:#f5f6f8; }
+.proof-page { padding:28rpx; }
+.proof-card { background:#fff; border-radius:18rpx; padding:28rpx; }
+.proof-title { font-size:34rpx; font-weight:700; margin-bottom:24rpx; }
+.proof-hint { font-size:24rpx; color:#777; line-height:1.7; margin:16rpx 0; word-break:break-all; }
+.proof-image { width:100%; height:460rpx; background:#eef2f0; border-radius:14rpx; margin:16rpx 0; }
+.proof-empty { height:260rpx; background:#f0f4f2; border-radius:14rpx; color:#8b9b93; display:flex; align-items:center; justify-content:center; margin:22rpx 0; }
+.proof-card button { margin-top:22rpx; }
+.proof-link { color:#16865d; margin-top:15rpx; }

@@ -1,10 +1,10 @@
 import { cloudCartConfig, changeCloudCart } from '../../utils/cloudCart' // PHASE33_CLOUD_CART
-import { loadStore, effectivePrice, money, productIsPublished, stockAllows } from '../../utils/store'
+import { loadStore, effectivePrice, money, productIsPublished, stockAllows } from '../../modules/customer/demo/catalog'
 import { addToCart } from '../../utils/cart'
 import { setDirectPurchase } from '../../utils/directPurchase'
 import { getRemoteProducts } from '../../utils/remoteApi' // PHASE32_REMOTE_DETAIL
 import { refreshPagePresentation } from '../../utils/storePresentation'
-import { supportIdentity } from '../../utils/supportCloud'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 
 Page({
   detailSerial:0,

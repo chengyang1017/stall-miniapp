@@ -1,6 +1,6 @@
 import { PUBLIC_API_BASE,DEFAULT_STORE_SLUG } from '../config/cloud'
-import { getMerchantContext } from './merchantContext'
-import { localDevAllowed } from './authApi'
+import { getCloudContext } from '../modules/shared/runtime/context'
+import { localDevAllowed } from '../modules/shared/runtime/auth'
 let pending:{kind:'store'|'scene';value:string}|null=null
 let generation=0
 export function captureStoreEntry(query:Record<string,string|undefined>={}){
@@ -11,7 +11,7 @@ export function captureStoreEntry(query:Record<string,string|undefined>={}){
  if(!pending||pending.kind!==kind||pending.value!==value){pending={kind,value};generation++}
 }
 export async function resolveStoreEntry():Promise<void>{
- const current=getMerchantContext()
+ const current=getCloudContext()
  if(!pending&&!current&&DEFAULT_STORE_SLUG){pending={kind:'store',value:DEFAULT_STORE_SLUG};generation++}
  if(!pending)return
  const entry=pending,serial=generation
@@ -25,4 +25,4 @@ export async function resolveStoreEntry():Promise<void>{
  wx.setStorageSync('stall_cloud_catalog_config_v1',{apiBase,storeSlug:result.storeSlug})
  pending=null
 }
-export function shopShare(name:string){const c=getMerchantContext();return {title:name||'店铺商品',path:c?'/pages/index/index?store='+encodeURIComponent(c.storeSlug):'/pages/index/index'}}
+export function shopShare(name:string){const c=getCloudContext();return {title:name||'店铺商品',path:c?'/pages/index/index?store='+encodeURIComponent(c.storeSlug):'/pages/index/index'}}

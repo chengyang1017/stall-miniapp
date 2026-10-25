@@ -1,7 +1,7 @@
-import { loadStore, saveStore, newId, Category } from '../../utils/store'
-import { getMerchantContext } from '../../utils/merchantContext'
+import { loadStore, saveStore, newId, Category } from '../../modules/merchant/demo/store'
+import { getCloudContext } from '../../modules/shared/runtime/context'
 import { readCloudCategories,writeCloudCategories } from '../../utils/merchantCategoriesCloud'
-import { supportIdentity } from '../../utils/supportCloud'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 
 type Row = Category & { y: number }
 
@@ -25,7 +25,7 @@ Page({
     this.setData({ rowHeight: h })
   },
   onShow() {this.reloadCategories()},
-  onHide(){this.serial++;if(getMerchantContext())this.setData({categories:[],rows:[],cloudBusy:false,draggingId:''})},
+  onHide(){this.serial++;if(getCloudContext())this.setData({categories:[],rows:[],cloudBusy:false,draggingId:''})},
   onUnload(){this.serial++},
   async cloudChange(method:'POST'|'PATCH'|'DELETE',id:string,body:Record<string,any>){
     if(this.data.cloudBusy||this.data.cloudError||this.context!==supportIdentity())return
@@ -35,7 +35,7 @@ Page({
     finally{this.setData({cloudBusy:false})}
   },
   async reloadCategories() {
-    const cfg=getMerchantContext(),serial=++this.serial,context=supportIdentity();this.context=context;this.setData({cloudMode:!!cfg,cloudError:'',draggingId:''})
+    const cfg=getCloudContext(),serial=++this.serial,context=supportIdentity();this.context=context;this.setData({cloudMode:!!cfg,cloudError:'',draggingId:''})
     if(cfg){this.setData({cloudBusy:true,categories:[],rows:[]});try{const r=await readCloudCategories();if(serial!==this.serial||context!==supportIdentity())return;this.revision=r.revision;const categories=r.items,h=this.data.rowHeight;this.setData({categories,rows:categories.map((c:Category,i:number)=>({...c,y:i*h})),areaHeight:categories.length*h})}catch(_){if(serial===this.serial)this.setData({cloudError:'云端分类读取失败，请先登录或检查权限；未回退本机数据'})}finally{if(serial===this.serial)this.setData({cloudBusy:false})}return}
     const categories = loadStore().categories
     const h = this.data.rowHeight
@@ -52,7 +52,7 @@ Page({
     if(this.data.cloudBusy)return
     const name = String(this.data.newName || '').trim()
     if (!name) { wx.showToast({ title: '请输入分类名称', icon: 'none' }); return }
-    if(getMerchantContext()){this.cloudChange('POST','',{name});return}
+    if(getCloudContext()){this.cloudChange('POST','',{name});return}
     const store = loadStore()
     if (store.categories.some(c => c.name === name)) { wx.showToast({ title: '分类名称已存在', icon: 'none' }); return }
     store.categories.push({ id: newId(), name })
@@ -64,7 +64,7 @@ Page({
     if(this.data.cloudBusy)return
     if (this.data.draggingId) return
     const id = String(e.currentTarget.dataset.id || '')
-    if(getMerchantContext()){const context=this.context;wx.showModal({title:'删除云端分类？',content:'服务端会拒绝删除仍有商品的分类，历史订单不受影响。',success:r=>{if(r.confirm&&context===supportIdentity())this.cloudChange('DELETE',id,{})}});return}
+    if(getCloudContext()){const context=this.context;wx.showModal({title:'删除云端分类？',content:'服务端会拒绝删除仍有商品的分类，历史订单不受影响。',success:r=>{if(r.confirm&&context===supportIdentity())this.cloudChange('DELETE',id,{})}});return}
     const store = loadStore()
     const category = store.categories.find(c => c.id === id)
     if (!category) return
@@ -85,7 +85,7 @@ Page({
     if(this.data.cloudBusy||this.data.cloudError)return
     if (this.data.draggingId) return
     const id = String(e.currentTarget.dataset.id || '')
-    const cat = (getMerchantContext()?this.data.categories:loadStore().categories).find(c => c.id === id)
+    const cat = (getCloudContext()?this.data.categories:loadStore().categories).find(c => c.id === id)
     if (cat) this.setData({ editingId: id, editingName: cat.name })
   },
   onEditingName(e: any) { this.setData({ editingName: e.detail.value }) },
@@ -96,7 +96,7 @@ Page({
     const name = String(this.data.editingName || '').trim()
     if (!id) return
     if (!name) { wx.showToast({ title: '名称不能为空', icon: 'none' }); return }
-    if(getMerchantContext()){this.cloudChange('PATCH',id,{name});return}
+    if(getCloudContext()){this.cloudChange('PATCH',id,{name});return}
     const store = loadStore()
     const cat = store.categories.find(c => c.id === id)
     if (!cat) return
@@ -147,7 +147,7 @@ Page({
   handleEnd(e: any) {
     const id = String(e.currentTarget.dataset.id || '')
     if (id !== this.data.draggingId) return
-    if(getMerchantContext()){const ids=this.dragOrder.slice();this.setData({draggingId:''});this.cloudChange('PATCH','order',{ids});return}
+    if(getCloudContext()){const ids=this.dragOrder.slice();this.setData({draggingId:''});this.cloudChange('PATCH','order',{ids});return}
     const store = loadStore()
     const oldIds = store.categories.map(c => c.id)
     const order = this.dragOrder.slice()

@@ -9,7 +9,7 @@
 <view wx:if="{{cloudMode && deliverySummary}}" style="padding:12rpx 26rpx;color:#66776b;font-size:23rpx;overflow-wrap:anywhere;">{{deliverySummary}}</view>
 
 <view class="hero">
-  <navigator url="/pages/support-chat/support-chat">联系商家 ›</navigator>
+  <navigator url="/pages/customer-support-chat/customer-support-chat">联系商家 ›</navigator>
   <view class="hero-title">{{storeName}}</view>
   <button wx:if="{{cloudMode && !entryError && shareReady}}" size="mini" open-type="share">分享店铺给好友</button>
   <view>欢迎选购 · 人民币结算</view>
@@ -255,7 +255,7 @@
   </button>
 </view>
 
-<view class="admin-entry" bindtap="goAdmin">
+<view wx:if="{{canOpenMerchant}}" class="admin-entry" bindtap="goAdmin">
   商家管理演示
 </view>
 

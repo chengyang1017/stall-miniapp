@@ -1,4 +1,6 @@
 import { storeEntryRoute } from './storeEntry.mjs'
+import { productReviewRoute } from './productReviews.mjs'
+import { deliveryTrackingRoute,startTrackingRetention } from './deliveryTracking.mjs'
 import { pageScope,pageQuery,pageResult,cursorTime } from './customerPagination.mjs'
 import http from 'node:http'
 import { supportRoute } from './support.mjs'
@@ -41,6 +43,8 @@ const server = http.createServer(async (req, res) => {
   try { url = new URL(req.url || '/', 'http://localhost') }
   catch { return reply(res, 400, { error: 'invalid_url' }) }
   try {
+    if (await productReviewRoute(req,res,url,pool)) return
+    if (await deliveryTrackingRoute(req,res,url,pool)) return
     if (await storeEntryRoute(req,res,url,pool)) return
     if (await supportRoute(req,res,url,pool)) return
     if (await merchantArchivesRoute(req,res,url,pool)) return
@@ -125,7 +129,8 @@ const server = http.createServer(async (req, res) => {
   }
 })
 let stopInventoryWorker=async()=>{}
-server.listen(port, host, () => { console.log(`Stall API listening on ${host}:${port}`);stopInventoryWorker=startInventoryWorker(pool) })
-async function shutdown() { server.close(); await stopInventoryWorker(); await pool.end() }
+let stopTrackingRetention=()=>{}
+server.listen(port, host, () => { console.log(`Stall API listening on ${host}:${port}`);stopInventoryWorker=startInventoryWorker(pool);stopTrackingRetention=startTrackingRetention(pool) })
+async function shutdown() { server.close(); stopTrackingRetention(); await stopInventoryWorker(); await pool.end() }
 process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)

@@ -13,9 +13,10 @@
     <view class="profile-link" bindtap="openOrders">
       <view class="profile-glyph">☷</view><view class="profile-link-content"><view class="profile-title">我的订单</view><view class="profile-desc">查看订单和配送进度</view></view><view class="profile-chevron">›</view>
     </view>
-    <navigator class="profile-link profile-contact" url="/pages/support-chat/support-chat">
+    <navigator class="profile-link profile-contact" url="/pages/customer-support-chat/customer-support-chat">
       <view class="profile-glyph">✉</view><view class="profile-link-content"><view class="profile-title">联系商家<text wx:if="{{cloudSupport}}"> · 未读 {{supportUnread === null ? '—' : supportUnread}}</text></view><view class="profile-desc">向商家发送消息</view></view><view class="profile-chevron">›</view>
     </navigator>
+    <navigator class="profile-link" url="/pages/customer-reviews/customer-reviews"><view class="profile-glyph">☆</view><view class="profile-link-content"><view class="profile-title">我的商品评价</view><view class="profile-desc">查看审核、修改或撤回自己的评价</view></view><view class="profile-chevron">›</view></navigator>
   </view>
   <view class="profile-section">
     <navigator class="profile-link" url="/pages/customer-settings/customer-settings">

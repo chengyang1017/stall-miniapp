@@ -1,13 +1,13 @@
 import { currentPresentation,refreshPagePresentation } from '../../utils/storePresentation'
 import { cloudCartConfig, cloudCartDetails, changeCloudCart, writeCloudCart, syncCloudBadge } from '../../utils/cloudCart' // PHASE33_CLOUD_CART
-import { loadStore } from '../../utils/store'
-import { getMinimumOrder, minimumOrderShortfall } from '../../utils/minimumOrder'
+import { loadStore } from '../../modules/customer/demo/catalog'
+import { getMinimumOrder, minimumOrderShortfall } from '../../modules/customer/demo/settings'
 import { clearDirectPurchase } from '../../utils/directPurchase'
-import { minimumDisplay } from '../../utils/businessCloud'
+import { minimumDisplay } from '../../modules/shared/api/business'
 import { loadCloudDelivery, cloudDeliveryReason, availableCloudSlots, localDate } from '../../utils/cloudCheckout'
 import { getSelectedAddress } from '../../utils/addresses'
-import { deliveryStoreKey, resolveDeliveryArea, deliveryAddressReason } from '../../utils/cloudDelivery'
-import { supportIdentity } from '../../utils/supportCloud'
+import { deliveryStoreKey, resolveDeliveryArea, deliveryAddressReason } from '../../modules/customer/api/delivery'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 
 import {
   getCartDetails,

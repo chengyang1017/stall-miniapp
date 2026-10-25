@@ -1,8 +1,8 @@
-import {loadDelivery,saveDelivery,DeliveryConfig,DeliverySlot,validateDeliveryConfig} from '../../utils/delivery'
-import {newId} from '../../utils/store'
-import {getMerchantContext} from '../../utils/merchantContext'
-import {businessContextKey} from '../../utils/businessCloud'
-import {fetchMerchantDelivery,saveMerchantDelivery} from '../../utils/cloudDelivery'
+import {loadDelivery,saveDelivery,DeliveryConfig,DeliverySlot,validateDeliveryConfig} from '../../modules/merchant/demo/settings'
+import {newId} from '../../modules/merchant/demo/store'
+import { getCloudContext } from '../../modules/shared/runtime/context'
+import { businessContextKey } from '../../modules/merchant/api/business'
+import { fetchMerchantDelivery, saveMerchantDelivery } from '../../modules/merchant/api/delivery'
 const weekdays=['周日','周一','周二','周三','周四','周五','周六']
 function message(error:unknown):string{const s=String(error);if(s.includes('store_changed'))return '店铺或模式已变化，请重新读取后操作。';if(s.includes('409'))return '配置已被其他设备或营业设置修改，请重新读取后编辑；本次输入仍保留。';if(s.includes('403')||s.includes('401')||s.includes('not_logged_in'))return '无配送管理权限或登录已失效，请使用有权限的商家账号。';if(s.includes('overlapping'))return '同一区域、同一星期的时段存在重叠，请调整。';if(s.includes('duplicate_area_name'))return '配送区域名称不能重复。';return '读取或保存失败，请检查网络和后端版本；不会回退本机配置。'}
 Page({
@@ -25,7 +25,7 @@ Page({
   if(this.data.dirty&&this.context===businessContextKey()){
    this.setData({confirming:true});const ok=await new Promise<boolean>(resolve=>wx.showModal({title:'重新读取配置？',content:'将丢弃本页尚未保存的修改。',success:r=>resolve(r.confirm),fail:()=>resolve(false)}));this.setData({confirming:false});if(!ok)return
   }
-  const cfg=getMerchantContext(),context=businessContextKey(),serial=++this.serial;this.context=context
+  const cfg=getCloudContext(),context=businessContextKey(),serial=++this.serial;this.context=context
   this.setData({cloudMode:!!cfg,sourceStore:cfg?.storeSlug||'',loading:true,ready:false,dirty:false,conflict:false,error:'',feedback:'',areas:[],slots:[],slotViews:[],specialDates:[],enabledAreas:0,enabledSlots:0,deliveryPaused:false,areaName:'',slotLabel:'',slotStart:'',slotEnd:''})
   try{
    const result=cfg?await fetchMerchantDelivery(cfg):{config:loadDelivery(),revision:null,configured:true}
@@ -39,7 +39,7 @@ Page({
   if(this.data.areaName.trim()||this.data.slotLabel.trim()||this.data.slotStart.trim()||this.data.slotEnd.trim()){this.setData({error:'请先点击新增，将输入加入待保存配置；或清空尚未添加的输入。'});return}
   const config=this.config(),error=validateDeliveryConfig(config)
   if(error){this.setData({error});return}
-  const cfg=getMerchantContext(),context=this.context;this.setData({saving:true,error:'',feedback:''})
+  const cfg=getCloudContext(),context=this.context;this.setData({saving:true,error:'',feedback:''})
   try{
    if(cfg){const revision=await saveMerchantDelivery(cfg,this.revision,config);if(context!==businessContextKey())throw Error('store_changed');this.revision=revision}
    else saveDelivery(config)

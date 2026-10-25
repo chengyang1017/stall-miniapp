@@ -1,0 +1,2 @@
+<import src="../../modules/features/chat/view.wxml" />
+<template is="support-view" data="{{messages:messages,draft:draft,bottomId:bottomId,cloudMode:cloudMode,merchantMode:merchantMode,conversationLabel:conversationLabel,loading:loading,sending:sending,loginBusy:loginBusy,error:error,sendError:sendError,hasOlder:hasOlder,ready:ready,unread:unread}}" />

@@ -1,4 +1,4 @@
-import { Product, ProductDraft, StoreData, productIsPending, productIsPublished } from './store'
+import { Product, ProductDraft, StoreData, productIsPending, productIsPublished } from '../modules/merchant/demo/store'
 
 export interface MerchantProductQuery {
   q:string; categoryId:string; kind:string; state:string; soldOut:string;

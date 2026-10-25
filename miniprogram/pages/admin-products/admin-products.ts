@@ -1,10 +1,11 @@
 import { currentPresentation,refreshPagePresentation } from '../../utils/storePresentation'
-import { loadStore, saveStore, newId, Category, Product, ProductDraft, productIsPublished, productIsPending } from '../../utils/store'
+import { loadStore, saveStore, newId, Category, Product, ProductDraft, productIsPublished, productIsPending } from '../../modules/merchant/demo/store'
 import { merchantCloudConfig, merchantCloudProductPage, merchantCloudCategoryContext, discardMerchantCloudDraft, patchMerchantCloudProduct, MerchantProductBatchPatch } from '../../utils/cloudMerchantProducts'
 import { formatPublishTime } from '../../utils/productPublishing'
 import { MerchantCatalogItem, defaultProductQuery, queryChoices, localMerchantQuery } from '../../utils/merchantProductQuery'
 import { imageManagementGet,imageManagementPost,imageReasonText,imageStateText } from '../../utils/cloudMerchantImage'
-import { supportIdentity,supportKey,supportTime } from '../../utils/supportCloud'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
+import { supportKey, supportTime } from '../../modules/shared/domain/support'
 
 function catalogContextKey(): string {
   const cfg = merchantCloudConfig()

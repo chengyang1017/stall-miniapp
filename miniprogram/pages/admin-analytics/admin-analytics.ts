@@ -1,5 +1,5 @@
 import { AnalyticsQuery, AnalyticsReport, AnalyticsProduct, analyticsPresets, analyticsRange, validAnalyticsRange, analyticsContext, cloudAnalytics, localAnalytics, localAnalyticsCsv, analyticsExport, shareAnalyticsCsv, rankKeys, rankLabels, trendKeys, trendLabels, beijingTime } from '../../utils/salesAnalytics'
-import { getMerchantContext } from '../../utils/merchantContext'
+import { getCloudContext } from '../../modules/shared/runtime/context'
 
 function errorText(error:unknown):string {
   const s=String(error)
@@ -46,9 +46,9 @@ Page({
     if(this.data.loading&&this.activeRequestKey===requestKey)return
     const id=++this.serial;this.context=context;this.activeRequestKey=requestKey;this.snapshot='';this.localReport=null;this.report=null
     this.setData({loading:true,loadingMore:false,dirty:false,needsRefresh:false,hasReport:false,error:'',moreError:'',products:[],hasMore:false,
-      sourceLabel:getMerchantContext()?'云端数据库订单':'本地演示数据（非真实交易）'})
+      sourceLabel:getCloudContext()?'云端数据库订单':'本地演示数据（非真实交易）'})
     try {
-      const cloud=!!getMerchantContext(), report=cloud?await cloudAnalytics(query):localAnalytics(query)
+      const cloud=!!getCloudContext(), report=cloud?await cloudAnalytics(query):localAnalytics(query)
       if(id!==this.serial||context!==analyticsContext())return
       this.localReport=cloud?null:report;this.report=report;this.snapshot=report.snapshot;this.appliedQuery=query
       const categories=[{id:'',name:'全部历史分类'},{id:'unknown',name:'未记录历史分类／无分类'},...report.categories]

@@ -48,6 +48,7 @@
     </view>
 
     <view class="merchant-section-title">服务与数据</view>
+    <navigator class="merchant-item" url="/pages/merchant-reviews/merchant-reviews"><view class="merchant-item-text"><view class="merchant-item-name">商品评价</view><view class="merchant-item-desc">查看评分、回复与举报 · 审核由平台负责</view></view><text class="merchant-arrow">›</text></navigator>
     <navigator class="merchant-item" url="/pages/store-code/store-code"><view class="merchant-item-text"><view class="merchant-item-name">店铺小程序码</view><view class="merchant-item-desc">微信官方码 · 保存、分享与打印图片</view></view><text class="merchant-arrow">›</text></navigator>
     <view class="merchant-group">
       <navigator class="merchant-item" url="/pages/admin-analytics/admin-analytics"><view class="merchant-item-symbol">📊</view><view class="merchant-item-text"><view class="merchant-item-name">经营分析</view><view class="merchant-item-desc">销售趋势、商品表现与经营报表</view></view><text class="merchant-arrow">›</text></navigator>

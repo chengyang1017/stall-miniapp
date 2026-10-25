@@ -1,7 +1,7 @@
-import { getMerchantContext } from '../../utils/merchantContext'
-import { supportIdentity } from '../../utils/supportCloud'
+import { getCloudContext } from '../../modules/shared/runtime/context'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 import { getRemoteProducts, RemoteProduct } from '../../utils/remoteApi'
-import { stockAllows } from '../../utils/store'
+import { stockAllows } from '../../modules/customer/demo/catalog'
 
 
 const DEV_LOCAL = /^http:\/\/(?:127\.0\.0\.1|localhost):8787$/
@@ -22,7 +22,7 @@ Page({
     quantities: {} as Record<string, number>, stale: true
   },
   onShow() {
-    const cfg = getMerchantContext(),context=supportIdentity()
+    const cfg = getCloudContext(),context=supportIdentity()
     if(this.context!==context){this.context=context;this.serial++;this.setData({products:[],quantities:{},selected:null,totalText:'0.00',totalCount:0,busy:false})}
     if (!validConfig(cfg)) {
       this.setData({ status: '请先到商家管理中心的云端商品连接页填写 API 和店铺标识', products: [], stale: true })

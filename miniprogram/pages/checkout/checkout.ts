@@ -1,25 +1,25 @@
 import { cloudCartConfig, loadCloudCheckout, localDate, availableCloudSlots, cloudDeliveryReason, createCloudOrder } from '../../utils/cloudCheckout' // PHASE34_CLOUD_CHECKOUT
-import { businessState } from '../../utils/storeHours' // STALL_HOURS_V1
-import { getMinimumOrder, minimumOrderShortfall } from '../../utils/minimumOrder'
-import { isPointDeliverable } from '../../utils/delivery'
+import { businessState } from '../../modules/customer/demo/settings' // STALL_HOURS_V1
+import { getMinimumOrder, minimumOrderShortfall } from '../../modules/customer/demo/settings'
+import { isPointDeliverable } from '../../modules/customer/demo/settings'
 import { getPurchaseDetails, clearDirectPurchase, hasDirectPurchase } from '../../utils/directPurchase'
 import { getSelectedAddress, SavedAddress } from '../../utils/addresses'
-import { availableAreas, availableSlots, loadDelivery } from '../../utils/delivery'
+import { availableAreas, availableSlots, loadDelivery } from '../../modules/customer/demo/settings'
 import { CartDisplayItem, saveCart } from '../../utils/cart'
-import { createDemoOrder } from '../../utils/orders'
+import { createDemoOrder } from '../../modules/customer/demo/orders'
 import { formatPublishTime } from '../../utils/productPublishing'
-import { minimumDisplay } from '../../utils/businessCloud'
-import { deliveryStoreKey, resolveDeliveryArea, deliveryAddressReason } from '../../utils/cloudDelivery'
-import { refreshCloudAddresses } from '../../utils/cloudAddresses'
+import { minimumDisplay } from '../../modules/shared/api/business'
+import { deliveryStoreKey, resolveDeliveryArea, deliveryAddressReason } from '../../modules/customer/api/delivery'
+import { refreshCloudAddresses } from '../../modules/customer/api/addresses'
 import { cloudCacheSuffix } from '../../utils/cloudCart'
-import { supportIdentity } from '../../utils/supportCloud'
-import { getMerchantSessionToken } from '../../utils/merchantContext'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
+import { getSessionToken } from '../../modules/shared/runtime/context'
 
 const DRAFT_KEY = 'stall_checkout_draft_v1'
 
 Page({
   checkoutContext:'',
-  draftStorageKey(){const cfg=cloudCartConfig();return cfg?(getMerchantSessionToken()?DRAFT_KEY+':'+cloudCacheSuffix(cfg.storeSlug):''):DRAFT_KEY+':demo'},
+  draftStorageKey(){const cfg=cloudCartConfig();return cfg?(getSessionToken()?DRAFT_KEY+':'+cloudCacheSuffix(cfg.storeSlug):''):DRAFT_KEY+':demo'},
   restoreDraft(){this.checkoutContext=supportIdentity();const key=this.draftStorageKey(),draft=key?wx.getStorageSync(key):null;this.setData({note:draft&&typeof draft.note==='string'?draft.note:'',selectedAddress:null,hasAddress:false,selectedSlotId:'',noteShortcuts:[]})},
   cloudSerial:0,
   // CHECKOUT_NOTE_SHORTCUTS_V1

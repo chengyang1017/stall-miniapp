@@ -1,24 +1,24 @@
 import { getRemoteProducts } from './remoteApi'
-import { stockAllows } from './store'
-import { getMerchantContext } from './merchantContext'
-import { sessionScope } from './sessionScope'
-import { supportIdentity } from './supportCloud'
+import { stockAllows } from '../modules/customer/demo/catalog'
+import { getCloudContext } from '../modules/shared/runtime/context'
+import { sessionScope } from '../modules/shared/runtime/sessionScope'
+import { cloudIdentity as supportIdentity } from '../modules/shared/runtime/context'
 
 export interface CloudCartRow { productId: string; quantity: number }
 const KEY = 'stall_cloud_cart_v1'
 export function cloudCartConfig(): { apiBase: string; storeSlug: string } | null {
-  return getMerchantContext()
+  return getCloudContext()
 }
-export function cloudCacheSuffix(slug:string):string {const cfg=getMerchantContext();return encodeURIComponent((cfg?.apiBase||'disabled')+'/'+slug)+':'+sessionScope()}
+export function cloudCacheSuffix(slug:string):string {const cfg=getCloudContext();return encodeURIComponent((cfg?.apiBase||'disabled')+'/'+slug)+':'+sessionScope()}
 function storageKey(slug: string): string { return KEY + ':' + cloudCacheSuffix(slug) }
 export function readCloudCart(slug: string): CloudCartRow[] {
-  if(getMerchantContext()?.storeSlug!==slug)return []
+  if(getCloudContext()?.storeSlug!==slug)return []
   const rows = wx.getStorageSync(storageKey(slug))
   if (!Array.isArray(rows)) return []
   return rows.filter((r: any) => r && typeof r.productId === 'string' && Number.isInteger(r.quantity) && r.quantity > 0 && r.quantity <= 99)
 }
 export function writeCloudCart(slug: string, rows: CloudCartRow[]): void {
-  if(getMerchantContext()?.storeSlug!==slug)throw Error('store_changed')
+  if(getCloudContext()?.storeSlug!==slug)throw Error('store_changed')
   wx.setStorageSync(storageKey(slug), rows)
   syncCloudBadge(slug)
 }
@@ -28,7 +28,7 @@ export function syncCloudBadge(slug: string): void {
   else wx.removeTabBarBadge({ index: 1, fail: () => {} })
 }
 export async function changeCloudCart(slug: string, productId: string, delta: number): Promise<boolean> {
-  const context=supportIdentity();if(getMerchantContext()?.storeSlug!==slug)return false
+  const context=supportIdentity();if(getCloudContext()?.storeSlug!==slug)return false
   if (!productId || !Number.isSafeInteger(delta)) return false
   let stockLimit:number|null=null
   if (delta > 0) {
@@ -57,7 +57,7 @@ export async function cloudCartDetails(cfg: { apiBase: string; storeSlug: string
   // The remote catalog is the price authority for the display, never local demo data.
   const selected=readCloudCart(cfg.storeSlug)
   const catalog = selected.length?await getRemoteProducts(cfg.apiBase, cfg.storeSlug,selected.map(r=>r.productId)) as any[]:[]
-  if(context!==supportIdentity()||getMerchantContext()?.apiBase!==cfg.apiBase||getMerchantContext()?.storeSlug!==cfg.storeSlug)throw Error('store_or_identity_changed')
+  if(context!==supportIdentity()||getCloudContext()?.apiBase!==cfg.apiBase||getCloudContext()?.storeSlug!==cfg.storeSlug)throw Error('store_or_identity_changed')
   const cart = readCloudCart(cfg.storeSlug)
   const items: any[] = []
   for (const row of cart) {

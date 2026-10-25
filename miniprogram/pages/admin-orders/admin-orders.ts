@@ -1,6 +1,6 @@
-import {loadWorkflowOrders,updateWorkflowOrder,chinaTime} from '../../utils/orderWorkflow'
-import {saveDemoOrders} from '../../utils/orders'
-import {merchantOrderConfig,merchantOrderContextKey,fetchMerchantOrderPage,updateMerchantOrder,saveMerchantOrderNote,MerchantOrderCounts,MerchantOrderQuery} from '../../utils/merchantOrdersCloud'
+import {loadWorkflowOrders,updateWorkflowOrder,chinaTime} from '../../modules/merchant/demo/orders'
+import {saveDemoOrders} from '../../modules/merchant/demo/orders'
+import { merchantOrderConfig, merchantOrderContextKey, fetchMerchantOrderPage, updateMerchantOrder, saveMerchantOrderNote, MerchantOrderCounts, MerchantOrderQuery } from '../../modules/merchant/api/orders'
 import {saveMerchantEta} from '../../utils/merchantEtaCloud'
 const tabs=[{key:'latest',label:'全部订单'},{key:'new',label:'待接单'},{key:'accepted',label:'已接单'},{key:'preparing',label:'备货中'},{key:'delivering',label:'配送中'},{key:'delivered',label:'已送达'},{key:'cancelled',label:'已取消'},{key:'abnormal',label:'配送异常'},{key:'other',label:'取消 / 异常'}]
 const labels:Record<string,string>={new:'新订单',accepted:'已接单',preparing:'备货中',delivering:'配送中',delivered:'已送达',cancelled:'已取消',abnormal:'配送异常'}

@@ -1,3 +1,5 @@
+> 历史阶段文档：正文保留原审查时点。Phase29当前最新迁移为018；模块路径/独立构建与双AppID边界以 [APP_SEPARATION_READINESS.md](C:/Users/USER/WeChatProjects/miniprogram-1/backend/APP_SEPARATION_READINESS.md) 为准。未执行迁移或环境验证。
+
 # Stall Miniapp 集成准备审查
 
 审查日期：2026-10-25。项目根目录：`C:\Users\USER\WeChatProjects\miniprogram-1`。

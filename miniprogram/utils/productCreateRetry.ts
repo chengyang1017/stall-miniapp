@@ -1,6 +1,6 @@
-import { sessionScope } from './sessionScope'
-import { supportIdentity } from './supportCloud'
-import { authorizedMutation } from './authApi'
+import { sessionScope } from '../modules/shared/runtime/sessionScope'
+import { cloudIdentity as supportIdentity } from '../modules/shared/runtime/context'
+import { authorizedMutation } from '../modules/merchant/api/mutation'
 type Config={apiBase:string;storeSlug:string}
 type Pending={key:string;payload:Record<string,any>}
 function storageKey(cfg:Config,intent:string){return 'stall_product_create_retry_v1:'+JSON.stringify([cfg.apiBase,cfg.storeSlug,sessionScope(),intent])}

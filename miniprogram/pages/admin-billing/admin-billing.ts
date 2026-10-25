@@ -1,7 +1,7 @@
-import {loadWorkflowOrders,workflowLabel} from '../../utils/orderWorkflow'
-import {getMerchantContext} from '../../utils/merchantContext'
-import {authorizedGet} from '../../utils/authApi'
-import {businessContextKey} from '../../utils/businessCloud'
+import {loadWorkflowOrders,workflowLabel} from '../../modules/merchant/demo/orders'
+import { getCloudContext } from '../../modules/shared/runtime/context'
+import { authorizedGet } from '../../modules/shared/runtime/auth'
+import { businessContextKey } from '../../modules/merchant/api/business'
 import {shareCsvFile} from '../../utils/shareCsvFile'
 function localDay(value=new Date().toISOString()):string{const t=Date.parse(value);return Number.isFinite(t)?new Date(t+8*3600000).toISOString().slice(0,10):''}
 function localTime(value:string):string{return new Date(Date.parse(value)+8*3600000).toISOString().slice(11,16)}
@@ -21,7 +21,7 @@ Page({
  async loadMore(){if(this.data.loading||this.data.loadingMore||this.data.exporting||!this.data.hasMore)return;if(this.context!==businessContextKey()){await this.refresh();return}await this.loadPage(false)},
  async loadPage(reset:boolean):Promise<void>{
   if(this.data.exporting)return
-  const cfg=getMerchantContext(),context=businessContextKey(),serial=++this.serial;this.context=context
+  const cfg=getCloudContext(),context=businessContextKey(),serial=++this.serial;this.context=context
   if(reset){this.cursor='';this.setData({rows:[],count:0,pending:0,delivered:0,cancelled:0,orderValue:'0.00',received:'0.00',unpaid:'0.00',cloudMode:!!cfg,loading:!!cfg,loadingMore:false,error:'',moreError:'',hasMore:false,notice:cfg?'云端数据库账单，尚无可信支付核验链路。':'本机演示订单，确认收款为零。'})}
   else this.setData({loadingMore:true,moreError:''})
   try{
@@ -51,7 +51,7 @@ Page({
  },
  async exportCsv(){
   if(this.data.loading||this.data.loadingMore||this.data.exporting||this.data.error||!this.data.rows.length)return
-  const cfg=getMerchantContext(),context=businessContextKey();if(context!==this.context){this.refresh();return}
+  const cfg=getCloudContext(),context=businessContextKey();if(context!==this.context){this.refresh();return}
   this.setData({exporting:true})
   try{
    let csv:string,filename:string

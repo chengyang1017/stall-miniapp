@@ -1,10 +1,11 @@
 import { createProductWithRetry } from './productCreateRetry'
-import { authorizedGet, authorizedMutation } from './authApi'
-import { ProductDraft, ProductDraftPayload, InventoryMovement } from './store'
+import { authorizedGet } from '../modules/shared/runtime/auth'
+import { authorizedMutation } from '../modules/merchant/api/mutation'
+import { ProductDraft, ProductDraftPayload, InventoryMovement } from '../modules/merchant/demo/store'
 import { MerchantCatalogItem, MerchantProductQuery, cloudProductToLocal } from './merchantProductQuery'
 
-import { getMerchantContext } from './merchantContext'
-export const merchantCloudConfig = getMerchantContext
+import { getCloudContext } from '../modules/shared/runtime/context'
+export const merchantCloudConfig = getCloudContext
 export interface MerchantCloudProduct {
   createdAt?:string;updatedAt?:string
   id: string; categoryId: string | null; name: string; priceCents: number

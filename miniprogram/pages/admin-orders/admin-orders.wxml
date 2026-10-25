@@ -60,7 +60,8 @@
     <view class="muted">地址：{{item.area}} {{item.detail}}</view>
     <view class="muted">配送时段：{{item.slotText}}</view>
     <!-- PHASE39_ORDER_LIST_PROOF_LINK: original photo page now available to authorized cloud merchants. -->
-    <navigator wx:if="{{!batchMode && !queryDirty}}" class="proof-link {{operationBusy ? 'order-action-disabled' : ''}}" url="/pages/delivery-proof/delivery-proof?id={{item.id}}&amp;merchant=1">送达照片 / 完成配送 →</navigator>
+    <navigator wx:if="{{cloudMode && item.allowAbnormal && !batchMode && !queryDirty}}" class="proof-link" url="/pages/merchant-tracking/merchant-tracking?id={{item.id}}">配送指派 / 位置共享 →</navigator>
+    <navigator wx:if="{{!batchMode && !queryDirty}}" class="proof-link {{operationBusy ? 'order-action-disabled' : ''}}" url="/pages/merchant-delivery-proof/merchant-delivery-proof?id={{item.id}}">送达照片 / 完成配送 →</navigator>
     <view wx:if="{{item.note}}" class="muted">顾客下单备注：{{item.note}}</view>
     <view wx:if="{{!batchMode}}" class="eta">
       <text>商家内部备注（顾客不可见）</text>

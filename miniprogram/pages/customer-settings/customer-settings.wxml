@@ -10,6 +10,11 @@
   <view class="settings-card">
     <view class="settings-text-title">数据存储</view>
     <view class="settings-text">云端模式的地址、订单和客服消息由服务器按身份保存；临时购物车和界面偏好仍保存在设备。本机演示不会自动上传数据，演示时请勿填写真实敏感资料。</view>
+    <view class="settings-text-title">配送位置隐私</view>
+    <view class="settings-text">顾客仅查看自己订单的最近有效配送位置，不开启配送员持续定位。配送人员须在商家端主动授权，离开定位页面即停止采集并请求暂停；不提供历史轨迹。位置最多有效120秒，最后坐标最长保留24小时，结束会话元数据保留7天；不作为送达或支付证明。</view>
+
+    <view class="settings-text-title">商品评价与图片</view>
+    <view class="settings-text">仅经真实交易核验的订单商品可发表评价。图片由本人主动选择，审核通过后才随评价公开；撤回后不再展示，但必要审计资料不会直接删除。评价和举报资料用于内容审核与违规处理，请勿上传含他人隐私的信息。</view>
     <view class="settings-text-title">订单通知</view>
     <view class="settings-text">真正的订单通知需要服务端与微信订阅消息授权。</view>
   </view>

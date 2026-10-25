@@ -1,4 +1,4 @@
-import {loadStore,saveStore,Product,StoreData,MAX_STOCK,inventoryMovement} from './store'
+import {loadStore,saveStore,Product,StoreData,MAX_STOCK,inventoryMovement} from '../modules/merchant/demo/store'
 export function stockInteger(raw:string):number {
   if(!/^\d+$/.test(raw.trim()))throw new Error('库存和阈值必须为非负整数')
   const value=Number(raw)

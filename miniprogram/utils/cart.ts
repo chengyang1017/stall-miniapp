@@ -1,5 +1,5 @@
 
-import { loadStore, effectivePrice, productIsPublished, stockAllows } from './store'
+import { loadStore, effectivePrice, productIsPublished, stockAllows } from '../modules/customer/demo/catalog'
 
 export interface CartItem {
   productId: string

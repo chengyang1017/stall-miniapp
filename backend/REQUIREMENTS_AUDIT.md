@@ -1,3 +1,17 @@
+# Phase32 审计增量
+
+按用户本阶段指令，商品评价由原可选转为当前开发范围，收藏仍可选未开发。11.04合并条目保持部分完成，并明确评价源码及外部支付/审核依赖。原Phase28统计为历史口径，不将新增范围重复计入首版核心计数。新增020未执行；三目标静态编译完成，不等同支付、图片、审核或业务验收。详见 [PRODUCT_REVIEWS.md](PRODUCT_REVIEWS.md)。
+
+---
+
+# Phase31 审计增量
+
+原需求11.01的GPS可选项现按用户Phase31指令转为本阶段开发范围；下表对应行已更新源码证据。Phase28原始统计口径/数字保留历史，不将新增范围重复计入首版核心项。前台单任务源码及三目标静态编译已完成；019未执行，微信权限/实际定位/数据库与网络场景均未验证。无后台定位、多单行程、路线规划或支付变更。详见 [GPS_TRACKING.md](GPS_TRACKING.md)。
+
+---
+
+> 历史阶段文档：正文保留原审查时点。Phase29当前最新迁移为018；模块路径/独立构建与双AppID边界以 [APP_SEPARATION_READINESS.md](C:/Users/USER/WeChatProjects/miniprogram-1/backend/APP_SEPARATION_READINESS.md) 为准。未执行迁移或环境验证。
+
 # 需求.md 逐条源码审计（Phase28）
 
 日期：2026-10-25。唯一原始需求基准为项目根目录需求.md第0—12章。本审计保留原文及原始[核心]/[可选]/[待确认]标签；新增功能不另造原始需求计数。逐条证据指向当前本地实际页面、事件/函数、API和结构；不以旧阶段报告判定完成。所有结论仅为源码审计，尚未实际运行验证。
@@ -233,12 +247,12 @@
 
 | ID | 原始需求 | 主状态 | 实际链路、依赖与缺口 | 具体源码证据 |
 | --- | --- | --- | --- | --- |
-| 11.01 | [可选] 地图 GPS 实时骑手位置 | 可选或未来功能 | 无实时骑手定位上传/读取或顾客追踪流；留作未来。 | [app.json:5](C:/Users/USER/WeChatProjects/miniprogram-1/miniprogram/app.json:5)；[server.mjs:44](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/server.mjs:44) |
+| 11.01 | [原可选，Phase31已纳入] 地图 GPS 实时骑手位置 | 已完成源码 | Merchant主动前台定位、明确指派、单任务会话、Customer本人订单最近点地图、到期/终态撤权；后台和多单行程不在本次实现内，未运行验证。 | [GPS_TRACKING.md](GPS_TRACKING.md)；[deliveryTracking.mjs](src/deliveryTracking.mjs)；[019](sql/019_delivery_tracking.sql)；[Customer控制器](../miniprogram/modules/customer/controllers/tracking.ts)；[Merchant设备单例](../miniprogram/modules/merchant/controllers/trackingDevice.ts) |
 | 11.02 | [可选] 路线规划及自动预计送达时间 | 可选或未来功能 | ETA是商家文字，不是路线规划或自动预计到达。 | [merchantEtaCloud.ts:3](C:/Users/USER/WeChatProjects/miniprogram-1/miniprogram/utils/merchantEtaCloud.ts:3)；[orderWorkflow.mjs:39](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/orderWorkflow.mjs:39) |
 | 11.03 | [可选] 复杂优惠券、满减、会员积分 | 可选或未来功能 | 无优惠券/满减/积分模型或计算；当前只支持单商品折扣。 | [server.mjs:103](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/server.mjs:103)；[006_product_description_discount.sql:4](C:/Users/USER/WeChatProjects/miniprogram-1/backend/sql/006_product_description_discount.sql:4) |
-| 11.04 | [可选] 商品评价与收藏 | 可选或未来功能 | 无评价、收藏模型/页面。 | [app.json:5](C:/Users/USER/WeChatProjects/miniprogram-1/miniprogram/app.json:5)；[server.mjs:44](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/server.mjs:44) |
+| 11.04 | [原可选；评价已纳入Phase32，收藏仍可选] 商品评价与收藏 | 部分完成 | 评价/评分/图片/修订/回复/举报/独立人审源码已实现；可信支付核验未接入，当前真实发表仍不满足资格。微信自动内容安全为预留适配器，默认待审；收藏尚未开发。未运行验证。 | [PRODUCT_REVIEWS.md](PRODUCT_REVIEWS.md)；[productReviews.mjs](src/productReviews.mjs)；[reviewPolicy.mjs](src/reviewPolicy.mjs)；[020](sql/020_product_reviews.sql)；[顾客页](../miniprogram/pages/customer-reviews/customer-reviews.ts)；[商家页](../miniprogram/pages/merchant-reviews/merchant-reviews.ts) |
 | 11.05 | [可选] 多商家入驻 | 可选或未来功能 | 虽有店铺隔离，但没有多商家自助入驻/审核模块；不把多店查询当作入驻。 | [auth.mjs:12](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/auth.mjs:12)；[auth.mjs:58](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/auth.mjs:58) |
-| 11.06 | [可选] 专门的配送员端 | 可选或未来功能 | 没有独立配送员端或骑手权限。 | [app.json:5](C:/Users/USER/WeChatProjects/miniprogram-1/miniprogram/app.json:5)；[server.mjs:44](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/server.mjs:44) |
+| 11.06 | [可选] 专门的配送员端 | 可选或未来功能 | 无独立配送员小程序；Phase31仅在Merchant内实现本店被指派成员的定位页面，不等同完整骑手调度平台。 | [GPS_TRACKING.md](GPS_TRACKING.md)；[merchant-tracking](../miniprogram/pages/merchant-tracking/merchant-tracking.ts) |
 | 11.07 | [可选] 高级营收与销量报表 | 可选或未来功能 | 已有销售分析基础；“高级”进一步规则未定义，原文明确非首版必需，不额外扩展。 | [salesAnalytics.mjs:84](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/salesAnalytics.mjs:84)；[admin-analytics.ts:18](C:/Users/USER/WeChatProjects/miniprogram-1/miniprogram/pages/admin-analytics/admin-analytics.ts:18) |
 
 ### 第12章：待向商家确认的关键问题

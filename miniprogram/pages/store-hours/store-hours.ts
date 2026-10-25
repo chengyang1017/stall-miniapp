@@ -1,6 +1,6 @@
-import {loadHours,saveHours,HoursConfig,businessState} from '../../utils/storeHours'
-import {getMerchantContext} from '../../utils/merchantContext'
-import {merchantBusiness,patchMerchantBusiness,businessContextKey} from '../../utils/businessCloud'
+import {loadHours,saveHours,HoursConfig,businessState} from '../../modules/merchant/demo/settings'
+import { getCloudContext } from '../../modules/shared/runtime/context'
+import { merchantBusiness, patchMerchantBusiness, businessContextKey } from '../../modules/merchant/api/business'
 const DAYS=['星期日','星期一','星期二','星期三','星期四','星期五','星期六']
 const TIME=/^([01]\d|2[0-3]):[0-5]\d$/
 Page({
@@ -9,7 +9,7 @@ Page({
  onShow(){this.refresh()},onUnload(){this.serial++},
  async refresh(){
   if(this.data.busy&&this.data.ready)return
-  const cfg=getMerchantContext(),context=businessContextKey(),serial=++this.serial;this.context=context
+  const cfg=getCloudContext(),context=businessContextKey(),serial=++this.serial;this.context=context
   this.setData({cloudMode:!!cfg,busy:!!cfg,ready:false,error:'',status:'正在读取',...(cfg?{days:[],notice:'',accepting:false}:{})})
   try{
    const config=cfg?await merchantBusiness(cfg):loadHours()
@@ -22,7 +22,7 @@ Page({
  async persist(patch:Partial<HoursConfig>,message:string){
   if(this.data.busy||!this.data.ready)return
   if(this.context!==businessContextKey()){this.refresh();return}
-  const cfg=getMerchantContext(),context=this.context
+  const cfg=getCloudContext(),context=this.context
   this.setData({busy:true,error:''})
   try{
    if(cfg){this.revision=await patchMerchantBusiness(cfg,this.revision,patch);const saved=await merchantBusiness(cfg);if(context!==businessContextKey())throw Error('context_changed');if(saved.revision!==this.revision)throw Error('business_settings_changed_refresh');this.setData({status:saved.label})}

@@ -1,0 +1,30 @@
+<view class="tracking-page"><view class="card">
+ <view class="title">配送位置共享</view><view>本单：{{id}}</view>
+ <view wx:if="{{!cloudMode}}" class="notice">本机演示不采集真实 GPS，不上传位置。请先配置云端店铺并登录。</view>
+ <block wx:else>
+  <view wx:if="{{ownCourierLabel}}">本人配送成员编号：{{ownCourierLabel}}（可告知管理员用于指派）</view>
+  <view class="state">{{running ? '本设备正在定位，上传以成功回执为准' : '本设备没有开启定位'}}</view>
+  <view>服务端：{{stateText}}</view><view>订单状态：{{orderStatus === 'delivering' ? '配送中' : '当前不在配送中'}}</view>
+  <view>本设备共享任务：{{currentTask || '无'}}</view>
+  <view>上传状态：{{uploading ? '正在上传' : '等待设备更新／未上传'}}</view>
+  <view>最近成功同步：{{lastSynced || '尚未同步'}} · 北京时间</view>
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+  <button bindtap="refresh" loading="{{loading}}" disabled="{{loading || busy}}">刷新授权和共享状态</button>
+  <view wx:if="{{canAssign && orderStatus === 'delivering'}}" class="section">
+   <view>明确指派本店配送人员（编号来自服务器，不代表姓名）</view>
+   <picker range="{{couriers}}" range-key="label" value="{{courierIndex}}" bindchange="courierChange" disabled="{{busy}}"><view class="picker">{{couriers.length ? couriers[courierIndex].label : '暂无可指派成员'}} {{couriers[courierIndex].self ? '（本人）' : ''}} ›</view></picker>
+   <button bindtap="assign" disabled="{{busy || !couriers.length}}">确认指派</button>
+  </view>
+  <view wx:if="{{canControl && orderStatus === 'delivering'}}" class="section">
+   <button type="primary" bindtap="start" disabled="{{busy || running}}" loading="{{busy}}">开始／恢复本人位置共享</button>
+   <button bindtap="pause" disabled="{{busy || !running}}">暂停共享</button>
+   <button bindtap="stop" disabled="{{busy || !sessionId}}">结束共享／结束旧设备会话</button>
+  </view>
+  <view wx:else class="notice">只有已指派的本人可以共享，且订单必须处于配送中。其他成员不能代传定位。</view>
+  <map wx:if="{{hasPoint}}" class="tracking-map" latitude="{{latitude}}" longitude="{{longitude}}" markers="{{markers}}" show-location="{{false}}" scale="15" />
+  <view wx:if="{{hasPoint}}">本人 GCJ-02：{{latitude}}，{{longitude}} · 精度约 {{accuracy}} 米</view>
+  <button size="mini" bindtap="settings">查看微信定位授权设置</button>
+ </block>
+ <view class="notice">仅在本人明确同意后前台定位；离开页面即停止采集并请求暂停。一个身份同一时间仅共享一个任务。后台定位未启用；请勿把同一账号交给他人代传位置。</view>
+ <view class="notice">仅保存最后一个坐标，不提供活动轨迹。顾客最多读取120秒内的有效点；结束或暂停立即隐藏。坐标最长保留24小时，结束会话元数据保留7天，由服务端清理。</view>
+</view></view>

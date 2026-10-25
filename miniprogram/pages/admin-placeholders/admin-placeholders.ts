@@ -1,7 +1,7 @@
-import { getMerchantContext } from '../../utils/merchantContext'
-import { merchantBusiness,patchMerchantBusiness } from '../../utils/businessCloud'
+import { getCloudContext } from '../../modules/shared/runtime/context'
+import { merchantBusiness, patchMerchantBusiness } from '../../modules/merchant/api/business'
 import { uploadMerchantImage } from '../../utils/cloudMerchantImage'
-import { supportIdentity } from '../../utils/supportCloud'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 import { currentPresentation,placeholderStyles } from '../../utils/storePresentation'
 Page({
  context:'',serial:0,reading:false,revision:null as string|null,
@@ -11,7 +11,7 @@ Page({
  onUnload(){this.serial++},
  async refresh(){
   if(this.data.busy)return
-  const context=supportIdentity(),serial=++this.serial,cfg=getMerchantContext();this.context=context;this.setData({cloudMode:!!cfg,ready:!cfg,error:'',...cfg?{placeholderStyle:'none',customPlaceholderUrl:'',placeholderImageKey:null}:{...currentPresentation()}})
+  const context=supportIdentity(),serial=++this.serial,cfg=getCloudContext();this.context=context;this.setData({cloudMode:!!cfg,ready:!cfg,error:'',...cfg?{placeholderStyle:'none',customPlaceholderUrl:'',placeholderImageKey:null}:{...currentPresentation()}})
   if(!cfg)return
   this.reading=true;this.setData({busy:true})
   try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==supportIdentity())return;const style=r.placeholderStyle||'premium';this.revision=r.revision||null;this.setData({placeholderStyle:style,placeholderStyleIndex:placeholderStyles.indexOf(style),customPlaceholderUrl:r.customPlaceholderUrl||'',placeholderImageKey:r.placeholderImageKey||null,ready:true})}
@@ -19,7 +19,7 @@ Page({
  },
  async persist(style:string,key?:string|null):Promise<boolean>{
   if(this.data.busy||!this.data.ready||this.context!==supportIdentity())return false
-  const cfg=getMerchantContext(),context=this.context;this.setData({busy:true,error:''})
+  const cfg=getCloudContext(),context=this.context;this.setData({busy:true,error:''})
   try{if(cfg){this.revision=await patchMerchantBusiness(cfg,this.revision,{placeholderStyle:style,...key===undefined?{}:{placeholderImageKey:key}});if(context!==supportIdentity())return false;const r=await merchantBusiness(cfg);if(context!==supportIdentity())return false;if(r.revision!==this.revision)throw Error('configuration_changed');this.revision=r.revision||null;this.setData({placeholderStyle:r.placeholderStyle||style,customPlaceholderUrl:r.customPlaceholderUrl||'',placeholderImageKey:r.placeholderImageKey||null,placeholderStyleIndex:placeholderStyles.indexOf(style)})}
    else{wx.setStorageSync('stall_placeholder_style_v1',style);if(key===null)wx.removeStorageSync('stall_placeholder_custom_v1');this.setData({placeholderStyle:style,placeholderStyleIndex:placeholderStyles.indexOf(style),customPlaceholderUrl:style==='custom'?String(wx.getStorageSync('stall_placeholder_custom_v1')||''):this.data.customPlaceholderUrl})}
    wx.showToast({title:'缺图样式已保存'});return true
@@ -29,7 +29,7 @@ Page({
  changePlaceholderStyle(e:any){const style=placeholderStyles[Number(e.detail.value)];if(style)this.persist(style)},
  uploadCustomPlaceholder(){
   if(this.data.busy||!this.data.ready||this.context!==supportIdentity())return
-  const cfg=getMerchantContext(),context=this.context;this.setData({busy:true,error:''})
+  const cfg=getCloudContext(),context=this.context;this.setData({busy:true,error:''})
   wx.chooseImage({count:1,sizeType:['compressed'],sourceType:['album','camera'],success:async r=>{
    try{const path=r.tempFilePaths[0];if(!path||context!==supportIdentity())return
     if(cfg){const key=await uploadMerchantImage(cfg,path);if(context!==supportIdentity())return;this.revision=await patchMerchantBusiness(cfg,this.revision,{placeholderStyle:'custom',placeholderImageKey:key});const settings=await merchantBusiness(cfg);if(settings.revision!==this.revision)throw Error('configuration_changed');if(context===supportIdentity()){this.revision=settings.revision||null;this.setData({placeholderStyle:'custom',placeholderStyleIndex:5,placeholderImageKey:key,customPlaceholderUrl:settings.customPlaceholderUrl||''})}}

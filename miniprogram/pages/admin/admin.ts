@@ -1,19 +1,19 @@
-import { getMinimumOrder, saveMinimumOrder } from '../../utils/minimumOrder'
-import { getMerchantContext } from '../../utils/merchantContext'
-import { merchantBusiness, patchMerchantBusiness, businessContextKey } from '../../utils/businessCloud'
-import { fetchMerchantPendingCount } from '../../utils/merchantOrdersCloud'
-import { loadWorkflowOrders } from '../../utils/orderWorkflow'
-import { supportGet,supportIdentity } from '../../utils/supportCloud'
+import { getMinimumOrder, saveMinimumOrder } from '../../modules/merchant/demo/settings'
+import { getCloudContext } from '../../modules/shared/runtime/context'
+import { merchantBusiness, patchMerchantBusiness, businessContextKey } from '../../modules/merchant/api/business'
+import { fetchMerchantPendingCount } from '../../modules/merchant/api/orders'
+import { loadWorkflowOrders } from '../../modules/merchant/demo/orders'
+import { merchantSupportGet,supportIdentity } from '../../modules/merchant/api/support'
 Page({
  revision:null as string|null, serial:0,pendingSerial:0, loadedContext:'',supportSerial:0,supportTimer:0 as any,
  data:{supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',pendingNewOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
  onShow(){this.refreshNewOrderNotice();this.refreshMinimum();this.refreshSupport()},
- async refreshSupport(){clearTimeout(this.supportTimer);const serial=++this.supportSerial,identity=supportIdentity();this.setData({supportUnread:null,supportError:''});if(!getMerchantContext())return;try{const r=await supportGet(true,'unread');if(serial===this.supportSerial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){if(serial===this.supportSerial&&identity===supportIdentity())this.setData({supportError:'未读读取失败，进入客服重试'})}finally{if(serial===this.supportSerial)this.supportTimer=setTimeout(()=>this.refreshSupport(),30000)}},
+ async refreshSupport(){clearTimeout(this.supportTimer);const serial=++this.supportSerial,identity=supportIdentity();this.setData({supportUnread:null,supportError:''});if(!getCloudContext())return;try{const r=await merchantSupportGet('unread');if(serial===this.supportSerial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){if(serial===this.supportSerial&&identity===supportIdentity())this.setData({supportError:'未读读取失败，进入客服重试'})}finally{if(serial===this.supportSerial)this.supportTimer=setTimeout(()=>this.refreshSupport(),30000)}},
  onHide(){this.supportSerial++;clearTimeout(this.supportTimer);this.setData({supportUnread:null,supportError:''})},
  onUnload(){this.serial++;this.pendingSerial++;this.supportSerial++;clearTimeout(this.supportTimer)},
  onMinimumOrderInput(e:any){if(!this.data.settingsSaving)this.setData({minimumOrderInput:String(e.detail.value||'')})},
  async refreshMinimum(){
-  const cfg=getMerchantContext(),serial=++this.serial,context=businessContextKey();this.loadedContext=context
+  const cfg=getCloudContext(),serial=++this.serial,context=businessContextKey();this.loadedContext=context
   this.setData({cloudMode:!!cfg,settingsLoading:!!cfg,settingsReady:!cfg,settingsError:'',minimumOrderInput:cfg?'':getMinimumOrder().toFixed(2)})
   if(!cfg)return
   try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==businessContextKey())return;this.revision=r.revision||null;this.setData({minimumOrderInput:(r.minimumOrderCents/100).toFixed(2),settingsReady:true})}
@@ -24,7 +24,7 @@ Page({
   if(this.data.settingsSaving||!this.data.settingsReady)return
   const raw=this.data.minimumOrderInput.trim()
   if(!/^\d+(?:\.\d{1,2})?$/.test(raw)||!Number.isFinite(Number(raw))||Number(raw)>999999){wx.showToast({title:'请输入有效金额（最多两位小数）',icon:'none'});return}
-  const cfg=getMerchantContext(),context=businessContextKey()
+  const cfg=getCloudContext(),context=businessContextKey()
   if(context!==this.loadedContext){this.refreshMinimum();return}
   this.setData({settingsSaving:true,settingsError:''})
   try{
@@ -36,7 +36,7 @@ Page({
   finally{this.setData({settingsSaving:false})}
  },
  async refreshNewOrderNotice(){
-  const cfg=getMerchantContext(),context=businessContextKey(),serial=++this.pendingSerial
+  const cfg=getCloudContext(),context=businessContextKey(),serial=++this.pendingSerial
   this.setData({pendingNewOrderCount:null,pendingLoading:!!cfg,pendingError:''})
   try{
    const count=cfg?await fetchMerchantPendingCount(cfg):loadWorkflowOrders().filter(o=>String(o.fulfillmentStatus||'new')==='new').length

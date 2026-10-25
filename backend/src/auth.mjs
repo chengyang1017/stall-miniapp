@@ -1,3 +1,4 @@
+import { legacyWechatApplication } from './wechatApplications.mjs'
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 
 const sha256 = value => createHash('sha256').update(value).digest('hex')
@@ -31,9 +32,7 @@ export async function revokeSession(pool, req) {
 }
 
 export async function exchangeWechatCode(code) {
-  const appId = process.env.WX_APPID
-  const secret = process.env.WX_APPSECRET
-  if (!appId || !secret) throw new Error('wechat_not_configured')
+  const {appId,secret}=legacyWechatApplication()
   if (!/^[a-zA-Z0-9_-]{1,256}$/.test(code)) throw new Error('invalid_code')
   const url = new URL('https://api.weixin.qq.com/sns/jscode2session')
   url.searchParams.set('appid', appId)

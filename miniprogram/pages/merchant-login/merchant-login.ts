@@ -1,6 +1,6 @@
-import { loginWithWechat, authorizedGet, setLocalDevToken, localDevAllowed } from '../../utils/authApi'
-import { getMerchantContext } from '../../utils/merchantContext'
-import { clearCloudAddressCache } from '../../utils/cloudAddresses'
+import { loginWithWechat, authorizedGet, setLocalDevToken, localDevAllowed } from '../../modules/shared/runtime/auth'
+import { getCloudContext } from '../../modules/shared/runtime/context'
+import { clearSessionCaches } from '../../modules/shared/runtime/sessionLifecycle'
 
 const CONFIG_KEY = 'stall_cloud_catalog_config_v1'
 const TOKEN_KEY = 'stall_server_session_v1'
@@ -62,10 +62,10 @@ Page({
   },
   async logout() {
     if(this.data.busy)return
-    const token=wx.getStorageSync(TOKEN_KEY),cfg=getMerchantContext();let revoked=false
+    const token=wx.getStorageSync(TOKEN_KEY),cfg=getCloudContext();let revoked=false
     this.setData({busy:true})
     try{if(cfg&&typeof token==='string'&&token){await new Promise<void>((resolve,reject)=>wx.request({url:cfg.apiBase+'/v1/auth/logout',method:'POST',timeout:15000,header:{Authorization:`Bearer ${token}`},success:r=>r.statusCode===200?resolve():reject(Error('logout_unconfirmed')),fail:reject}));revoked=true}}
     catch(_){/* Still remove this device's session; do not claim remote revocation. */}
-    finally{if(wx.getStorageSync(TOKEN_KEY)===token){wx.removeStorageSync(TOKEN_KEY);wx.removeStorageSync('stall_server_cache_scope_v1');clearCloudAddressCache();this.setData({authenticated:false,devToken:'',status:revoked?'服务器会话已撤销，已退出登录':'已退出本机登录；服务器会话撤销未确认，请检查网络'})}this.setData({busy:false})}
+    finally{if(wx.getStorageSync(TOKEN_KEY)===token){wx.removeStorageSync(TOKEN_KEY);wx.removeStorageSync('stall_server_cache_scope_v1');clearSessionCaches();this.setData({authenticated:false,devToken:'',status:revoked?'服务器会话已撤销，已退出登录':'已退出本机登录；服务器会话撤销未确认，请检查网络'})}this.setData({busy:false})}
   }
 })

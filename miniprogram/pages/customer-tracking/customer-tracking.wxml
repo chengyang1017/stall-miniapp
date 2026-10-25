@@ -1,0 +1,19 @@
+<view class="tracking-page">
+ <view class="card">
+  <view class="title">本订单配送位置</view>
+  <view>订单：{{id}}</view>
+  <view wx:if="{{!cloudMode}}" class="notice">本机演示没有真实配送位置，不采集定位、不生成模拟骑手。</view>
+  <block wx:else>
+   <view class="state">{{stateText}}</view>
+   <view>订单配送状态：{{orderStatus === 'delivering' ? '配送中' : orderStatus === 'delivered' ? '已送达' : orderStatus === 'cancelled' ? '已取消' : orderStatus === 'abnormal' ? '配送异常' : '当前不在配送中'}}</view>
+   <view>商家预计送达：{{eta || '尚未填写'}}</view>
+   <view>最后位置同步：{{lastUpdated || '尚未同步'}} · 北京时间</view>
+   <view wx:if="{{error}}" class="error">{{error}}</view>
+   <button bindtap="refresh" loading="{{loading}}" disabled="{{loading}}">刷新配送位置</button>
+   <map wx:if="{{hasMap}}" id="delivery-map" class="tracking-map" latitude="{{latitude}}" longitude="{{longitude}}" markers="{{markers}}" scale="15" show-location="{{false}}" />
+   <view wx:else class="notice">没有可靠坐标，位置不可用。</view>
+   <button wx:if="{{hasMap}}" bindtap="center" size="mini">查看当前配送区域</button>
+  </block>
+  <view class="notice">仅展示本订单获授权的位置及目的地。暂停、失联或结束后不表示仍在实时更新。地图不绘制推测路线，GPS 不作为送达证明。</view>
+ </view>
+</view>

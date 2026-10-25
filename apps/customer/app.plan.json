@@ -1,0 +1,56 @@
+{
+  "kind": "build-target-description",
+  "independentlyPublishable": false,
+  "appId": null,
+  "currentRoot": "../../miniprogram",
+  "entry": "pages/index/index",
+  "ownedPages": [
+    "pages/index/index",
+    "pages/product-detail/product-detail",
+    "pages/cart/cart",
+    "pages/checkout/checkout",
+    "pages/addresses/addresses",
+    "pages/orders/orders",
+    "pages/order-detail/order-detail",
+    "pages/profile/profile",
+    "pages/customer-settings/customer-settings",
+    "pages/customer-support-chat/customer-support-chat",
+    "pages/customer-delivery-proof/customer-delivery-proof",
+    "pages/customer-tracking/customer-tracking",
+    "pages/customer-reviews/customer-reviews"
+  ],
+  "currentTabBar": [
+    "pages/index/index",
+    "pages/cart/cart",
+    "pages/orders/orders",
+    "pages/profile/profile"
+  ],
+  "apiNamespace": "/v1/stores/:slug/...",
+  "authorization": "server-session-and-database-permissions",
+  "nextBuildWork": [
+    "WeChat platform compilation and package/privacy checks",
+    "operator-controlled multi-AppID server authentication",
+    "explicit historical identity mapping and customer-targeted store codes"
+  ],
+  "authenticationPreparation": {
+    "actualAppId": null,
+    "currentFlow": "legacy single AppID wx.login -> backend code exchange",
+    "roleGrantedBy": "database membership, never client plan",
+    "futureCacheNamespace": "app identity + API + store + subject-derived scope"
+  },
+  "publicConfigBoundary": {
+    "trustedApiBaseSource": "miniprogram/config/cloud.ts",
+    "appSecretAllowed": false,
+    "defaultStoreOptional": true
+  },
+  "privacyBoundary": "customer-settings contains a brief notice; formal subject/retention policy remains a separate requirement",
+  "sourceBuildImplemented": true,
+  "platformCompilationVerified": false,
+  "combinedCompatibilityPages": [
+    "pages/support-chat/support-chat",
+    "pages/delivery-proof/delivery-proof"
+  ],
+  "buildCommand": "npm run build:customer",
+  "output": "../../dist/customer",
+  "manifest": "../build-targets.json"
+}

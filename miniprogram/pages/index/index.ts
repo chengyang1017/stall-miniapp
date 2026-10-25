@@ -1,12 +1,13 @@
+import { openMerchantWorkspace,CAN_OPEN_MERCHANT } from '../../modules/integration/singleAppHost'
 import { PUBLIC_API_BASE } from '../../config/cloud'
 import { captureStoreEntry,resolveStoreEntry,shopShare } from '../../utils/storeEntry'
 import { currentPresentation,refreshPagePresentation } from '../../utils/storePresentation'
 import { cloudCartConfig, changeCloudCart, cloudCartDetails, syncCloudBadge } from '../../utils/cloudCart' // PHASE33_CLOUD_CART
-import { businessState } from '../../utils/storeHours' // STALL_HOURS_V1
+import { businessState } from '../../modules/customer/demo/settings' // STALL_HOURS_V1
 import { getRemoteProductPage } from '../../utils/remoteApi'
-import { publicBusiness } from '../../utils/businessCloud'
+import { publicBusiness } from '../../modules/shared/api/business'
 import { loadCloudDelivery } from '../../utils/cloudCheckout'
-import { supportIdentity } from '../../utils/supportCloud'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 
 import {
   loadStore,
@@ -14,7 +15,7 @@ import {
   productIsPublished,
   stockAllows,
   money
-} from '../../utils/store'
+} from '../../modules/customer/demo/catalog'
 
 import {
   addToCart,
@@ -36,6 +37,7 @@ Page({
   cloudSerial:0,cloudContext:'',pageVisible:false,
 
   data: {
+    canOpenMerchant:CAN_OPEN_MERCHANT,
     storeName:'小摊商店',shareReady:false,entryLoading:false,entryError:'',dealRows:[] as any[],dealCursor:'',dealsHasMore:false,dealBusy:false,dealError:'',
     placeholderStyle: 'premium',
     customPlaceholderUrl: '',
@@ -270,8 +272,6 @@ url: '/pages/cart/cart'
   },
 
   goAdmin() {
-    wx.navigateTo({
-      url: '/pages/admin/admin'
-    })
+    openMerchantWorkspace()
   }
 })

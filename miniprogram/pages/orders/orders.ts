@@ -1,6 +1,6 @@
-import { customerOrdersConfig, customerOrdersRequest } from '../../utils/customerOrdersApi' // PHASE35_CUSTOMER_ORDERS
-import { loadWorkflowOrders, chinaTime } from '../../utils/orderWorkflow'
-import { supportIdentity } from '../../utils/supportCloud'
+import { customerOrdersConfig, customerOrdersRequest } from '../../modules/customer/api/orders' // PHASE35_CUSTOMER_ORDERS
+import { loadWorkflowOrders, chinaTime } from '../../modules/customer/demo/orders'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 
 type OrderTab = 'all' | 'unpaid' | 'active' | 'completed' | 'other'
 const TABS: Array<{key: OrderTab; label: string}> = [

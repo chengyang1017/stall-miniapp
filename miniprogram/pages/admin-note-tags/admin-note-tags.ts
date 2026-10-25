@@ -1,17 +1,17 @@
-import { getMerchantContext } from '../../utils/merchantContext'
-import { merchantBusiness,patchMerchantBusiness } from '../../utils/businessCloud'
-import { supportIdentity } from '../../utils/supportCloud'
+import { getCloudContext } from '../../modules/shared/runtime/context'
+import { merchantBusiness, patchMerchantBusiness } from '../../modules/merchant/api/business'
+import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 const KEY='stall_note_tags_v1'
 function readTags():string[]{const raw=wx.getStorageSync(KEY);return Array.isArray(raw)?raw.filter((s:any)=>typeof s==='string').slice(0,30):[]}
 Page({
  context:'',serial:0,revision:null as string|null,
  data:{tags:[] as string[],draft:'',editingIndex:-1,editingValue:'',cloudMode:false,busy:false,loading:false,ready:false,error:''},
  onShow(){this.refresh()},
- onHide(){this.serial++;if(getMerchantContext())this.setData({tags:[],ready:false,loading:false})},
+ onHide(){this.serial++;if(getCloudContext())this.setData({tags:[],ready:false,loading:false})},
  onUnload(){this.serial++},
  async refresh(){
   if(this.data.busy)return
-  const context=supportIdentity(),serial=++this.serial,cfg=getMerchantContext();if(context!==this.context)this.setData({draft:'',editingIndex:-1,editingValue:''});this.context=context
+  const context=supportIdentity(),serial=++this.serial,cfg=getCloudContext();if(context!==this.context)this.setData({draft:'',editingIndex:-1,editingValue:''});this.context=context
   this.setData({cloudMode:!!cfg,tags:cfg?[]:readTags(),loading:!!cfg,ready:!cfg,error:'',editingIndex:-1})
   if(!cfg)return
   try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==supportIdentity())return;this.revision=r.revision||null;this.setData({tags:r.noteTags||[],ready:true})}catch(_){if(serial===this.serial)this.setData({error:'云端标签读取失败，请检查商家登录和权限；未回退本机标签'})}finally{if(serial===this.serial)this.setData({loading:false})}
@@ -20,7 +20,7 @@ Page({
  typeEdit(e:any){if(!this.data.busy)this.setData({editingValue:String(e.detail.value||'')})},
  async persist(tags:string[]):Promise<boolean>{
   if(this.data.busy||!this.data.ready||this.context!==supportIdentity())return false
-  const cfg=getMerchantContext(),context=this.context;this.setData({busy:true,error:''})
+  const cfg=getCloudContext(),context=this.context;this.setData({busy:true,error:''})
   try{if(cfg)this.revision=await patchMerchantBusiness(cfg,this.revision,{noteTags:tags});else wx.setStorageSync(KEY,tags)
    if(context!==supportIdentity())return false;this.setData({tags});return true
   }catch(e){if(context===supportIdentity())this.setData({error:String(e).includes('409')?'设置已变化，请刷新后重新编辑，未覆盖云端配置':'保存失败，输入保留；请重试或刷新核对',ready:false});return false}finally{this.setData({busy:false})}
