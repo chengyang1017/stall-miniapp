@@ -1,6 +1,16 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { ROOT,config,walk } from './miniapp-graph.mjs'
+import { scanJavaScript } from './miniapp-preview-audit.mjs'
+
+// Fail the build if its JavaScript still contains syntax rejected by WeChat preview.
+export function assertPreviewCompatibleJS(source, filename){
+ const findings=scanJavaScript(source,filename)
+ if(findings.length){
+  const first=findings[0]
+  throw Error(`Preview-incompatible JS: ${first.file}:${first.line}:${first.column} [${first.rule}] (${findings.length} issue(s))`)
+ }
+}
 
 // Inspection only: no miniapp APIs or business functions are executed.
 export function checkOutput(target){
@@ -8,6 +18,8 @@ export function checkOutput(target){
  const output=path.join(ROOT,'dist',target),root=path.join(output,'miniprogram')
  const manifest=JSON.parse(fs.readFileSync(path.join(output,'build-manifest.json'),'utf8'))
  const app=JSON.parse(fs.readFileSync(path.join(root,'app.json'),'utf8'))
+ const locationDesc=app.permission?.['scope.userLocation']?.desc
+ if(typeof locationDesc==='string'&&[...locationDesc].length>30)throw Error(`Location permission description exceeds 30 characters in ${target} output: ${[...locationDesc].length}`)
  if(manifest.target!==target||JSON.stringify(app.pages)!==JSON.stringify(plan.pages))throw Error('Output page manifest mismatch')
  for(const tab of app.tabBar?.list||[])if(!app.pages.includes(tab.pagePath))throw Error('Tab outside target')
  if(target==='merchant'&&app.tabBar)throw Error('Merchant must not contain customer TabBar')
@@ -24,6 +36,7 @@ export function checkOutput(target){
   }
   if(!name.endsWith('.js'))continue
   const file=path.join(root,name),text=fs.readFileSync(file,'utf8')
+  assertPreviewCompatibleJS(text,`${target}/miniprogram/${name}`)
   if(target==='customer'&&/wx\.(?:startLocationUpdate|onLocationChange|stopLocationUpdate|offLocationChange)\s*\(/.test(text))throw Error('Customer includes courier GPS collection: '+name)
   for(const match of text.matchAll(/\brequire\(["']([^"']+)["']\)/g)){
    if(!match[1].startsWith('.'))throw Error('External JS dependency '+match[1])

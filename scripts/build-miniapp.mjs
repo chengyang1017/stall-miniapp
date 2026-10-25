@@ -29,7 +29,7 @@ if(target==='customer'){
  app.requiredPrivateInfos=(original.requiredPrivateInfos||[]).filter(name=>!['startLocationUpdate','onLocationChange','startLocationUpdateBackground'].includes(name))
  app.permission={...original.permission,'scope.userLocation':{desc:'用于顾客主动选择收货地址地图位置，不持续采集配送定位'}}
 }
-if(target==='merchant')app.permission={...original.permission,'scope.userLocation':{desc:'用于配送区域选点，以及获指派人员主动共享本单配送期间的前台位置'}}
+if(target==='merchant')app.permission={...original.permission,'scope.userLocation':{desc:'用于配送区域选点及经授权的本单前台位置共享'}}
 if(target==='merchant'){delete app.tabBar;app.window={...original.window,navigationBarTitleText:'商家工作台'}}
 fs.writeFileSync(path.join(miniapp,'app.json'),JSON.stringify(app,null,2)+'\n')
 const copied=new Set(),resource=p=>{
