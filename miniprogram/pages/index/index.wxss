@@ -401,3 +401,9 @@ page { background: #f5f6f8; }
 
 /* stall-native-tabbar-hide: tabBar replaces the old home cart footer */
 .footer { display: none !important; }
+
+/* Unified connection failure for cloud customer home. */
+.stall-connect-card { margin:28rpx 0; padding:50rpx 32rpx; background:#fff; border-radius:20rpx; text-align:center; }
+.stall-connect-title { font-size:34rpx; font-weight:600; color:#273b32; }
+.stall-connect-detail { font-size:26rpx; line-height:1.6; color:#6d7973; margin:20rpx 0 28rpx; }
+.stall-connect-card button { color:#16865d; }

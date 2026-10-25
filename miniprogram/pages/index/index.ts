@@ -50,7 +50,7 @@ Page({
 
     products: [] as ProductView[],
     discountedProducts: [] as ProductView[],
-    cloudVisible: false, cloudBusy: false, cloudStatus: '',
+    cloudVisible: false, cloudBusy: false, cloudStatus: '', cloudConnectionError:false,
     cloudProducts: [] as Array<{ id: string; name: string; priceText: string; soldOut: boolean; imageUrl: string }>,
     cloudMode: false, remoteRows: [] as Array<any>,
     deliverySummary:'',
@@ -65,8 +65,8 @@ Page({
   async onShow() {
     this.pageVisible=true
     const serial=++this.cloudSerial
-    this.setData({entryLoading:true,entryError:''})
-    try{await resolveStoreEntry()}catch(e){if(serial===this.cloudSerial)this.setData({entryError:String((e as Error).message||'店铺入口读取失败'),entryLoading:false,storeName:'店铺入口未确认',cartCount:0,cartTotal:'0.00',businessInfo:{open:false,label:'尚未确认当前店铺',notice:''},hasMore:false,dealsHasMore:false,products:[],discountedProducts:[],remoteRows:[],dealRows:[],categories:[],cloudMode:true,cloudBusy:false});return}
+    this.setData({entryLoading:true,entryError:'',cloudConnectionError:false})
+    try{await resolveStoreEntry()}catch(e){if(serial===this.cloudSerial)this.setData({entryError:'暂时无法连接商店，请检查网络连接后重试。',entryLoading:false,storeName:'店铺入口未确认',cartCount:0,cartTotal:'0.00',businessInfo:{open:false,label:'尚未确认当前店铺',notice:''},hasMore:false,dealsHasMore:false,products:[],discountedProducts:[],remoteRows:[],dealRows:[],categories:[],cloudMode:true,cloudBusy:false,cloudConnectionError:true,deliverySummary:''});return}
     if(!this.pageVisible||serial!==this.cloudSerial)return
     this.setData({entryLoading:false});refreshPagePresentation(this);
     const cfg = cloudCartConfig()
@@ -76,7 +76,7 @@ Page({
     const context=supportIdentity()
     if(context!==this.cloudContext){this.cloudContext=context;this.setData({selectedCategory:'all',searchInput:'',searchQuery:'',remoteRows:[],dealRows:[],dealCursor:'',dealsHasMore:false,products:[],discountedProducts:[],categories:[],nextCursor:'',hasMore:false})}
     if (cfg && cfg.apiBase && cfg.storeSlug) this.loadCloudHome()
-    else { this.cloudSerial++;this.setData({ cloudMode: false,storeName:'小摊商店',deliverySummary:'' }); this.refresh() }
+    else { this.cloudSerial++;this.setData({ cloudMode: false,cloudConnectionError:false,storeName:'小摊商店',deliverySummary:'' }); this.refresh() }
   },
 
   onHide(){this.pageVisible=false;this.cloudSerial++;this.setData({cloudBusy:false,dealBusy:false})},
@@ -164,7 +164,7 @@ Page({
     const cfg = cloudCartConfig()
     if (this.data.entryError || !cfg || !cfg.apiBase || !cfg.storeSlug) return
     const serial=++this.cloudSerial,key=supportIdentity()
-    this.setData({ cloudMode: true, cloudBusy: true, cloudStatus: '正在加载云端商品',deliverySummary:'',
+    this.setData({ cloudMode: true, cloudBusy: true, cloudConnectionError:false, cloudStatus: '正在加载云端商品',deliverySummary:'',
       businessInfo: {open:false,label:'正在读取云端营业状态',notice:''}, products: [], discountedProducts: [], categories: [],
       dealRows:[],dealCursor:'',dealsHasMore:false,dealBusy:false,dealError:'',remoteRows:[],nextCursor:'',hasMore:false,cartCount: 0, cartTotal: '0.00' })
     try {
@@ -172,13 +172,13 @@ Page({
       const [page,business,rules,deals] = await Promise.all([getRemoteProductPage(requestCfg.apiBase,requestCfg.storeSlug,{...this.data.searchQuery?{q:this.data.searchQuery}:{},...this.data.selectedCategory!=='all'?{category:this.data.selectedCategory}:{}}),publicBusiness(requestCfg),loadCloudDelivery(requestCfg).catch(()=>null),getRemoteProductPage(requestCfg.apiBase,requestCfg.storeSlug,{discount:'1'})])
       const current=cloudCartConfig();if(serial!==this.cloudSerial||!current||supportIdentity()!==key)return
       const areas=rules?rules.areas.filter(a=>a.enabled):[]
-      this.setData({ storeName:business.storeName||'店铺',dealRows:deals.products,dealCursor:deals.nextCursor||'',dealsHasMore:deals.hasMore,remoteRows: page.products,categories:page.categories,hasMore:page.hasMore,nextCursor:page.nextCursor||'', businessInfo:business,cloudStatus: '', cloudBusy: false,
+      this.setData({ storeName:business.storeName||'店铺',dealRows:deals.products,dealCursor:deals.nextCursor||'',dealsHasMore:deals.hasMore,remoteRows: page.products,categories:page.categories,hasMore:page.hasMore,nextCursor:page.nextCursor||'', businessInfo:business,cloudStatus: '', cloudBusy: false, cloudConnectionError:false,
         deliverySummary:rules?('启用配送区域 '+areas.length+' 个：'+areas.slice(0,3).map(a=>a.name).join('、')+(areas.length>3?' 等':'')+'；时段在结算时按区域、星期和日期核对'):'配送规则未配置或暂不可读取，当前不能确认配送，请进入结算重新核对' })
       this.renderCloudProducts()
     } catch (_) {
       if(serial!==this.cloudSerial||key!==supportIdentity())return
       this.setData({ remoteRows: [],dealRows:[], products: [], categories: [], discountedProducts: [],
-        businessInfo:{open:false,label:'云端营业状态读取失败',notice:''},cloudBusy: false, cloudStatus: '商品或营业信息加载失败，请检查网络后重试' })
+        businessInfo:{open:false,label:'',notice:''},cloudBusy: false, cloudStatus: '', cloudConnectionError:true,deliverySummary:'',hasMore:false,dealsHasMore:false })
     }
   },
 

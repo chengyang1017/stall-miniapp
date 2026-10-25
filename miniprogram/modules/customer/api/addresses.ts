@@ -22,7 +22,7 @@ export async function refreshCloudAddresses():Promise<SavedAddress[]>{
 export async function writeCloudAddress(method:'POST'|'PATCH'|'DELETE',id:string,body:Record<string,any>):Promise<void>{
  sync();const cfg=getCloudContext(),token=getSessionToken(),key=identity;if(!cfg||!token)throw Error('not_logged_in')
  if(id&&!/^[0-9a-f-]{36}$/.test(id))throw Error('invalid_address')
- const r:any=await new Promise((resolve,reject)=>wx.request({url:cfg.apiBase+`/v1/stores/${cfg.storeSlug}/addresses`+(id?'/'+id:''),method:method as WechatMiniprogram.RequestOption['method'],data:body,timeout:15000,header:{Authorization:`Bearer ${token}`,'content-type':'application/json'},success:(r:any)=>r.statusCode===200?resolve(r.data):reject(Error(`http_${r.statusCode}_${r.data?.error||''}`)),fail:reject}))
+ const r:any=await new Promise((resolve,reject)=>wx.request({url:cfg.apiBase+`/v1/stores/${cfg.storeSlug}/addresses`+(id?'/'+id:''),method:method as WechatMiniprogram.RequestOption['method'],data:body,timeout:15000,header:{Authorization:`Bearer ${token}`,'content-type':'application/json'},success:(r:any)=>r.statusCode===200?resolve(r.data):reject(Error(`http_${r.statusCode}_${r.data && r.data.error || ''}`)),fail:reject}))
  if(key!==supportIdentity()){sync();throw Error('identity_changed')}
  if(!r||r.ok!==true)throw Error('address_save_unconfirmed')
  await refreshCloudAddresses()

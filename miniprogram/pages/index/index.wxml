@@ -1,13 +1,15 @@
 
-<view class="page"><view wx:if="{{entryLoading}}" class="empty">正在读取店铺入口…</view><view wx:if="{{entryError}}" class="empty">{{entryError}}<button size="mini" bindtap="retryStoreEntry">重新读取店铺</button></view><view wx:if="{{presentationError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{presentationError}}</view>
-<view wx:if="{{cloudMode}}" style="padding:14rpx 26rpx;color:#537e68;font-size:23rpx;">
+<view class="page"><view wx:if="{{entryLoading}}" class="empty">正在读取店铺入口…</view><view wx:if="{{entryError}}" class="stall-connect-card"><view class="stall-connect-title">暂时无法连接商店</view><view class="stall-connect-detail">请检查网络连接后重试。如果问题持续，可能是商店服务暂时不可用。</view><button size="mini" bindtap="retryStoreEntry">重新连接</button></view><view wx:if="{{presentationError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{presentationError}}</view>
+<view wx:if="{{cloudMode && !cloudConnectionError && !entryError}}" style="padding:14rpx 26rpx;color:#537e68;font-size:23rpx;">
   <text wx:if="{{cloudBusy}}">正在加载商品…</text>
   <text wx:if="{{cloudStatus}}">{{cloudStatus}}</text>
   <button wx:if="{{cloudStatus}}" size="mini" bindtap="loadCloudHome">重试</button>
 </view>
-<view class="store-hours-banner" style="padding:18rpx 26rpx;color:#16865d;background:#e8f6ef;font-size:26rpx;">{{businessInfo.label}}<text wx:if="{{businessInfo.notice}}"> · {{businessInfo.notice}}</text></view>
-<view wx:if="{{cloudMode && deliverySummary}}" style="padding:12rpx 26rpx;color:#66776b;font-size:23rpx;overflow-wrap:anywhere;">{{deliverySummary}}</view>
+<view wx:if="{{!cloudConnectionError && !entryError}}" class="store-hours-banner" style="padding:18rpx 26rpx;color:#16865d;background:#e8f6ef;font-size:26rpx;">{{businessInfo.label}}<text wx:if="{{businessInfo.notice}}"> · {{businessInfo.notice}}</text></view>
+<view wx:if="{{cloudMode && !cloudConnectionError && !entryError && deliverySummary}}" style="padding:12rpx 26rpx;color:#66776b;font-size:23rpx;overflow-wrap:anywhere;">{{deliverySummary}}</view>
 
+<view wx:if="{{cloudConnectionError && !entryError}}" class="stall-connect-card"><view class="stall-connect-title">暂时无法连接商店</view><view class="stall-connect-detail">请检查网络连接后重试。如果问题持续，可能是商店服务暂时不可用。</view><button size="mini" bindtap="loadCloudHome">重新连接</button></view>
+<view wx:if="{{!cloudConnectionError && !entryError}}">
 <view class="hero">
   <navigator url="/pages/customer-support-chat/customer-support-chat">联系商家 ›</navigator>
   <view class="hero-title">{{storeName}}</view>
@@ -255,6 +257,7 @@
   </button>
 </view>
 
+</view>
 <view wx:if="{{canOpenMerchant}}" class="admin-entry" bindtap="goAdmin">
   商家管理演示
 </view>

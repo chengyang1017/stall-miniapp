@@ -23,7 +23,16 @@ Component({
   refresh(this:any){this.load(true)},more(this:any){if(this.data.hasMore)this.load()},
   async images(this:any,e:any){const row=this.data.rows.find((r:any)=>r.id===e.detail.id);if(!row)return;const identity=cloudIdentity();try{const urls:string[]=[];for(const id of row.imageIds){const v=await reviewCustomerRequest('review-images/'+id);urls.push(v.url)}if(this.visible&&identity===cloudIdentity()&&urls.length)wx.previewImage({urls,current:urls[0]})}catch(e){if(this.visible)this.setData({error:String((e as Error).message)})}},
   report(this:any,e:any){const row=this.data.rows.find((r:any)=>r.id===e.currentTarget.dataset.id);if(!row)return;this.setData({reportId:row.id,reportRevision:row.revisionId,reportReason:''})},
-  reportReply(this:any,e:any){const row=this.data.rows.find((r:any)=>r.id===e.currentTarget.dataset.id);if(row?.publicReplyRevisionId)this.setData({reportId:row.id,reportRevision:row.publicReplyRevisionId,reportReason:''})},
+  reportReply(this:any,e:any){
+    const row=this.data.rows.find((r:any)=>r.id===e.currentTarget.dataset.id)
+    if(row && row.publicReplyRevisionId){
+      this.setData({
+        reportId:row.id,
+        reportRevision:row.publicReplyRevisionId,
+        reportReason:''
+      })
+    }
+  },
   reportInput(this:any,e:any){this.setData({reportReason:String(e.detail.value)})},
   cancelReport(this:any){if(!this.data.reportBusy)this.setData({reportId:'',reportReason:''})},
   async submitReport(this:any){if(this.data.reportBusy||!this.data.reportReason.trim())return;const identity=cloudIdentity();this.setData({reportBusy:true,error:''});try{await reviewCustomerRequest(`reviews/${this.data.reportId}/report`,'POST',{revisionId:this.data.reportRevision,reason:this.data.reportReason.trim()});if(this.visible&&identity===cloudIdentity()){this.setData({reportId:'',reportReason:''});wx.showToast({title:'举报已提交，等待处理',icon:'none'})}}catch(e){if(this.visible)this.setData({error:String((e as Error).message)})}finally{this.setData({reportBusy:false})}},
