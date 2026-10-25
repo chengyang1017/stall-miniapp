@@ -133,3 +133,39 @@ test('live staging returns 404 for a nonexistent endpoint', async () => {
   assert.equal(r.status, 404)
   assert.equal(r.data.error, 'not_found')
 })
+
+test('live staging rejects invalid discount selector', async () => {
+  const r = await get(store + '/products?discount=2')
+  assert.equal(r.status, 400, JSON.stringify(r.data))
+  assert.equal(r.data.error, 'invalid_product_query')
+})
+
+test('live staging rejects an excessively long product search', async () => {
+  const r = await get(store + '/products?q=' + encodeURIComponent('a'.repeat(101)))
+  assert.equal(r.status, 400, JSON.stringify(r.data))
+  assert.equal(r.data.error, 'invalid_product_query')
+})
+
+test('live staging rejects invalid product category identifiers', async () => {
+  const r = await get(store + '/products?category=not-a-uuid')
+  assert.equal(r.status, 400, JSON.stringify(r.data))
+  assert.equal(r.data.error, 'invalid_product_query')
+})
+
+test('live staging hides merchant billing from unauthenticated visitors', async () => {
+  const r = await get('/v1/merchant/stores/' + slug + '/billing')
+  assert.equal(r.status, 401, JSON.stringify(r.data))
+  assert.equal(typeof r.data.error, 'string')
+})
+
+test('live staging hides merchant analytics from unauthenticated visitors', async () => {
+  const r = await get('/v1/merchant/stores/' + slug + '/analytics')
+  assert.equal(r.status, 401, JSON.stringify(r.data))
+  assert.equal(typeof r.data.error, 'string')
+})
+
+test('live staging hides merchant categories from unauthenticated visitors', async () => {
+  const r = await get('/v1/merchant/stores/' + slug + '/categories')
+  assert.equal(r.status, 401, JSON.stringify(r.data))
+  assert.equal(r.data.error, 'unauthorized')
+})
