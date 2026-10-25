@@ -19,6 +19,7 @@
     <navigator class="profile-link" url="/pages/customer-reviews/customer-reviews"><view class="profile-glyph">☆</view><view class="profile-link-content"><view class="profile-title">我的商品评价</view><view class="profile-desc">查看审核、修改或撤回自己的评价</view></view><view class="profile-chevron">›</view></navigator>
   </view>
   <view class="profile-section">
+    <view wx:if="{{merchantAuthorized}}" class="profile-link" bindtap="openMerchant"><view class="profile-glyph">▣</view><view class="profile-link-content"><view class="profile-title">商家工作台</view><view class="profile-desc">通过商家权限验证后显示</view></view><view class="profile-chevron">›</view></view>
     <navigator class="profile-link" url="/pages/customer-settings/customer-settings">
       <view class="profile-glyph">⚙</view><view class="profile-link-content"><view class="profile-title">设置</view><view class="profile-desc">偏好与隐私说明</view></view><view class="profile-chevron">›</view>
     </navigator>
