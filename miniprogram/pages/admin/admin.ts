@@ -5,6 +5,11 @@ import { fetchMerchantPendingCount } from '../../modules/merchant/api/orders'
 import { loadWorkflowOrders } from '../../modules/merchant/demo/orders'
 import { merchantSupportGet,supportIdentity } from '../../modules/merchant/api/support'
 Page({
+  openCustomerShop(){
+    const cfg=getCloudContext()
+    if(cfg)wx.setStorageSync('stall_merchant_home_preference_v1','customer|'+cfg.apiBase+'|'+cfg.storeSlug)
+    wx.switchTab({url:'/pages/index/index'})
+  },
  revision:null as string|null, serial:0,pendingSerial:0, loadedContext:'',supportSerial:0,supportTimer:0 as any,
  data:{supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',pendingNewOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
  onShow(){this.refreshNewOrderNotice();this.refreshMinimum();this.refreshSupport()},
