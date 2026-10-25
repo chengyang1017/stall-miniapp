@@ -1,9 +1,33 @@
+import { getCloudContext } from '../../modules/shared/runtime/context'
+import { authorizedGet } from '../../modules/shared/runtime/auth'
 import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/customer/api/support'
 Page({
-  data:{supportUnread:null as number|null,cloudSupport:false},
+  data:{supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false},
   serial:0,
-  async onShow(){const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,supportUnread:null});if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
-  onHide(){this.serial++;this.setData({supportUnread:null})},
+  merchantSerial:0,
+  async checkMerchant(){
+    const serial=++this.merchantSerial,cfg=getCloudContext(),identity=supportIdentity()
+    this.setData({merchantAuthorized:false})
+    if(!cfg)return
+    try{
+      const result=await authorizedGet(cfg.apiBase,'/v1/merchant/stores/'+cfg.storeSlug+'/categories')
+      if(serial===this.merchantSerial&&identity===supportIdentity()&&result&&Array.isArray(result.items))this.setData({merchantAuthorized:true})
+    }catch(_){/* A failed check never exposes the merchant shortcut. */}
+  },
+  async openMerchant(){
+    if(!this.data.merchantAuthorized)return
+    const cfg=getCloudContext(),identity=supportIdentity()
+    if(!cfg)return
+    this.setData({merchantAuthorized:false})
+    try{
+      const result=await authorizedGet(cfg.apiBase,'/v1/merchant/stores/'+cfg.storeSlug+'/categories')
+      if(identity!==supportIdentity()||!result||!Array.isArray(result.items))return
+      wx.setStorageSync('stall_merchant_home_preference_v1',cfg.apiBase+'|'+cfg.storeSlug)
+      wx.navigateTo({url:'/pages/admin/admin'})
+    }catch(_){wx.showToast({title:'商家权限验证失败',icon:'none'})}
+  },
+  async onShow(){const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,supportUnread:null});this.checkMerchant();if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
+  onHide(){this.serial++;this.merchantSerial++;this.setData({supportUnread:null,merchantAuthorized:false})},
   openOrders() {
     wx.switchTab({ url: '/pages/orders/orders' })
   }
