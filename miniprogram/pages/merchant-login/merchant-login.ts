@@ -39,6 +39,9 @@ Page({
       const result = await authorizedGet(this.data.apiBase, `${basePath}/categories`)
       if (!result || !Array.isArray(result.items)) throw new Error('invalid_response')
       this.setData({ authenticated: true, status: `已登录，具有 ${this.data.storeSlug} 店铺访问权限` })
+      // Only a successful server authorization may enable merchant-first entry.
+      wx.setStorageSync('stall_merchant_home_preference_v1', this.data.apiBase + '|' + this.data.storeSlug)
+      wx.navigateTo({url:'/pages/admin/admin'})
     } catch (_) {
       this.setData({ authenticated: false, status: '登录未通过或会话已失效，请重新登录' })
     } finally { this.setData({ busy: false }) }
@@ -66,6 +69,6 @@ Page({
     this.setData({busy:true})
     try{if(cfg&&typeof token==='string'&&token){await new Promise<void>((resolve,reject)=>wx.request({url:cfg.apiBase+'/v1/auth/logout',method:'POST',timeout:15000,header:{Authorization:`Bearer ${token}`},success:r=>r.statusCode===200?resolve():reject(Error('logout_unconfirmed')),fail:reject}));revoked=true}}
     catch(_){/* Still remove this device's session; do not claim remote revocation. */}
-    finally{if(wx.getStorageSync(TOKEN_KEY)===token){wx.removeStorageSync(TOKEN_KEY);wx.removeStorageSync('stall_server_cache_scope_v1');clearSessionCaches();this.setData({authenticated:false,devToken:'',status:revoked?'服务器会话已撤销，已退出登录':'已退出本机登录；服务器会话撤销未确认，请检查网络'})}this.setData({busy:false})}
+    finally{if(wx.getStorageSync(TOKEN_KEY)===token){wx.removeStorageSync('stall_merchant_home_preference_v1');wx.removeStorageSync(TOKEN_KEY);wx.removeStorageSync('stall_server_cache_scope_v1');clearSessionCaches();this.setData({authenticated:false,devToken:'',status:revoked?'服务器会话已撤销，已退出登录':'已退出本机登录；服务器会话撤销未确认，请检查网络'})}this.setData({busy:false})}
   }
 })
