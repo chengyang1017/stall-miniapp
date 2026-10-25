@@ -8,6 +8,9 @@ export interface RemoteProduct {
   categoryId: string | null
   imageObjectKey: string | null
   imageUrl?: string | null
+  stockMode?:'unlimited'|'finite'
+  stockQuantity?:number
+  outOfStock?:boolean
 }
 export function getRemoteProducts(apiBaseUrl: string, storeSlug: string): Promise<RemoteProduct[]> {
   const devLocal = /^http:\/\/(?:127\.0\.0\.1|localhost):8787$/.test(apiBaseUrl)

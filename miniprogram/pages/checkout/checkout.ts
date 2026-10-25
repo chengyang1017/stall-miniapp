@@ -1,12 +1,13 @@
-import { cloudCartConfig, loadCloudCheckout, loadCloudDelivery, localDate, availableCloudSlots, createCloudOrder } from '../../utils/cloudCheckout' // PHASE34_CLOUD_CHECKOUT
+import { cloudCartConfig, loadCloudCheckout, localDate, availableCloudSlots, createCloudOrder } from '../../utils/cloudCheckout' // PHASE34_CLOUD_CHECKOUT
 import { businessState } from '../../utils/storeHours' // STALL_HOURS_V1
 import { getMinimumOrder, minimumOrderShortfall } from '../../utils/minimumOrder'
 import { isPointDeliverable } from '../../utils/delivery'
 import { getPurchaseDetails, clearDirectPurchase, hasDirectPurchase } from '../../utils/directPurchase'
 import { getSelectedAddress, SavedAddress } from '../../utils/addresses'
 import { availableAreas, availableSlots } from '../../utils/delivery'
-import { getCartDetails, CartDisplayItem, saveCart } from '../../utils/cart'
+import { CartDisplayItem, saveCart } from '../../utils/cart'
 import { createDemoOrder } from '../../utils/orders'
+import { formatPublishTime } from '../../utils/productPublishing'
 
 const DRAFT_KEY = 'stall_checkout_draft_v1'
 
@@ -104,24 +105,24 @@ Page({
     if(this.data.cloudBusy)return
     const address=getSelectedAddress()
     const rules=this.data.cloudRules
-    if(!rules||!rules.accepting)return wx.showToast({title:'店铺暂不接单',icon:'none'})
-    if(!address)return wx.showToast({title:'请选择收货地址',icon:'none'})
+    if(!rules||!rules.accepting){ wx.showToast({title:'店铺暂不接单',icon:'none'}); return }
+    if(!address){ wx.showToast({title:'请选择收货地址',icon:'none'}); return }
     const area=rules.areas.find((x:any)=>x.name===address.area&&x.enabled)
-    if(!area)return wx.showToast({title:'地址不在云端配送范围',icon:'none'})
+    if(!area){ wx.showToast({title:'地址不在云端配送范围',icon:'none'}); return }
     const date=this.data.deliveryDate
-    if(date<localDate()||date>localDate(7))return wx.showToast({title:'请选择配送日期',icon:'none'})
+    if(date<localDate()||date>localDate(7)){ wx.showToast({title:'请选择配送日期',icon:'none'}); return }
     const slots=availableCloudSlots(rules,date)
     const slot=slots.find(s=>s.id===this.data.selectedSlotId)
-    if(!slot)return wx.showToast({title:'请选择有效配送时段',icon:'none'})
-    if(!address.receiverName.trim()||!address.phone.trim()||!address.detail.trim())return wx.showToast({title:'请补全收货地址',icon:'none'})
-    if(!this.data.totalCount)return wx.showToast({title:'购物车为空',icon:'none'})
+    if(!slot){ wx.showToast({title:'请选择有效配送时段',icon:'none'}); return }
+    if(!address.receiverName.trim()||!address.phone.trim()||!address.detail.trim()){ wx.showToast({title:'请补全收货地址',icon:'none'}); return }
+    if(!this.data.totalCount){ wx.showToast({title:'购物车为空',icon:'none'}); return }
     this.setData({cloudBusy:true})
     try {
       const result=await createCloudOrder({address:{receiverName:address.receiverName,phone:address.phone,areaId:area.id,
         detail:address.detail,latitude:address.latitude,longitude:address.longitude},slot:{id:slot.id,date},note:String(this.data.note||'')})
-      wx.showModal({title:'订单已创建（待支付）',content:'订单号：'+result.orderId+'\n服务端金额：¥'+(Number(result.totalCents)/100).toFixed(2)+'\n尚未扣款，请勿当作付款成功。',showCancel:false,
+      wx.showModal({title:'订单已创建（待支付）',content:'订单号：'+result.orderId+'\n服务端金额：¥'+(Number(result.totalCents)/100).toFixed(2)+(result.inventoryExpiresAt?'\n有限库存预留至：'+formatPublishTime(result.inventoryExpiresAt,'Asia/Shanghai')+' 北京时间（UTC+8），未支付会释放。':'')+'\n尚未扣款，请勿当作付款成功。',showCancel:false,
         success:()=>wx.switchTab({url:'/pages/cart/cart'})})
-    }catch(e:any){wx.showModal({title:'云端下单失败',content:String(e&&e.message||e).slice(0,200),showCancel:false})}
+    }catch(e:any){const message=String(e&&e.message||e);wx.showModal({title:'云端下单失败',content:/insufficient_stock/.test(message)?'商品库存不足，请返回购物车减少数量或刷新商品列表。':message.slice(0,200),showCancel:false})}
     finally{this.setData({cloudBusy:false})}
   },
   onUnload() { this.saveDraft() },
@@ -149,19 +150,20 @@ Page({
       return
     }
     const cart = getPurchaseDetails()
-    if (!cart.totalCount) return wx.showToast({ title: '购物车为空', icon: 'none' })
+    if (!cart.totalCount) { wx.showToast({ title: '购物车为空', icon: 'none' }); return }
+    if(cart.items.some(item=>item.stockInsufficient)){wx.showToast({title:'库存不足，请返回购物车调整数量',icon:'none'});return}
     const missing = minimumOrderShortfall(cart.totalText)
-    if (missing > 0) return wx.showToast({ title: `还差¥${missing.toFixed(2)}达到起送金额`, icon: 'none' })
+    if (missing > 0) { wx.showToast({ title: `还差¥${missing.toFixed(2)}达到起送金额`, icon: 'none' }); return }
     const selected = getSelectedAddress()
-    if (!selected) return wx.showToast({ title: '请先选择收货地址', icon: 'none' })
+    if (!selected) { wx.showToast({ title: '请先选择收货地址', icon: 'none' }); return }
     if (!selected.receiverName.trim() || !/^1[3-9]\d{9}$/.test(selected.phone.trim()) || !selected.detail.trim()) {
-      return wx.showToast({ title: '收货地址信息不完整，请编辑地址', icon: 'none' })
+      { wx.showToast({ title: '收货地址信息不完整，请编辑地址', icon: 'none' }); return }
     }
     if (!availableAreas().some(a => a.name === selected.area)) {
-      return wx.showToast({ title: '该地址已不在配送范围内', icon: 'none' })
+      { wx.showToast({ title: '该地址已不在配送范围内', icon: 'none' }); return }
     }
     const slot = availableSlots().find(s => s.id === this.data.selectedSlotId)
-    if (!slot) return wx.showToast({ title: '请选择有效配送时段', icon: 'none' })
+    if (!slot) { wx.showToast({ title: '请选择有效配送时段', icon: 'none' }); return }
     this.saveDraft()
     wx.showModal({
       title: '创建待支付演示订单',
@@ -183,7 +185,8 @@ Page({
           this.onShow()
           return
         }
-        const order = createDemoOrder({
+        try {
+          const order = createDemoOrder({
           items: fresh.items,
           totalText: fresh.totalText,
           receiverName: address.receiverName.trim(),
@@ -195,7 +198,11 @@ Page({
           slotText: `${validSlot.label} ${validSlot.start}–${validSlot.end}`
         })
         if (hasDirectPurchase()) clearDirectPurchase(); else saveCart([])
-        wx.redirectTo({ url: `/pages/orders/orders?created=${encodeURIComponent(order.id)}` })
+          wx.redirectTo({ url: `/pages/orders/orders?created=${encodeURIComponent(order.id)}` })
+        } catch (_) {
+          wx.showToast({title:'商品状态已变化，请刷新后重试',icon:'none'})
+          this.onShow()
+        }
       }
     })
   }

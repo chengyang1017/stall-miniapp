@@ -16,7 +16,7 @@ Page({
   editEnd(e:any) {const idx=Number(e.currentTarget.dataset.index);const arr=this.data.days.slice();if(!arr[idx])return;arr[idx].end=e.detail.value;this.setData({days:arr})},
   saveSchedule() {
     const days=this.data.days.map(d=>({enabled:d.enabled,start:d.start,end:d.end}))
-    for (const d of days) if (!TIME.test(d.start)||!TIME.test(d.end)||d.start>=d.end) return wx.showToast({title:'请检查营业时间',icon:'none'})
+    for (const d of days) if (!TIME.test(d.start)||!TIME.test(d.end)||d.start>=d.end) { wx.showToast({title:'请检查营业时间',icon:'none'}); return }
     const cfg:HoursConfig=loadHours();cfg.days=days;saveHours(cfg);wx.showToast({title:'营业时间已保存'});this.refresh()
   }
 })

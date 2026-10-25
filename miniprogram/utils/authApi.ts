@@ -32,28 +32,29 @@ export function loginWithWechat(apiBase: string): Promise<void> {
   })
 }
 
-export function authorizedGet(apiBase: string, path: string): Promise<any> {
+export function authorizedGet(apiBase: string, path: string, query?: Record<string,string|number|boolean>): Promise<any> {
   if (!/^\/v1\/[a-zA-Z0-9/_-]+$/.test(path)) return Promise.reject(new Error('invalid_path'))
   const token = wx.getStorageSync(TOKEN_KEY)
   if (!token || typeof token !== 'string') return Promise.reject(new Error('not_logged_in'))
+  const suffix = query ? '?' + Object.keys(query).map(key=>encodeURIComponent(key)+'='+encodeURIComponent(String(query[key]))).join('&') : ''
   return new Promise((resolve, reject) => wx.request({
-    url: `${apiBase.replace(/\/$/, '')}${path}`,
-    method: 'GET', header: { Authorization: `Bearer ${token}` },
-    success: (res: any) => res.statusCode === 200 ? resolve(res.data) : reject(new Error(`http_${res.statusCode}`)),
+    url: `${apiBase.replace(/\/$/, '')}${path}${suffix}`,
+    method: 'GET', timeout: 15000, header: { Authorization: `Bearer ${token}` },
+    success: (res: any) => res.statusCode === 200 ? resolve(res.data) : reject(new Error(`http_${res.statusCode}${res.data && res.data.error ? '_' + res.data.error : ''}`)),
     fail: reject
   }))
 }
 
 // Write requests always go through the server authorization checks.
 export function authorizedMutation(apiBase: string, path: string, method: 'POST'|'PATCH'|'DELETE', data?: Record<string, any>): Promise<any> {
-  if (!(/^https:\/\//.test(apiBase) || isLocalDevApi(apiBase)) || !/^\/v1\/merchant\/stores\/[a-z0-9-]+\/(products|categories|image-uploads)(?:\/[0-9a-f-]{36})?$/.test(path)) {
+  if (!(/^https:\/\//.test(apiBase) || isLocalDevApi(apiBase)) || !/^\/v1\/merchant\/stores\/[a-z0-9-]+\/(products|categories|drafts|image-uploads)(?:\/[0-9a-f-]{36}(?:\/inventory)?)?$/.test(path)) {
     return Promise.reject(new Error('invalid_endpoint'))
   }
   const token = wx.getStorageSync(TOKEN_KEY)
   if (typeof token !== 'string' || !token) return Promise.reject(new Error('not_logged_in'))
   return new Promise((resolve, reject) => wx.request({
     url: `${apiBase.replace(/\/$/, '')}${path}`,
-    method, data: data || {}, timeout: 15000,
+    method: method as WechatMiniprogram.RequestOption['method'], data: data || {}, timeout: 15000,
     header: { Authorization: `Bearer ${token}`, 'content-type': 'application/json' },
     success: (res: any) => res.statusCode >= 200 && res.statusCode < 300 ? resolve(res.data) : reject(new Error(`http_${res.statusCode}${res.data && res.data.error ? '_' + res.data.error : ''}`)),
     fail: reject

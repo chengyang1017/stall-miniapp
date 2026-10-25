@@ -47,6 +47,7 @@
 
     <view class="merchant-section-title">服务与数据</view>
     <view class="merchant-group">
+      <navigator class="merchant-item" url="/pages/admin-analytics/admin-analytics"><view class="merchant-item-symbol">📊</view><view class="merchant-item-text"><view class="merchant-item-name">经营分析</view><view class="merchant-item-desc">销售趋势、商品表现与经营报表</view></view><text class="merchant-arrow">›</text></navigator>
       <navigator class="merchant-item" url="/pages/support-inbox/support-inbox"><view class="merchant-item-symbol">✉️</view><view class="merchant-item-text"><view class="merchant-item-name">客服消息</view><view class="merchant-item-desc">查看与回复顾客咨询</view></view><text class="merchant-arrow">›</text></navigator>
       <navigator class="merchant-item merchant-last" url="/pages/admin-backup/admin-backup"><view class="merchant-item-symbol">💾</view><view class="merchant-item-text"><view class="merchant-item-name">数据备份与恢复</view><view class="merchant-item-desc">导出与导入商家数据</view></view><text class="merchant-arrow">›</text></navigator>
     </view>

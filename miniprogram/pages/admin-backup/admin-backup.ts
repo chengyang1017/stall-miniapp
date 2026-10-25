@@ -50,7 +50,7 @@ Page({
     if (this.data.busy) return
     const backup = snapshot()
     const content = JSON.stringify(backup, null, 2)
-    if (content.length > MAX_BYTES) return wx.showModal({ title: '备份过大', content: '数据量超过限制，请使用正式后端备份。', showCancel: false })
+    if (content.length > MAX_BYTES) { wx.showModal({ title: '备份过大', content: '数据量超过限制，请使用正式后端备份。', showCancel: false }); return }
     const fs = wx.getFileSystemManager()
     const path = `${wx.env.USER_DATA_PATH}/stall-backup-${Date.now()}.json`
     this.setData({ busy: true })
@@ -71,7 +71,7 @@ Page({
     if (this.data.busy) return
     wx.chooseMessageFile({ count: 1, type: 'file', extension: ['json'], success: r => {
       const file = r.tempFiles && r.tempFiles[0]
-      if (!file || file.size > MAX_BYTES) return wx.showToast({ title: '文件超出大小限制', icon: 'none' })
+      if (!file || file.size > MAX_BYTES) { wx.showToast({ title: '文件超出大小限制', icon: 'none' }); return }
       const fs = wx.getFileSystemManager()
       fs.readFile({ filePath: file.path, encoding: 'utf8', success: result => {
         try {

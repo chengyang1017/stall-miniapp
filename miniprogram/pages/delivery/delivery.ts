@@ -45,8 +45,8 @@ Page({
   this.refresh()
  }, addArea() {
   console.log('[delivery] addArea 点击', this.data.areaName)
-  const name=this.data.areaName.trim(); if(!name) return wx.showToast({title:'请输入地区',icon:'none'})
-  const data=loadDelivery(); if(data.areas.some(a=>a.name===name)) return wx.showToast({title:'地区已存在',icon:'none'})
+  const name=this.data.areaName.trim(); if(!name) { wx.showToast({title:'请输入地区',icon:'none'}); return }
+  const data=loadDelivery(); if(data.areas.some(a=>a.name===name)) { wx.showToast({title:'地区已存在',icon:'none'}); return }
   data.areas.push({id:newId(),name,enabled:true}); saveDelivery(data); this.setData({areaName:''}); this.refresh()
   wx.showToast({title:'地区添加成功',icon:'success'})
  },
@@ -55,7 +55,7 @@ Page({
  addSlot() {
   console.log('[delivery] addSlot 点击', this.data.slotLabel, this.data.slotStart, this.data.slotEnd)
   const label=this.data.slotLabel.trim(),start=this.data.slotStart.trim(),end=this.data.slotEnd.trim()
-  if(!label||!validTime(start)||!validTime(end)||start>=end) return wx.showToast({title:'请输入有效时段 HH:mm',icon:'none'})
+  if(!label||!validTime(start)||!validTime(end)||start>=end) { wx.showToast({title:'请输入有效时段 HH:mm',icon:'none'}); return }
   const data=loadDelivery();data.slots.push({id:newId(),label,start,end,enabled:true});saveDelivery(data)
   this.setData({slotLabel:'',slotStart:'',slotEnd:''});this.refresh()
   wx.showToast({title:'时段添加成功',icon:'success'})

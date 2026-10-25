@@ -11,10 +11,11 @@
     <view class="product-body">
       <view class="name" data-id="{{item.id}}" bindtap="showDetail">{{item.name}}</view>
       <view class="price">¥{{item.priceText}} <text wx:if="{{item.soldOut}}">（售罄）</text></view>
+      <view class="hint">{{item.stockMode === 'finite' ? (item.outOfStock ? '缺货（库存为零）' : '库存 ' + item.stockQuantity + ' 件') : '不限库存'}}</view>
       <view class="actions">
         <button size="mini" disabled="{{stale || busy || item.soldOut || item.count === 0}}" data-id="{{item.id}}" data-step="-1" bindtap="changeQuantity">－</button>
         <text>{{item.count}}</text>
-        <button size="mini" disabled="{{stale || busy || item.soldOut || item.count >= 99}}" data-id="{{item.id}}" data-step="1" bindtap="changeQuantity">＋</button>
+        <button size="mini" disabled="{{stale || busy || item.soldOut || item.outOfStock || item.count >= 99 || (item.stockMode === 'finite' && item.count >= item.stockQuantity)}}" data-id="{{item.id}}" data-step="1" bindtap="changeQuantity">＋</button>
       </view>
     </view>
   </view>

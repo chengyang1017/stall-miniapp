@@ -32,6 +32,7 @@ export async function loadCloudDelivery():Promise<CloudDeliveryRules> {
 export async function loadCloudCheckout(){
   const cfg=cloudCartConfig();if(!cfg)throw new Error('cloud_not_configured')
   const [cart,rules]=await Promise.all([cloudCartDetails(cfg),loadCloudDelivery()])
+  if(cart.items.some((item:any)=>item.stockInsufficient))throw new Error('库存不足，请返回购物车减少数量')
   return {cart,rules}
 }
 export function localDate(daysAhead=0):string {
@@ -60,11 +61,15 @@ export async function createCloudOrder(input:{address:{receiverName:string;phone
   }
   const result=await request(endpoint(cfg.apiBase,cfg.storeSlug,'orders'),'POST',body,previous.key)
   if(!result||typeof result.orderId!=='string')throw new Error('invalid_order_result')
+  if(result.inventoryState==='released'||result.fulfillmentStatus==='cancelled'){
+    wx.removeStorageSync(pendingKey)
+    throw new Error('原待支付订单已取消或预留过期，请重新确认库存后下单')
+  }
   wx.removeStorageSync(pendingKey)
   writeCloudCart(cfg.storeSlug,[])
   const ordersKey='stall_cloud_recent_orders_v1:'+cfg.storeSlug
   const existing=wx.getStorageSync(ordersKey)
   const orders=Array.isArray(existing)?existing:[]
-  wx.setStorageSync(ordersKey,[{id:result.orderId,totalCents:result.totalCents,paymentStatus:'unpaid',createdAt:new Date().toISOString()},...orders.filter((x:any)=>x.id!==result.orderId)].slice(0,50))
+  wx.setStorageSync(ordersKey,[{id:result.orderId,totalCents:result.totalCents,paymentStatus:result.paymentStatus,inventoryState:result.inventoryState,inventoryExpiresAt:result.inventoryExpiresAt,createdAt:new Date().toISOString()},...orders.filter((x:any)=>x.id!==result.orderId)].slice(0,50))
   return result
 }

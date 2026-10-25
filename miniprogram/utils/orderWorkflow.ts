@@ -1,4 +1,4 @@
-import { DemoOrder, loadDemoOrders } from './orders'
+import { DemoOrder, loadDemoOrders, saveDemoOrders } from './orders'
 
 export type FulfillmentStatus = 'new' | 'accepted' | 'preparing' | 'delivering' | 'delivered'
 export interface WorkflowOrder extends DemoOrder {
@@ -6,7 +6,6 @@ export interface WorkflowOrder extends DemoOrder {
   estimatedArrival?: string
   deliveredAt?: string
 }
-const KEY = 'stall_demo_orders_v1'
 export function loadWorkflowOrders(): WorkflowOrder[] {
   return loadDemoOrders() as WorkflowOrder[]
 }
@@ -24,12 +23,14 @@ export function updateWorkflowOrder(id: string, action: FulfillmentStatus | 'eta
     if (eta.length > 60) return false
     order.estimatedArrival = eta.trim()
   } else {
+    if(order.inventoryState==='held'&&order.paymentStatus==='unpaid')return false
+    if(order.inventoryState==='released')return false
     if (transitions[current] !== action) return false
     if (action === 'delivered' && !(order as any).deliveryPhotoPath) return false
     order.fulfillmentStatus = action
     if (action === 'delivered') order.deliveredAt = new Date().toISOString()
   }
-  wx.setStorageSync(KEY, orders)
+  saveDemoOrders(orders)
   return true
 }
 export function workflowLabel(status?: FulfillmentStatus): string {

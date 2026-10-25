@@ -1,4 +1,13 @@
 page { background: #f5f6f8; }
+.product-inventory-panel { padding:20rpx; margin:20rpx 0; border-radius:14rpx; background:#f3f7fb; }
+.product-inventory-actions { display:flex; gap:16rpx; margin-bottom:12rpx; }
+.product-inventory-actions button { margin:0; flex:1; }
+.product-inventory-movement { display:flex; flex-direction:column; gap:8rpx; padding:18rpx 0; border-top:1rpx solid #dce5ee; font-size:23rpx; line-height:1.5; color:#4b5a66; overflow-wrap:anywhere; }
+.product-schedule-panel { padding:20rpx; margin:20rpx 0; border-radius:14rpx; background:#f1f9f4; }
+.product-schedule-hint { display:block; margin:12rpx 0; color:#697a70; font-size:23rpx; line-height:1.6; }
+.product-schedule-pickers { display:flex; gap:16rpx; }
+.product-schedule-pickers picker { flex:1; min-width:0; }
+.product-copy-notice { display: flex; flex-direction: column; gap: 12rpx; padding: 20rpx; margin-bottom: 24rpx; border: 1rpx solid #c9dfd3; border-radius: 12rpx; background: #f1f9f4; color: #267452; font-size: 26rpx; line-height: 1.6; overflow-wrap: anywhere; }
 .page { padding: 28rpx; }
 .heading { font-size: 38rpx; font-weight: bold; margin-bottom: 28rpx; }
 .subheading { font-size: 30rpx; font-weight: bold; margin-bottom: 24rpx; }

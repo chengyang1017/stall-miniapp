@@ -202,6 +202,7 @@
 </view>
     <view class="stall-product-text-v3">
     <view class="name">{{item.name}}</view>
+    <view class="category">{{item.inventoryText}}</view>
 
     <view wx:if="{{item.discounted}}" class="sale">
       限时折扣
@@ -224,7 +225,7 @@
     data-id="{{item.id}}"
     bindtap="addCart"
   >
-    {{item.available ? '加入' : '停售/售罄'}}
+    {{item.available ? '加入' : '停售/售罄/缺货'}}
   </button>
 </view>
 

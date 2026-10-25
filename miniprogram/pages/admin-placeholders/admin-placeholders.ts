@@ -93,9 +93,9 @@ Page({
   inputCategory(e: any) { this.setData({ categoryName: e.detail.value }) },
   addCategory() {
     const name = this.data.categoryName.trim()
-    if (!name) return wx.showToast({ title: '请输入分类名', icon: 'none' })
+    if (!name) { wx.showToast({ title: '请输入分类名', icon: 'none' }); return }
     const store = loadStore()
-    if (store.categories.some(c => c.name === name)) return wx.showToast({ title: '分类已存在', icon: 'none' })
+    if (store.categories.some(c => c.name === name)) { wx.showToast({ title: '分类已存在', icon: 'none' }); return }
     const id = newId()
     store.categories.push({ id, name })
     saveStore(store)
@@ -105,7 +105,7 @@ Page({
   deleteCategory(e: WechatMiniprogram.TouchEvent) {
     const id = String(e.currentTarget.dataset.id)
     const store = loadStore()
-    if (store.products.some(p => p.categoryId === id)) return wx.showToast({ title: '先移动或删除分类里的商品', icon: 'none' })
+    if (store.products.some(p => p.categoryId === id)) { wx.showToast({ title: '先移动或删除分类里的商品', icon: 'none' }); return }
     wx.showModal({ title: '删除分类？', content: '此操作不可撤销', success: res => {
       if (!res.confirm) return
       store.categories = store.categories.filter(c => c.id !== id)
@@ -150,13 +150,13 @@ Page({
     const txt = this.data.discountText.trim()
     const discountPrice = txt === '' ? null : Number(txt)
     if (!this.data.selectedCategory || !name || this.data.priceText.trim() === '' || !Number.isFinite(price) || price < 0 || (discountPrice !== null && (!Number.isFinite(discountPrice) || discountPrice < 0 || discountPrice >= price))) {
-      return wx.showToast({ title: '请检查名称、价格与折扣价', icon: 'none' })
+      { wx.showToast({ title: '请检查名称、价格与折扣价', icon: 'none' }); return }
     }
     const start = this.data.startText.trim()
     const end = this.data.endText.trim()
     const pattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/
     if ((start && (!pattern.test(start) || Number.isNaN(Date.parse(start.replace(' ', 'T'))))) || (end && (!pattern.test(end) || Number.isNaN(Date.parse(end.replace(' ', 'T'))))) || (start && end && new Date(start.replace(' ', 'T')).getTime() >= new Date(end.replace(' ', 'T')).getTime())) {
-      return wx.showToast({ title: '时间格式错误或结束早于开始', icon: 'none' })
+      { wx.showToast({ title: '时间格式错误或结束早于开始', icon: 'none' }); return }
     }
     const store = loadStore()
     const product: Product = { id: this.data.editId || newId(), categoryId: this.data.selectedCategory, name, price, discountPrice, discountStart: start, discountEnd: end, available: this.data.isAvailable, soldOut: this.data.isSoldOut, description: this.data.productDescription.trim(), imageUrl: this.data.productImageUrl }

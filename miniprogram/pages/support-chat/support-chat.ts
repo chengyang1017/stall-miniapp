@@ -9,7 +9,7 @@ Page({
   onPullDownRefresh() { this.refresh(); wx.stopPullDownRefresh() },
   onInput(e: WechatMiniprogram.Input) { this.setData({ draft: e.detail.value }) },
   send() {
-    if (!sendSupportMessage('customer', String(this.data.draft))) return wx.showToast({ title: '请输入1至500字', icon: 'none' })
+    if (!sendSupportMessage('customer', String(this.data.draft))) { wx.showToast({ title: '请输入1至500字', icon: 'none' }); return }
     this.setData({ draft: '' }); this.refresh()
   }
 })

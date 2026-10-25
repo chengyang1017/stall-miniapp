@@ -60,7 +60,7 @@ Page({
         else unpaid += cents
       }
       if (orderStatus(o) === 'delivered') delivered++
-      const items = (Array.isArray(o.items) ? o.items : []).map(i => `${i.name} ×${i.quantity}`).join('、')
+      const items = (Array.isArray(o.items) ? o.items : []).map((i: {name?: string; quantity?: number}) => `${i.name} ×${i.quantity}`).join('、')
       return {
         id: o.id, date: localDay(o.createdAt),
         time: (() => { const d = new Date(o.createdAt); return Number.isFinite(d.getTime()) ? `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}` : '' })(),
@@ -74,7 +74,7 @@ Page({
   },
   exportCsv() {
     const rows = this.data.rows as Array<any>
-    if (!rows.length) return wx.showToast({ title: '没有可导出的订单', icon: 'none' })
+    if (!rows.length) { wx.showToast({ title: '没有可导出的订单', icon: 'none' }); return }
     const header = ['订单编号','下单日期','时间','顾客','商品','订单金额','支付状态','履约状态','联系电话','配送区域','地址','备注']
     const records = rows.map(r => {
       const o = r.raw

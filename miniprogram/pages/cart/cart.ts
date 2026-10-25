@@ -63,18 +63,18 @@ Page({
     })
   },
 
-  increase(e: WechatMiniprogram.TouchEvent) {
+  async increase(e: WechatMiniprogram.TouchEvent) {
     const id = String(e.currentTarget.dataset.id)
     const cfg = cloudCartConfig()
-    if (cfg) { changeCloudCart(cfg.storeSlug, id, 1); this.refresh(); return }
+    if (cfg) { await changeCloudCart(cfg.storeSlug, id, 1); this.refresh(); return }
     changeQuantity(id, 1)
     this.refresh()
   },
 
-  decrease(e: WechatMiniprogram.TouchEvent) {
+  async decrease(e: WechatMiniprogram.TouchEvent) {
     const id = String(e.currentTarget.dataset.id)
     const cfg = cloudCartConfig()
-    if (cfg) { changeCloudCart(cfg.storeSlug, id, -1); this.refresh(); return }
+    if (cfg) { await changeCloudCart(cfg.storeSlug, id, -1); this.refresh(); return }
     changeQuantity(id, -1)
     this.refresh()
   },
@@ -99,8 +99,8 @@ Page({
   },
   checkout() {
     if (cloudCartConfig()) {
-      if(this.data.cloudError || this.data.totalCount === 0)return wx.showToast({title:'请先加载购物车',icon:'none'})
-      return wx.navigateTo({url:'/pages/checkout/checkout'})
+      if(this.data.cloudError || this.data.totalCount === 0){ wx.showToast({title:'请先加载购物车',icon:'none'}); return }
+      { wx.navigateTo({url:'/pages/checkout/checkout'}); return }
     }
     clearDirectPurchase()
     clearDirectPurchase()

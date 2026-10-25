@@ -34,9 +34,9 @@ Page({
   onNewName(e: any) { this.setData({ newName: e.detail.value }) },
   addCategory() {
     const name = String(this.data.newName || '').trim()
-    if (!name) return wx.showToast({ title: '请输入分类名称', icon: 'none' })
+    if (!name) { wx.showToast({ title: '请输入分类名称', icon: 'none' }); return }
     const store = loadStore()
-    if (store.categories.some(c => c.name === name)) return wx.showToast({ title: '分类名称已存在', icon: 'none' })
+    if (store.categories.some(c => c.name === name)) { wx.showToast({ title: '分类名称已存在', icon: 'none' }); return }
     store.categories.push({ id: newId(), name })
     saveStore(store)
     this.setData({ newName: '' })
@@ -49,12 +49,12 @@ Page({
     const category = store.categories.find(c => c.id === id)
     if (!category) return
     if (store.products.some(p => p.categoryId === id)) {
-      return wx.showToast({ title: '分类下有商品，请先移走商品', icon: 'none' })
+      { wx.showToast({ title: '分类下有商品，请先移走商品', icon: 'none' }); return }
     }
     wx.showModal({ title: '删除分类', content: '确定删除「' + category.name + '」吗？', success: result => {
       if (!result.confirm) return
       const latest = loadStore()
-      if (latest.products.some(p => p.categoryId === id)) return wx.showToast({ title: '分类下有商品', icon: 'none' })
+      if (latest.products.some(p => p.categoryId === id)) { wx.showToast({ title: '分类下有商品', icon: 'none' }); return }
       latest.categories = latest.categories.filter(c => c.id !== id)
       saveStore(latest)
       if (this.data.editingId === id) this.setData({ editingId: '', editingName: '' })
@@ -73,12 +73,12 @@ Page({
     const id = this.data.editingId
     const name = String(this.data.editingName || '').trim()
     if (!id) return
-    if (!name) return wx.showToast({ title: '名称不能为空', icon: 'none' })
+    if (!name) { wx.showToast({ title: '名称不能为空', icon: 'none' }); return }
     const store = loadStore()
     const cat = store.categories.find(c => c.id === id)
     if (!cat) return
     if (store.categories.some(c => c.id !== id && c.name === name)) {
-      return wx.showToast({ title: '分类名称已存在', icon: 'none' })
+      { wx.showToast({ title: '分类名称已存在', icon: 'none' }); return }
     }
     cat.name = name
     saveStore(store)

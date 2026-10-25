@@ -1,9 +1,11 @@
-import { loadStore, effectivePrice } from './store'
+import { loadStore, effectivePrice, productIsPublished, stockAllows } from './store'
 import { getCartDetails, CartDisplayItem } from './cart'
 
 const KEY = 'stall_direct_purchase_v1'
 interface DirectSelection { productId: string; quantity: number }
 export function setDirectPurchase(productId: string, quantity: number): void {
+  const product = loadStore().products.find(p=>p.id===productId)
+  if (!product || !productIsPublished(product) || product.soldOut || !stockAllows(product,quantity)) return
   wx.setStorageSync(KEY, { productId, quantity } as DirectSelection)
 }
 export function clearDirectPurchase(): void { wx.removeStorageSync(KEY) }
@@ -14,7 +16,7 @@ export function getPurchaseDetails(): { items: CartDisplayItem[]; totalText: str
   const quantity = selection.quantity
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) return { items: [], totalText: '0.00', totalCount: 0 }
   const product = loadStore().products.find(p => p.id === selection.productId)
-  if (!product || !product.available) return { items: [], totalText: '0.00', totalCount: 0 }
+  if (!product || !productIsPublished(product) || product.soldOut || !stockAllows(product,quantity)) return { items: [], totalText: '0.00', totalCount: 0 }
   const unitCents = Math.round(effectivePrice(product) * 100)
   const subtotalCents = unitCents * quantity
   const item: CartDisplayItem = {

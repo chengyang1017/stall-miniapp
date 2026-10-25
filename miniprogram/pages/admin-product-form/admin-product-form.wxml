@@ -1,35 +1,82 @@
 <view class="product-form-page">
   <view wx:if="{{cloudError}}" style="padding:22rpx;color:#b33">{{cloudError}}</view>
-  <view wx:if="{{cloudBusy}}" style="padding:22rpx">æ­£åœ¨å¤„ç†â€¦</view>
+  <view wx:if="{{cloudBusy || saveBusy || inventoryBusy}}" style="padding:22rpx">正在处理，请稍候…</view>
 <view class="card">
-    <view class="subheading">{{editId ? '编辑商品' : '新增商品'}}</view>
-    <view class="field">商品名称<input placeholder="例如：炒饭" value="{{productName}}" bindinput="inputName" /></view>
+    <view class="subheading">{{draftId ? '编辑商品草稿' : (copyMode ? '复制商品' : (editId ? '编辑商品' : '新增商品'))}}</view>
+    <view wx:if="{{draftId}}" class="product-copy-notice">草稿仅商家可见。保存草稿可暂缺信息；发布正式商品需通过完整校验。</view>
+    <view wx:if="{{copyMode}}" class="product-copy-notice">
+      <text>复制来源：{{copySourceName || (cloudError ? '读取失败' : '正在读取…')}}</text>
+      <text>副本默认下架且有货，可修改全部字段。点击「保存商品」后才会创建。</text>
+    </view>
+    <view class="field">商品名称<input maxlength="200" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="例如：炒饭" value="{{productName}}" bindinput="inputName" /></view>
     <view class="field">
   商品分类
   <picker
     range="{{categories}}"
     range-key="name"
     bindchange="selectCategory"
+    disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}"
   >
     <view class="picker">
       {{selectedCategoryName || '请选择分类'}}
     </view>
   </picker>
 </view>
-    <view class="field">商品介绍<textarea maxlength="1000" value="{{productDescription}}" placeholder="填写商品介绍" bindinput="inputDescription" auto-height /></view>
+    <view class="field">商品介绍<textarea maxlength="1000" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" value="{{productDescription}}" placeholder="填写商品介绍" bindinput="inputDescription" auto-height /></view>
     <view class="field">商品图片
       <image wx:if="{{productImageUrl}}" src="{{productImageUrl}}" mode="aspectFill" style="display:block;width:240rpx;height:180rpx;border-radius:12rpx;margin:12rpx 0" />
-      <button size="mini" bindtap="chooseProductImage">选择图片</button>
-      <button wx:if="{{productImageUrl}}" size="mini" bindtap="removeProductImage">移除图片</button>
+      <button size="mini" bindtap="chooseProductImage" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">选择图片</button>
+      <button wx:if="{{productImageUrl}}" size="mini" bindtap="removeProductImage" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">移除图片</button>
     </view>
-    <view class="field">原价 ¥<input type="digit" placeholder="例如：15" value="{{priceText}}" bindinput="inputPrice" /></view>
-    <view class="field">折后价 ¥（留空表示无折扣）<input type="digit" placeholder="例如：12" value="{{discountText}}" bindinput="inputDiscount" /></view>
-    <view class="field">折扣开始（可留空）<input placeholder="2026-10-23 10:00" value="{{startText}}" bindinput="inputStart" /></view>
-    <view class="field">折扣结束（可留空）<input placeholder="2026-10-23 18:00" value="{{endText}}" bindinput="inputEnd" /></view>
-    <view class="line"><text>标记售罄</text><switch checked="{{isSoldOut}}" bindchange="switchSoldOut" color="#16865d" /></view>
-    <view class="line"><text>允许销售</text><switch checked="{{isAvailable}}" bindchange="switchAvailable" color="#16865d" /></view>
-    <button type="primary" bindtap="saveFromForm">保存商品</button>
-    <button wx:if="{{editId}}" bindtap="resetForm">取消编辑</button>
-    <button wx:if="{{editId}}" class="product-form-delete-action" bindtap="deleteFromForm" type="warn">删除商品</button>
+    <view class="field">原价 ¥<input type="digit" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="例如：15" value="{{priceText}}" bindinput="inputPrice" /></view>
+    <view class="field">折后价 ¥（留空表示无折扣）<input type="digit" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="例如：12" value="{{discountText}}" bindinput="inputDiscount" /></view>
+    <view class="field">折扣开始（店铺时区，可留空）<input disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="2026-10-23 10:00" value="{{startText}}" bindinput="inputStart" /></view>
+    <view class="field">折扣结束（店铺时区，可留空）<input disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="2026-10-23 18:00" value="{{endText}}" bindinput="inputEnd" /></view>
+    <view class="product-inventory-panel">
+      <view class="line"><text>有限库存</text><switch checked="{{stockMode === 'finite'}}" bindchange="changeStockMode" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" color="#16865d" /></view>
+      <text class="product-schedule-hint">{{stockMode === 'finite' ? '可销售库存不含已预留数量，创建待支付订单时会暂时占用。' : '不限库存：不按数量限制购买。'}}</text>
+      <view wx:if="{{stockMode === 'finite'}}" class="field">可销售库存<input type="number" value="{{stockQuantityText}}" bindinput="inputStockQuantity" maxlength="7" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="0 至 1000000 的整数" /></view>
+      <view class="field">低库存预警阈值<input type="number" value="{{lowStockThresholdText}}" bindinput="inputStockThreshold" maxlength="7" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="0 至 1000000 的整数" /></view>
+      <text class="product-schedule-hint">库存为零将显示缺货；补货不会解除下方的商家手动售罄。库存设置随「保存商品」生效。</text>
+      <view wx:if="{{editId && !copyMode && !draftId}}">
+        <view class="field">本次补货／扣减数量<input type="number" value="{{stockDeltaText}}" bindinput="inputStockDelta" maxlength="7" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="输入大于零的整数" /></view>
+        <view class="field">库存操作原因<input value="{{stockReason}}" bindinput="inputStockReason" maxlength="200" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="例如：到货补充、盘点损耗" /></view>
+        <view class="product-inventory-actions">
+          <button size="mini" data-action="add" bindtap="adjustStock" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || stockMode !== 'finite'}}">手动补货</button>
+          <button size="mini" data-action="subtract" bindtap="adjustStock" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || stockMode !== 'finite'}}">手动扣减</button>
+        </view>
+        <text class="product-schedule-hint">补货和扣减确认后立即生效，其他表单字段不随之保存。</text>
+        <button size="mini" bindtap="showInventoryHistory" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}">{{showStockHistory ? '刷新库存并收起记录' : '刷新库存并查看记录'}}</button>
+        <view wx:if="{{showStockHistory}}">
+          <text class="product-schedule-hint">最近 100 条记录，仅可查看，不可修改。</text>
+          <view wx:for="{{stockMovements}}" wx:key="id" class="product-inventory-movement">
+            <text>{{item.sourceText}} · {{item.beforeQuantity}} → {{item.afterQuantity}}（{{item.delta > 0 ? '+' : ''}}{{item.delta}}）</text>
+            <text>{{item.beforeMode === 'finite' ? '有限' : '不限'}} → {{item.afterMode === 'finite' ? '有限' : '不限'}} · {{item.reason}}</text>
+            <text>{{item.timeText}}</text>
+            <text wx:if="{{item.orderId}}">订单：{{item.orderId}}</text>
+          </view>
+          <text wx:if="{{!stockMovements.length}}" class="product-schedule-hint">暂无库存变动记录</text>
+        </view>
+      </view>
+    </view>
+    <view class="line"><text>商家手动售罄</text><switch disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" checked="{{isSoldOut}}" bindchange="switchSoldOut" color="#16865d" /></view>
+    <view class="line"><text>允许销售</text><switch disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" checked="{{isAvailable}}" bindchange="switchAvailable" color="#16865d" /></view>
+    <view class="product-schedule-panel">
+      <view class="line"><text>定时上架</text><switch checked="{{scheduleEnabled}}" bindchange="changeSchedule" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" color="#16865d" /></view>
+      <text class="product-schedule-hint">{{storeTimeZone === 'Asia/Shanghai' ? '北京时间（UTC+8），Asia/Shanghai' : '店铺时区：' + storeTimeZone}}。云端按服务器时间生效；本地演示仅按设备时间计算。</text>
+      <view wx:if="{{scheduleEnabled}}" class="product-schedule-pickers">
+        <picker mode="date" value="{{scheduleDate}}" bindchange="changeScheduleDate" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}"><view class="picker">{{scheduleDate || '选择未来日期'}}</view></picker>
+        <picker mode="time" value="{{scheduleTime}}" bindchange="changeScheduleTime" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}"><view class="picker">{{scheduleTime || '选择上架时间'}}</view></picker>
+      </view>
+      <text class="product-schedule-hint">启用计划时商品保持下架；到期保留售罄状态。取消计划后保持下架，需保存才生效。批量下架也会取消计划。</text>
+      <button wx:if="{{scheduleEnabled}}" size="mini" bindtap="cancelSchedule" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}">取消计划并保持下架</button>
+    </view>
+    <button type="primary" bindtap="saveFromForm" loading="{{saveBusy}}" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">{{saved ? '内容已保存' : (draftId ? '发布为正式商品' : '保存商品')}}</button>
+    <button bindtap="saveDraft" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">{{draftId ? '保存草稿更新' : '保存草稿'}}</button>
+    <text wx:if="{{editId}}" class="product-schedule-hint">保存草稿会另存当前内容，原正式商品不变；不带库存余额，发布时需重新设置库存并创建新商品。</text>
+    <button wx:if="{{draftId}}" bindtap="cancelCopy" disabled="{{cloudBusy || saveBusy || inventoryBusy}}">返回商品列表</button>
+    <button wx:if="{{copyMode}}" bindtap="cancelCopy" disabled="{{cloudBusy || saveBusy || inventoryBusy}}">{{saved ? '返回商品列表' : '取消复制，返回列表'}}</button>
+    <button wx:if="{{editId && !copyMode}}" bindtap="resetForm" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}">取消编辑</button>
+    <button wx:if="{{editId && !copyMode}}" class="product-form-delete-action" bindtap="deleteFromForm" type="warn" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}">删除商品</button>
   </view>
 </view>

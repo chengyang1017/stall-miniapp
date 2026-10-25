@@ -1,0 +1,44 @@
+<view class="analytics-page">
+  <view class="heading">经营分析</view>
+  <view class="source">{{sourceLabel || '正在确定数据来源'}} · CNY 人民币 ¥</view>
+  <view class="card filters">
+    <text class="section-title">日期与筛选 · 北京时间（UTC+8）</text>
+    <picker range="{{presets}}" value="{{presetIndex}}" bindchange="choosePreset" disabled="{{exporting}}"><view class="choice">{{presets[presetIndex]}} ▾</view></picker>
+    <view class="date-row"><picker mode="date" value="{{from}}" start="2000-01-01" end="2100-12-31" data-key="from" bindchange="chooseDate" disabled="{{exporting}}"><view class="choice">{{from}}</view></picker><text>至</text><picker mode="date" value="{{to}}" start="2000-01-01" end="2100-12-31" data-key="to" bindchange="chooseDate" disabled="{{exporting}}"><view class="choice">{{to}}</view></picker></view>
+    <picker range="{{categories}}" range-key="name" value="{{categoryIndex}}" bindchange="chooseCategory" disabled="{{exporting}}"><view class="choice">{{categories[categoryIndex].name}} ▾</view></picker>
+    <view class="search-row"><input value="{{q}}" maxlength="100" placeholder="快照／当前商品名称，或完整商品ID" bindinput="inputQuery" bindconfirm="refresh" confirm-type="search" disabled="{{exporting}}"/><button size="mini" bindtap="clearQuery" disabled="{{exporting}}">清空</button></view>
+    <button type="primary" bindtap="refresh" disabled="{{loading || exporting}}">{{loading ? '统计中…' : '搜索／刷新统计'}}</button>
+    <text class="note">最长366天；商品名称按订单快照展示，分类按下单时分类快照筛选。旧订单归入“未记录历史分类”。</text>
+  </view>
+  <view wx:if="{{loading}}" class="state">正在读取真实统计来源…</view>
+  <view wx:if="{{dirty}}" class="state">输入后点击搜索，旧报表已隐藏。</view>
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+  <block wx:if="{{hasReport}}">
+    <view class="notice">{{notice}}<text>金额口径：{{amountScope}}。</text><text>客单价＝未取消订单金额÷未取消订单数；所有指标均按下单日期归属。</text></view>
+    <view wx:if="{{unverifiedCount}}" class="error">另有 {{unverifiedCount}} 笔非未支付、但缺乏可信核验的支付状态，未计入确认收款，也未当作待支付。</view>
+    <view class="metrics"><view wx:for="{{cards}}" wx:key="label" class="metric"><text>{{item.label}}</text><text class="metric-value">{{item.value}}</text></view></view>
+    <view wx:if="{{!hasOrders}}" class="state">所选范围没有订单，销售指标为零。当前商品仍可显示为零销量。</view>
+    <view class="card">
+      <text class="section-title">每日销售趋势</text>
+      <picker range="{{trendLabels}}" value="{{trendIndex}}" bindchange="chooseTrend"><view class="choice">{{trendLabels[trendIndex]}} ▾</view></picker>
+      <scroll-view wx:if="{{hasOrders}}" scroll-y class="chart-scroll"><view wx:for="{{dailyBars}}" wx:key="day" class="bar-row"><text class="bar-label">{{item.label}}</text><view class="bar-track"><view class="bar-fill" style="width:{{item.width}}%"></view></view><text class="bar-value">{{item.valueLabel}}</text></view></scroll-view>
+      <view wx:else class="empty">暂无订单趋势，没有生成模拟曲线。</view>
+    </view>
+    <view class="card"><text class="section-title">订单小时分布（北京时间）</text><text class="note">按服务器创建时间统计，包含取消订单。</text><scroll-view wx:if="{{hasOrders}}" scroll-y class="hour-scroll"><view wx:for="{{hourBars}}" wx:key="hour" class="bar-row"><text class="hour-label">{{item.label}}</text><view class="bar-track"><view class="bar-fill" style="width:{{item.width}}%"></view></view><text class="bar-value">{{item.orderCount}}</text></view></scroll-view><view wx:else class="empty">暂无订单时间分布</view></view>
+    <view class="card">
+      <text class="section-title">商品销量排行榜</text><text class="note">未取消订单；件数包含未支付，商品金额不含配送费，不能作为已收款。</text>
+      <view class="date-row"><picker range="{{rankLabels}}" value="{{rankIndex}}" bindchange="chooseRank" disabled="{{exporting}}"><view class="choice">{{rankLabels[rankIndex]}} ▾</view></picker><picker range="{{tops}}" value="{{topIndex}}" bindchange="chooseTop" disabled="{{exporting}}"><view class="choice">前 {{tops[topIndex]}} 件 ▾</view></picker></view>
+      <view wx:for="{{ranking}}" wx:key="key" class="product"><text class="product-name">{{index + 1}}. {{item.name}}</text><text>下单 {{item.quantity}} 件 · {{item.orderCount}} 笔订单</text><text>商品订单金额 {{item.orderMoney}} · 确认支付 {{item.paidMoney}}</text></view>
+      <view wx:if="{{!ranking.length}}" class="empty">暂无有效商品订单排行</view>
+    </view>
+    <view class="card">
+      <text class="section-title">商品销售表现（{{totalProducts}} 项）</text><text class="note">沿用上方排序；零销量不代表库存不足。历史商品名取最近匹配订单快照；无记录商品使用当前名称。</text>
+      <view wx:for="{{products}}" wx:key="key" class="product"><text class="product-name">{{item.name}}</text><text wx:if="{{item.currentName && item.currentName !== item.name}}" class="note">当前名称：{{item.currentName}}</text><text class="note">ID：{{item.productId || '历史订单未记录ID'}}</text><text>{{item.salesLabel}} · {{item.orderCount}} 笔未取消订单</text><text>商品订单金额 {{item.orderMoney}} · 确认支付 {{item.paidMoney}}</text><text>历史分类：{{item.historicalCategories}}</text><text class="stock">当前库存：{{item.stockLabel}}</text><text class="note">最近有效订单：{{item.lastTime}}（北京时间）</text></view>
+      <view wx:if="{{!products.length}}" class="empty">没有匹配商品或历史订单记录</view>
+      <view wx:if="{{moreError}}" class="error">{{moreError}}</view>
+      <button wx:if="{{needsRefresh}}" bindtap="refresh" disabled="{{loading || exporting}}">数据已变化，请刷新</button>
+      <button wx:elif="{{hasMore}}" bindtap="loadMore" disabled="{{loadingMore || exporting}}">{{loadingMore ? '加载中…' : '加载更多商品'}}</button>
+    </view>
+    <view class="card"><text class="section-title">CSV 报表导出</text><text class="note">UTF-8 BOM；仅经营汇总，不包含顾客姓名、电话和地址。商品导出最多5000项，文件最多5MB。</text><view class="export-actions"><button data-type="overview" bindtap="exportReport" disabled="{{exporting || loadingMore || needsRefresh}}">经营总览</button><button data-type="products" bindtap="exportReport" disabled="{{exporting || loadingMore || needsRefresh}}">商品销售明细</button><button data-type="daily" bindtap="exportReport" disabled="{{exporting || loadingMore || needsRefresh}}">每日趋势</button></view><text wx:if="{{exporting}}" class="note">正在生成或分享文件，请勿重复点击…</text></view>
+  </block>
+</view>

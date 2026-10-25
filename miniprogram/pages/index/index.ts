@@ -5,6 +5,8 @@ import { getRemoteProducts } from '../../utils/remoteApi'
 import {
   loadStore,
   effectivePrice,
+  productIsPublished,
+  stockAllows,
   money
 } from '../../utils/store'
 
@@ -14,6 +16,7 @@ import {
 } from '../../utils/cart'
 
 interface ProductView {
+  inventoryText?:string
   id: string
   name: string
   imageUrl?: string
@@ -56,7 +59,7 @@ Page({
     const store = loadStore()
 
     const allProducts: ProductView[] =
-      store.products.map(p => {
+      store.products.filter(p=>productIsPublished(p)).map(p => {
         const current = effectivePrice(p)
 
         return {
@@ -66,7 +69,8 @@ Page({
           original: money(p.price),
           current: money(current),
           discounted: current < p.price,
-          available: p.available && !p.soldOut
+          available: productIsPublished(p) && !p.soldOut && stockAllows(p),
+          inventoryText:(p.soldOut?'商家手动售罄 · ':'')+(p.stockMode==='finite'?(stockAllows(p)?`库存 ${p.stockQuantity} 件`:'缺货（库存为零）'):'不限库存')
         }
       })
 
@@ -132,7 +136,8 @@ Page({
     const products = rows.map((r: any) => ({
         id: r.id, name: r.name, imageUrl: r.imageUrl || '',
         original: (r.priceCents / 100).toFixed(2), current: (r.priceCents / 100).toFixed(2),
-        discounted: false, available: !r.soldOut
+        discounted: false, available: !r.soldOut && stockAllows(r),
+        inventoryText:(r.soldOut?'商家手动售罄 · ':'')+(r.stockMode==='finite'?(stockAllows(r)?`库存 ${r.stockQuantity} 件`:'缺货（库存为零）'):'不限库存')
       }))
     this.refreshCloudCartTotal()
     this.setData({ categories: [], selectedCategory: 'all', products, discountedProducts: [],
@@ -152,15 +157,15 @@ Page({
     this.refresh()
   },
 
-  addCart(e: WechatMiniprogram.TouchEvent) {
+  async addCart(e: WechatMiniprogram.TouchEvent) {
     if (this.data.cloudMode) {
       const cfg = cloudCartConfig()
       const id = String(e.currentTarget.dataset.id || '')
       const row = (this.data.remoteRows || []).find((p: any) => String(p.id) === id)
-      if (!cfg || !row || row.active === false || row.soldOut) return wx.showToast({ title: '商品已停售', icon: 'none' })
-      changeCloudCart(cfg.storeSlug, id, 1)
+      if (!cfg || !row || row.active === false || row.soldOut) { wx.showToast({ title: '商品已停售', icon: 'none' }); return }
+      if (!await changeCloudCart(cfg.storeSlug, id, 1)) return
       this.refreshCloudCartTotal()
-      return wx.showToast({ title: '已加入购物车', icon: 'success' })
+      { wx.showToast({ title: '已加入购物车', icon: 'success' }); return }
     }
     const id = String(e.currentTarget.dataset.id)
 
@@ -168,7 +173,7 @@ Page({
       p => p.id === id
     )
 
-    if (!product || !product.available || product.soldOut) {
+    if (!product || !productIsPublished(product) || product.soldOut || !stockAllows(product)) {
       wx.showToast({
         title: '商品已停售',
         icon: 'none'
@@ -176,7 +181,7 @@ Page({
       return
     }
 
-    addToCart(id)
+    if(!addToCart(id))return
     this.refresh()
 
     wx.showToast({

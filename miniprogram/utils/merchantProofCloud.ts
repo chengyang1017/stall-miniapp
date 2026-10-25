@@ -1,18 +1,16 @@
 // PHASE37B_PROOF: signed R2 upload for the existing delivery-proof page.
-interface Cfg {apiBase:string;storeSlug:string}
-function config():Cfg|null {
- const v=wx.getStorageSync('stall_cloud_catalog_config_v1') as any
- return v&&typeof v.apiBase==='string'&&typeof v.storeSlug==='string'&&v.apiBase&&v.storeSlug ? {apiBase:v.apiBase.replace(/\/$/,''),storeSlug:v.storeSlug}:null
-}
+import { getMerchantContext, getMerchantSessionToken, MerchantContext } from './merchantContext'
+type Cfg = MerchantContext
+const config = getMerchantContext
 export function cloudProofConfig():Cfg|null{return config()}
 function request(cfg:Cfg,route:string,body:any):Promise<any>{
- const token=wx.getStorageSync('stall_server_session_v1')
+ const token=getMerchantSessionToken()
  if(typeof token!=='string'||!token)return Promise.reject(new Error('not_logged_in'))
  return new Promise((resolve,reject)=>wx.request({url:cfg.apiBase+'/v1/merchant/stores/'+cfg.storeSlug+route,method:'POST',data:body,timeout:20000,header:{Authorization:'Bearer '+token,'content-type':'application/json'},success:(r:any)=>r.statusCode>=200&&r.statusCode<300?resolve(r.data):reject(new Error('http_'+r.statusCode+'_'+String(r.data&&r.data.error||'failed'))),fail:reject}))
 }
 export async function loadProofOrder(id:string):Promise<any>{
  const cfg=config();if(!cfg)throw Error('not_configured')
- const token=wx.getStorageSync('stall_server_session_v1')
+ const token=getMerchantSessionToken()
  if(typeof token!=='string'||!token)throw Error('not_logged_in')
  return new Promise((resolve,reject)=>wx.request({url:cfg.apiBase+'/v1/merchant/stores/'+cfg.storeSlug+'/orders/'+encodeURIComponent(id),method:'GET',header:{Authorization:'Bearer '+token},success:(r:any)=>r.statusCode===200?resolve(r.data.order):reject(new Error('http_'+r.statusCode)),fail:reject}))
 }

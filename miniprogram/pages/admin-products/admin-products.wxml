@@ -1,12 +1,65 @@
 <view class="product-manage-page">
-  <view wx:if="{{cloudLoading}}" style="padding:22rpx">æ­£åœ¨è¯»å–å•†å“â€¦</view>
+  <view wx:if="{{cloudLoading}}" style="padding:22rpx">正在读取商品和分类…</view>
   <view wx:if="{{cloudError}}" style="padding:22rpx;color:#b33">{{cloudError}}</view>
   <view class="product-manage-header">
     <text class="product-manage-heading">商品管理</text>
-    <button size="mini" type="primary" bindtap="openNewProduct">+ 新增商品</button>
+    <view class="product-manage-header-actions">
+      <button wx:if="{{products.length || batchMode}}" size="mini" bindtap="toggleBatchMode" disabled="{{batchBusy || cloudLoading || queryDirty}}">{{batchMode ? '退出批量管理' : '批量管理'}}</button>
+      <button wx:if="{{!batchMode}}" size="mini" type="primary" bindtap="openNewProduct">+ 新增商品</button>
+    </view>
   </view>
-  <view wx:if="{{products.length === 0}}" class="product-manage-empty">还没有商品，点击右上角新增商品</view>
-  <view wx:for="{{products}}" wx:key="id" class="product-manage-row product-card-click-v1" data-id="{{item.id}}" bindtap="openEditProduct" role="button">
+  <view class="product-query-panel">
+    <view class="product-query-search">
+      <input value="{{searchText}}" bindinput="inputSearch" bindconfirm="searchProducts" confirm-type="search" maxlength="100" placeholder="商品名称／分类名称，或完整商品 ID" disabled="{{batchBusy}}" />
+      <button size="mini" bindtap="clearSearch" disabled="{{batchBusy}}">清空</button>
+    </view>
+    <view class="product-query-filters">
+      <picker mode="selector" range="{{categoryFilters}}" range-key="name" value="{{categoryFilterIndex}}" bindchange="chooseQueryCategory" disabled="{{batchBusy}}">
+        <view class="product-query-choice"><text>商品分类</text><text>{{categoryFilters[categoryFilterIndex].name}} ▾</text></view>
+      </picker>
+      <picker wx:for="{{queryControls}}" wx:key="key" mode="selector" range="{{item.labels}}" value="{{item.index}}" data-key="{{item.key}}" bindchange="chooseQueryFilter" disabled="{{batchBusy}}">
+        <view class="product-query-choice"><text>{{item.label}}</text><text>{{item.labels[item.index]}} ▾</text></view>
+      </picker>
+    </view>
+    <view class="product-query-actions">
+      <button size="mini" type="primary" bindtap="searchProducts" disabled="{{batchBusy}}">搜索／刷新</button>
+      <button size="mini" bindtap="resetQuery" disabled="{{batchBusy}}">重置条件</button>
+    </view>
+    <text class="product-query-note">筛选可组合；上架、定时及手动售罄仅适用于正式商品。折扣指已设置的有效折扣价格，包含未开始和已结束的优惠。</text>
+    <text class="product-query-note">价格按原价排序；不限库存、未填写数值排在末尾。全选仅选中当前已加载的正式商品。</text>
+    <text wx:if="{{queryDirty}}" class="product-query-pending">{{refreshRequired ? '数据已变化，请刷新后再操作。' : '搜索内容已修改，请点击搜索。旧结果暂不能操作。'}}</text>
+  </view>
+  <view wx:if="{{batchMode}}" class="product-batch-panel">
+    <view class="product-batch-summary">
+      <text>已选 {{batchSelectedCount}} / {{products.length}} 件商品</text>
+      <button size="mini" bindtap="toggleBatchAll" disabled="{{batchBusy || cloudLoading || !products.length}}">{{batchAllSelected ? '取消全选' : '全选'}}</button>
+    </view>
+    <text class="product-batch-hint">点击已加载的正式商品勾选，草稿不可勾选；售罄操作仅修改商家手动状态，不增加库存，零库存仍不可购买。</text>
+    <view class="product-batch-actions">
+      <button bindtap="runBatchAction" data-action="activate" disabled="{{batchBusy || cloudLoading || loadingMore || queryDirty || !batchSelectedCount || cloudError}}">上架（{{batchSelectedCount}}）</button>
+      <button bindtap="runBatchAction" data-action="deactivate" disabled="{{batchBusy || cloudLoading || loadingMore || queryDirty || !batchSelectedCount || cloudError}}">下架（{{batchSelectedCount}}）</button>
+      <button bindtap="runBatchAction" data-action="soldOut" disabled="{{batchBusy || cloudLoading || loadingMore || queryDirty || !batchSelectedCount || cloudError}}">标记售罄（{{batchSelectedCount}}）</button>
+      <button bindtap="runBatchAction" data-action="inStock" disabled="{{batchBusy || cloudLoading || loadingMore || queryDirty || !batchSelectedCount || cloudError}}">恢复有货（{{batchSelectedCount}}）</button>
+    </view>
+    <picker mode="selector" range="{{categories}}" range-key="name" bindchange="chooseBatchCategory" disabled="{{batchBusy || cloudLoading || !categories.length}}">
+      <view class="product-batch-category">{{batchCategoryName ? '目标分类：' + batchCategoryName : (categories.length ? '请选择目标分类 ›' : '暂无可用分类')}}</view>
+    </picker>
+    <button class="product-batch-category-submit" bindtap="runBatchAction" data-action="category" disabled="{{batchBusy || cloudLoading || loadingMore || queryDirty || !batchSelectedCount || !batchCategoryId || cloudError}}">修改分类（{{batchSelectedCount}} 件）</button>
+    <text wx:if="{{batchBusy}}" class="product-batch-feedback">{{batchProgress || '等待确认…'}} 已选 {{batchSelectedCount}} 件，请勿重复操作。</text>
+  </view>
+  <view wx:if="{{batchResult}}" class="product-batch-result">{{batchResult}}</view>
+  <view wx:if="{{!cloudLoading && !cloudError && entries.length === 0 && !queryDirty}}" class="product-manage-empty">没有符合当前条件的商品或草稿</view>
+  <view wx:for="{{entries}}" wx:key="entryKey">
+    <view wx:if="{{item.kind === 'draft'}}" class="product-draft-card">
+      <text class="product-manage-name">{{item.payload.productName || '未命名草稿'}}</text>
+      <text class="product-draft-label">草稿 · 顾客不可见 · 不参与批量操作</text>
+      <view class="product-draft-actions">
+        <button size="mini" data-id="{{item.id}}" bindtap="openDraft" disabled="{{batchMode || batchBusy || cloudLoading || queryDirty}}">继续编辑</button>
+        <button size="mini" data-id="{{item.id}}" bindtap="discardDraft" disabled="{{batchMode || batchBusy || cloudLoading || queryDirty}}">放弃草稿</button>
+      </view>
+    </view>
+  <view wx:else class="product-manage-row product-card-click-v1 {{batchMode && batchSelected[item.id] ? 'product-batch-selected' : ''}}" data-id="{{item.id}}" bindtap="openEditProduct" role="button" aria-label="{{batchMode ? (batchSelected[item.id] ? '已选择商品' : '选择商品') : '编辑商品'}} {{item.name}}">
+    <view wx:if="{{batchMode}}" class="product-batch-checkbox"><checkbox checked="{{batchSelected[item.id] || false}}" disabled="{{batchBusy || cloudLoading}}" color="#267452" /></view>
     <image wx:if="{{item.imageUrl}}" class="product-manage-image" src="{{item.imageUrl}}" mode="aspectFill" />
     <!-- UNIFIED_PLACEHOLDER_THUMB_V1 -->
 <view wx:else class="stall-placeholder-choice-shell">
@@ -69,8 +122,20 @@
     <view class="product-manage-info">
       <text class="product-manage-name">{{item.name}}</text>
       <text class="product-manage-price">¥{{item.price}}</text>
-      <text class="product-manage-state">{{item.soldOut ? '已售罄' : (item.available ? '销售中' : '已下架')}}</text>
+      <text class="product-manage-state">{{item.statusLabel}} · {{item.soldOut ? '商家手动售罄' : '未手动售罄'}}</text>
+      <text class="product-schedule-label">{{item.inventoryLabel}}</text>
+      <text wx:if="{{item.publishAt}}" class="product-schedule-label">{{item.pendingPublication ? '计划上架：' : '已按计划上架：'}}{{item.publishTimeText || item.publishAt}}（{{storeTimeZone === 'Asia/Shanghai' ? '北京时间 UTC+8' : storeTimeZone}}）</text>
+      <button wx:if="{{!batchMode}}" class="product-copy-button" size="mini" catchtap="openCopyProduct" data-id="{{item.id}}" disabled="{{cloudLoading || batchBusy || cloudError || queryDirty}}">复制</button>
     </view>
     
+  </view>
+  </view>
+  <view class="product-query-footer">
+    <text>已加载 {{entries.length}} 条（正式商品 {{products.length}}，草稿 {{drafts.length}}）</text>
+    <text wx:if="{{loadingMore}}">正在加载更多…</text>
+    <text wx:if="{{moreError}}" class="product-query-pending">{{moreError}}</text>
+    <button wx:if="{{refreshRequired}}" bindtap="searchProducts" disabled="{{batchBusy}}">数据有变化，刷新列表</button>
+    <button wx:elif="{{hasMore}}" bindtap="loadMore" disabled="{{batchBusy || cloudLoading || loadingMore || queryDirty}}">{{moreError ? '重试加载更多' : '加载更多'}}</button>
+    <text wx:if="{{!hasMore && !cloudLoading && !cloudError && entries.length && !queryDirty}}">已加载全部匹配结果</text>
   </view>
 </view>

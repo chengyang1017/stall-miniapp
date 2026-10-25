@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto'
 import { authenticate } from './auth.mjs'
 import { verifyDelivery } from './deliveryRules.mjs'
+import { publishedSql } from './productPublishing.mjs'
+import { sweepInventory, recordMovement, HOLD_MINUTES, stockError } from './inventory.mjs'
 
 const slugRe = /^[a-z0-9][a-z0-9-]{1,62}$/
 const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -37,6 +39,7 @@ export async function checkoutRoute(req,res,url,pool){
   const normalized={items:[...body.items].map(i=>({productId:i.productId.toLowerCase(),quantity:i.quantity})).sort((a,b)=>a.productId.localeCompare(b.productId)),
     address:{receiverName:body.address.receiverName.trim(),phone:body.address.phone.trim(),areaId:body.address.areaId,latitude:body.address.latitude??null,longitude:body.address.longitude??null,detail:body.address.detail.trim()},slot:{id:body.slot.id,date:body.slot.date},note:body.note.trim()}
   const fp=fingerprint(normalized)
+  await sweepInventory(pool,1)
   const client=await pool.connect()
   try{
     await client.query('BEGIN')
@@ -45,21 +48,24 @@ export async function checkoutRoute(req,res,url,pool){
     const storeResult=await client.query('SELECT id FROM stores WHERE slug=$1 AND is_active=true',[slug])
     if(!storeResult.rows.length){await client.query('ROLLBACK');reply(res,404,{error:'store_unavailable'});return true}
     const storeId=storeResult.rows[0].id
-    const existing=await client.query('SELECT id,total_cents,checkout_fingerprint FROM orders WHERE store_id=$1 AND customer_subject=$2 AND checkout_key=$3',[storeId,subject,key])
+    const existing=await client.query('SELECT id,total_cents,checkout_fingerprint,payment_status,fulfillment_status,inventory_state,inventory_expires_at FROM orders WHERE store_id=$1 AND customer_subject=$2 AND checkout_key=$3',[storeId,subject,key])
     if(existing.rows.length){
       await client.query('COMMIT')
       const saved=existing.rows[0]
       if(saved.checkout_fingerprint!==fp){reply(res,409,{error:'idempotency_key_reused'});return true}
-      reply(res,200,{orderId:saved.id,totalCents:Number(saved.total_cents),paymentStatus:'unpaid',replayed:true});return true
+      reply(res,200,{orderId:saved.id,totalCents:Number(saved.total_cents),paymentStatus:saved.payment_status,fulfillmentStatus:saved.fulfillment_status,inventoryState:saved.inventory_state,inventoryExpiresAt:saved.inventory_expires_at,replayed:true});return true
     }
     const delivery=await verifyDelivery(client,storeId,normalized.address,normalized.slot)
     if(delivery.error){await client.query('ROLLBACK');reply(res,409,{error:delivery.error});return true}
     const ids=normalized.items.map(i=>i.productId)
-    const products=await client.query('SELECT id,name,price_cents,discount_price_cents,discount_start,discount_end,active,sold_out FROM products WHERE store_id=$1 AND id=ANY($2::uuid[]) FOR SHARE',[storeId,ids])
+    const products=await client.query(`SELECT p.id,p.store_id,p.name,p.price_cents,p.discount_price_cents,p.discount_start,p.discount_end,${publishedSql('p')} AS active,p.sold_out,p.stock_mode,p.stock_quantity FROM products p WHERE p.store_id=$1 AND p.id=ANY($2::uuid[]) ORDER BY p.id FOR UPDATE`,[storeId,ids])
     if(products.rows.length!==ids.length||products.rows.some(p=>!p.active||p.sold_out)){
       await client.query('ROLLBACK');reply(res,409,{error:'product_unavailable'});return true
     }
     const byId=new Map(products.rows.map(p=>[p.id,p]))
+    if (normalized.items.some(item=>byId.get(item.productId).stock_mode==='finite' && byId.get(item.productId).stock_quantity<item.quantity)) {
+      await client.query('ROLLBACK');reply(res,409,{error:'insufficient_stock'});return true
+    }
     const lines=normalized.items.map(i=>({...i,name:byId.get(i.productId).name,priceCents:(byId.get(i.productId).discount_price_cents !== null && (!byId.get(i.productId).discount_start || new Date(byId.get(i.productId).discount_start) <= new Date()) && (!byId.get(i.productId).discount_end || new Date(byId.get(i.productId).discount_end) > new Date()) ? byId.get(i.productId).discount_price_cents : byId.get(i.productId).price_cents)}))
     const total=lines.reduce((sum,i)=>sum+i.priceCents*i.quantity,0)
     if(!Number.isSafeInteger(total)||total<0||total>100000000){await client.query('ROLLBACK');reply(res,400,{error:'cart_total_too_large'});return true}
@@ -68,8 +74,21 @@ export async function checkoutRoute(req,res,url,pool){
       VALUES($1,$2,$3,$3,$4,$5,$6::jsonb,$7::jsonb) RETURNING id`,[storeId,subject,total,key,fp,JSON.stringify({...normalized.address,note:normalized.note}),JSON.stringify(delivery.snapshot)])
     const orderId=inserted.rows[0].id
     for(const line of lines)await client.query('INSERT INTO order_items(order_id,product_id,product_name,unit_price_cents,quantity) VALUES($1,$2,$3,$4,$5)',[orderId,line.productId,line.name,line.priceCents,line.quantity])
+    let inventoryExpiresAt=null
+    const finiteLines=lines.filter(line=>byId.get(line.productId).stock_mode==='finite')
+    if (finiteLines.length) {
+      const expiry=await client.query(`UPDATE orders SET inventory_state='held',inventory_expires_at=clock_timestamp()+interval '1 minute' * $2 WHERE id=$1 RETURNING inventory_expires_at`,[orderId,HOLD_MINUTES])
+      inventoryExpiresAt=expiry.rows[0].inventory_expires_at
+      for (const line of finiteLines) {
+        const product=byId.get(line.productId)
+        const changed=await client.query('UPDATE products SET stock_quantity=stock_quantity-$3,inventory_version=inventory_version+1 WHERE store_id=$1 AND id=$2 AND stock_mode=$4 AND stock_quantity >= $3 RETURNING id',[storeId,product.id,line.quantity,'finite'])
+        if (!changed.rows.length) throw stockError('insufficient_stock')
+        await client.query('INSERT INTO inventory_reservations(store_id,order_id,product_id,quantity) VALUES($1,$2,$3,$4)',[storeId,orderId,product.id,line.quantity])
+        await recordMovement(client,product,'finite',product.stock_quantity-line.quantity,{orderId,source:'order',reason:'待支付订单预留，尚未收款',actor:subject,key:'reserve_'+orderId})
+      }
+    }
     await client.query('COMMIT')
-    reply(res,201,{orderId,totalCents:total,paymentStatus:'unpaid',replayed:false,deliveryVerified:true})
-  }catch(e){try{await client.query('ROLLBACK')}catch{};throw e}finally{client.release()}
+    reply(res,201,{orderId,totalCents:total,paymentStatus:'unpaid',inventoryState:finiteLines.length?'held':'none',inventoryExpiresAt,replayed:false,deliveryVerified:true})
+  }catch(e){try{await client.query('ROLLBACK')}catch{};if(e.inventoryError){reply(res,409,{error:e.message});return true}throw e}finally{client.release()}
   return true
 }

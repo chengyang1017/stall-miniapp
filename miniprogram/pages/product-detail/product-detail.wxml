@@ -8,7 +8,9 @@
     <view class="name">{{name}}</view>
     <view class="price">¥{{current}} <text wx:if="{{discounted}}" class="old">¥{{original}}</text></view>
     <view wx:if="{{discounted}}" class="sale">限时优惠</view>
-    <view wx:if="{{!available}}" class="unavailable">商品已下架或售罄，暂不可购买</view>
+    <view class="category">{{inventoryText}}</view>
+    <view wx:if="{{manualSoldOut}}" class="unavailable">商家手动售罄</view>
+    <view wx:if="{{!available}}" class="unavailable">商品未上架、手动售罄或库存不足，暂不可购买</view>
   </view>
   <view class="card">
     <view class="subtitle">商品介绍</view>
@@ -16,7 +18,7 @@
   </view>
   <view class="card quantity-row">
     <text>购买数量</text>
-    <view class="counter"><button size="mini" bindtap="decrease" disabled="{{quantity <= 1}}">−</button><text>{{quantity}}</text><button size="mini" bindtap="increase" disabled="{{quantity >= 99}}">＋</button></view>
+    <view class="counter"><button size="mini" bindtap="decrease" disabled="{{quantity <= 1}}">−</button><text>{{quantity}}</text><button size="mini" bindtap="increase" disabled="{{quantity >= maxQuantity}}">＋</button></view>
   </view>
   <view class="footer">
     <view><view class="label">合计</view><view class="total">¥{{totalText}}</view></view>

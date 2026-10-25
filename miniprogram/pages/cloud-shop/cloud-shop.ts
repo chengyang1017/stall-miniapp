@@ -1,4 +1,5 @@
 import { getRemoteProducts, RemoteProduct } from '../../utils/remoteApi'
+import { stockAllows } from '../../utils/store'
 
 const CONFIG_KEY = 'stall_cloud_catalog_config_v1'
 const DEV_LOCAL = /^http:\/\/(?:127\.0\.0\.1|localhost):8787$/
@@ -35,7 +36,7 @@ Page({
       const result = await getRemoteProducts(cfg.apiBase, cfg.storeSlug)
       const items = result.filter(p => typeof p.id === 'string' && Number.isSafeInteger(p.priceCents) && p.priceCents >= 0 && typeof p.name === 'string')
       const quantities: Record<string, number> = {}
-      for (const item of items) if (!item.soldOut && this.data.quantities[item.id] > 0) quantities[item.id] = this.data.quantities[item.id]
+      for (const item of items) if (!item.soldOut && stockAllows(item) && this.data.quantities[item.id] > 0) quantities[item.id] = Math.min(this.data.quantities[item.id],item.stockMode==='finite'?Number(item.stockQuantity):99)
       const products = items.map(p => ({ ...p, count: quantities[p.id] || 0, priceText: (p.priceCents / 100).toFixed(2), subtotalText: '0.00' }))
       const selected = this.data.selected ? products.find(p => p.id === this.data.selected!.id) || null : null
       this.setData({ products, quantities, selected, stale: false, status: `已同步 ${products.length} 件商品`, lastUpdated: new Date().toLocaleString() })
@@ -49,7 +50,7 @@ Page({
     let totalCents = 0
     let totalCount = 0
     const products = this.data.products.map(p => {
-      const count = p.soldOut ? 0 : Math.max(0, Math.min(99, Number(this.data.quantities[p.id]) || 0))
+      const count = p.soldOut || !stockAllows(p) ? 0 : Math.max(0, Math.min(p.stockMode==='finite'?Math.min(99,Number(p.stockQuantity)):99, Number(this.data.quantities[p.id]) || 0))
       totalCents += p.priceCents * count
       totalCount += count
       return { ...p, count, subtotalText: (p.priceCents * count / 100).toFixed(2) }
@@ -62,12 +63,13 @@ Page({
   },
   closeDetail() { this.setData({ selected: null }) },
   changeQuantity(e: any) {
-    if (this.data.stale || this.data.busy) return wx.showToast({ title: '请先刷新云端价格', icon: 'none' })
+    if (this.data.stale || this.data.busy) { wx.showToast({ title: '请先刷新云端价格', icon: 'none' }); return }
     const id = String(e.currentTarget.dataset.id || '')
     const step = Number(e.currentTarget.dataset.step)
     const product = this.data.products.find(p => p.id === id)
-    if (!product || product.soldOut || (step !== 1 && step !== -1)) return
+    if (!product || product.soldOut || !stockAllows(product) || (step !== 1 && step !== -1)) return
     const next = Math.max(0, Math.min(99, (this.data.quantities[id] || 0) + step))
+    if(!stockAllows(product,next))return
     this.setData({ quantities: { ...this.data.quantities, [id]: next } })
     this.recalculate()
   },
@@ -75,7 +77,7 @@ Page({
     if (this.data.busy || !this.data.totalCount) return
     const oldTotal = this.data.totalText
     await this.refresh()
-    if (this.data.stale) return wx.showToast({ title: '无法验证最新价格', icon: 'none' })
+    if (this.data.stale) { wx.showToast({ title: '无法验证最新价格', icon: 'none' }); return }
     wx.showModal({ title: '仅为购物车预览',
       content: `服务器最新商品合计 ¥${this.data.totalText}${oldTotal !== this.data.totalText ? '（价格或数量发生变化）' : ''}。正式下单尚未开放，下一阶段需要由后端创建订单并再次校验价格。`,
       showCancel: false })

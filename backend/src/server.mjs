@@ -1,9 +1,13 @@
 import http from 'node:http'
 import { Pool } from 'pg'
 import { catalogRoute } from './catalog.mjs'
+import { publishedSql } from './productPublishing.mjs'
+import { inventoryRoute } from './inventoryRoute.mjs'
+import { inventoryColumns, startInventoryWorker } from './inventory.mjs'
 import { checkoutRoute } from './checkout.mjs'
 import { orderWorkflowRoute } from './orderWorkflow.mjs'
 import { billingRoute } from './billing.mjs'
+import { salesAnalyticsRoute } from './salesAnalytics.mjs'
 import { merchantDeliveryRoute } from './deliveryRules.mjs'
 import { authenticate, createSession, revokeSession, exchangeWechatCode, merchantStores, permittedStore } from './auth.mjs'
 
@@ -31,10 +35,12 @@ const server = http.createServer(async (req, res) => {
   try { url = new URL(req.url || '/', 'http://localhost') }
   catch { return reply(res, 400, { error: 'invalid_url' }) }
   try {
+    if (await inventoryRoute(req,res,url,pool)) return
     if (await catalogRoute(req,res,url,pool)) return
     if (await checkoutRoute(req,res,url,pool)) return
     if (await orderWorkflowRoute(req,res,url,pool)) return
     if (await billingRoute(req,res,url,pool)) return
+    if (await salesAnalyticsRoute(req,res,url,pool)) return
     if (await merchantDeliveryRoute(req,res,url,pool)) return
     if (url.pathname === '/v1/auth/wechat' && req.method === 'POST') {
       const length = Number(req.headers['content-length'] || 0)
@@ -76,9 +82,9 @@ const server = http.createServer(async (req, res) => {
     if (match) {
       const { rows } = await pool.query(`
         SELECT p.id, p.name, p.price_cents AS "priceCents", p.sold_out AS "soldOut",
-               p.category_id AS "categoryId", p.image_object_key AS "imageObjectKey", p.description, p.discount_price_cents AS "discountPriceCents", p.discount_start AS "discountStart", p.discount_end AS "discountEnd", CASE WHEN p.discount_price_cents IS NOT NULL AND (p.discount_start IS NULL OR p.discount_start <= now()) AND (p.discount_end IS NULL OR p.discount_end > now()) THEN p.discount_price_cents ELSE p.price_cents END AS "effectivePriceCents"
+               ${inventoryColumns()},p.category_id AS "categoryId", p.image_object_key AS "imageObjectKey", p.description, p.discount_price_cents AS "discountPriceCents", p.discount_start AS "discountStart", p.discount_end AS "discountEnd", CASE WHEN p.discount_price_cents IS NOT NULL AND (p.discount_start IS NULL OR p.discount_start <= now()) AND (p.discount_end IS NULL OR p.discount_end > now()) THEN p.discount_price_cents ELSE p.price_cents END AS "effectivePriceCents"
         FROM products p JOIN stores s ON s.id = p.store_id
-        WHERE s.slug = $1 AND s.is_active = true AND p.active = true
+        WHERE s.slug = $1 AND s.is_active = true AND ${publishedSql('p')}
         ORDER BY p.created_at DESC, p.id DESC LIMIT 200
       `, [match[1]])
       const imageBase = (process.env.IMAGE_PUBLIC_BASE_URL || '').replace(/\/+$/, '')
@@ -93,7 +99,8 @@ const server = http.createServer(async (req, res) => {
     return reply(res, 503, { error: 'service_unavailable' })
   }
 })
-server.listen(port, host, () => console.log(`Stall API listening on ${host}:${port}`))
-async function shutdown() { server.close(); await pool.end() }
+let stopInventoryWorker=async()=>{}
+server.listen(port, host, () => { console.log(`Stall API listening on ${host}:${port}`);stopInventoryWorker=startInventoryWorker(pool) })
+async function shutdown() { server.close(); await stopInventoryWorker(); await pool.end() }
 process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)

@@ -1,4 +1,5 @@
 import { loadWorkflowOrders, updateWorkflowOrder, workflowLabel, chinaTime } from '../../utils/orderWorkflow'
+import { saveDemoOrders } from '../../utils/orders'
 import { merchantOrderConfig, fetchMerchantOrders, updateMerchantOrder } from '../../utils/merchantOrdersCloud'
 import { saveMerchantEta } from '../../utils/merchantEtaCloud' // PHASE37_ETA // PHASE36_CLOUD_MERCHANT_ORDERS
 
@@ -198,7 +199,7 @@ Page({
         target.issueReason = reason
         target.issueTime = new Date().toISOString()
         try {
-          wx.setStorageSync('stall_demo_orders_v1', orders)
+          saveDemoOrders(orders)
           this.refresh()
           wx.showToast({ title: '状态已记录', icon: 'success' })
         } catch (_error) {
@@ -216,7 +217,7 @@ Page({
       success:async (result:any)=>{
         if(!result.confirm)return
         const reason=String(result.content||'').trim()
-        if(!reason||reason.length>200)return wx.showToast({title:'原因需为1至200字',icon:'none'})
+        if(!reason||reason.length>200){ wx.showToast({title:'原因需为1至200字',icon:'none'}); return }
         try{await updateMerchantOrder(cfg,id,type,reason);this.refresh()}
         catch(e:any){wx.showModal({title:'操作失败',content:String(e?.message||'request_failed'),showCancel:false})}
       }})
@@ -229,14 +230,14 @@ Page({
     if(this.data.cloudMode){
       const id=String(e.currentTarget.dataset.id||'')
       const value=String(this.data.etaInputs[id]!==undefined?this.data.etaInputs[id]:(this.data.orders.find((o:any)=>o.id===id)||{}).etaValue||'').trim()
-      if(value.length>60)return wx.showToast({title:'预计时间过长',icon:'none'})
+      if(value.length>60){ wx.showToast({title:'预计时间过长',icon:'none'}); return }
       saveMerchantEta(id,value).then(()=>{this.refresh();wx.showToast({title:'预计时间已保存',icon:'success'})})
         .catch((err:any)=>wx.showModal({title:'保存失败',content:String(err?.message||'request_failed'),showCancel:false}))
       return
     }
     const id = String(e.currentTarget.dataset.id)
     const value = (this.data.etaInputs[id] !== undefined ? this.data.etaInputs[id] : (this.data.orders.find((o: any) => o.id === id) || {}).etaValue || '').trim()
-    if (!updateWorkflowOrder(id, 'eta', value)) return wx.showToast({ title: '当前状态不可设置预计时间', icon: 'none' })
+    if (!updateWorkflowOrder(id, 'eta', value)) { wx.showToast({ title: '当前状态不可设置预计时间', icon: 'none' }); return }
     this.refresh()
     wx.showToast({ title: '预计时间已保存' })
   },
@@ -254,7 +255,7 @@ Page({
     const status = String(e.currentTarget.dataset.status)
     if (!['accepted', 'preparing', 'delivering', 'delivered'].includes(status)) return
     const execute = () => {
-      if (!updateWorkflowOrder(id, status as any)) return wx.showToast({ title: '订单状态已变化', icon: 'none' })
+      if (!updateWorkflowOrder(id, status as any)) { wx.showToast({ title: '订单状态已变化', icon: 'none' }); return }
       this.refresh()
       wx.showToast({ title: '演示状态已更新' })
     }

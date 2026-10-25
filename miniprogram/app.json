@@ -12,6 +12,7 @@
                   "pages/cart/cart",
                   "pages/checkout/checkout",
                   "pages/admin-billing/admin-billing",
+                  "pages/admin-analytics/admin-analytics",
                   "pages/delivery/delivery",
                   "pages/addresses/addresses",
                   "pages/orders/orders",

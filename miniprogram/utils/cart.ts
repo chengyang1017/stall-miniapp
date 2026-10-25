@@ -1,5 +1,5 @@
 
-import { loadStore, effectivePrice } from './store'
+import { loadStore, effectivePrice, productIsPublished, stockAllows } from './store'
 
 export interface CartItem {
   productId: string
@@ -7,6 +7,8 @@ export interface CartItem {
 }
 
 export interface CartDisplayItem {
+  stockInsufficient?:boolean
+  inventoryText?:string
   productId: string
   name: string
   quantity: number
@@ -35,29 +37,35 @@ export function saveCart(items: CartItem[]): void {
   syncCartTabBadge()
 }
 
-export function addToCart(productId: string): void {
+export function addToCart(productId: string, quantity=1): boolean {
   const product = loadStore().products.find(
     p => p.id === productId
   )
 
-  if (!product || !product.available) return
+  if (!product || !productIsPublished(product) || product.soldOut || !stockAllows(product) || !Number.isSafeInteger(quantity) || quantity<1) return false
 
   const cart = loadCart()
   const item = cart.find(p => p.productId === productId)
+  if(!stockAllows(product,(item?item.quantity:0)+quantity)){wx.showToast({title:'库存不足',icon:'none'});return false}
 
   if (item) {
-    item.quantity += 1
+    item.quantity += quantity
   } else {
-    cart.push({ productId, quantity: 1 })
+    cart.push({ productId, quantity })
   }
 
   saveCart(cart)
+  return true
 }
 
 export function changeQuantity(
   productId: string,
   delta: number
 ): void {
+  if (delta > 0) {
+    const product = loadStore().products.find(p=>p.id===productId)
+    if (!product || !productIsPublished(product) || product.soldOut || !stockAllows(product,(loadCart().find(row=>row.productId===productId)?.quantity || 0)+delta)) {wx.showToast({title:'库存不足或商品不可购买',icon:'none'});return}
+  }
   const cart = loadCart()
   const item = cart.find(p => p.productId === productId)
 
@@ -81,7 +89,7 @@ export function getCartDetails() {
       p => p.id === entry.productId
     )
 
-    if (!product || !product.available || product.soldOut) continue
+    if (!product || !productIsPublished(product) || product.soldOut) continue
 
     const price = effectivePrice(product)
     const subtotal = Math.round(
@@ -95,7 +103,8 @@ export function getCartDetails() {
       price,
       subtotal,
       priceText: price.toFixed(2),
-      subtotalText: subtotal.toFixed(2)
+      subtotalText: subtotal.toFixed(2),
+      stockInsufficient:!stockAllows(product,entry.quantity),inventoryText:product.stockMode==='finite'?`可销售库存 ${product.stockQuantity} 件${!stockAllows(product,entry.quantity)?'，库存不足，请减少数量':''}`:'不限库存'
     })
   }
 

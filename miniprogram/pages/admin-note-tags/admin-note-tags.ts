@@ -11,11 +11,11 @@ Page({
   persist(tags: string[]) { wx.setStorageSync(KEY, tags); this.setData({ tags }) },
   add() {
     const value = this.data.draft.trim()
-    if (!value) return wx.showToast({ title: '请输入标签', icon: 'none' })
-    if (value.length > 20) return wx.showToast({ title: '最多20个字', icon: 'none' })
+    if (!value) { wx.showToast({ title: '请输入标签', icon: 'none' }); return }
+    if (value.length > 20) { wx.showToast({ title: '最多20个字', icon: 'none' }); return }
     const tags = readTags()
-    if (tags.includes(value)) return wx.showToast({ title: '标签已存在', icon: 'none' })
-    if (tags.length >= 30) return wx.showToast({ title: '最多30个标签', icon: 'none' })
+    if (tags.includes(value)) { wx.showToast({ title: '标签已存在', icon: 'none' }); return }
+    if (tags.length >= 30) { wx.showToast({ title: '最多30个标签', icon: 'none' }); return }
     this.persist([...tags, value]); this.setData({ draft: '' })
   },
   edit(e: any) {
@@ -30,8 +30,8 @@ Page({
     const tags = readTags()
     if (i < 0 || i >= tags.length) return
     const value = this.data.editingValue.trim()
-    if (!value || value.length > 20) return wx.showToast({ title: '标签须为1至20字', icon: 'none' })
-    if (tags.some((x, j) => j !== i && x === value)) return wx.showToast({ title: '标签已存在', icon: 'none' })
+    if (!value || value.length > 20) { wx.showToast({ title: '标签须为1至20字', icon: 'none' }); return }
+    if (tags.some((x, j) => j !== i && x === value)) { wx.showToast({ title: '标签已存在', icon: 'none' }); return }
     tags[i] = value
     this.persist(tags); this.cancelEdit()
   },

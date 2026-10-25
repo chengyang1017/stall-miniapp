@@ -66,9 +66,9 @@ Page({
     const phone=this.data.phone.trim()
     const area=this.data.area
     const detail=this.data.detail.trim()
-    if (!receiverName || !phone || !area || !detail) return wx.showToast({title:'请填写完整地址',icon:'none'})
-    if (!/^1[3-9]\d{9}$/.test(phone)) return wx.showToast({title:'手机号格式错误',icon:'none'})
-    if (!availableAreas().some(a=>a.name===area)) return wx.showToast({title:'该地区暂不可配送',icon:'none'})
+    if (!receiverName || !phone || !area || !detail) { wx.showToast({title:'请填写完整地址',icon:'none'}); return }
+    if (!/^1[3-9]\d{9}$/.test(phone)) { wx.showToast({title:'手机号格式错误',icon:'none'}); return }
+    if (!availableAreas().some(a=>a.name===area)) { wx.showToast({title:'该地区暂不可配送',icon:'none'}); return }
     if (!isPointDeliverable(area, this.data.latitude, this.data.longitude)) {
       wx.showToast({title:'地址不在配送范围内',icon:'none'})
       return
@@ -90,7 +90,9 @@ Page({
   },
   setDefault(e: WechatMiniprogram.TouchEvent) {
     const id=String(e.currentTarget.dataset.id)
-    if (!isPointDeliverable(area, this.data.latitude, this.data.longitude)) {
+    const target=loadAddresses().find(a=>a.id===id)
+    if (!target) { wx.showToast({title:'åœ°å€ä¸å­˜åœ¨',icon:'none'}); return }
+    if (!isPointDeliverable(target.area, target.latitude ?? null, target.longitude ?? null)) {
       wx.showToast({title:'地址不在配送范围内',icon:'none'})
       return
     }    const items=loadAddresses().map(a=>({...a,isDefault:a.id===id}))

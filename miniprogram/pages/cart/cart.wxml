@@ -74,6 +74,7 @@
     </view>
     <view class="cart-item-content">
     <view class="product-name">{{item.name}}</view>
+    <view wx:if="{{item.inventoryText}}" style="font-size:22rpx;color:{{item.stockInsufficient ? '#b33' : '#777'}}">{{item.inventoryText}}</view>
     <view class="item-bottom">
       <view>
         <view class="price">¥{{item.priceText}}</view>

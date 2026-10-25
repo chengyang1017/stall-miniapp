@@ -28,7 +28,7 @@ Page({
   onDevTokenInput(e: any) { this.setData({ devTokenDraft: String(e.detail.value || '').trim() }) },
   async loginLocalDev() {
     if (!localDevAllowed(this.data.apiBase) || this.data.storeSlug !== 'stall-demo')
-      return wx.showToast({title:'仅限本机模拟器 stall-demo',icon:'none'})
+      { wx.showToast({title:'仅限本机模拟器 stall-demo',icon:'none'}); return }
     try {
       setLocalDevToken(this.data.apiBase, this.data.devTokenDraft)
       this.setData({devTokenDraft:''})
@@ -98,7 +98,7 @@ Page({
     if (this.data.billBusy || !this.data.merchantReady || !this.validConfig()) return
     const from=this.data.billFrom || new Date().toISOString().slice(0,10)
     const to=this.data.billTo || from
-    if(from>to) return wx.showToast({title:'日期范围错误',icon:'none'})
+    if(from>to) { wx.showToast({title:'日期范围错误',icon:'none'}); return }
     this.setData({billBusy:true,billMessage:'正在读取云端账单…'})
     try {
       const data=await authorizedGet(this.data.apiBase, `/v1/merchant/stores/${this.data.storeSlug}/billing?from=${from}&to=${to}`)
@@ -112,7 +112,7 @@ Page({
   exportBilling() {
     if(this.data.billBusy || !this.data.merchantReady || !this.data.billSummary) return
     const token=wx.getStorageSync('stall_server_session_v1')
-    if(typeof token!=='string'||!token) return wx.showToast({title:'请重新登录',icon:'none'})
+    if(typeof token!=='string'||!token) { wx.showToast({title:'请重新登录',icon:'none'}); return }
     const from=this.data.billFrom,to=this.data.billTo
     this.setData({billBusy:true,billMessage:'正在下载 CSV…'})
     wx.downloadFile({url:`${this.data.apiBase.replace(/\/+$/,'')}/v1/merchant/stores/${this.data.storeSlug}/billing/export?from=${from}&to=${to}`,header:{Authorization:`Bearer ${token}`},
@@ -182,14 +182,14 @@ Page({
       placeholderText: '填写原因（1 至 200 字）', success: async (r: any) => {
         const reason = String(r.content || '').trim()
         if (!r.confirm) return
-        if (!reason || reason.length > 200) return wx.showToast({ title: '请填写1至200字原因', icon: 'none' })
+        if (!reason || reason.length > 200) { wx.showToast({ title: '请填写1至200字原因', icon: 'none' }); return }
         await this.submitCloudOrderStatus(id, next, reason)
       } })
   },
   async submitCloudOrderStatus(id: string, status: string, reason = '') {
     if (this.data.orderBusy || !this.validConfig()) return
     const token = wx.getStorageSync('stall_server_session_v1')
-    if (typeof token !== 'string' || !token) return wx.showToast({ title: '请重新登录', icon: 'none' })
+    if (typeof token !== 'string' || !token) { wx.showToast({ title: '请重新登录', icon: 'none' }); return }
     this.setData({ orderBusy: true })
     try {
       const result: any = await new Promise((resolve, reject) => wx.request({
@@ -239,7 +239,7 @@ Page({
   async saveCategory() {
     if (this.data.busy || !this.data.merchantReady || !this.validConfig()) return
     const name = this.data.categoryDraft.trim()
-    if (!name || name.length > 100) return wx.showToast({ title: '分类名称需为1-100字', icon: 'none' })
+    if (!name || name.length > 100) { wx.showToast({ title: '分类名称需为1-100字', icon: 'none' }); return }
     this.setData({ busy: true })
     try {
       const root = `/v1/merchant/stores/${this.data.storeSlug}/categories`
@@ -302,9 +302,9 @@ Page({
     const name = this.data.productName.trim(), raw = this.data.productPrice.trim()
     const value = Number(raw), cents = Math.round(value * 100)
     if (!name || name.length > 200 || !/^\d+(?:\.\d{1,2})?$/.test(raw) || !Number.isSafeInteger(cents) || cents < 0 || cents > 100000000) {
-      return wx.showToast({ title: '请检查商品名称和价格', icon: 'none' })
+      { wx.showToast({ title: '请检查商品名称和价格', icon: 'none' }); return }
     }
-    if (this.data.productCategoryId && !this.data.categories.some(c => c.id === this.data.productCategoryId)) return wx.showToast({ title: '请选择有效分类', icon: 'none' })
+    if (this.data.productCategoryId && !this.data.categories.some(c => c.id === this.data.productCategoryId)) { wx.showToast({ title: '请选择有效分类', icon: 'none' }); return }
     const data = { name, priceCents: cents, categoryId: this.data.productCategoryId || null, active: this.data.productActive, soldOut: this.data.productSoldOut, imageObjectKey: this.data.productImageKey || null }
     const root = `/v1/merchant/stores/${this.data.storeSlug}/products`
     this.setData({ busy: true })
