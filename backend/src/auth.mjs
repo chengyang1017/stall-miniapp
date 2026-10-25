@@ -21,7 +21,7 @@ export async function createSession(pool, subject) {
   const token = randomBytes(32).toString('base64url')
   const expiresAt = new Date(Date.now() + expiryMs).toISOString()
   await pool.query('INSERT INTO auth_sessions(token_hash, external_subject, expires_at) VALUES ($1,$2,$3)', [sha256(token), subject, expiresAt])
-  return { token, expiresAt }
+  return { token, expiresAt, cacheScope:sha256('customer-cache:'+subject) }
 }
 
 export async function revokeSession(pool, req) {

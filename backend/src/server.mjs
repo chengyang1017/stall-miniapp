@@ -1,4 +1,10 @@
+import { storeEntryRoute } from './storeEntry.mjs'
+import { pageScope,pageQuery,pageResult,cursorTime } from './customerPagination.mjs'
 import http from 'node:http'
+import { supportRoute } from './support.mjs'
+import { merchantArchivesRoute } from './merchantArchives.mjs'
+import { imageManagementRoute } from './imageManagement.mjs'
+import { customerAddressRoute } from './customerAddresses.mjs'
 import { Pool } from 'pg'
 import { catalogRoute } from './catalog.mjs'
 import { publishedSql } from './productPublishing.mjs'
@@ -8,7 +14,7 @@ import { checkoutRoute } from './checkout.mjs'
 import { orderWorkflowRoute } from './orderWorkflow.mjs'
 import { billingRoute } from './billing.mjs'
 import { salesAnalyticsRoute } from './salesAnalytics.mjs'
-import { merchantDeliveryRoute } from './deliveryRules.mjs'
+import { merchantDeliveryRoute, businessSettingsRoute } from './deliveryRules.mjs'
 import { authenticate, createSession, revokeSession, exchangeWechatCode, merchantStores, permittedStore } from './auth.mjs'
 
 // Public read-only API. Do not add merchant writes or customer checkout before
@@ -35,6 +41,11 @@ const server = http.createServer(async (req, res) => {
   try { url = new URL(req.url || '/', 'http://localhost') }
   catch { return reply(res, 400, { error: 'invalid_url' }) }
   try {
+    if (await storeEntryRoute(req,res,url,pool)) return
+    if (await supportRoute(req,res,url,pool)) return
+    if (await merchantArchivesRoute(req,res,url,pool)) return
+    if (await imageManagementRoute(req,res,url,pool)) return
+    if (await customerAddressRoute(req,res,url,pool)) return
     if (await inventoryRoute(req,res,url,pool)) return
     if (await catalogRoute(req,res,url,pool)) return
     if (await checkoutRoute(req,res,url,pool)) return
@@ -42,6 +53,7 @@ const server = http.createServer(async (req, res) => {
     if (await billingRoute(req,res,url,pool)) return
     if (await salesAnalyticsRoute(req,res,url,pool)) return
     if (await merchantDeliveryRoute(req,res,url,pool)) return
+    if (await businessSettingsRoute(req,res,url,pool)) return
     if (url.pathname === '/v1/auth/wechat' && req.method === 'POST') {
       const length = Number(req.headers['content-length'] || 0)
       if (!Number.isFinite(length) || length > 2048) return reply(res, 413, { error: 'too_large' })
@@ -80,15 +92,28 @@ const server = http.createServer(async (req, res) => {
     }
     const match = /^\/v1\/stores\/([a-z0-9][a-z0-9-]{1,62})\/products$/.exec(url.pathname)
     if (match) {
+      const q=url.searchParams,ids=q.has('ids')?q.get('ids').split(','):null
+      const search=(q.get('q')||'').trim(),category=q.get('category')||null,discount=q.get('discount')||''
+      if(discount&&discount!=='1'||search.length>100||category&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(category)||ids&&(!ids.length||ids.length>40||new Set(ids).size!==ids.length||[...q.keys()].some(k=>k!=='ids')||ids.some(id=>!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id))))return reply(res,400,{error:'invalid_product_query'})
+      const scope=pageScope(['products',match[1],search,category,discount])
+      let page
+      try{page=pageQuery(q,ids?['ids']:['q','category','discount','limit','cursor'],30,scope)}catch(e){return reply(res,400,{error:e.message})}
       const { rows } = await pool.query(`
-        SELECT p.id, p.name, p.price_cents AS "priceCents", p.sold_out AS "soldOut",
+        SELECT ${cursorTime('p')} AS "cursorTime", p.id, p.name, p.price_cents AS "priceCents", p.sold_out AS "soldOut",c.name AS "categoryName",c.sort_order AS "categorySortOrder",
                ${inventoryColumns()},p.category_id AS "categoryId", p.image_object_key AS "imageObjectKey", p.description, p.discount_price_cents AS "discountPriceCents", p.discount_start AS "discountStart", p.discount_end AS "discountEnd", CASE WHEN p.discount_price_cents IS NOT NULL AND (p.discount_start IS NULL OR p.discount_start <= now()) AND (p.discount_end IS NULL OR p.discount_end > now()) THEN p.discount_price_cents ELSE p.price_cents END AS "effectivePriceCents"
-        FROM products p JOIN stores s ON s.id = p.store_id
-        WHERE s.slug = $1 AND s.is_active = true AND ${publishedSql('p')}
-        ORDER BY p.created_at DESC, p.id DESC LIMIT 200
-      `, [match[1]])
+        FROM products p JOIN stores s ON s.id = p.store_id LEFT JOIN categories c ON c.store_id=p.store_id AND c.id=p.category_id
+        WHERE s.slug = $1 AND s.is_active = true AND ${publishedSql('p')} AND ($2::uuid[] IS NULL OR p.id=ANY($2))
+        AND ($3::text = '' OR strpos(lower(p.name),lower($3))>0)
+          AND ($4::uuid IS NULL OR p.category_id=$4)
+          AND ($5::timestamptz IS NULL OR (p.created_at,p.id)<($5::timestamptz,$6::uuid))
+        AND ($8::boolean=false OR (p.discount_price_cents IS NOT NULL AND (p.discount_start IS NULL OR p.discount_start<=now()) AND (p.discount_end IS NULL OR p.discount_end>now())))
+        ORDER BY p.created_at DESC, p.id DESC LIMIT $7
+      `, [match[1],ids,search,category,page.anchor?.[1]??null,page.anchor?.[2]??null,ids?40:page.limit+1,discount==='1'])
+      const result=pageResult(rows,ids?40:page.limit,scope)
+      const categories=ids?{rows:[]}:await pool.query(`SELECT c.id,c.name FROM categories c JOIN stores s ON s.id=c.store_id WHERE s.slug=$1 AND s.is_active=true ORDER BY c.sort_order,c.name,c.id LIMIT 1001`,[match[1]])
+      if(categories.rows.length>1000)return reply(res,413,{error:'category_limit'})
       const imageBase = (process.env.IMAGE_PUBLIC_BASE_URL || '').replace(/\/+$/, '')
-      return reply(res, 200, { products: rows.map(p => ({ ...p,
+      return reply(res, 200, { hasMore:result.hasMore,nextCursor:result.nextCursor,categories:categories.rows,products: result.items.map(p => ({ ...p,
         imageUrl: p.imageObjectKey && /^https:\/\/[^/]+/.test(imageBase)
           ? `${imageBase}/${p.imageObjectKey.split('/').map(encodeURIComponent).join('/')}` : null
       })) })

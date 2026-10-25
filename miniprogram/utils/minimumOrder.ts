@@ -13,3 +13,8 @@ export function minimumOrderShortfall(totalText: string): number {
   const cents = Number.isFinite(total) && total > 0 ? Math.round(total * 100) : 0
   return Math.max(0, Math.round(getMinimumOrder() * 100) - cents) / 100
 }
+export function minimumShortfallCents(totalText:string,minimumCents:number):number {
+  const subtotal=Math.round(Number(totalText)*100)
+  if(!Number.isSafeInteger(minimumCents)||minimumCents<0||!Number.isSafeInteger(subtotal)||subtotal<0)throw new Error('invalid_minimum_amount')
+  return Math.max(0,minimumCents-subtotal)
+}

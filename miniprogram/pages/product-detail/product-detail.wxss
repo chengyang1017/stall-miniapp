@@ -1,3 +1,4 @@
+@import "../../styles/product-placeholder.wxss";
 page {
   background: #f5f6f8;
 }

@@ -1,268 +1,162 @@
-import { loadWorkflowOrders, updateWorkflowOrder, workflowLabel, chinaTime } from '../../utils/orderWorkflow'
-import { saveDemoOrders } from '../../utils/orders'
-import { merchantOrderConfig, fetchMerchantOrders, updateMerchantOrder } from '../../utils/merchantOrdersCloud'
-import { saveMerchantEta } from '../../utils/merchantEtaCloud' // PHASE37_ETA // PHASE36_CLOUD_MERCHANT_ORDERS
-
-// orderStatusTabsV1: local demonstration status filters, newest first.
-const orderTabs = [
-  { key: 'latest', label: '最新' },
-  { key: 'new', label: '待接单' },
-  { key: 'accepted', label: '已接单' },
-  { key: 'preparing', label: '备货中' },
-  { key: 'delivering', label: '配送中' },
-  { key: 'delivered', label: '已送达' },
-  { key: 'other', label: '取消 / 异常' }
-]
-function orderState(o: any): string { return String(o.fulfillmentStatus || 'new') }
-function orderSort(a: any, b: any): number {
-  const ta = Date.parse(String(a.createdAt || '')) || 0
-  const tb = Date.parse(String(b.createdAt || '')) || 0
-  return tb - ta
-}
-function orderMatches(o: any, tab: string): boolean {
-  if (tab === 'latest') return true
-  const status = orderState(o)
-  if (tab === 'other') return ['cancelled', 'canceled', 'abnormal', 'exception', 'refunded'].includes(status)
-  return status === tab
-}
-function orderCount(orders: any[], key: string): number {
-  return orders.filter(o => orderMatches(o, key)).length
-}
-// ORDER_SEARCH_V1: search visible fields without mutating persisted orders.
-function orderSearchMatch(o: any, value: string): boolean {
-  const q = String(value || '').trim().toLowerCase()
-  if (!q) return true
-  const fields = [o.id, o.receiverName, o.phone]
-  return fields.some(v => String(v == null ? '' : v).toLowerCase().includes(q))
-}
-// ADMIN_ORDER_DATE_FILTER_V1
-function orderDateMatches(order: any, selected: string): boolean {
-  if (!selected) return true
-  const raw = order.createdAt
-  if (raw === undefined || raw === null || raw === '') return false
-  const date = typeof raw === 'number'
-    ? new Date(raw < 100000000000 ? raw * 1000 : raw)
-    : new Date(raw)
-  if (Number.isNaN(date.getTime())) return false
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}` === selected
-}
+import {loadWorkflowOrders,updateWorkflowOrder,chinaTime} from '../../utils/orderWorkflow'
+import {saveDemoOrders} from '../../utils/orders'
+import {merchantOrderConfig,merchantOrderContextKey,fetchMerchantOrderPage,updateMerchantOrder,saveMerchantOrderNote,MerchantOrderCounts,MerchantOrderQuery} from '../../utils/merchantOrdersCloud'
+import {saveMerchantEta} from '../../utils/merchantEtaCloud'
+const tabs=[{key:'latest',label:'全部订单'},{key:'new',label:'待接单'},{key:'accepted',label:'已接单'},{key:'preparing',label:'备货中'},{key:'delivering',label:'配送中'},{key:'delivered',label:'已送达'},{key:'cancelled',label:'已取消'},{key:'abnormal',label:'配送异常'},{key:'other',label:'取消 / 异常'}]
+const labels:Record<string,string>={new:'新订单',accepted:'已接单',preparing:'备货中',delivering:'配送中',delivered:'已送达',cancelled:'已取消',abnormal:'配送异常'}
+function state(o:any):string{const s=String(o.fulfillmentStatus||'new');return ['canceled','refunded'].includes(s)?'cancelled':s==='exception'?'abnormal':s}
+function matches(o:any,tab:string):boolean{return tab==='latest'||(tab==='other'?['cancelled','abnormal'].includes(state(o)):state(o)===tab)}
+function beijingDay(iso:string):string{const t=Date.parse(iso);return Number.isFinite(t)?new Date(t+8*3600000).toISOString().slice(0,10):''}
+function validRange(from:string,to:string):boolean{if(!from&&!to)return true;const ok=(s:string)=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+'T00:00:00Z'))&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s&&s>='2000-01-01'&&s<='2100-12-31';return ok(from)&&ok(to)&&from<=to&&Date.parse(to)-Date.parse(from)<366*86400000}
+function emptyCounts():MerchantOrderCounts{return {all:0,new:0,accepted:0,preparing:0,delivering:0,delivered:0,cancelled:0,abnormal:0,other:0}}
+function errorMessage(e:unknown):string{const s=String(e);if(/orders_changed|cursor/.test(s))return '订单数据已变化或分页已过期，请刷新后继续加载';if(/401|403|not_logged_in/.test(s))return '登录已失效或无操作权限，请重新登录有权限的商家账号';if(s.includes('payment_not_confirmed'))return '尚未确认支付，现有支付或库存预留规则禁止此操作';if(s.includes('inventory_reservation_expired'))return '库存预留已过期，服务器已处理，请刷新核对';if(/invalid_transition|state_changed|inventory_released/.test(s))return '订单状态或库存预留已变化，请刷新核对';if(s.includes('400'))return '查询条件或操作参数无效，请检查日期范围和输入';return '请求失败或结果未能确认，请检查网络后刷新核对，勿重复操作'}
 Page({
-  // ADMIN_ORDER_DATE_FILTER_V1: update only the presentation list.
-  observers: {
-    'searchResults, orderDateFilter': function(searchResults: any, orderDateFilter: string) {
-      const result = (searchResults || []).filter((o: any) => orderDateMatches(o, orderDateFilter || ''))
-      this.setData({ dateResults: result })
-    }
-  },
-  selectOrderDate(e: any) {
-    this.setData({ orderDateFilter: String(e.detail.value || '') })
-  },
-  // ADMIN_ORDER_TODAY_BUTTON_V1
-  selectTodayOrders() {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
-    const day = String(now.getDate()).padStart(2, '0')
-    this.setData({ orderDateFilter: `${year}-${month}-${day}` })
-  },
-  clearOrderDate() {
-    this.setData({ orderDateFilter: '' })
-  },
-  data: {
-    orders: [] as Array<any>,
-    visibleOrders: [] as Array<any>,
-    currentTab: 'latest',
-    orderSearchText: '',
-    searchResults: [] as Array<any>,
-    orderDateFilter: '',
-    dateResults: [] as Array<any>,
-    orderTabs: orderTabs.map(tab => ({ ...tab, count: 0 })),
-    etaInputs: {} as Record<string, string>,
-    cloudMode: false, cloudError: '', cloudBusy: false
-  },
-  onShow() { this.refresh() },
-  refresh() {
-    const cfg=merchantOrderConfig()
-    if(cfg){this.refreshCloud(cfg);return}
-    this.setData({cloudMode:false,cloudError:''})
-    const orders = loadWorkflowOrders().map(order => {
-      const status = order.fulfillmentStatus || 'new'
-      return {
-        ...order,
-        statusText: workflowLabel(status),
-        issueReason: (order as any).issueReason || '',
-        issueTimeText: (order as any).issueTime ? chinaTime((order as any).issueTime) : '',
-        allowCancel: !['delivered', 'cancelled', 'canceled', 'abnormal'].includes(status),
-        allowAbnormal: status === 'delivering',
-        createdText: chinaTime(order.createdAt),
-        deliveredText: order.deliveredAt ? chinaTime(order.deliveredAt) : '',
-        nextStatus: ['cancelled', 'canceled', 'abnormal'].includes(status) ? '' : status === 'new' ? 'accepted' : status === 'accepted' ? 'preparing' : status === 'preparing' ? 'delivering' : status === 'delivering' ? 'delivered' : '',
-        nextLabel: status === 'new' ? '接单' : status === 'accepted' ? '开始备货' : status === 'preparing' ? '开始配送' : status === 'delivering' ? '标记已送达（无照片，仅演示）' : '',
-        etaValue: order.estimatedArrival || ''
-      }
-    })
-        orders.sort(orderSort)
-    this.setData({
-      orders,
-      visibleOrders: orders.filter(o => orderMatches(o, this.data.currentTab)),
-      searchResults: orders.filter(o => orderMatches(o, this.data.currentTab)).filter(o => orderSearchMatch(o, this.data.orderSearchText)),
-      orderTabs: orderTabs.map(tab => ({ ...tab, count: orderCount(orders, tab.key) }))
-    })
-  },
-  // PHASE36_CLOUD_MERCHANT_ORDERS: preserve local filters and original order cards.
-  async refreshCloud(cfg: {apiBase:string;storeSlug:string}) {
-    this.setData({cloudMode:true,cloudBusy:true,cloudError:''})
-    try {
-      const records=await fetchMerchantOrders(cfg)
-      const orders=records.map((o:any)=>{
-        const status=String(o.fulfillmentStatus||'new')
-        const contact=o.contactSnapshot||{}
-        const slot=o.deliverySlotSnapshot||{}
-        const canProceed=['new','accepted','preparing'].includes(status)
-        return {...o,
-          id:String(o.id),statusText:workflowLabel(status as any),
-          totalText:(Number(o.totalCents||0)/100).toFixed(2),
-          receiverName:String(contact.receiverName||''),phone:String(contact.phone||''),
-          area:String(contact.areaId||''),detail:String(contact.detail||''),note:String(contact.note||''), // PHASE41_ORDER_NOTES
-          slotText:[slot.date,slot.label,slot.start&&slot.end?slot.start+'–'+slot.end:''].filter(Boolean).join(' '),
-          items:Array.isArray(o.items)?o.items:[],createdText:o.createdAt?chinaTime(String(o.createdAt)):'',
-          deliveredText:o.deliveredAt?chinaTime(String(o.deliveredAt)):'',
-          issueReason:String(o.issueReason||''),issueTimeText:'' /* PHASE40_ISSUE_REASON */,etaValue:String(o.estimatedArrival||''),
-          allowCancel:['new','accepted','preparing'].includes(status),allowAbnormal:status==='delivering',
-          nextStatus:canProceed?({new:'accepted',accepted:'preparing',preparing:'delivering'} as any)[status]:'',
-          nextLabel:({new:'接单',accepted:'开始备货',preparing:'开始配送'} as any)[status]||''
-        }
-      }).sort(orderSort)
-      this.setData({orders,cloudBusy:false,
-        visibleOrders:orders.filter((o:any)=>orderMatches(o,this.data.currentTab)),
-        searchResults:orders.filter((o:any)=>orderMatches(o,this.data.currentTab)).filter((o:any)=>orderSearchMatch(o,this.data.orderSearchText)),
-        orderTabs:orderTabs.map(t=>({...t,count:orderCount(orders,t.key)}))})
-    }catch(e:any){this.setData({orders:[],visibleOrders:[],searchResults:[],cloudBusy:false,
-      cloudError:String(e?.message||'load_failed'),orderTabs:orderTabs.map(t=>({...t,count:0}))})}
-  },
-  // ORDER_SEARCH_V1
-  orderSearchInput(e: any) {
-    const orderSearchText = String(e.detail.value || '')
-    const searchResults = this.data.orders
-      .filter((o: any) => orderMatches(o, this.data.currentTab))
-      .filter((o: any) => orderSearchMatch(o, orderSearchText))
-    this.setData({ orderSearchText, searchResults })
-  },
-  clearOrderSearch() {
-    const searchResults = this.data.orders.filter((o: any) => orderMatches(o, this.data.currentTab))
-    this.setData({ orderSearchText: '', searchResults })
-  },
-  switchOrderTab(e: any) {
-    const tab = String(e.currentTarget.dataset.tab || 'latest')
-    if (!orderTabs.some(item => item.key === tab)) return
-    this.setData({
-      currentTab: tab,
-      visibleOrders: this.data.orders.filter((o: any) => orderMatches(o, tab)),
-      searchResults: this.data.orders.filter((o: any) => orderMatches(o, tab)).filter((o: any) => orderSearchMatch(o, this.data.orderSearchText))
-    })
-  },
-  // stallCancelExceptionV1: demo-only cancellation and delivery issue recording.
-  recordOrderIssue(e: any) {
-    if(this.data.cloudMode){this.recordCloudIssue(e);return}
-    const id = String(e.currentTarget.dataset.id || '')
-    const type = String(e.currentTarget.dataset.type || '')
-    if (type !== 'cancelled' && type !== 'abnormal') return
-    const currentOrder = loadWorkflowOrders().find(o => o.id === id) as any
-    if (!currentOrder) return
-    const current = String(currentOrder.fulfillmentStatus || 'new')
-    if (['delivered', 'cancelled', 'canceled', 'abnormal'].includes(current)) {
-      wx.showToast({ title: '当前订单不可操作', icon: 'none' }); return
-    }
-    if (type === 'abnormal' && current !== 'delivering') {
-      wx.showToast({ title: '仅配送中可标记异常', icon: 'none' }); return
-    }
-    wx.showModal({
-      title: type === 'cancelled' ? '取消订单' : '记录配送异常',
-      content: type === 'cancelled' ? '请填写取消原因（本地演示）' : '请填写配送异常原因（本地演示）',
-      editable: true,
-      placeholderText: '请输入原因',
-      success: (result: any) => {
-        if (!result.confirm) return
-        const reason = String(result.content || '').trim()
-        if (!reason || reason.length > 200) {
-          wx.showToast({ title: '原因需为1至200字', icon: 'none' }); return
-        }
-        const orders = loadWorkflowOrders() as any[]
-        const target = orders.find(o => o.id === id)
-        if (!target || String(target.fulfillmentStatus || 'new') !== current) {
-          wx.showToast({ title: '订单状态已变化', icon: 'none' }); this.refresh(); return
-        }
-        target.fulfillmentStatus = type
-        target.issueReason = reason
-        target.issueTime = new Date().toISOString()
-        try {
-          saveDemoOrders(orders)
-          this.refresh()
-          wx.showToast({ title: '状态已记录', icon: 'success' })
-        } catch (_error) {
-          wx.showToast({ title: '保存失败', icon: 'none' })
-        }
-      }
-    })
-  },
-  recordCloudIssue(e:any){
-    const cfg=merchantOrderConfig()
-    const id=String(e.currentTarget.dataset.id||'')
-    const type=String(e.currentTarget.dataset.type||'')
-    if(!cfg||!['cancelled','abnormal'].includes(type))return
-    wx.showModal({title:type==='cancelled'?'取消订单':'记录配送异常',editable:true,placeholderText:'请输入原因',
-      success:async (result:any)=>{
-        if(!result.confirm)return
-        const reason=String(result.content||'').trim()
-        if(!reason||reason.length>200){ wx.showToast({title:'原因需为1至200字',icon:'none'}); return }
-        try{await updateMerchantOrder(cfg,id,type,reason);this.refresh()}
-        catch(e:any){wx.showModal({title:'操作失败',content:String(e?.message||'request_failed'),showCancel:false})}
-      }})
-  },
-  etaInput(e: any) {
-    const id = String(e.currentTarget.dataset.id)
-    this.setData({ [`etaInputs.${id}`]: String(e.detail.value) })
-  },
-  saveEta(e: any) {
-    if(this.data.cloudMode){
-      const id=String(e.currentTarget.dataset.id||'')
-      const value=String(this.data.etaInputs[id]!==undefined?this.data.etaInputs[id]:(this.data.orders.find((o:any)=>o.id===id)||{}).etaValue||'').trim()
-      if(value.length>60){ wx.showToast({title:'预计时间过长',icon:'none'}); return }
-      saveMerchantEta(id,value).then(()=>{this.refresh();wx.showToast({title:'预计时间已保存',icon:'success'})})
-        .catch((err:any)=>wx.showModal({title:'保存失败',content:String(err?.message||'request_failed'),showCancel:false}))
-      return
-    }
-    const id = String(e.currentTarget.dataset.id)
-    const value = (this.data.etaInputs[id] !== undefined ? this.data.etaInputs[id] : (this.data.orders.find((o: any) => o.id === id) || {}).etaValue || '').trim()
-    if (!updateWorkflowOrder(id, 'eta', value)) { wx.showToast({ title: '当前状态不可设置预计时间', icon: 'none' }); return }
-    this.refresh()
-    wx.showToast({ title: '预计时间已保存' })
-  },
-  async nextCloud(e:any){
-    const cfg=merchantOrderConfig()
-    const id=String(e.currentTarget.dataset.id||'')
-    const status=String(e.currentTarget.dataset.status||'')
-    if(!cfg||!['accepted','preparing','delivering'].includes(status))return
-    try{await updateMerchantOrder(cfg,id,status);this.refresh()}
-    catch(e:any){wx.showModal({title:'操作失败',content:String(e?.message||'request_failed'),showCancel:false})}
-  },
-  next(e: any) {
-    if(this.data.cloudMode){this.nextCloud(e);return}
-    const id = String(e.currentTarget.dataset.id)
-    const status = String(e.currentTarget.dataset.status)
-    if (!['accepted', 'preparing', 'delivering', 'delivered'].includes(status)) return
-    const execute = () => {
-      if (!updateWorkflowOrder(id, status as any)) { wx.showToast({ title: '订单状态已变化', icon: 'none' }); return }
-      this.refresh()
-      wx.showToast({ title: '演示状态已更新' })
-    }
-    if (status === 'delivered') {
-      wx.showToast({ title: '请进入送达照片页面完成配送', icon: 'none' })
-      return
-      wx.showModal({ title: '仅供流程演示', content: '此阶段尚未上传送达照片。该状态只是本地演示，不代表真实交付。', success: r => { if (r.confirm) execute() } })
-    } else execute()
-  }
+ loaded:[] as any[],localRows:[] as any[],localFiltered:[] as any[],counts:emptyCounts(),context:'',serial:0,nextCursor:'',localOffset:0,visible:false,
+ data:{dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
+  orderTabs:tabs.map(t=>({...t,count:0})),countsKnown:false,globalTotal:0,globalPending:0,matchingCount:0,
+  noteInputs:{} as Record<string,string>,etaInputs:{} as Record<string,string>,cloudMode:false,cloudBusy:false,loadingMore:false,cloudError:'',moreError:'',hasMore:false,refreshRequired:false,canManage:true,
+  batchMode:false,selectedIds:[] as string[],selectedMap:{} as Record<string,boolean>,selectedCount:0,allSelected:false,operationBusy:false,operationProgress:'',batchResult:'',batchFailures:[] as Array<{id:string;reason:string}>},
+ onShow(){this.visible=true;this.syncContext();if(!this.data.operationBusy)this.refresh()},
+ onHide(){this.visible=false;this.serial++;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.setSelection([]);this.setData({dateResults:[],batchMode:false,countsKnown:false,hasMore:false,cloudBusy:false,loadingMore:false,etaInputs:{},noteInputs:{},batchFailures:[]})},
+ onUnload(){this.visible=false;this.serial++;this.loaded=[];this.localRows=[];this.localFiltered=[]},
+ async onPullDownRefresh(){try{if(!this.data.operationBusy)await this.refresh()}finally{wx.stopPullDownRefresh()}},
+ onReachBottom(){this.loadMore()},
+ query():MerchantOrderQuery{return {q:this.data.orderSearchText.trim(),state:this.data.currentTab,from:this.data.dateFrom,to:this.data.dateTo}},
+ syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
+ setCounts(counts:MerchantOrderCounts){this.counts=counts;this.setData({countsKnown:true,globalTotal:counts.all,globalPending:counts.new,orderTabs:tabs.map(t=>({...t,count:Number((counts as any)[t.key==='latest'?'all':t.key])}))})},
+ setSelection(ids:string[]){const map:Record<string,boolean>={};ids.forEach(id=>{map[id]=true});const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o)));this.setData({selectedIds:ids,selectedMap:map,selectedCount:ids.length,allSelected:!!eligible.length&&ids.length===eligible.length})},
+ changedQuery(){this.serial++;this.setSelection([]);this.setData({batchMode:false,queryDirty:true,cloudBusy:false,loadingMore:false,refreshRequired:false,batchResult:'',batchFailures:[],moreError:''})},
+ orderSearchInput(e:any){if(this.data.operationBusy)return;this.changedQuery();this.setData({orderSearchText:String(e.detail.value||'').slice(0,100)})},
+ searchOrders(){if(!this.data.operationBusy&&!this.data.cloudBusy&&!this.data.loadingMore)this.refresh()},
+ clearOrderSearch(){if(this.data.operationBusy)return;this.changedQuery();this.setData({orderSearchText:''});this.refresh()},
+ switchOrderTab(e:any){if(this.data.operationBusy)return;const tab=String(e.currentTarget.dataset.tab);if(!tabs.some(t=>t.key===tab))return;this.changedQuery();this.setData({currentTab:tab});this.refresh()},
+ selectOrderDate(e:any){if(this.data.operationBusy)return;const key=String(e.currentTarget.dataset.key),v=String(e.detail.value||'');if(!['dateFrom','dateTo'].includes(key))return;this.changedQuery();this.setData({[key]:v,...key==='dateFrom'&&!this.data.dateTo?{dateTo:v}:{},...key==='dateTo'&&!this.data.dateFrom?{dateFrom:v}:{}});this.refresh()},
+ selectTodayOrders(){if(this.data.operationBusy)return;const d=beijingDay(new Date().toISOString());this.changedQuery();this.setData({dateFrom:d,dateTo:d});this.refresh()},
+ clearOrderDate(){if(this.data.operationBusy)return;this.changedQuery();this.setData({dateFrom:'',dateTo:''});this.refresh()},
+ render(append=false){
+  const views=this.loaded.map(o=>{
+   const s=state(o),cloud=this.data.cloudMode,c=o.contactSnapshot||{},slot=o.deliverySlotSnapshot||{},next=({new:'accepted',accepted:'preparing',preparing:'delivering'} as Record<string,string>)[s]||''
+   return {...o,statusText:labels[s]||s,totalText:cloud?(Number(o.totalCents)/100).toFixed(2):o.totalText,receiverName:cloud?String(c.receiverName||''):o.receiverName||'',phone:cloud?String(c.phone||''):o.phone||'',
+    area:cloud?String(c.areaName||slot.areaName||c.areaId||''):o.area||'',detail:cloud?String(c.detail||''):o.detail||'',note:cloud?String(c.note||''):o.note||'',slotText:cloud?[slot.date,slot.label,slot.start&&slot.end?slot.start+'–'+slot.end:''].filter(Boolean).join(' '):o.slotText||'',
+    items:(o.items||[]).map((i:any,index:number)=>({...i,lineKey:i.lineId||o.id+':'+index,subtotal:i.subtotal==null?'':String(i.subtotal)})),createdText:chinaTime(o.createdAt),deliveredText:o.deliveredAt?chinaTime(o.deliveredAt):'',
+    issueReason:o.issueReason||'',issueTimeText:o.issueTime?chinaTime(o.issueTime):'',nextStatus:next,nextLabel:({accepted:'接单',preparing:'开始备货',delivering:'开始配送'} as Record<string,string>)[next]||'',
+    allowCancel:cloud?['new','accepted','preparing'].includes(s):!['delivered','cancelled','abnormal'].includes(s),allowAbnormal:s==='delivering',allowEta:['accepted','preparing','delivering'].includes(s),
+    merchantNote:o.merchantNote||'',merchantNoteVersion:o.merchantNoteVersion||1,noteDraft:this.data.noteInputs[o.id]!==undefined?this.data.noteInputs[o.id]:o.merchantNote||'',
+    etaValue:o.estimatedArrival||'',etaDraft:this.data.etaInputs[o.id]!==undefined?this.data.etaInputs[o.id]:o.estimatedArrival||'',batchEligible:['new','accepted'].includes(s),
+    paymentLabel:o.paymentStatus==='unpaid'?'待支付':o.paymentStatus==='paid'?'后台标记已支付（未独立核验）':'支付状态未核验'}
+  })
+  if(append){const update:Record<string,any>={};views.slice(this.data.dateResults.length).forEach((v,i)=>{update['dateResults['+(this.data.dateResults.length+i)+']']=v});this.setData(update)}else this.setData({dateResults:views})
+  this.setSelection(this.data.selectedIds.filter(id=>this.loaded.some(o=>o.id===id&&['new','accepted'].includes(state(o)))))
+ },
+ async refresh(){if(this.data.operationBusy)return false;return this.fetchPage(true)},
+ async loadMore(){if(this.data.operationBusy||this.data.cloudBusy||this.data.loadingMore||this.data.queryDirty||this.data.refreshRequired||!this.data.hasMore)return;if(this.context!==merchantOrderContextKey()){await this.refresh();return}await this.fetchPage(false)},
+ async fetchPage(reset:boolean,keepRows=false):Promise<boolean>{
+  const context=merchantOrderContextKey(),cfg=merchantOrderConfig()
+  this.syncContext()
+  const query=this.query(),serial=++this.serial
+  if(!validRange(query.from,query.to)){this.setSelection([]);this.setData({dateResults:[],queryDirty:true,cloudBusy:false,loadingMore:false,cloudError:'请选择合法日期范围，开始日期不能晚于结束日期，最多366天'});return false}
+  if(reset){this.nextCursor='';this.localOffset=0;if(!keepRows)this.loaded=[];this.setSelection([]);this.setData({cloudMode:!!cfg,cloudBusy:true,loadingMore:false,queryDirty:false,cloudError:'',moreError:'',refreshRequired:false,hasMore:false,...keepRows?{}:{dateResults:[],countsKnown:false}})}
+  else this.setData({loadingMore:true,moreError:''})
+  try{
+   let rows:any[],hasMore:boolean,matchingCount:number,counts:MerchantOrderCounts,canManage=true,cursorResult=''
+   if(cfg){const page=await fetchMerchantOrderPage(cfg,query,reset?'':this.nextCursor);rows=page.orders;hasMore=page.hasMore;matchingCount=page.matchingCount;counts=page.counts;canManage=page.canManage;cursorResult=page.nextCursor||''}
+   else{
+    if(reset){this.localRows=loadWorkflowOrders().slice().sort((a,b)=>(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0)||(a.id<b.id?1:a.id>b.id?-1:0));const q=query.q.toLowerCase();this.localFiltered=this.localRows.filter(o=>matches(o,query.state)&&(!q||[o.id,o.receiverName,o.phone].some(v=>String(v||'').toLowerCase().includes(q)))&&(!query.from||beijingDay(o.createdAt)>=query.from&&beijingDay(o.createdAt)<=query.to))}
+    counts=emptyCounts();this.localRows.forEach(o=>{counts.all++;const key=state(o);if(key in counts)(counts as any)[key]++});counts.other=counts.cancelled+counts.abnormal
+    rows=this.localFiltered.slice(this.localOffset,this.localOffset+30);this.localOffset+=rows.length;matchingCount=this.localFiltered.length;hasMore=this.localOffset<matchingCount
+   }
+   if(serial!==this.serial||context!==merchantOrderContextKey()||!this.visible)return false
+   this.nextCursor=cursorResult
+   const seen=new Set(reset?[]:this.loaded.map(o=>o.id));const incoming=rows.filter(o=>{if(seen.has(o.id))return false;seen.add(o.id);return true})
+   this.loaded=reset?incoming:this.loaded.concat(incoming);this.setCounts(counts);this.setData({matchingCount,hasMore,canManage});this.render(!reset);return true
+  }catch(e){if(serial===this.serial&&context===merchantOrderContextKey()){
+   if(/401|403|not_logged_in/.test(String(e))){this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.setSelection([]);this.setData({dateResults:[],canManage:false,countsKnown:false,batchMode:false,hasMore:false,batchFailures:[],cloudError:errorMessage(e)});return false}
+   const needs=/orders_changed|cursor/.test(String(e));if(needs){this.setSelection([]);this.setData({batchMode:false,refreshRequired:true,queryDirty:true,countsKnown:false})}
+   this.setData(reset?{cloudError:errorMessage(e),countsKnown:false}:{moreError:errorMessage(e)});
+  }return false}
+  finally{if(serial===this.serial){this.setData({cloudBusy:false,loadingMore:false});if(context!==merchantOrderContextKey()){this.syncContext();this.setData({cloudError:'商家会话或店铺已变化，请重新读取'})}}}
+ },
+ toggleBatchMode(){if(this.data.operationBusy||this.data.cloudBusy||this.data.queryDirty||!this.data.canManage)return;this.setSelection([]);this.setData({batchMode:!this.data.batchMode,batchResult:''})},
+ toggleOrder(e:any){if(!this.data.batchMode||this.data.operationBusy||this.data.queryDirty)return;const id=String(e.currentTarget.dataset.id),o=this.loaded.find(o=>o.id===id);if(!o||!['new','accepted'].includes(state(o)))return;const ids=this.data.selectedIds.includes(id)?this.data.selectedIds.filter(x=>x!==id):this.data.selectedIds.concat(id);if(ids.length>50){wx.showToast({title:'一次最多选择50单',icon:'none'});return}this.setSelection(ids)},
+ selectAll(){if(!this.data.batchMode||this.data.operationBusy||this.data.queryDirty)return;const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o)));if(!this.data.allSelected&&eligible.length>50){wx.showToast({title:'超过50单，请手动选择',icon:'none'});return}this.setSelection(this.data.allSelected?[]:eligible.map(o=>o.id))},
+ clearBatchSelection(){if(this.data.batchMode&&!this.data.operationBusy)this.setSelection([])},
+ canAct(id:string):boolean{return this.visible&&!this.data.operationBusy&&!this.data.batchMode&&!this.data.queryDirty&&!this.data.cloudBusy&&!this.data.loadingMore&&!this.data.refreshRequired&&this.data.canManage&&this.context===merchantOrderContextKey()&&this.loaded.some(o=>o.id===id)},
+ applyState(id:string,next:string){const o=this.loaded.find(o=>o.id===id);if(!o)return;o.fulfillmentStatus=next;this.setData({countsKnown:false});if(!matches(o,this.data.currentTab)){this.loaded=this.loaded.filter(o=>o.id!==id);this.setData({matchingCount:Math.max(0,this.data.matchingCount-1)})}this.render()},
+ async afterAction(context:string){if(this.visible)await this.fetchPage(true,context===merchantOrderContextKey())},
+ async next(e:any){
+  const id=String(e.currentTarget.dataset.id||''),next=String(e.currentTarget.dataset.status||'');if(!this.canAct(id)||!['accepted','preparing','delivering'].includes(next))return
+  const context=this.context,cfg=merchantOrderConfig();this.setData({operationBusy:true,operationProgress:'正在更新订单'})
+  try{if(cfg)await updateMerchantOrder(cfg,id,next);else if(!updateWorkflowOrder(id,next as any))throw Error('invalid_transition_or_payment_not_confirmed');if(context!==merchantOrderContextKey())throw Error('context_changed');this.applyState(id,next)}
+  catch(error){if(this.visible)wx.showModal({title:'操作失败或未确认',content:errorMessage(error),showCancel:false})}
+  finally{await this.afterAction(context);this.setData({operationBusy:false,operationProgress:''})}
+ },
+ async recordOrderIssue(e:any){
+  const id=String(e.currentTarget.dataset.id||''),type=String(e.currentTarget.dataset.type||'');if(!this.canAct(id)||!['cancelled','abnormal'].includes(type))return
+  const context=this.context,cfg=merchantOrderConfig(),before=state(this.loaded.find(o=>o.id===id));let attempted=false;this.setData({operationBusy:true,operationProgress:'请填写原因'})
+  try{
+   const result=await new Promise<any>(resolve=>wx.showModal({title:type==='cancelled'?'取消订单':'记录配送异常',editable:true,placeholderText:'请输入1至200字原因',success:resolve,fail:()=>resolve({confirm:false})}))
+   if(!result.confirm)return
+   const reason=String(result.content||'').trim();if(!reason||reason.length>200)throw Error('invalid_reason')
+   if(context!==merchantOrderContextKey()||!this.visible)throw Error('context_changed')
+   attempted=true
+   if(cfg)await updateMerchantOrder(cfg,id,type,reason)
+   else{const orders=loadWorkflowOrders() as any[],o=orders.find(o=>o.id===id);if(!o||state(o)!==before||['delivered','cancelled','abnormal'].includes(before)||type==='abnormal'&&before!=='delivering')throw Error('invalid_transition');o.fulfillmentStatus=type;o.issueReason=reason;o.issueTime=new Date().toISOString();saveDemoOrders(orders)}
+   if(context===merchantOrderContextKey()){this.applyState(id,type);const row=this.loaded.find(o=>o.id===id);if(row){row.issueReason=reason;this.render()}}
+  }catch(error){if(this.visible)wx.showModal({title:'操作失败或未确认',content:String(error).includes('invalid_reason')?'原因需为1至200字':errorMessage(error),showCancel:false})}
+  finally{if(attempted||!this.loaded.length)await this.afterAction(context);this.setData({operationBusy:false,operationProgress:''})}
+ },
+ etaInput(e:any){if(this.data.operationBusy||this.data.batchMode||this.data.queryDirty)return;const id=String(e.currentTarget.dataset.id);this.setData({['etaInputs.'+id]:String(e.detail.value)})},
+ async saveEta(e:any){
+  const id=String(e.currentTarget.dataset.id||'');if(!this.canAct(id))return
+  const o=this.loaded.find(o=>o.id===id),value=String(this.data.etaInputs[id]!==undefined?this.data.etaInputs[id]:o.estimatedArrival||'').trim()
+  if(value.length>60){wx.showToast({title:'预计时间最多60字',icon:'none'});return}
+  const context=this.context,cfg=merchantOrderConfig();this.setData({operationBusy:true,operationProgress:'正在保存预计时间'})
+  try{if(cfg)await saveMerchantEta(id,value);else if(!updateWorkflowOrder(id,'eta',value))throw Error('invalid_transition');if(context!==merchantOrderContextKey())throw Error('context_changed');o.estimatedArrival=value;const inputs={...this.data.etaInputs};delete inputs[id];this.setData({etaInputs:inputs});this.render();wx.showToast({title:'预计时间已保存',icon:'success'})}
+  catch(error){if(this.visible)wx.showModal({title:'保存失败',content:errorMessage(error),showCancel:false})}
+  finally{await this.afterAction(context);this.setData({operationBusy:false,operationProgress:''})}
+ },
+ noteInput(e:any){const id=String(e.currentTarget.dataset.id||'');if(!this.canAct(id))return;this.setData({['noteInputs.'+id]:String(e.detail.value||'').slice(0,1000)})},
+ async saveInternalNote(e:any){
+  const id=String(e.currentTarget.dataset.id||'');if(!this.canAct(id))return
+  const order=this.loaded.find(o=>o.id===id),note=String(this.data.noteInputs[id]!==undefined?this.data.noteInputs[id]:order.merchantNote||'').trim()
+  const context=this.context,cfg=merchantOrderConfig();this.setData({operationBusy:true,operationProgress:'正在保存商家内部备注'})
+  try{
+   let saved:{note:string;version:number}
+   if(cfg)saved=await saveMerchantOrderNote(cfg,id,note,order.merchantNoteVersion||1)
+   else{
+    const orders=loadWorkflowOrders(),current=orders.find(o=>o.id===id)
+    if(!current||(current.merchantNoteVersion||1)!==(order.merchantNoteVersion||1))throw Error('merchant_note_changed_refresh')
+    current.merchantNote=note;current.merchantNoteVersion=(current.merchantNoteVersion||1)+1;saveDemoOrders(orders);saved={note,version:current.merchantNoteVersion}
+   }
+   if(context!==merchantOrderContextKey())throw Error('context_changed')
+   order.merchantNote=saved.note;order.merchantNoteVersion=saved.version
+   const drafts={...this.data.noteInputs};delete drafts[id];this.setData({noteInputs:drafts});this.render();wx.showToast({title:'内部备注已保存'})
+  }catch(e){if(this.visible&&context===merchantOrderContextKey())wx.showModal({title:'内部备注未保存',content:/409|changed_refresh/.test(String(e))?'备注版本已变化，输入已保留。请刷新核对后重试。':errorMessage(e),showCancel:false})}
+  finally{await this.afterAction(context);this.setData({operationBusy:false,operationProgress:''})}
+ },
+ async runBatch(e:any){
+  if(!this.data.batchMode||this.data.operationBusy||this.data.cloudBusy||this.data.loadingMore||this.data.queryDirty||this.data.refreshRequired||!this.data.canManage)return
+  const next=String(e.currentTarget.dataset.status||''),expected=next==='accepted'?'new':next==='preparing'?'accepted':''
+  const ids=this.data.selectedIds.slice(),source=this.loaded.slice(),context=this.context,cfg=merchantOrderConfig()
+  if(!expected||!ids.length||ids.length>50||context!==merchantOrderContextKey())return
+  this.setData({operationBusy:true,operationProgress:'等待确认',batchResult:'',batchFailures:[]})
+  let succeeded=0,confirmed=false;const failures:Array<{id:string;reason:string}>=[]
+  try{
+   const ok=await new Promise<boolean>(resolve=>wx.showModal({title:next==='accepted'?'批量接单':'批量开始备货',content:'已选择 '+ids.length+' 单。仅允许 '+expected+' → '+next+'；不符合状态、支付或库存规则的订单会计为失败。是否继续？',success:r=>resolve(r.confirm),fail:()=>resolve(false)}))
+   if(!ok)return
+   confirmed=true
+   for(let i=0;i<ids.length;i++){
+    const id=ids[i];this.setData({operationProgress:'正在处理 '+(i+1)+' / '+ids.length+' 单'})
+    try{
+     if(!this.visible||context!==merchantOrderContextKey())throw Error('session_changed_not_executed')
+     const o=source.find(o=>o.id===id);if(!o||state(o)!==expected)throw Error('invalid_transition')
+     if(cfg)await updateMerchantOrder(cfg,id,next);else if(!updateWorkflowOrder(id,next as any))throw Error('invalid_transition_or_payment_not_confirmed')
+     succeeded++;if(context===merchantOrderContextKey()&&this.visible)this.applyState(id,next)
+    }catch(error){failures.push({id,reason:String(error).includes('session_changed')?'未执行：页面或会话已变化':errorMessage(error)})}
+   }
+   const result='已选 '+ids.length+' 单：成功 '+succeeded+' 单，失败或未确认 '+failures.length+' 单。'+(failures.length?'不符合状态、网络未确认或未执行均计入失败；刷新核对后重试。':'')
+   this.setData({batchResult:result,...this.visible&&context===merchantOrderContextKey()?{batchFailures:failures}:{}})
+   if(this.visible&&context===merchantOrderContextKey())wx.showModal({title:failures.length?'批量操作有失败':'批量操作完成',content:result,showCancel:false})
+  }finally{if(confirmed||!this.loaded.length)await this.afterAction(context);if(confirmed&&context===merchantOrderContextKey()&&this.visible)this.setSelection(failures.map(f=>f.id).filter(id=>this.loaded.some(o=>o.id===id&&['new','accepted'].includes(state(o)))));this.setData({operationBusy:false,operationProgress:''})}
+ }
 })

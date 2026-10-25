@@ -18,12 +18,13 @@ async function readPayload(req){
 function validItems(items){
   return Array.isArray(items)&&items.length>0&&items.length<=40&&items.every(i=>i&&uuidRe.test(i.productId)&&Number.isInteger(i.quantity)&&i.quantity>=1&&i.quantity<=99)&&new Set(items.map(i=>i.productId)).size===items.length
 }
-function validAddress(a){return a&&typeof a==='object'&&typeof a.receiverName==='string'&&a.receiverName.trim().length>=1&&a.receiverName.length<=100&&typeof a.phone==='string'&&/^[+0-9 ()-]{6,24}$/.test(a.phone)&&typeof a.areaId==='string'&&a.areaId.length>=1&&a.areaId.length<=60&&typeof a.detail==='string'&&a.detail.trim().length>=1&&a.detail.length<=300}
+function validAddress(a){return a&&typeof a==='object'&&typeof a.receiverName==='string'&&a.receiverName.trim().length>=1&&a.receiverName.length<=100&&typeof a.phone==='string'&&/^1[3-9]\d{9}$/.test(a.phone)&&typeof a.areaId==='string'&&a.areaId.length>=1&&a.areaId.length<=60&&typeof a.detail==='string'&&a.detail.trim().length>=1&&a.detail.length<=300}
 function validSlot(s){return s&&typeof s==='object'&&typeof s.id==='string'&&s.id.length>=1&&s.id.length<=100&&typeof s.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s.date)}
 function fingerprint(obj){return createHash('sha256').update(JSON.stringify(obj)).digest('hex')}
 export async function checkoutRoute(req,res,url,pool){
   const match=/^\/v1\/stores\/([a-z0-9][a-z0-9-]{1,62})\/orders$/.exec(url.pathname)
   if(!match)return false
+  if(req.method==='GET')return false // Existing customer order read route owns GET.
   if(req.method!=='POST'){reply(res,405,{error:'method_not_allowed'});return true}
   const slug=match[1]
   if(!slugRe.test(slug)){reply(res,400,{error:'invalid_store'});return true}
@@ -69,9 +70,13 @@ export async function checkoutRoute(req,res,url,pool){
     const lines=normalized.items.map(i=>({...i,name:byId.get(i.productId).name,priceCents:(byId.get(i.productId).discount_price_cents !== null && (!byId.get(i.productId).discount_start || new Date(byId.get(i.productId).discount_start) <= new Date()) && (!byId.get(i.productId).discount_end || new Date(byId.get(i.productId).discount_end) > new Date()) ? byId.get(i.productId).discount_price_cents : byId.get(i.productId).price_cents)}))
     const total=lines.reduce((sum,i)=>sum+i.priceCents*i.quantity,0)
     if(!Number.isSafeInteger(total)||total<0||total>100000000){await client.query('ROLLBACK');reply(res,400,{error:'cart_total_too_large'});return true}
+    // Recheck time boundaries after any wait for product locks; the same rules row remains share-locked.
+    const finalDelivery=await verifyDelivery(client,storeId,normalized.address,normalized.slot)
+    if(finalDelivery.error){await client.query('ROLLBACK');reply(res,409,{error:finalDelivery.error});return true}
+    if(total<finalDelivery.minimumOrderCents){await client.query('ROLLBACK');reply(res,409,{error:'minimum_order_not_reached',minimumOrderCents:finalDelivery.minimumOrderCents,subtotalCents:total});return true}
     // Delivery is checked against server-owned rules; payment is not yet implemented. Delivery fee remains zero.
     const inserted=await client.query(`INSERT INTO orders(store_id,customer_subject,subtotal_cents,total_cents,checkout_key,checkout_fingerprint,contact_snapshot,delivery_slot_snapshot)
-      VALUES($1,$2,$3,$3,$4,$5,$6::jsonb,$7::jsonb) RETURNING id`,[storeId,subject,total,key,fp,JSON.stringify({...normalized.address,note:normalized.note}),JSON.stringify(delivery.snapshot)])
+      VALUES($1,$2,$3,$3,$4,$5,$6::jsonb,$7::jsonb) RETURNING id`,[storeId,subject,total,key,fp,JSON.stringify({...normalized.address,areaName:finalDelivery.area.name,note:normalized.note}),JSON.stringify(finalDelivery.snapshot)])
     const orderId=inserted.rows[0].id
     for(const line of lines)await client.query('INSERT INTO order_items(order_id,product_id,product_name,unit_price_cents,quantity) VALUES($1,$2,$3,$4,$5)',[orderId,line.productId,line.name,line.priceCents,line.quantity])
     let inventoryExpiresAt=null

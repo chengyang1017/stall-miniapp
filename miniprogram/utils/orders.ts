@@ -13,6 +13,8 @@ export interface DemoOrderItem {
 }
 
 export interface DemoOrder {
+  merchantNote?:string
+  merchantNoteVersion?:number
   inventoryState?: 'none'|'held'|'released'|'committed'
   inventoryExpiresAt?:string
   fulfillmentStatus?:string

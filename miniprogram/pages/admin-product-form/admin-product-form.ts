@@ -1,3 +1,6 @@
+import { pendingProductCreate,clearProductCreate,createProductWithRetry } from '../../utils/productCreateRetry'
+import { currentPresentation,refreshPagePresentation } from '../../utils/storePresentation'
+import { supportIdentity } from '../../utils/supportCloud'
 import { loadStore, saveStore, newId, Category, Product, ProductDraft, ProductDraftPayload, InventoryMovement, productIsPublished } from '../../utils/store'
 import { merchantCloudConfig, merchantCloudProduct, merchantCloudCategoryContext, merchantCloudDraft, saveMerchantCloudDraft, saveMerchantCloudProduct, archiveMerchantCloudProduct, merchantCloudInventory, adjustMerchantCloudInventory } from '../../utils/cloudMerchantProducts'
 import { uploadMerchantImage } from '../../utils/cloudMerchantImage'
@@ -6,7 +9,7 @@ import { stockInteger, configureDemoInventory, adjustDemoInventory } from '../..
 
 function formContextKey(): string {
   const cfg = merchantCloudConfig()
-  return cfg ? cfg.apiBase + '/' + cfg.storeSlug : 'local-demo'
+  return cfg ? supportIdentity() : 'local-demo'
 }
 
 function copyProductName(name: string): string {
@@ -15,6 +18,30 @@ function copyProductName(name: string): string {
 }
 
 Page({
+  createIntent:'new',
+  async retryProductCreation(){
+    const cfg=merchantCloudConfig()
+    if(!cfg||this.data.inventoryBusy||this.data.saveBusy||this.data.cloudBusy||this.data.saved||formContextKey()!==this.loadedContext)return
+    const pending=pendingProductCreate(cfg,this.createIntent)
+    if(!pending){this.setData({createRetryAvailable:false});return}
+    const confirmed=await new Promise<boolean>(resolve=>wx.showModal({title:'重试上次创建',content:'将提交上次保存的内容：'+String(pending.payload.name||'商品')+'。当前未保存的修改不会一并提交；服务端会返回同一件商品。',success:r=>resolve(r.confirm),fail:()=>resolve(false)}))
+    if(!confirmed||this.data.inventoryBusy||this.data.saveBusy||this.data.cloudBusy||formContextKey()!==this.loadedContext)return
+    this.setData({saveBusy:true})
+    try{
+      await createProductWithRetry(cfg,this.createIntent,pending.payload)
+      this.setData({saved:true,createRetryAvailable:false})
+      wx.showToast({title:'云端创建已确认',icon:'success'});wx.navigateBack({delta:1})
+    }catch(_){wx.showModal({title:'创建仍未确认',content:'原请求及重试编号已保留，请检查网络和权限后重试。',showCancel:false})}
+    finally{this.setData({saveBusy:false})}
+  },
+  forgetProductCreation(){
+    const cfg=merchantCloudConfig()
+    if(!cfg||this.data.saveBusy||this.data.cloudBusy||formContextKey()!==this.loadedContext)return
+    wx.showModal({title:'已核对商品列表？',content:'这不会撤销服务端请求。请先确认上次商品是否已创建；放弃重试后再次保存将使用新编号，可能创建另一件商品。',success:r=>{
+      if(!r.confirm||this.data.saveBusy||this.data.cloudBusy||formContextKey()!==this.loadedContext)return
+      clearProductCreate(cfg,this.createIntent);this.setData({createRetryAvailable:false})
+    }})
+  },
   inventoryRequestKey:'',
   inventorySnapshot:'unlimited|0|5',
   inventoryAdjustment:{fingerprint:'',key:''},
@@ -188,10 +215,12 @@ Page({
     const copyFrom = options && options.copyFrom ? decodeURIComponent(String(options.copyFrom)) : ''
     const copyMode = !!copyFrom
     const id = copyMode ? '' : (options && options.id ? decodeURIComponent(String(options.id)) : '')
+    this.createIntent=draftId?'draft:'+draftId:copyMode?'copy:'+copyFrom:'new'
     this.loadedContext = formContextKey()
     this.setData({ copyMode })
     if (copyMode) wx.setNavigationBarTitle({ title: '复制商品' })
     const cfg = merchantCloudConfig()
+    this.setData({createRetryAvailable:!!cfg&&!id&&!!pendingProductCreate(cfg,this.createIntent)})
     if (draftId) {
       this.setData({cloudMode:!!cfg,cloudBusy:true})
       try {
@@ -334,18 +363,21 @@ Page({
           } : {}),
           ...(this.data.draftId ? {sourceDraftId:this.data.draftId,expectedDraftVersion:this.data.draftVersion} : {}),
           ...(this.pendingInventory ? {inventory:this.pendingInventory} : {})
-        })
+        },this.createIntent)
         if (!result || typeof result.id !== 'string' || !result.id) throw new Error('unconfirmed_save')
-        this.setData({ saved: true })
+        this.setData({ saved: true,createRetryAvailable:false })
         wx.showToast({ title: '已保存至云端', icon: 'success' })
         wx.navigateBack({ delta: 1 })
       } catch (error: any) {
         const message = String(error && error.message || '')
-        const content = /changed_reload|already_published_reload/.test(message)
+        this.setData({createRetryAvailable:!this.data.editId&&!!pendingProductCreate(cfg,this.createIntent)})
+        const content = /product_create_key_payload_conflict|product_create_retry_content_changed/.test(message)
+          ? '当前内容与上次创建请求不同，已阻止再次创建。请使用“重试上次创建”确认原结果，或核对商品列表后明确放弃重试。当前表单已保留。'
+          : /changed_reload|already_published_reload/.test(message)
           ? '商品或草稿已被其他操作修改，表单内容已保留。请返回列表重新打开，避免覆盖较新的内容。'
           : /publish_time|invalid_schedule|local_time/.test(message)
           ? '上架时间或时区未通过服务端校验，请选择未来的有效店铺时间后重试。表单内容已保留。'
-          : '表单内容已保留。请检查权限及网络；若请求超时，服务端可能已创建商品，请先返回列表核对，避免重复创建。'
+          : '表单内容及创建重试编号已保留。请检查权限及网络；可点击“重试上次创建”使用原内容确认结果，相同请求不会重复创建。'
         wx.showModal({ title: '云端保存未确认', content, showCancel: false })
       }
       finally { this.setData({ cloudBusy: false, saveBusy: false }) }
@@ -377,7 +409,7 @@ Page({
     scheduleTime: '',
     copyMode: false,
     copySourceName: '',
-    saveBusy: false,
+    createRetryAvailable:false,saveBusy: false,
     saved: false,
     showProductForm: false,
     adminSection: '',
@@ -390,7 +422,7 @@ Page({
     categoryName: '',
     productName: '',
     productDescription: '',
-    productImageUrl: '',
+    productImageUrl: '',imageUploadState:'',
     isSoldOut: false,
     priceText: '',
     discountText: '',
@@ -416,12 +448,12 @@ Page({
   closeProductForm() {
     this.resetForm()
     this.setData({ showProductForm: false })
-  },  onShow() { if (!this.data.copyMode && !this.data.draftId && !merchantCloudConfig()) this.refresh() },
+  },  onShow() { refreshPagePresentation(this);if(this.loadedContext&&this.loadedContext!==formContextKey()){this.cloudImageKey=null;this.cloudExistingImageUrl='';this.setData({productName:'',productDescription:'',productImageUrl:'',priceText:'',discountText:'',categories:[],products:[],copySourceName:'',copyMode:false,editId:'',draftId:'',selectedCategory:'',selectedCategoryName:'',stockQuantityText:'0',lowStockThresholdText:'5',stockDeltaText:'',stockReason:'',scheduleEnabled:false,scheduleDate:'',scheduleTime:'',startText:'',endText:'',cloudError:'账号、店铺或模式已变化，请返回商品列表重新进入'});return} if (!this.data.copyMode && !this.data.draftId && !merchantCloudConfig()) this.refresh() },
   uploadCustomPlaceholder() {
     wx.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], success: (result: any) => {
       const item = result.tempFiles && result.tempFiles[0]
       if (!item || !item.tempFilePath) return
-      const oldPath = String(wx.getStorageSync('stall_placeholder_custom_v1') || '')
+      const oldPath = currentPresentation().customPlaceholderUrl
       wx.saveFile({ tempFilePath: item.tempFilePath, success: (saved: any) => {
         if (oldPath && oldPath !== saved.savedFilePath) wx.removeSavedFile({ filePath: oldPath, fail: () => {} })
         wx.setStorageSync('stall_placeholder_custom_v1', saved.savedFilePath)
@@ -432,7 +464,7 @@ Page({
     } })
   },
   removeCustomPlaceholder() {
-    const path = String(wx.getStorageSync('stall_placeholder_custom_v1') || '')
+    const path = currentPresentation().customPlaceholderUrl
     if(path) wx.removeSavedFile({filePath:path,fail:()=>{}})
     wx.removeStorageSync('stall_placeholder_custom_v1')
     wx.setStorageSync('stall_placeholder_style_v1', 'premium')
@@ -448,8 +480,8 @@ Page({
   },
   refresh() {
     const styles = ['classic','mountain','bag','playful','premium','custom']
-    const savedStyle = String(wx.getStorageSync('stall_placeholder_style_v1') || 'premium')
-    const customPlaceholderUrl = String(wx.getStorageSync('stall_placeholder_custom_v1') || '')
+    const savedStyle = currentPresentation().placeholderStyle
+    const customPlaceholderUrl = currentPresentation().customPlaceholderUrl
     this.setData({ placeholderStyle: savedStyle, placeholderStyleIndex: Math.max(0,styles.indexOf(savedStyle)), customPlaceholderUrl })
     const store = loadStore()
   
@@ -501,47 +533,36 @@ Page({
   switchSoldOut(e: any) { this.setData({ isSoldOut: e.detail.value }) },
   chooseProductImage() {
     if (this.data.saveBusy || this.data.inventoryBusy || this.data.saved || this.data.cloudBusy || this.data.cloudError) return
-    if (this.data.copyMode && formContextKey() !== this.loadedContext) {
-      wx.showToast({ title: '店铺已变化，请返回列表', icon: 'none' }); return
-    }
-    const cfg = merchantCloudConfig()
-    if (!cfg) {
-      wx.chooseImage({ count: 1, sizeType: ['compressed'], sourceType: ['album', 'camera'], success: res => {
-        const tempFilePath = res.tempFilePaths[0]
-        if (!tempFilePath) return
-        wx.saveFile({ tempFilePath, success: saved => {
-          this.setData({ productImageUrl: saved.savedFilePath })
-        }, fail: () => wx.showToast({title: '图片保存失败', icon: 'none'}) })
-      } })
-      return
-    }
-    if (this.data.cloudBusy) return
-    wx.chooseImage({ count: 1, sizeType: ['compressed'], sourceType: ['album', 'camera'], success: async res => {
-      const path = res.tempFilePaths && res.tempFilePaths[0]
-      if (!path) return
-      this.setData({ cloudBusy: true })
-      try {
-        const key = await uploadMerchantImage(cfg, path)
-        this.cloudImageKey = key
-        this.cloudExistingImageUrl = path
-        this.setData({ productImageUrl: path })
-        wx.showToast({ title: '图片已上传', icon: 'success' })
-      } catch (err: any) {
-        const message = err && err.message ? String(err.message) : String(err)
-        console.error('Merchant image upload failed', message, err)
-        wx.showModal({ title: 'Image upload failed', content: message.slice(0, 300), showCancel: false })
-      } finally {
-        this.setData({ cloudBusy: false })
-      }
-    } })
+    const context=formContextKey()
+    if(context!==this.loadedContext){wx.showToast({title:'店铺或模式已变化，请返回列表',icon:'none'});return}
+    const cfg=merchantCloudConfig()
+    this.setData({cloudBusy:true,imageUploadState:'选择图片中…'})
+    wx.chooseImage({count:1,sizeType:['compressed'],sourceType:['album','camera'],success:async res=>{
+      const path=res.tempFilePaths && res.tempFilePaths[0]
+      if(!path||context!==formContextKey()){this.setData({cloudBusy:false,imageUploadState:''});return}
+      try{
+        this.setData({imageUploadState:cfg?'上传并校验图片中…':'保存本机图片中…'})
+        if(cfg){
+          const key=await uploadMerchantImage(cfg,path)
+          if(context!==formContextKey())throw Error('merchant_context_changed')
+          this.cloudImageKey=key;this.cloudExistingImageUrl=path
+          this.setData({productImageUrl:path,imageUploadState:'已上传并校验；保存商品或草稿后才生效。原图不会立即删除。'})
+        }else{
+          const saved=await new Promise<WechatMiniprogram.SaveFileSuccessCallbackResult>((resolve,reject)=>wx.saveFile({tempFilePath:path,success:resolve,fail:reject}))
+          if(context!==formContextKey())throw Error('merchant_context_changed')
+          this.setData({productImageUrl:saved.savedFilePath,imageUploadState:'本机图片已保存'})
+        }
+      }catch(_){this.setData({imageUploadState:'上传或校验失败，原图片已保留，可重新选择。'});wx.showToast({title:'图片上传失败，原图保留',icon:'none'})}
+      finally{this.setData({cloudBusy:false})}
+    },fail:()=>this.setData({cloudBusy:false,imageUploadState:''})})
   },
   removeProductImage() {
-    if (this.data.saveBusy || this.data.saved || this.data.cloudBusy || this.data.cloudError) return
+    if (this.data.saveBusy || this.data.saved || this.data.cloudBusy || this.data.inventoryBusy || this.data.cloudError || formContextKey()!==this.loadedContext) return
     if (merchantCloudConfig()) {
       this.cloudImageKey = null
       this.cloudExistingImageUrl = ''
     }
-    this.setData({productImageUrl: ''})
+    this.setData({productImageUrl: '',imageUploadState:'已从当前表单移除；保存成功后生效，原对象不会立即删除。'})
   },
   inputPrice(e: any) { this.setData({ priceText: e.detail.value }) },
   inputDiscount(e: any) { this.setData({ discountText: e.detail.value }) },

@@ -1,4 +1,4 @@
-<view class="product-manage-page">
+<view class="product-manage-page"><view wx:if="{{presentationError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{presentationError}}</view>
   <view wx:if="{{cloudLoading}}" style="padding:22rpx">正在读取商品和分类…</view>
   <view wx:if="{{cloudError}}" style="padding:22rpx;color:#b33">{{cloudError}}</view>
   <view class="product-manage-header">
@@ -9,6 +9,20 @@
     </view>
   </view>
   <view class="product-query-panel">
+    <button wx:if="{{!batchMode}}" size="mini" bindtap="toggleImagePanel" disabled="{{batchBusy || imageBusy}}">{{imagePanel ? '收起图片管理' : '云端图片引用与清理计划'}}</button>
+    <view wx:if="{{imagePanel && !batchMode}}" class="image-management-panel">
+      <text class="product-query-note">只管理当前店铺商品图。历史、草稿、订单快照、归档和备份引用永久保护；旧对象来源不明时保留。保护期至少7天。此处不会执行删除，清理检查与计划仅owner可操作。</text>
+      <view wx:if="{{imageError}}" class="product-query-pending">{{imageError}}</view>
+      <button size="mini" bindtap="reloadImages" disabled="{{imageBusy}}">刷新图片登记</button>
+      <button size="mini" data-action="check" bindtap="inspectImages" disabled="{{imageBusy || !imageRows.length}}">核对前20个已加载图片</button>
+      <button size="mini" data-action="scan" bindtap="inspectImages" disabled="{{imageBusy}}">{{imageScanMore ? '继续扫描下一页R2对象' : '扫描一页R2对象（最多20个）'}}</button>
+      <view wx:if="{{imageBusy}}" class="product-query-note">正在读取或核对，原商品图片保持不变…</view>
+      <view wx:for="{{imageRows}}" wx:key="id" class="image-management-row"><text>{{item.object_key}}</text><text class="product-query-note">{{item.ever_referenced || item.retention_hold ? '受保护，禁止清理' : '需服务端核对后判定'}} · 登记状态 {{item.stateText}}</text><text class="product-query-note">登记 {{item.createdText}} · 保护至少至 {{item.protectText}}（北京时间）</text><text class="product-query-note">最近识别：{{item.checkedText}}</text><button size="mini" data-id="{{item.id}}" bindtap="imageReferences" disabled="{{imageBusy}}">查看引用</button></view>
+      <button wx:if="{{imageHasMore}}" size="mini" bindtap="moreImages" disabled="{{imageBusy}}">加载更多图片登记</button>
+      <view wx:for="{{imageChecks}}" wx:key="id" class="image-management-row"><text>{{item.key}}</text><text class="product-query-note">对象状态：{{item.objectState === 'exists' ? '存在' : (item.objectState === 'missing' ? '缺失' : '无法确认')}}</text><text class="product-query-note">{{item.reasonText}}</text></view>
+      <button size="mini" bindtap="planImages" disabled="{{imageBusy || !imageEligibleCount}}">为当前安全候选生成计划（共{{imageEligibleCount}}个，每次最多5个）</button>
+      <view wx:for="{{imagePlans}}" wx:key="id" class="image-management-row"><text>计划 {{item.id}}</text><text class="product-query-note">{{item.statusText}} · 不代表全部已删除</text><button size="mini" data-id="{{item.id}}" bindtap="viewImagePlan" disabled="{{imageBusy}}">查看逐项状态</button></view>
+    </view>
     <view class="product-query-search">
       <input value="{{searchText}}" bindinput="inputSearch" bindconfirm="searchProducts" confirm-type="search" maxlength="100" placeholder="商品名称／分类名称，或完整商品 ID" disabled="{{batchBusy}}" />
       <button size="mini" bindtap="clearSearch" disabled="{{batchBusy}}">清空</button>

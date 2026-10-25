@@ -1,196 +1,41 @@
-import { loadStore, saveStore, newId, Category, Product } from '../../utils/store'
-
+import { getMerchantContext } from '../../utils/merchantContext'
+import { merchantBusiness,patchMerchantBusiness } from '../../utils/businessCloud'
+import { uploadMerchantImage } from '../../utils/cloudMerchantImage'
+import { supportIdentity } from '../../utils/supportCloud'
+import { currentPresentation,placeholderStyles } from '../../utils/storePresentation'
 Page({
-  data: {
-    adminSection: '',
-    placeholderStyle: 'premium',
-    customPlaceholderUrl: '',
-    placeholderStyleIndex: 4,
-    placeholderStyleNames: ['经典图案', '山峰插画', '购物袋', '彩色礼盒', '精品礼盒', '自定义图片'],
-    categories: [] as Category[],
-    products: [] as Product[],
-    categoryName: '',
-    productName: '',
-    productDescription: '',
-    productImageUrl: '',
-    isSoldOut: false,
-    priceText: '',
-    discountText: '',
-    startText: '',
-    endText: '',
-    selectedCategory: '',
-    selectedCategoryName: '',
-    editId: '',
-    isAvailable: true
-  },
-  toggleAdminSection(e: any) {
-    const section = String(e.currentTarget.dataset.section || '')
-    if (['placeholder', 'categories', 'product', 'saved'].indexOf(section) < 0) return
-    this.setData({ adminSection: this.data.adminSection === section ? '' : section })
-  },  onShow() { this.refresh() },
-  uploadCustomPlaceholder() {
-    wx.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], success: (result: any) => {
-      const item = result.tempFiles && result.tempFiles[0]
-      if (!item || !item.tempFilePath) return
-      const oldPath = String(wx.getStorageSync('stall_placeholder_custom_v1') || '')
-      wx.saveFile({ tempFilePath: item.tempFilePath, success: (saved: any) => {
-        if (oldPath && oldPath !== saved.savedFilePath) wx.removeSavedFile({ filePath: oldPath, fail: () => {} })
-        wx.setStorageSync('stall_placeholder_custom_v1', saved.savedFilePath)
-        wx.setStorageSync('stall_placeholder_style_v1', 'custom')
-        this.setData({customPlaceholderUrl:saved.savedFilePath,placeholderStyle:'custom',placeholderStyleIndex:5})
-        wx.showToast({title:'已保存自定义图',icon:'success'})
-      }, fail: () => wx.showToast({title:'保存失败',icon:'none'}) })
-    } })
-  },
-  removeCustomPlaceholder() {
-    const path = String(wx.getStorageSync('stall_placeholder_custom_v1') || '')
-    if(path) wx.removeSavedFile({filePath:path,fail:()=>{}})
-    wx.removeStorageSync('stall_placeholder_custom_v1')
-    wx.setStorageSync('stall_placeholder_style_v1', 'premium')
-    this.setData({customPlaceholderUrl:'',placeholderStyle:'premium',placeholderStyleIndex:4})
-  },
-  chooseGalleryStyle(e: any) {
-    const styles = ['classic','mountain','bag','playful','premium']
-    const style = String(e.currentTarget.dataset.style || '')
-    const index = styles.indexOf(style)
-    if (index < 0) return
-    this.changePlaceholderStyle({ detail: { value: String(index) } } as any)
-  },
-  changePlaceholderStyle(e: any) {
-    const styles = ['classic','mountain','bag','playful','premium','custom']
-    const n = Number(e.detail.value)
-    if (!Number.isInteger(n) || n < 0 || n >= styles.length) return
-    wx.setStorageSync('stall_placeholder_style_v1', styles[n])
-    this.setData({ placeholderStyle: styles[n], placeholderStyleIndex: n })
-    wx.showToast({ title: 'Style saved', icon: 'success' })
-  },
-  refresh() {
-    const styles = ['classic','mountain','bag','playful','premium','custom']
-    const savedStyle = String(wx.getStorageSync('stall_placeholder_style_v1') || 'premium')
-    const customPlaceholderUrl = String(wx.getStorageSync('stall_placeholder_custom_v1') || '')
-    this.setData({ placeholderStyle: savedStyle, placeholderStyleIndex: Math.max(0,styles.indexOf(savedStyle)), customPlaceholderUrl })
-    const store = loadStore()
-  
-    const selectedCategory =
-      store.categories.some(
-        c => c.id === this.data.selectedCategory
-      )
-        ? this.data.selectedCategory
-        : (store.categories.length > 0 ? store.categories[0].id : '')
-  
-    const category = store.categories.find(
-      c => c.id === selectedCategory
-    )
-    const selectedCategoryName = category ? category.name : ''
-  
-    this.setData({
-      categories: store.categories,
-      products: store.products,
-      selectedCategory,
-      selectedCategoryName
-    })
-  },
-  inputCategory(e: any) { this.setData({ categoryName: e.detail.value }) },
-  addCategory() {
-    const name = this.data.categoryName.trim()
-    if (!name) { wx.showToast({ title: '请输入分类名', icon: 'none' }); return }
-    const store = loadStore()
-    if (store.categories.some(c => c.name === name)) { wx.showToast({ title: '分类已存在', icon: 'none' }); return }
-    const id = newId()
-    store.categories.push({ id, name })
-    saveStore(store)
-    this.setData({ categoryName: '', selectedCategory: id })
-    this.refresh()
-  },
-  deleteCategory(e: WechatMiniprogram.TouchEvent) {
-    const id = String(e.currentTarget.dataset.id)
-    const store = loadStore()
-    if (store.products.some(p => p.categoryId === id)) { wx.showToast({ title: '先移动或删除分类里的商品', icon: 'none' }); return }
-    wx.showModal({ title: '删除分类？', content: '此操作不可撤销', success: res => {
-      if (!res.confirm) return
-      store.categories = store.categories.filter(c => c.id !== id)
-      saveStore(store)
-      this.setData({ selectedCategory: store.categories.length > 0 ? store.categories[0].id : '' })
-      this.refresh()
-    } })
-  },
-  inputName(e: any) { this.setData({ productName: e.detail.value }) },
-  inputDescription(e: any) { this.setData({ productDescription: e.detail.value }) },
-  switchSoldOut(e: any) { this.setData({ isSoldOut: e.detail.value }) },
-  chooseProductImage() {
-    wx.chooseImage({ count: 1, sizeType: ['compressed'], sourceType: ['album', 'camera'], success: res => {
-      const tempFilePath = res.tempFilePaths[0]
-      if (!tempFilePath) return
-      wx.saveFile({ tempFilePath, success: saved => {
-        this.setData({ productImageUrl: saved.savedFilePath })
-      }, fail: () => wx.showToast({title: '图片保存失败', icon: 'none'}) })
-    } })
-  },
-  removeProductImage() { this.setData({productImageUrl: ''}) },
-  inputPrice(e: any) { this.setData({ priceText: e.detail.value }) },
-  inputDiscount(e: any) { this.setData({ discountText: e.detail.value }) },
-  inputStart(e: any) { this.setData({ startText: e.detail.value }) },
-  inputEnd(e: any) { this.setData({ endText: e.detail.value }) },
-  selectCategory(e: any) {
-    const index = Number(e.detail.value)
-  
-    const category = this.data.categories[index]
-  
-    if (!category) return
-  
-    this.setData({
-      selectedCategory: category.id,
-      selectedCategoryName: category.name
-    })
-  },
-  switchAvailable(e: any) { this.setData({ isAvailable: e.detail.value }) },
-  saveProduct() {
-    const name = this.data.productName.trim()
-    const price = Number(this.data.priceText)
-    const txt = this.data.discountText.trim()
-    const discountPrice = txt === '' ? null : Number(txt)
-    if (!this.data.selectedCategory || !name || this.data.priceText.trim() === '' || !Number.isFinite(price) || price < 0 || (discountPrice !== null && (!Number.isFinite(discountPrice) || discountPrice < 0 || discountPrice >= price))) {
-      { wx.showToast({ title: '请检查名称、价格与折扣价', icon: 'none' }); return }
-    }
-    const start = this.data.startText.trim()
-    const end = this.data.endText.trim()
-    const pattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/
-    if ((start && (!pattern.test(start) || Number.isNaN(Date.parse(start.replace(' ', 'T'))))) || (end && (!pattern.test(end) || Number.isNaN(Date.parse(end.replace(' ', 'T'))))) || (start && end && new Date(start.replace(' ', 'T')).getTime() >= new Date(end.replace(' ', 'T')).getTime())) {
-      { wx.showToast({ title: '时间格式错误或结束早于开始', icon: 'none' }); return }
-    }
-    const store = loadStore()
-    const product: Product = { id: this.data.editId || newId(), categoryId: this.data.selectedCategory, name, price, discountPrice, discountStart: start, discountEnd: end, available: this.data.isAvailable, soldOut: this.data.isSoldOut, description: this.data.productDescription.trim(), imageUrl: this.data.productImageUrl }
-    const index = store.products.findIndex(p => p.id === product.id)
-    if (index >= 0) store.products[index] = product
-    else store.products.push(product)
-    saveStore(store)
-    this.resetForm()
-    this.refresh()
-    wx.showToast({ title: '保存成功' })
-  },
-  editProduct(e: WechatMiniprogram.TouchEvent) {
-    const id = String(e.currentTarget.dataset.id)
-    const p = loadStore().products.find(p => p.id === id)
-    if (!p) return
-    this.setData({ editId: p.id, productName: p.name, priceText: String(p.price), discountText: p.discountPrice === null ? '' : String(p.discountPrice), selectedCategory: p.categoryId, 
-    selectedCategoryName:
-    (this.data.categories.find(
-      c => c.id === p.categoryId
-    ) || { name: '' }).name,
-    startText: p.discountStart, endText: p.discountEnd, isAvailable: p.available, isSoldOut: !!p.soldOut, productDescription: p.description || '', productImageUrl: p.imageUrl || '' })
-    },
-  deleteProduct(e: WechatMiniprogram.TouchEvent) {
-    const id = String(e.currentTarget.dataset.id)
-    wx.showModal({ title: '确定删除商品？', success: res => {
-      if (!res.confirm) return
-      const store = loadStore()
-      store.products = store.products.filter(p => p.id !== id)
-      saveStore(store)
-      if (this.data.editId === id) this.resetForm()
-      this.refresh()
-    } })
-  },
-  resetForm() {
-    this.setData({ editId: '', productName: '', priceText: '', discountText: '', startText: '', endText: '', isAvailable: true, isSoldOut: false, productDescription: '', productImageUrl: '' })
-  }
+ context:'',serial:0,reading:false,revision:null as string|null,
+ data:{placeholderStyle:'premium',customPlaceholderUrl:'',placeholderImageKey:null as string|null,placeholderStyleIndex:4,placeholderStyleNames:['经典图案','山峰插画','购物袋','彩色礼盒','精品礼盒','自定义图片'],cloudMode:false,busy:false,ready:false,error:''},
+ onShow(){this.refresh()},
+ onHide(){this.serial++;if(this.reading){this.reading=false;this.setData({busy:false})}},
+ onUnload(){this.serial++},
+ async refresh(){
+  if(this.data.busy)return
+  const context=supportIdentity(),serial=++this.serial,cfg=getMerchantContext();this.context=context;this.setData({cloudMode:!!cfg,ready:!cfg,error:'',...cfg?{placeholderStyle:'none',customPlaceholderUrl:'',placeholderImageKey:null}:{...currentPresentation()}})
+  if(!cfg)return
+  this.reading=true;this.setData({busy:true})
+  try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==supportIdentity())return;const style=r.placeholderStyle||'premium';this.revision=r.revision||null;this.setData({placeholderStyle:style,placeholderStyleIndex:placeholderStyles.indexOf(style),customPlaceholderUrl:r.customPlaceholderUrl||'',placeholderImageKey:r.placeholderImageKey||null,ready:true})}
+  catch(_){if(serial===this.serial)this.setData({error:'云端缺图设置读取失败，请检查商家身份及后端配置；未回退本机数据'})}finally{if(serial===this.serial){this.reading=false;this.setData({busy:false})}}
+ },
+ async persist(style:string,key?:string|null):Promise<boolean>{
+  if(this.data.busy||!this.data.ready||this.context!==supportIdentity())return false
+  const cfg=getMerchantContext(),context=this.context;this.setData({busy:true,error:''})
+  try{if(cfg){this.revision=await patchMerchantBusiness(cfg,this.revision,{placeholderStyle:style,...key===undefined?{}:{placeholderImageKey:key}});if(context!==supportIdentity())return false;const r=await merchantBusiness(cfg);if(context!==supportIdentity())return false;if(r.revision!==this.revision)throw Error('configuration_changed');this.revision=r.revision||null;this.setData({placeholderStyle:r.placeholderStyle||style,customPlaceholderUrl:r.customPlaceholderUrl||'',placeholderImageKey:r.placeholderImageKey||null,placeholderStyleIndex:placeholderStyles.indexOf(style)})}
+   else{wx.setStorageSync('stall_placeholder_style_v1',style);if(key===null)wx.removeStorageSync('stall_placeholder_custom_v1');this.setData({placeholderStyle:style,placeholderStyleIndex:placeholderStyles.indexOf(style),customPlaceholderUrl:style==='custom'?String(wx.getStorageSync('stall_placeholder_custom_v1')||''):this.data.customPlaceholderUrl})}
+   wx.showToast({title:'缺图样式已保存'});return true
+  }catch(_){if(context===supportIdentity())this.setData({error:'保存未确认或配置已变化，原云端设置未被强行覆盖；请刷新核对',ready:false});return false}finally{this.setData({busy:false})}
+ },
+ chooseGalleryStyle(e:any){const style=String(e.currentTarget.dataset.style||'');if(placeholderStyles.includes(style))this.persist(style)},
+ changePlaceholderStyle(e:any){const style=placeholderStyles[Number(e.detail.value)];if(style)this.persist(style)},
+ uploadCustomPlaceholder(){
+  if(this.data.busy||!this.data.ready||this.context!==supportIdentity())return
+  const cfg=getMerchantContext(),context=this.context;this.setData({busy:true,error:''})
+  wx.chooseImage({count:1,sizeType:['compressed'],sourceType:['album','camera'],success:async r=>{
+   try{const path=r.tempFilePaths[0];if(!path||context!==supportIdentity())return
+    if(cfg){const key=await uploadMerchantImage(cfg,path);if(context!==supportIdentity())return;this.revision=await patchMerchantBusiness(cfg,this.revision,{placeholderStyle:'custom',placeholderImageKey:key});const settings=await merchantBusiness(cfg);if(settings.revision!==this.revision)throw Error('configuration_changed');if(context===supportIdentity()){this.revision=settings.revision||null;this.setData({placeholderStyle:'custom',placeholderStyleIndex:5,placeholderImageKey:key,customPlaceholderUrl:settings.customPlaceholderUrl||''})}}
+    else{const saved:any=await new Promise((resolve,reject)=>wx.saveFile({tempFilePath:path,success:resolve,fail:reject}));if(context!==supportIdentity())return;wx.setStorageSync('stall_placeholder_custom_v1',saved.savedFilePath);wx.setStorageSync('stall_placeholder_style_v1','custom');this.setData({placeholderStyle:'custom',placeholderStyleIndex:5,customPlaceholderUrl:saved.savedFilePath})}
+   }catch(_){if(context===supportIdentity())this.setData({error:'上传或保存未确认，原设置保留；请刷新核对后重试'})}finally{this.setData({busy:false})}
+  },fail:()=>this.setData({busy:false})})
+ },
+ removeCustomPlaceholder(){this.persist('premium',null)}
 })

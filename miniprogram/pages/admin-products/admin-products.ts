@@ -1,14 +1,67 @@
+import { currentPresentation,refreshPagePresentation } from '../../utils/storePresentation'
 import { loadStore, saveStore, newId, Category, Product, ProductDraft, productIsPublished, productIsPending } from '../../utils/store'
 import { merchantCloudConfig, merchantCloudProductPage, merchantCloudCategoryContext, discardMerchantCloudDraft, patchMerchantCloudProduct, MerchantProductBatchPatch } from '../../utils/cloudMerchantProducts'
 import { formatPublishTime } from '../../utils/productPublishing'
 import { MerchantCatalogItem, defaultProductQuery, queryChoices, localMerchantQuery } from '../../utils/merchantProductQuery'
+import { imageManagementGet,imageManagementPost,imageReasonText,imageStateText } from '../../utils/cloudMerchantImage'
+import { supportIdentity,supportKey,supportTime } from '../../utils/supportCloud'
 
 function catalogContextKey(): string {
   const cfg = merchantCloudConfig()
-  return cfg ? cfg.apiBase + '/' + cfg.storeSlug : 'local-demo'
+  return cfg ? supportIdentity() : 'local-demo'
 }
 
 Page({
+  imageSerial:0,imageVisible:false,imageContext:'',imageCursor:'',imageScanCursor:'',imagePlanRequest:{fingerprint:'',key:''},
+  onHide(){this.imageVisible=false;this.imageSerial++;this.requestSerial++;this.setData({imagePanel:false,imageBusy:false,imageRows:[],imageChecks:[],imageEligibleCount:0,imagePlans:[],imageError:'',...merchantCloudConfig()?{entries:[],products:[],drafts:[],cloudLoading:false,loadingMore:false}:{}})},
+  async toggleImagePanel(){
+    if(this.data.batchMode||this.data.batchBusy||this.data.imageBusy)return
+    if(this.data.imagePanel){this.setData({imagePanel:false});return}
+    if(!merchantCloudConfig()){wx.showToast({title:'本机演示图片继续在商品表单管理',icon:'none'});return}
+    this.imageContext=supportIdentity();this.imageCursor='';this.imageScanCursor='';this.imagePlanRequest={fingerprint:'',key:''};this.setData({imagePanel:true,imageChecks:[],imageEligibleCount:0});await this.loadImageRows(false)
+  },
+  imageCurrent(context:string,serial:number){return this.imageVisible&&context===supportIdentity()&&context===this.imageContext&&serial===this.imageSerial},
+  async loadImageRows(more=false){
+    if(this.data.imageBusy||!this.data.imagePanel)return
+    const context=this.imageContext,serial=++this.imageSerial;this.setData({imageBusy:true,imageError:''})
+    try{const r=await imageManagementGet('images',more&&this.imageCursor?{before:this.imageCursor}:undefined);if(!this.imageCurrent(context,serial))return
+      const seen=new Map<string,any>();(more?this.data.imageRows:[]).concat(r.images).forEach((v:any)=>seen.set(v.id,{...v,stateText:imageStateText(v.upload_state),createdText:supportTime(v.created_at),protectText:supportTime(v.protect_until),checkedText:v.candidate_identified_at?supportTime(v.candidate_identified_at):'尚未检查'}));this.imageCursor=r.nextCursor||'';this.setData({imageRows:Array.from(seen.values()),imageHasMore:r.hasMore})
+      try{const p=await imageManagementGet('image-cleanup/plans');if(this.imageCurrent(context,serial))this.setData({imagePlans:p.plans.map((v:any)=>({...v,statusText:imageStateText(v.status)}))})}catch(_){if(this.imageCurrent(context,serial))this.setData({imageError:'清理计划仅owner可查看；图片引用查询仍需现有商家权限'})}
+    }catch(_){if(this.imageCurrent(context,serial))this.setData({imageError:'云端图片登记读取失败，请检查身份、权限及迁移015；不会回退本机数据'})}
+    finally{if(serial===this.imageSerial)this.setData({imageBusy:false})}
+  },
+  reloadImages(){this.loadImageRows(false)},
+  moreImages(){if(this.data.imageHasMore)this.loadImageRows(true)},
+  async imageReferences(e:any){
+    if(this.data.imageBusy||this.data.batchMode)return
+    const id=String(e.currentTarget.dataset.id||''),context=this.imageContext,serial=++this.imageSerial;this.setData({imageBusy:true})
+    try{const r=await imageManagementGet('images/'+id+'/references');if(this.imageCurrent(context,serial))wx.showModal({title:'服务端图片引用',content:JSON.stringify(r.references)+'\n'+r.note,showCancel:false})}catch(_){if(this.imageCurrent(context,serial))this.setData({imageError:'图片引用读取失败，未修改任何对象'})}finally{if(serial===this.imageSerial)this.setData({imageBusy:false})}
+  },
+  async viewImagePlan(e:any){
+    if(this.data.imageBusy||this.data.batchMode)return
+    const id=String(e.currentTarget.dataset.id||''),context=this.imageContext,serial=++this.imageSerial;this.setData({imageBusy:true})
+    try{const r=await imageManagementGet('image-cleanup/plans/'+id);if(this.imageCurrent(context,serial))wx.showModal({title:'计划逐项状态',content:r.items.map((i:any)=>i.image_id+'\n'+imageStateText(i.result)).join('\n\n')||'计划没有可展示项目',showCancel:false})}catch(_){if(this.imageCurrent(context,serial))this.setData({imageError:'计划读取失败，请检查身份及店铺权限'})}finally{if(serial===this.imageSerial)this.setData({imageBusy:false})}
+  },
+  async inspectImages(e:any){
+    if(this.data.imageBusy||this.data.batchMode)return
+    const scan=e.currentTarget.dataset.action==='scan',context=this.imageContext,serial=++this.imageSerial
+    this.setData({imageBusy:true,imageError:''})
+    try{const ids=this.data.imageRows.slice(0,20).map((v:any)=>v.id);if(!scan&&!ids.length)throw Error('empty')
+      const r=await imageManagementPost(scan?'images/scan':'images/check',scan?{cursor:this.imageScanCursor||undefined}:{ids})
+      if(!this.imageCurrent(context,serial))return
+      if(scan)this.imageScanCursor=r.nextCursor||''
+      this.setData({imageChecks:r.checked.map((v:any)=>({...v,reasonText:imageReasonText(v.reason)})),imageEligibleCount:r.checked.filter((v:any)=>v.eligible).length,imageScanMore:!!r.hasMore})
+    }catch(_){if(this.imageCurrent(context,serial))this.setData({imageError:'检查失败或无对象；需要owner权限、迁移015和对象存储配置，请稍后重试。'})}finally{if(serial===this.imageSerial)this.setData({imageBusy:false})}
+  },
+  async planImages(){
+    if(this.data.imageBusy||this.data.batchMode||!this.data.imagePanel)return
+    const ids=this.data.imageChecks.filter((v:any)=>v.eligible).map((v:any)=>v.id).sort().slice(0,5);if(!ids.length){wx.showToast({title:'没有已确认安全的候选',icon:'none'});return}
+    const fingerprint=JSON.stringify(ids);if(this.imagePlanRequest.fingerprint!==fingerprint)this.imagePlanRequest={fingerprint,key:supportKey()}
+    const context=this.imageContext,serial=++this.imageSerial;this.setData({imageBusy:true,imageError:''})
+    try{const confirmed=await new Promise<boolean>(resolve=>wx.showModal({title:'仅生成清理计划',content:`为当前检查中 ${ids.length} 个未关联上传生成计划，服务端将再次核对。不会删除图片。`,success:r=>resolve(r.confirm),fail:()=>resolve(false)}));if(!confirmed||!this.imageCurrent(context,serial))return
+      const r=await imageManagementPost('image-cleanup/plans',{ids,clientKey:this.imagePlanRequest.key});if(this.imageCurrent(context,serial)){const detail=await imageManagementGet('image-cleanup/plans/'+r.planId);if(!this.imageCurrent(context,serial))return;wx.showModal({title:'计划已确认，本次未删除对象',content:r.planId+'\n实际纳入 '+detail.items.length+' 个对象；其余可能已受保护。',showCancel:false});const p=await imageManagementGet('image-cleanup/plans');if(this.imageCurrent(context,serial))this.setData({imagePlans:p.plans.map((v:any)=>({...v,statusText:imageStateText(v.status)}))})}
+    }catch(_){if(this.imageCurrent(context,serial))this.setData({imageError:'计划未确认或对象已受保护，请刷新核对；重试沿用原编号。'})}finally{if(serial===this.imageSerial)this.setData({imageBusy:false})}
+  },
   catalogProducts: [] as Product[],
   catalogItems: [] as MerchantCatalogItem[],
   localItems: [] as MerchantCatalogItem[],
@@ -16,7 +69,7 @@ Page({
   requestSerial: 0,
   nextCursor: '',
   localOffset: 0,
-  onUnload() { this.requestSerial++ },
+  onUnload() { this.requestSerial++;this.imageSerial++;this.imageVisible=false },
   async onPullDownRefresh() {
     try { if (!this.data.batchBusy) await this.refresh() }
     finally { wx.stopPullDownRefresh() }
@@ -132,6 +185,7 @@ Page({
     if (id) wx.navigateTo({ url: '/pages/admin-product-form/admin-product-form?id=' + encodeURIComponent(id) });
   },
   data: {
+    imagePanel:false,imageBusy:false,imageError:'',imageRows:[] as any[],imageChecks:[] as any[],imagePlans:[] as any[],imageHasMore:false,imageScanMore:false,imageEligibleCount:0,
     searchText: '',
     queryDirty: false,
     queryControls: queryChoices.map(c=>({...c,index:0})),
@@ -189,15 +243,17 @@ Page({
   closeProductForm() {
     this.resetForm()
     this.setData({ showProductForm: false })
-  },  onShow() {
+  },  onShow() { refreshPagePresentation(this);
+    this.imageVisible=true
+    if(this.imageContext!==supportIdentity()){this.imageSerial++;this.imageContext=supportIdentity();this.setData({imagePanel:false,imageBusy:false,imageRows:[],imageChecks:[],imageEligibleCount:0,imagePlans:[],imageError:''})}
     if (this.data.batchBusy) return
-    this.setData({ placeholderStyle: String(wx.getStorageSync('stall_placeholder_style_v1') || 'premium'), customPlaceholderUrl: String(wx.getStorageSync('stall_placeholder_custom_v1') || '') })
+    this.setData({ placeholderStyle: currentPresentation().placeholderStyle, customPlaceholderUrl: currentPresentation().customPlaceholderUrl })
  this.refresh() },
   uploadCustomPlaceholder() {
     wx.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], success: (result: any) => {
       const item = result.tempFiles && result.tempFiles[0]
       if (!item || !item.tempFilePath) return
-      const oldPath = String(wx.getStorageSync('stall_placeholder_custom_v1') || '')
+      const oldPath = currentPresentation().customPlaceholderUrl
       wx.saveFile({ tempFilePath: item.tempFilePath, success: (saved: any) => {
         if (oldPath && oldPath !== saved.savedFilePath) wx.removeSavedFile({ filePath: oldPath, fail: () => {} })
         wx.setStorageSync('stall_placeholder_custom_v1', saved.savedFilePath)
@@ -208,7 +264,7 @@ Page({
     } })
   },
   removeCustomPlaceholder() {
-    const path = String(wx.getStorageSync('stall_placeholder_custom_v1') || '')
+    const path = currentPresentation().customPlaceholderUrl
     if(path) wx.removeSavedFile({filePath:path,fail:()=>{}})
     wx.removeStorageSync('stall_placeholder_custom_v1')
     wx.setStorageSync('stall_placeholder_style_v1', 'premium')

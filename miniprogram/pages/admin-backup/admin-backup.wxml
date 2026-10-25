@@ -1,4 +1,44 @@
 <view class="page">
+ <view wx:if="{{cloudMode}}">
+  <view class="heading">云端导出与归档</view>
+  <view class="hint">当前店铺云端数据 · CNY · 北京时间 UTC+8。归档管理仅限 owner；账单沿用现有权限。失败不会导出本地演示数据。</view>
+  <view wx:if="{{error}}" class="card hint">{{error}}</view>
+  <view class="card">
+   <view class="subheading">经营数据导出</view>
+   <view class="hint">商品 CSV 金额单位为整数分；JSON 保留稳定ID、库存、草稿原始字段及定时计划。</view>
+   <button data-kind="catalog-csv" disabled="{{busy || historyLoading}}" bindtap="generate">商品与分类 CSV</button>
+   <button data-kind="catalog-json" disabled="{{busy || historyLoading}}" bindtap="generate">商品、分类与草稿 JSON</button>
+   <button data-kind="settings-json" disabled="{{busy || historyLoading}}" bindtap="generate">营业与配送管理设置 JSON</button>
+   <view class="hint">以下订单及账单使用所选日期范围（最多366天）；不含顾客姓名、电话、详细地址或客服消息。</view>
+   <picker mode="date" value="{{from}}" disabled="{{busy}}" bindchange="dateFrom"><view>开始：{{from}} ›</view></picker>
+   <picker mode="date" value="{{to}}" disabled="{{busy}}" bindchange="dateTo"><view>结束：{{to}} ›</view></picker>
+   <button data-kind="orders-json" disabled="{{busy || historyLoading}}" bindtap="generate">订单与成交明细 JSON</button>
+   <button disabled="{{busy}}" bindtap="exportBilling">账单 CSV（复用现有接口）</button>
+   <navigator url="/pages/admin-analytics/admin-analytics">前往经营分析导出报表 ›</navigator>
+  </view>
+  <view class="card">
+   <view class="subheading">完整商家数据归档</view>
+   <view class="hint">包含当前商品、分类、全部草稿及经营配置，订单仅包含所选日期范围。单份上限4MB，最多5000商品、5000草稿、2000分类、5000订单及20000明细。只保存图片对象引用，不含图片文件、支付凭证、库存流水或客服记录。并非完整数据库恢复备份。</view>
+   <button type="primary" data-kind="archive-json" disabled="{{busy || historyLoading}}" loading="{{busy}}" bindtap="generate">生成结构化店铺归档</button>
+   <view class="hint">文件仅供授权下载，有效期7天；每店最多保留10份有效文件，每小时最多生成5次。</view>
+  </view>
+  <view class="card">
+   <view class="subheading">归档历史与状态</view>
+   <button size="mini" disabled="{{historyLoading}}" bindtap="reloadHistory">刷新历史</button>
+   <view wx:if="{{historyLoading}}" class="hint">读取中…</view>
+   <view wx:if="{{!historyLoading && !history.length}}" class="hint">暂无可展示记录；若请求失败请查看错误提示。</view>
+   <view wx:for="{{history}}" wx:key="id" class="archive-row"><view>{{item.kind}} · {{item.statusText}}</view><view class="hint">{{item.time}} · {{item.size}}<text wx:if="{{item.failureCode}}"> · {{item.failureCode}}</text></view><view class="hint">下载有效期至 {{item.expiry}}</view><button size="mini" wx:if="{{item.downloadable}}" data-id="{{item.id}}" disabled="{{busy}}" bindtap="download">下载／分享</button></view>
+   <button wx:if="{{hasMore}}" disabled="{{historyLoading}}" bindtap="moreHistory">加载更多</button>
+  </view>
+  <view class="card">
+   <view class="subheading">恢复前校验与预览</view>
+   <view class="hint">仅接受本店云端归档 JSON。服务端检查版本、摘要、必需字段及关联。不会恢复或覆盖商品、库存、订单、支付记录。摘要正确也不代表来源可信。</view>
+   <button disabled="{{busy}}" bindtap="preflight">选择归档并进行预检查</button>
+   <view wx:if="{{cloudPreview}}" class="preview">{{cloudPreview}}</view>
+  </view>
+  <view class="card hint">系统级备份：PostgreSQL 与 R2 备份由服务器管理员在受控环境执行，不向小程序提供执行入口。店铺归档不代表灾难恢复成功。</view>
+ </view>
+<block wx:else>
   <view class="heading">数据备份与恢复</view>
   <view class="card">
     <view class="subheading">当前本机数据</view>
@@ -13,4 +53,5 @@
     <button wx:if="{{selected}}" type="warn" disabled="{{busy}}" bindtap="restore">确认覆盖恢复</button>
   </view>
   <view class="card hint">注意：商品图片和自定义占位图目前保存在本机文件系统，JSON 只能保存路径，无法跨设备恢复图片。导出的订单数据包含顾客个人信息，请妥善保管。</view>
+</block>
 </view>

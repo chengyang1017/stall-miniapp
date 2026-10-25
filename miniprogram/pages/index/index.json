@@ -1,1 +1,4 @@
-{"navigationBarTitleText":"小摊商店"}
+{
+  "navigationBarTitleText": "小摊商店",
+  "enablePullDownRefresh": true
+}

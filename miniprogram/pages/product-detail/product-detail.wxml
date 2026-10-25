@@ -1,7 +1,8 @@
-<view class="page">
+<import src="../../templates/product-placeholder.wxml"/>
+<view class="page"><view wx:if="{{presentationError}}">{{presentationError}}</view>
   <view class="hero">
     <image wx:if="{{imageUrl}}" class="photo" src="{{imageUrl}}" mode="aspectFill" />
-    <view wx:else class="placeholder">商品图片待上传</view>
+    <view wx:else class="placeholder"><template is="productPlaceholder" data="{{placeholderStyle:placeholderStyle,customPlaceholderUrl:customPlaceholderUrl}}"/></view>
   </view>
   <view class="card">
     <view class="category">{{categoryName}}</view>
@@ -22,6 +23,6 @@
   </view>
   <view class="footer">
     <view><view class="label">合计</view><view class="total">¥{{totalText}}</view></view>
-    <view class="actions"><button bindtap="addCart" disabled="{{!available}}">加入购物车</button><button type="primary" bindtap="buyNow" disabled="{{!available}}">立即购买</button></view>
+    <view class="actions"><button bindtap="addCart" disabled="{{!available || purchaseBusy}}">加入购物车</button><button type="primary" bindtap="buyNow" disabled="{{!available || purchaseBusy}}">{{cloudMode ? '加入并去结算' : '立即购买'}}</button></view>
   </view>
 </view>

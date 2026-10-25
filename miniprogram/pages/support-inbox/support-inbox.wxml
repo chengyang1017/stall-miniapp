@@ -1,11 +1,13 @@
 <view class="support-page">
-  <view class="support-tip">客服收件箱（本地演示）。当前仅有一条本机测试会话，不支持跨设备或多位顾客。</view>
-  <scroll-view class="support-messages" scroll-y="true" scroll-into-view="{{bottomId}}">
-    <view wx:if="{{messages.length === 0}}" class="support-empty">暂时没有顾客消息。</view>
-    <view wx:for="{{messages}}" wx:key="id" id="msg-{{item.id}}" class="support-line {{item.mine ? 'mine' : 'other'}}">
-      <view class="support-meta">{{item.mine ? '商家' : '顾客'}} · {{item.time}}</view>
-      <view class="support-bubble">{{item.content}}</view>
-    </view>
-  </scroll-view>
-  <view class="support-compose"><textarea class="support-input" maxlength="500" auto-height value="{{draft}}" placeholder="回复顾客（最多500字）" bindinput="onInput"/><button type="primary" size="mini" bindtap="send">回复</button></view>
+ <view class="support-tip">{{cloudMode ? '云端客服收件箱 · 北京时间 UTC+8' : '本地演示客服 · 仅当前设备'}}<text wx:if="{{cloudMode}}"> · 未读 {{unread === null ? '—' : unread}}</text></view>
+ <view class="support-tip"><button size="mini" bindtap="refresh" disabled="{{loading}}">刷新会话</button></view>
+ <view wx:if="{{error}}" class="support-tip">{{error}}（会话变化时请刷新列表）</view>
+ <scroll-view class="support-messages" scroll-y="true" bindscrolltolower="more">
+  <button wx:if="{{!cloudMode}}" bindtap="demo">查看本地演示会话并回复</button>
+  <view wx:if="{{cloudMode && !loading && !error && !conversations.length}}" class="support-empty">暂无顾客咨询</view>
+  <view wx:for="{{conversations}}" wx:key="id" class="support-thread" data-id="{{item.id}}" bindtap="open"><view>{{item.label}}<text class="support-count">未读 {{item.unread}}</text></view><view class="support-preview">{{item.preview}}</view><view class="support-meta">{{item.time}} · {{item.status === 'open' ? '咨询中' : '已关闭'}}</view></view>
+  <view wx:if="{{loading}}" class="support-empty">正在加载…</view>
+  <button wx:if="{{hasMore}}" size="mini" bindtap="more" disabled="{{loading}}">加载更多会话</button>
+  <view wx:if="{{cloudMode && conversations.length && !hasMore}}" class="support-empty">已加载全部会话</view>
+ </scroll-view>
 </view>

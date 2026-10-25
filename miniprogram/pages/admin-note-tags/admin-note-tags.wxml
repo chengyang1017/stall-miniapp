@@ -1,4 +1,6 @@
 <view class="note-admin-page">
+  <view class="note-hint">{{cloudMode ? '云端店铺标签 · 复用营业配置版本保护' : '本机演示标签'}}<text wx:if="{{loading || busy}}"> · 正在处理…</text></view>
+  <view wx:if="{{error}}" class="note-hint">{{error}}</view><button size="mini" bindtap="refresh" disabled="{{busy || loading}}">重新读取</button>
   <view class="note-intro">
     <view class="note-title">备注快捷标签</view>
     <view class="note-desc">顾客结算时可一键添加这些备注。没有设置标签时，只显示自由输入框。</view>
@@ -6,8 +8,8 @@
   <view class="note-panel">
     <view class="note-section">新增标签</view>
     <view class="note-add-row">
-      <input class="note-input" maxlength="20" placeholder="输入适合店铺的备注" value="{{draft}}" bindinput="typeDraft" />
-      <button class="note-add" size="mini" bindtap="add">添加</button>
+      <input class="note-input" maxlength="20" placeholder="输入适合店铺的备注" value="{{draft}}" bindinput="typeDraft" disabled="{{busy}}" />
+      <button class="note-add" size="mini" bindtap="add" disabled="{{busy || !ready}}">添加</button>
     </view>
   </view>
   <view class="note-panel">
@@ -28,5 +30,5 @@
       </block>
     </view>
   </view>
-  <view class="note-hint">当前为本机演示。正式上线时需由服务端保存店铺配置。</view>
+  <view class="note-hint">{{cloudMode ? '保存到当前店铺服务器，跨设备同步。历史订单备注保持原样；顾客仍可自由填写备注。' : '本机演示标签仅影响当前设备。'}}</view>
 </view>

@@ -3,60 +3,79 @@
   <view class="notice" wx:if="{{!cloudMode}}">本地演示订单，未接入实际支付。</view>
   <view class="notice" wx:if="{{cloudMode}}">云端订单由服务器保存；未接入实际收款。</view>
   <view class="notice" wx:if="{{cloudError}}">订单读取失败：{{cloudError}}</view>
-      <!-- ADMIN_ORDER_DATE_FILTER_V1 -->
+  <view class="order-store-counts">店铺全部订单：{{countsKnown ? globalTotal : '—'}} · 待接单：{{countsKnown ? globalPending : '—'}}</view>
+  <view class="muted">状态标签统计完整店铺，不受搜索、日期或分页限制；接单和送达均不代表已确认收款。</view>
   <view class="admin-order-date-bar">
-    <view class="admin-order-date-label">下单日期</view>
-    <!-- ADMIN_ORDER_TODAY_BUTTON_V1 -->
-    <view class="admin-order-today-btn" bindtap="selectTodayOrders">今天</view>
-    <picker mode="date" value="{{orderDateFilter}}" bindchange="selectOrderDate">
-      <view class="admin-order-date-select">{{orderDateFilter || '选择日期'}}　⌄</view>
-    </picker>
-    <view wx:if="{{orderDateFilter}}" class="admin-order-date-clear" bindtap="clearOrderDate">查看全部日期</view>
+    <text class="admin-order-date-label">北京时间</text>
+    <button size="mini" bindtap="selectTodayOrders" disabled="{{operationBusy}}">今天</button>
+    <picker mode="date" start="2000-01-01" end="2100-12-31" value="{{dateFrom}}" data-key="dateFrom" bindchange="selectOrderDate" disabled="{{operationBusy}}"><view class="admin-order-date-select">{{dateFrom || '开始日期'}}</view></picker>
+    <text>至</text>
+    <picker mode="date" start="2000-01-01" end="2100-12-31" value="{{dateTo}}" data-key="dateTo" bindchange="selectOrderDate" disabled="{{operationBusy}}"><view class="admin-order-date-select">{{dateTo || '结束日期'}}</view></picker>
+    <button size="mini" bindtap="clearOrderDate" disabled="{{operationBusy}}">全部日期</button>
   </view>
-  <!-- ORDER_SEARCH_V1 -->
   <view class="order-search-wrap">
-    <view class="order-search-box">
-      <text class="order-search-icon">⌕</text>
-      <input class="order-search-input" type="text" confirm-type="search" value="{{orderSearchText}}" placeholder="搜索订单号、收货人或电话" bindinput="orderSearchInput" />
-      <text wx:if="{{orderSearchText}}" class="order-search-clear" bindtap="clearOrderSearch">清除</text>
-    </view>
-    <view class="order-search-count">当前筛选：{{dateResults.length}} 单</view>
+    <view class="order-search-box"><text class="order-search-icon">⌕</text><input class="order-search-input" type="text" maxlength="100" confirm-type="search" value="{{orderSearchText}}" placeholder="订单号（可部分）、收货人或电话" bindinput="orderSearchInput" bindconfirm="searchOrders" disabled="{{operationBusy}}"/><text class="order-search-clear" bindtap="clearOrderSearch">清除</text></view>
+    <view class="order-query-actions"><button size="mini" type="primary" bindtap="searchOrders" disabled="{{operationBusy || cloudBusy || loadingMore}}">搜索／刷新</button><button size="mini" bindtap="toggleBatchMode" disabled="{{operationBusy || cloudBusy || queryDirty || !canManage}}">{{batchMode ? '退出批量选择' : '批量选择'}}</button></view>
+    <view wx:if="{{queryDirty}}" class="order-search-count">{{refreshRequired ? '数据已变化，等待刷新' : '新条件尚未执行'}}</view>
+    <view wx:elif="{{cloudBusy}}" class="order-search-count">正在查询匹配数量…</view>
+    <view wx:elif="{{cloudError}}" class="order-search-count">查询未完成，请刷新核对</view>
+    <view wx:else class="order-search-count">本次查询匹配 {{matchingCount}} 单，已加载 {{dateResults.length}} 单</view>
+    <view wx:if="{{queryDirty}}" class="notice">{{refreshRequired ? '订单数据已变化，请刷新后操作。' : '条件已变化，请搜索。'}}旧勾选已清空，暂不能操作旧结果。</view>
   </view>
   <!-- order-status-tabs-v1 -->
   <scroll-view scroll-x="true" class="order-tabs-scroll" enable-flex="true">
     <view class="order-tabs-inner">
       <view wx:for="{{orderTabs}}" wx:key="key" class="order-tab {{currentTab === item.key ? 'order-tab-active' : ''}}" data-tab="{{item.key}}" bindtap="switchOrderTab">
         <text>{{item.label}}</text>
-        <text class="order-tab-count">{{item.count}}</text>
+        <text class="order-tab-count">{{countsKnown ? item.count : '—'}}</text>
       </view>
     </view>
   </scroll-view>
-  <view wx:if="{{dateResults.length === 0}}" class="empty">当前分类暂无订单。</view>
-  <view wx:for="{{dateResults}}" wx:key="id" class="card">
+  <view wx:if="{{cloudBusy}}" class="notice">正在读取订单和全店数量…</view>
+  <view wx:if="{{!canManage && cloudMode}}" class="notice">当前账号仅可查看订单；状态修改需要有权限的商家角色。</view>
+  <view wx:if="{{batchMode}}" class="order-batch-panel">
+    <view class="row"><text>已选择 {{selectedCount}} 单（最多50单）</text><button size="mini" bindtap="selectAll" disabled="{{operationBusy || cloudBusy || queryDirty}}">{{allSelected ? '取消全选' : '全选已加载可选订单'}}</button></view>
+    <button size="mini" bindtap="clearBatchSelection" disabled="{{operationBusy || !selectedCount}}">取消选择（{{selectedCount}}）</button>
+    <text class="muted">仅可勾选已加载的待接单、已接单订单。混合状态或不符合支付／库存规则的订单计为失败；全选不包含未加载订单。</text>
+    <view class="order-query-actions"><button data-status="accepted" bindtap="runBatch" disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !selectedCount}}">批量接单（{{selectedCount}}）</button><button data-status="preparing" bindtap="runBatch" disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !selectedCount}}">批量开始备货（{{selectedCount}}）</button></view>
+  </view>
+  <view wx:if="{{operationBusy}}" class="notice">{{operationProgress}}，请勿重复操作。</view>
+  <view wx:if="{{batchResult}}" class="notice">{{batchResult}}</view>
+  <view wx:for="{{batchFailures}}" wx:key="id" class="order-batch-failure">{{item.id}}：{{item.reason}}</view>
+  <view wx:if="{{dateResults.length === 0 && !cloudBusy && !cloudError && !queryDirty}}" class="empty">当前筛选暂无订单。</view>
+  <view wx:for="{{dateResults}}" wx:key="id" class="card {{batchMode && selectedMap[item.id] ? 'order-selected' : ''}}">
+    <view wx:if="{{batchMode}}" class="order-selection" bindtap="toggleOrder" data-id="{{item.id}}"><checkbox checked="{{selectedMap[item.id] || false}}" disabled="{{operationBusy || !item.batchEligible}}" color="#16865d"/><text>{{item.batchEligible ? '勾选此订单' : '该状态不可批量操作'}}</text></view>
     <view class="row"><text class="id">{{item.id}}</text><text class="state">{{item.statusText}}</text></view>
-    <view class="muted">{{item.createdText}} · {{item.paymentStatus === 'paid' ? '已付款' : '待支付'}}</view>
-    <view wx:for="{{item.items}}" wx:for-item="product" wx:key="productId" class="row item"><text>{{product.name}} × {{product.quantity}}</text><text>¥{{product.subtotal}}</text></view>
+    <view class="muted">{{item.createdText}} · {{item.paymentLabel}}</view>
+    <view wx:for="{{item.items}}" wx:for-item="product" wx:key="lineKey" class="row item"><text>{{product.name}} × {{product.quantity}}</text><text>¥{{product.subtotal}}</text></view>
         <!-- stallCancelExceptionV1 -->
     <view wx:if="{{item.issueReason}}" class="muted" style="color:#bf512d;">原因：{{item.issueReason}}</view>
     <view wx:if="{{item.issueTimeText}}" class="muted">记录时间：{{item.issueTimeText}}</view>
     <view class="order-issue-actions" style="display:flex;gap:12rpx;flex-wrap:wrap;margin:14rpx 0;">
-      <button wx:if="{{item.allowCancel}}" size="mini" data-id="{{item.id}}" data-type="cancelled" bindtap="recordOrderIssue">取消订单</button>
-      <button wx:if="{{item.allowAbnormal}}" size="mini" data-id="{{item.id}}" data-type="abnormal" bindtap="recordOrderIssue">配送异常</button>
+      <button disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !canManage}}" wx:if="{{item.allowCancel && !batchMode}}" size="mini" data-id="{{item.id}}" data-type="cancelled" bindtap="recordOrderIssue">取消订单</button>
+      <button disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !canManage}}" wx:if="{{item.allowAbnormal && !batchMode}}" size="mini" data-id="{{item.id}}" data-type="abnormal" bindtap="recordOrderIssue">配送异常</button>
     </view>
     <view class="total">合计 ¥{{item.totalText}}</view>
     <view class="muted">收货人：{{item.receiverName}} · {{item.phone}}</view>
     <view class="muted">地址：{{item.area}} {{item.detail}}</view>
     <view class="muted">配送时段：{{item.slotText}}</view>
     <!-- PHASE39_ORDER_LIST_PROOF_LINK: original photo page now available to authorized cloud merchants. -->
-    <navigator class="proof-link" url="/pages/delivery-proof/delivery-proof?id={{item.id}}&amp;merchant=1">送达照片 / 完成配送 →</navigator>
-    <view wx:if="{{item.note}}" class="muted">备注：{{item.note}}</view>
+    <navigator wx:if="{{!batchMode && !queryDirty}}" class="proof-link {{operationBusy ? 'order-action-disabled' : ''}}" url="/pages/delivery-proof/delivery-proof?id={{item.id}}&amp;merchant=1">送达照片 / 完成配送 →</navigator>
+    <view wx:if="{{item.note}}" class="muted">顾客下单备注：{{item.note}}</view>
+    <view wx:if="{{!batchMode}}" class="eta">
+      <text>商家内部备注（顾客不可见）</text>
+      <textarea wx:if="{{canManage}}" auto-height="true" maxlength="1000" value="{{item.noteDraft}}" data-id="{{item.id}}" bindinput="noteInput" disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty}}" placeholder="仅商家可见，不改变顾客原始备注" />
+      <view wx:else class="muted">{{item.merchantNote || '暂无内部备注'}}</view>
+      <button wx:if="{{canManage}}" size="mini" data-id="{{item.id}}" bindtap="saveInternalNote" disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty}}">保存内部备注</button>
+    </view>
     <view wx:if="{{item.deliveredText}}" class="muted">送达时间：{{item.deliveredText}}</view>
-    <view wx:if="{{(item.nextStatus && item.nextStatus !== 'accepted') || (cloudMode && item.fulfillmentStatus === 'delivering')}}" class="eta">
+    <view wx:if="{{item.allowEta && !batchMode}}" class="eta">
       <text>预计送达时间（文字，例如 18:30）</text>
-      <input value="{{item.etaValue}}" maxlength="60" placeholder="请输入预计时间" data-id="{{item.id}}" bindinput="etaInput" />
-      <button size="mini" data-id="{{item.id}}" bindtap="saveEta">保存预计时间</button>
+      <input disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !canManage}}" value="{{item.etaDraft}}" maxlength="60" placeholder="请输入预计时间" data-id="{{item.id}}" bindinput="etaInput" />
+      <button disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !canManage}}" size="mini" data-id="{{item.id}}" bindtap="saveEta">保存预计时间</button>
     </view>
     <view wx:if="{{item.etaValue}}" class="muted">当前预计：{{item.etaValue}}</view>
-    <button wx:if="{{item.nextStatus}}" class="next" type="primary" data-id="{{item.id}}" data-status="{{item.nextStatus}}" bindtap="next">{{item.nextLabel}}</button>
+    <button disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !canManage}}" wx:if="{{item.nextStatus && !batchMode}}" class="next" type="primary" data-id="{{item.id}}" data-status="{{item.nextStatus}}" bindtap="next">{{item.nextLabel}}</button>
   </view>
+  <view class="order-page-footer"><text>已加载 {{dateResults.length}} / {{matchingCount}} 单。刷新可获取新订单。</text><text wx:if="{{moreError}}">{{moreError}}</text><button wx:if="{{refreshRequired}}" bindtap="searchOrders" disabled="{{operationBusy || cloudBusy}}">数据已变化，刷新列表</button><button wx:elif="{{hasMore}}" bindtap="loadMore" disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty}}">{{loadingMore ? '加载中…' : (moreError ? '重试加载更多' : '加载更多')}}</button><text wx:if="{{!hasMore && !cloudBusy && !cloudError && !queryDirty && dateResults.length}}">本次匹配订单已全部加载</text></view>
 </view>

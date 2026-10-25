@@ -1,1 +1,4 @@
-{"navigationBarTitleText":"数据备份与恢复"}
+{
+  "navigationBarTitleText": "数据备份与恢复",
+  "enablePullDownRefresh": true
+}

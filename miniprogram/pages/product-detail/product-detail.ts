@@ -3,26 +3,33 @@ import { loadStore, effectivePrice, money, productIsPublished, stockAllows } fro
 import { addToCart } from '../../utils/cart'
 import { setDirectPurchase } from '../../utils/directPurchase'
 import { getRemoteProducts } from '../../utils/remoteApi' // PHASE32_REMOTE_DETAIL
+import { refreshPagePresentation } from '../../utils/storePresentation'
+import { supportIdentity } from '../../utils/supportCloud'
 
 Page({
+  detailSerial:0,
   data: {
+    purchaseBusy:false,
     inventoryText:'',manualSoldOut:false,maxQuantity:99,
     productId: '', name: '', original: '', current: '', discounted: false,
     available: false, quantity: 1, totalText: '0.00',
     categoryName: '', description: '', imageUrl: '', cloudMode: false, cloudLoading: false, cloudError: '', cloudPriceCents: 0
   },
   onLoad(options: { id?: string }) { this.setData({ productId: decodeURIComponent(options.id || '') }) },
-  onShow() { this.refresh() },
+  onShow() {refreshPagePresentation(this);this.refresh()},
+  onHide(){this.detailSerial++},
+  onUnload(){this.detailSerial++},
   async refresh() {
     // PHASE32_REMOTE_DETAIL: do not mix remote catalog with local cart.
-    const cfg = wx.getStorageSync('stall_cloud_catalog_config_v1') as any
-    if (cfg && typeof cfg.apiBase === 'string' && typeof cfg.storeSlug === 'string' && cfg.apiBase.trim() && cfg.storeSlug.trim()) {
+    const cfg=cloudCartConfig(),serial=++this.detailSerial,context=supportIdentity()
+    if (cfg) {
       this.setData({ cloudMode: true, cloudLoading: true, cloudError: '', available: false })
       try {
-        const products = await getRemoteProducts(cfg.apiBase.trim(), cfg.storeSlug.trim())
+        const products = await getRemoteProducts(cfg.apiBase,cfg.storeSlug,[this.data.productId])
+        if(serial!==this.detailSerial||context!==supportIdentity())return
         const p = (products as any[]).find(x => String(x.id) === String(this.data.productId))
         if (!p) throw new Error('not_found')
-        const price = Number(p.currentPriceCents !== undefined && p.currentPriceCents !== null ? p.currentPriceCents : p.priceCents)
+        const price = Number(p.effectivePriceCents??p.priceCents)
         const original = Number(p.priceCents)
         if (!Number.isSafeInteger(price) || price < 0 || !Number.isSafeInteger(original) || original < 0) throw new Error('invalid_price')
         const n = Number(this.data.quantity)
@@ -40,6 +47,7 @@ Page({
         })
         wx.setNavigationBarTitle({ title: String(p.name || '商品详情') })
       } catch (_) {
+        if(serial!==this.detailSerial||context!==supportIdentity())return
         this.setData({ cloudLoading: false, cloudError: '商品加载失败，请返回商品列表重试', available: false,
           name: '', current: '0.00', original: '0.00', imageUrl: '', description: '' })
       }
@@ -76,8 +84,8 @@ Page({
     if(!addToCart(product.id,this.data.quantity))return
     wx.showToast({ title: '已加入购物车', icon: 'success' })
   },
-  buyNow() {
-    if (this.data.cloudMode) { wx.showToast({ title: '云端结算开发中', icon: 'none' }); return }
+  async buyNow() {
+    if (this.data.cloudMode) {const cfg=cloudCartConfig();if(!cfg||this.data.purchaseBusy||!this.data.available||this.data.cloudLoading||this.data.cloudError)return;this.setData({purchaseBusy:true});try{if(await changeCloudCart(cfg.storeSlug,this.data.productId,this.data.quantity))wx.navigateTo({url:'/pages/checkout/checkout'})}finally{this.setData({purchaseBusy:false})}return}
     const product = loadStore().products.find(p => p.id === this.data.productId)
     if (!product || (!productIsPublished(product) || product.soldOut || !stockAllows(product,this.data.quantity))) { wx.showToast({ title: '商品停售或库存不足', icon: 'none' }); return }
     setDirectPurchase(product.id, this.data.quantity)

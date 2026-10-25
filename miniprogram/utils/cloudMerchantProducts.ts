@@ -1,3 +1,4 @@
+import { createProductWithRetry } from './productCreateRetry'
 import { authorizedGet, authorizedMutation } from './authApi'
 import { ProductDraft, ProductDraftPayload, InventoryMovement } from './store'
 import { MerchantCatalogItem, MerchantProductQuery, cloudProductToLocal } from './merchantProductQuery'
@@ -61,9 +62,9 @@ export async function saveMerchantCloudDraft(cfg: {apiBase:string;storeSlug:stri
 export async function discardMerchantCloudDraft(cfg: {apiBase:string;storeSlug:string}, id: string, version: number): Promise<void> {
   await authorizedMutation(cfg.apiBase,`/v1/merchant/stores/${cfg.storeSlug}/drafts/${id}`,'DELETE',{expectedVersion:version})
 }
-export async function saveMerchantCloudProduct(cfg: {apiBase:string;storeSlug:string}, id:string, data:any) {
+export async function saveMerchantCloudProduct(cfg: {apiBase:string;storeSlug:string}, id:string, data:any,createIntent='new') {
   const path = `/v1/merchant/stores/${cfg.storeSlug}/products${id ? '/' + id : ''}`
-  return authorizedMutation(cfg.apiBase, path, id ? 'PATCH' : 'POST', data)
+  return id?authorizedMutation(cfg.apiBase,path,'PATCH',data):createProductWithRetry(cfg,createIntent,data)
 }
 export async function archiveMerchantCloudProduct(cfg: {apiBase:string;storeSlug:string}, id:string) {
   return authorizedMutation(cfg.apiBase, `/v1/merchant/stores/${cfg.storeSlug}/products/${id}`, 'DELETE')

@@ -9,7 +9,7 @@
   <view class="settings-section-title">关于与隐私</view>
   <view class="settings-card">
     <view class="settings-text-title">数据存储</view>
-    <view class="settings-text">目前为本地演示版本，订单、地址和购物车数据主要保存在当前调试环境。请勿输入真实敏感资料。</view>
+    <view class="settings-text">云端模式的地址、订单和客服消息由服务器按身份保存；临时购物车和界面偏好仍保存在设备。本机演示不会自动上传数据，演示时请勿填写真实敏感资料。</view>
     <view class="settings-text-title">订单通知</view>
     <view class="settings-text">真正的订单通知需要服务端与微信订阅消息授权。</view>
   </view>

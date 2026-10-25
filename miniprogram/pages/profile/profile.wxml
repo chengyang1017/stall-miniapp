@@ -14,7 +14,7 @@
       <view class="profile-glyph">☷</view><view class="profile-link-content"><view class="profile-title">我的订单</view><view class="profile-desc">查看订单和配送进度</view></view><view class="profile-chevron">›</view>
     </view>
     <navigator class="profile-link profile-contact" url="/pages/support-chat/support-chat">
-      <view class="profile-glyph">✉</view><view class="profile-link-content"><view class="profile-title">联系商家</view><view class="profile-desc">向商家发送消息</view></view><view class="profile-chevron">›</view>
+      <view class="profile-glyph">✉</view><view class="profile-link-content"><view class="profile-title">联系商家<text wx:if="{{cloudSupport}}"> · 未读 {{supportUnread === null ? '—' : supportUnread}}</text></view><view class="profile-desc">向商家发送消息</view></view><view class="profile-chevron">›</view>
     </navigator>
   </view>
   <view class="profile-section">
@@ -22,5 +22,5 @@
       <view class="profile-glyph">⚙</view><view class="profile-link-content"><view class="profile-title">设置</view><view class="profile-desc">偏好与隐私说明</view></view><view class="profile-chevron">›</view>
     </navigator>
   </view>
-  <view class="profile-note">当前为本地演示版，不代表已开通微信用户登录。</view>
+  <view class="profile-note">{{cloudSupport ? '客服使用当前云端店铺，需微信身份登录' : '本地演示客服消息只保存在当前设备'}}</view>
 </view>

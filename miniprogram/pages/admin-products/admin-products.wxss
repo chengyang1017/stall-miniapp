@@ -630,3 +630,4 @@ page { background: #f5f6f8; }
 .product-query-pending { display: block; margin-top: 12rpx; color: #a15c18; font-size: 24rpx; }
 .product-query-footer { display: flex; flex-direction: column; align-items: center; gap: 18rpx; padding: 24rpx 12rpx 60rpx; color: #68726b; font-size: 24rpx; }
 .product-query-footer button { width: 100%; }
+.image-management-panel{padding:18rpx 0;display:flex;flex-direction:column;gap:12rpx}.image-management-row{border-top:1rpx solid #e5ebe7;padding:16rpx 0;display:flex;flex-direction:column;overflow-wrap:anywhere;font-size:23rpx}

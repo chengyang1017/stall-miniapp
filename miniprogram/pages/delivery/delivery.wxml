@@ -1,24 +1,34 @@
 <view class="page">
- <view class="title">配送设置（本地演示）</view>
- <view class="card"><view class="heading">开放地区</view>
-  <view wx:for="{{areas}}" wx:key="id" class="line"><text>{{item.name}}</text><switch data-id="{{item.id}}" checked="{{item.enabled}}" bindchange="toggleArea" color="#16865d"/><button size="mini" data-id="{{item.id}}" bindtap="deleteArea">删除</button></view>
-    <view wx:for="{{areas}}" wx:key="id" class="area-geo-block">
-    <view>{{item.name}} - GPS</view>
-    <button size="mini" data-id="{{item.id}}" bindtap="setAreaMapCenter">选择配送中心</button>
-    <view wx:if="{{item.centerLat}}">
-      <text>{{item.centerLat}}, {{item.centerLng}}</text>
-      <view>配送半径（米） <input type="number" data-id="{{item.id}}" value="{{item.radiusMeters}}" bindblur="changeAreaRadius" /></view>
-    </view>
+ <view class="title">配送设置</view>
+ <view class="tip">{{cloudMode ? '云端配置 · 店铺 ' + sourceStore : '本机演示配置'}} · 北京时间（UTC+8）</view>
+ <view class="card"><view class="heading">配送概览</view><view wx:if="{{ready}}">启用区域 {{enabledAreas}} / {{areas.length}} · 启用时段 {{enabledSlots}} / {{slots.length}}</view><view wx:else class="tip">配置尚未读取，启用数量和暂停状态未确认。</view><view wx:if="{{ready}}" class="line"><text>临时暂停全部配送</text><switch disabled="{{loading || saving || confirming || !ready || conflict}}" checked="{{deliveryPaused}}" bindchange="togglePaused" color="#16865d" /></view><view wx:if="{{ready}}" class="tip">{{deliveryPaused ? '全部配送已暂停（未保存时仅为本页草稿）' : '配送未整体暂停'}}。店铺接单开关仍由营业管理独立设置。</view><view wx:if="{{ready && !configured}}" class="tip">云端尚未配置配送。请自行添加区域和时段后保存，不会上传本机演示数据。</view></view>
+ <view wx:if="{{loading}}" class="tip">正在读取配送配置…</view>
+ <view wx:if="{{error}}" class="error">{{error}}</view><view wx:if="{{feedback}}" class="success">{{feedback}}</view>
+ <view class="delivery-toolbar"><text>{{dirty ? '有未保存修改' : '当前无未保存修改'}}</text><button size="mini" bindtap="reload" disabled="{{loading || saving || confirming}}">重新读取</button><button size="mini" type="primary" bindtap="saveAll" disabled="{{!dirty || !ready || loading || saving || confirming || conflict}}">{{saving ? '保存中…' : '保存全部配送修改'}}</button></view>
+ <view class="card"><view class="heading">配送区域</view><view class="tip">可填写小区、街道或自定义区域；上下移动调整顾客显示顺序。</view>
+  <view wx:for="{{areas}}" wx:key="id" class="area-editor">
+   <input disabled="{{loading || saving || confirming || !ready || conflict}}" value="{{item.name}}" maxlength="120" data-id="{{item.id}}" bindinput="editAreaName" placeholder="区域名称" />
+   <view class="line"><text>{{item.enabled ? '区域配送启用' : '该区域暂停配送'}}</text><switch disabled="{{loading || saving || confirming || !ready || conflict}}" data-id="{{item.id}}" checked="{{item.enabled}}" bindchange="toggleArea" color="#16865d" /></view>
+   <view class="mini-actions"><button disabled="{{loading || saving || confirming || !ready || conflict}}" size="mini" data-id="{{item.id}}" data-step="-1" bindtap="moveArea">上移</button><button disabled="{{loading || saving || confirming || !ready || conflict}}" size="mini" data-id="{{item.id}}" data-step="1" bindtap="moveArea">下移</button><button disabled="{{loading || saving || confirming || !ready || conflict}}" size="mini" data-id="{{item.id}}" bindtap="deleteArea">删除</button></view>
+   <view class="area-geo-block"><button disabled="{{loading || saving || confirming || !ready || conflict}}" size="mini" data-id="{{item.id}}" bindtap="setAreaMapCenter">选择配送中心</button><view wx:if="{{item.radiusMeters}}"><text>{{item.centerLat}}, {{item.centerLng}}</text><view>配送半径（米）<input disabled="{{loading || saving || confirming || !ready || conflict}}" type="number" value="{{item.radiusMeters}}" data-id="{{item.id}}" bindblur="changeAreaRadius" /></view><button disabled="{{loading || saving || confirming || !ready || conflict}}" size="mini" data-id="{{item.id}}" bindtap="clearAreaMap">移除该区域地图范围限制</button></view></view>
   </view>
-  <input placeholder="例如：阳光小区" value="{{areaName}}" bindinput="areaInput"/>
-  <button class="delivery-action" catchtap="addArea">新增地区</button>
+  <view wx:if="{{!areas.length}}" class="tip">暂无配送区域，暂不支持下单。</view><input disabled="{{loading || saving || confirming || !ready || conflict}}" maxlength="120" placeholder="小区、街道或其他配送区域名称" value="{{areaName}}" bindinput="areaInput"/><button disabled="{{loading || saving || confirming || !ready || conflict}}" class="delivery-action" bindtap="addArea">新增区域到待保存配置</button>
  </view>
- <view class="card"><view class="heading">每日配送时段</view>
-  <view wx:for="{{slots}}" wx:key="id" class="line"><text>{{item.label}} {{item.start}}–{{item.end}}</text><switch data-id="{{item.id}}" checked="{{item.enabled}}" bindchange="toggleSlot" color="#16865d"/><button size="mini" data-id="{{item.id}}" bindtap="deleteSlot">删除</button></view>
-  <input placeholder="时段名称，如午间" value="{{slotLabel}}" bindinput="labelInput"/>
-  <input placeholder="开始 HH:mm，如 11:00" value="{{slotStart}}" bindinput="startInput"/>
-  <input placeholder="结束 HH:mm，如 13:00" value="{{slotEnd}}" bindinput="endInput"/>
-  <button class="delivery-action" catchtap="addSlot">新增时段</button>
+ <view class="card"><view class="heading">配送时段</view><view class="tip">不支持跨日；同一区域、同一星期的启用时段不可重叠。只勾选时段允许服务的区域。</view>
+  <view wx:for="{{slotViews}}" wx:for-item="slot" wx:key="id" class="slot-editor">
+   <input disabled="{{loading || saving || confirming || !ready || conflict}}" value="{{slot.label}}" data-id="{{slot.id}}" data-key="label" maxlength="120" bindinput="editSlot" placeholder="时段名称" />
+   <view class="line"><picker disabled="{{loading || saving || confirming || !ready || conflict}}" mode="time" value="{{slot.start}}" data-id="{{slot.id}}" data-key="start" bindchange="editSlot"><view class="time-choice">{{slot.start}}</view></picker><text>至</text><picker disabled="{{loading || saving || confirming || !ready || conflict}}" mode="time" value="{{slot.end}}" data-id="{{slot.id}}" data-key="end" bindchange="editSlot"><view class="time-choice">{{slot.end}}</view></picker><switch disabled="{{loading || saving || confirming || !ready || conflict}}" checked="{{slot.enabled}}" data-id="{{slot.id}}" bindchange="toggleSlot" color="#16865d"/></view>
+   <view class="tip">{{slot.enabled ? '时段启用' : '时段暂停'}} · {{slot.start}}–{{slot.end}}</view>
+   <checkbox disabled="{{loading || saving || confirming || !ready || conflict}}"-group data-id="{{slot.id}}" bindchange="chooseWeekdays" class="delivery-checks"><label wx:for="{{slot.dayChoices}}" wx:for-item="day" wx:key="value"><checkbox disabled="{{loading || saving || confirming || !ready || conflict}}" value="{{day.value}}" checked="{{day.checked}}" color="#16865d"/>{{day.name}}</label></checkbox-group>
+   <view class="line"><text>适用所有配置区域</text><switch disabled="{{loading || saving || confirming || !ready || conflict}}" checked="{{slot.allAreas}}" data-id="{{slot.id}}" bindchange="toggleAllAreas" color="#16865d" /></view>
+   <checkbox disabled="{{loading || saving || confirming || !ready || conflict}}"-group wx:if="{{!slot.allAreas}}" data-id="{{slot.id}}" bindchange="chooseSlotAreas" class="delivery-checks"><label wx:for="{{slot.areaChoices}}" wx:for-item="region" wx:key="value"><checkbox disabled="{{loading || saving || confirming || !ready || conflict}}" value="{{region.value}}" checked="{{region.checked}}" color="#16865d"/>{{region.name}}</label></checkbox-group>
+   <button disabled="{{loading || saving || confirming || !ready || conflict}}" size="mini" data-id="{{slot.id}}" bindtap="deleteSlot">删除时段</button>
+  </view>
+  <view wx:if="{{!slots.length}}" class="tip">暂无配送时段。</view><input disabled="{{loading || saving || confirming || !ready || conflict}}" maxlength="120" placeholder="时段名称，如午间" value="{{slotLabel}}" bindinput="labelInput"/><input disabled="{{loading || saving || confirming || !ready || conflict}}" placeholder="开始 HH:mm，如 11:00" value="{{slotStart}}" bindinput="startInput"/><input disabled="{{loading || saving || confirming || !ready || conflict}}" placeholder="结束 HH:mm，如 13:00" value="{{slotEnd}}" bindinput="endInput"/><button disabled="{{loading || saving || confirming || !ready || conflict}}" class="delivery-action" bindtap="addSlot">新增时段到待保存配置</button>
  </view>
- <view class="tip">当前按每天重复的时间段配置。正式运营还需支持特定日期、截单时间、订单容量和服务端校验。</view>
+ <view class="card"><view class="heading">特殊日期</view><view class="tip">日期暂停只影响该日期配送；重新开放仅解除日期暂停，仍遵守营业周计划、区域和时段规则。</view>
+  <view wx:for="{{specialDates}}" wx:key="date" class="special-date"><view class="line"><text>{{item.date}} · {{item.paused ? '暂停配送' : '按正常周计划开放'}}</text><switch disabled="{{loading || saving || confirming || !ready || conflict}}" checked="{{item.paused}}" data-date="{{item.date}}" bindchange="toggleSpecialDate" color="#16865d" /></view><button disabled="{{loading || saving || confirming || !ready || conflict}}" size="mini" data-date="{{item.date}}" bindtap="deleteDate">删除日期规则</button></view>
+  <view wx:if="{{!specialDates.length}}" class="tip">暂无特殊日期规则。</view><picker disabled="{{loading || saving || confirming || !ready || conflict}}" mode="date" start="2000-01-01" end="2100-12-31" value="{{specialDate}}" bindchange="chooseSpecialDate"><view class="time-choice">{{specialDate}} ▾</view></picker><view class="line"><text>该日期暂停配送</text><switch disabled="{{loading || saving || confirming || !ready || conflict}}" checked="{{specialPaused}}" bindchange="chooseSpecialPaused" color="#16865d" /></view><button disabled="{{loading || saving || confirming || !ready || conflict}}" class="delivery-action" bindtap="addSpecialDate">添加或更新该日期到待保存配置</button>
+ </view>
+ <view class="tip">{{cloudMode ? '所有修改需点击保存；失败不会改用本机数据。营业时间、公告和起送金额不会被本页覆盖。' : '仅保存到当前设备的演示配置，不会写入云端。'}} 删除或停用配置不会修改历史订单快照。</view>
 </view>

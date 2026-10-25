@@ -10,7 +10,7 @@ export async function saveMerchantEta(orderId:string, estimatedArrival:string):P
     url:cfg.apiBase+'/v1/merchant/stores/'+cfg.storeSlug+'/orders/'+orderId+'/eta',
     method:'PUT',data:{estimatedArrival},timeout:15000,
     header:{Authorization:'Bearer '+token,'content-type':'application/json'},
-    success:(res:any)=>res.statusCode===200?resolve():reject(new Error('http_'+res.statusCode+(res.data&&res.data.error?'_'+res.data.error:''))),
+    success:(res:any)=>res.statusCode===200&&res.data?.ok===true&&res.data.estimatedArrival===estimatedArrival.trim()?resolve():reject(new Error('http_'+res.statusCode+(res.data&&res.data.error?'_'+res.data.error:'_unconfirmed_eta_save'))),
     fail:reject
   }))
 }

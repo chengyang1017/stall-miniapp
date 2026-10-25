@@ -1,15 +1,17 @@
 <view class="proof-page">
   <view class="proof-card">
     <view class="proof-title">送达凭证</view>
+    <view wx:if="{{proofError}}" class="proof-hint">{{proofError}}</view>
+    <button wx:if="{{cloudMode}}" size="mini" bindtap="refresh" loading="{{proofLoading}}" disabled="{{proofLoading || busy}}">刷新订单／重新获取凭证链接</button>
     <view wx:if="{{!found}}" class="proof-hint">未找到订单</view>
     <block wx:if="{{found}}">
       <view class="proof-hint">订单：{{orderId}}</view>
       <view wx:if="{{deliveredText}}" class="proof-hint">送达时间：{{deliveredText}}</view>
-      <image wx:if="{{photoPath}}" class="proof-image" src="{{photoPath}}" mode="aspectFit" bindtap="previewPhoto" />
+      <image wx:if="{{photoPath}}" class="proof-image" src="{{photoPath}}" mode="aspectFit" bindtap="previewPhoto" binderror="proofReadError" />
       <view wx:if="{{!photoPath && !selectedPhoto}}" class="proof-empty">暂无送达照片</view>
       <image wx:if="{{selectedPhoto}}" class="proof-image" src="{{selectedPhoto}}" mode="aspectFit" bindtap="previewPhoto" />
       <button wx:if="{{merchant && isDelivering && !photoPath}}" disabled="{{busy}}" bindtap="chooseProof">拍摄 / 选择送达照片</button>
-      <button wx:if="{{merchant && isDelivering && selectedPhoto}}" type="primary" bindtap="completeDelivery">确认送达</button>
+      <button wx:if="{{merchant && isDelivering && selectedPhoto}}" type="primary" bindtap="completeDelivery" loading="{{busy}}" disabled="{{busy}}">确认送达</button>
       <view wx:if="{{merchant && !isDelivering && !photoPath}}" class="proof-hint">请先将订单设置为配送中。</view>
       <view class="proof-hint">{{cloudMode ? '照片经服务器验证后与订单关联；未付款订单不可标记送达。' : '本地演示照片仅保存在当前设备。'}}</view>
     </block>

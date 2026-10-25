@@ -1,4 +1,5 @@
 <view class="category-page">
+  <view class="hint">{{cloudMode ? '云端分类 · 当前授权店铺' : '本机演示分类'}}<text wx:if="{{cloudBusy}}"> · 正在处理…</text></view><view wx:if="{{cloudError}}" class="hint">{{cloudError}}</view><button size="mini" bindtap="reloadCategories" disabled="{{cloudBusy}}">重新读取分类</button>
   <view class="page-title">分类管理</view>
   <view class="page-subtitle">添加、重命名和拖动排列商品分类</view>
   <view class="panel">

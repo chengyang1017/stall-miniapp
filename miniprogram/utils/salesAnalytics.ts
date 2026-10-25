@@ -1,3 +1,4 @@
+import { supportIdentity } from './supportCloud'
 import { authorizedGet } from './authApi'
 import { getMerchantContext } from './merchantContext'
 import { loadWorkflowOrders } from './orderWorkflow'
@@ -27,7 +28,7 @@ export function validAnalyticsRange(from:string,to:string):boolean {
   const valid=(s:string)=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+'T00:00:00Z'))&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s&&s>='2000-01-01'&&s<='2100-12-31'
   return valid(from)&&valid(to)&&from<=to&&Date.parse(to)-Date.parse(from)<366*86400000
 }
-export function analyticsContext():string {const c=getMerchantContext();return c?c.apiBase+'/'+c.storeSlug:'local-demo'}
+export function analyticsContext():string {const c=getMerchantContext();return c?supportIdentity():'local-demo'}
 export async function cloudAnalytics(query:AnalyticsQuery,page=1,snapshot=''):Promise<AnalyticsReport> {
   const cfg=getMerchantContext();if(!cfg)throw Error('missing_cloud_context')
   const r=await authorizedGet(cfg.apiBase,`/v1/merchant/stores/${cfg.storeSlug}/analytics`,{...query,page,...snapshot?{snapshot}:{}})

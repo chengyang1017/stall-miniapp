@@ -1,0 +1,13 @@
+<view class="page">
+ <view class="card"><view class="title">{{storeName || '店铺'}}小程序码</view><view class="hint">正式版小程序码 · 微信官方生成。扫码后无需登录即可浏览当前店铺。</view></view>
+ <view class="card">
+  <view class="hint">{{cloudMode ? '需当前店铺 owner 或 manager 权限、后端微信凭证，以及已发布的正式小程序首页。AppID须与当前小程序一致；发布前须配置可信PUBLIC_API_BASE，才能让新设备扫码进入云端。' : '本机演示不生成模拟码。请先配置真实云端店铺并登录商家账号。'}}</view>
+  <view wx:if="{{appId}}" class="hint">后端AppID：{{appId}}</view>
+  <view wx:if="{{error}}" class="hint error">{{error}}</view>
+  <image wx:if="{{imagePath}}" class="code" src="{{imagePath}}" mode="aspectFit" show-menu-by-longpress="true" />
+  <button type="primary" bindtap="generate" loading="{{busy}}" disabled="{{busy || !cloudMode}}">获取正式小程序码</button>
+  <button bindtap="saveImage" disabled="{{busy || !imagePath}}">保存到相册</button>
+  <button bindtap="exportImage" disabled="{{busy || !imagePath}}">导出图片用于分享／打印</button>
+  <view class="hint">保存或导出PNG后可交给打印设备打印。这里不直接控制打印机。生成失败不会显示模拟成功；实际扫码需正式发布及微信平台条件满足。</view>
+ </view>
+</view>

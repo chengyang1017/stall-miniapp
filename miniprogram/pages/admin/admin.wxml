@@ -15,10 +15,10 @@
       <view class="merchant-pending-mark">!</view>
       <view class="merchant-pending-info">
         <view class="merchant-pending-title">待处理订单</view>
-        <view class="merchant-pending-sub">查看新订单并及时接单</view>
+      <view class="merchant-pending-sub">{{pendingError || (pendingLoading ? '正在同步待接单数量…' : '查看新订单并及时接单')}}</view>
       </view>
       <view wx:if="{{pendingNewOrderCount > 0}}" class="merchant-count">{{pendingNewOrderCount}}</view>
-      <view wx:else class="merchant-count merchant-count-empty">0</view>
+      <view wx:else class="merchant-count merchant-count-empty">{{pendingNewOrderCount === null ? '—' : '0'}}</view>
       <text class="merchant-arrow">›</text>
     </navigator>
 
@@ -42,13 +42,16 @@
     <view class="merchant-minimum">
       <view class="merchant-setting-heading">起送金额</view>
       <view class="merchant-setting-desc">商品合计达到设定金额才能下单；设为 0 则不限制。</view>
-      <view class="merchant-minimum-row"><text class="merchant-yen">¥</text><input class="merchant-minimum-input" type="digit" value="{{minimumOrderInput}}" bindinput="onMinimumOrderInput" placeholder="0.00" /><button class="merchant-save" size="mini" bindtap="saveMinimumOrder">保存</button></view>
+      <view class="merchant-minimum-row"><text class="merchant-yen">¥</text><input class="merchant-minimum-input" type="digit" value="{{minimumOrderInput}}" bindinput="onMinimumOrderInput" placeholder="{{settingsLoading ? '读取中' : '0.00'}}" disabled="{{settingsLoading || settingsSaving || !settingsReady}}" /><button class="merchant-save" size="mini" bindtap="saveMinimumOrder" disabled="{{settingsLoading || settingsSaving || !settingsReady}}">{{settingsSaving ? '保存中' : '保存'}}</button></view>
+      <view class="merchant-setting-desc">{{cloudMode ? '云端设置，以服务器校验为准' : '本机演示设置'}}</view>
+      <view wx:if="{{settingsError}}" class="merchant-setting-desc">{{settingsError}}<text bindtap="refreshMinimum"> · 点击重新读取</text></view>
     </view>
 
     <view class="merchant-section-title">服务与数据</view>
+    <navigator class="merchant-item" url="/pages/store-code/store-code"><view class="merchant-item-text"><view class="merchant-item-name">店铺小程序码</view><view class="merchant-item-desc">微信官方码 · 保存、分享与打印图片</view></view><text class="merchant-arrow">›</text></navigator>
     <view class="merchant-group">
       <navigator class="merchant-item" url="/pages/admin-analytics/admin-analytics"><view class="merchant-item-symbol">📊</view><view class="merchant-item-text"><view class="merchant-item-name">经营分析</view><view class="merchant-item-desc">销售趋势、商品表现与经营报表</view></view><text class="merchant-arrow">›</text></navigator>
-      <navigator class="merchant-item" url="/pages/support-inbox/support-inbox"><view class="merchant-item-symbol">✉️</view><view class="merchant-item-text"><view class="merchant-item-name">客服消息</view><view class="merchant-item-desc">查看与回复顾客咨询</view></view><text class="merchant-arrow">›</text></navigator>
+      <navigator class="merchant-item" url="/pages/support-inbox/support-inbox"><view class="merchant-item-symbol">✉️</view><view class="merchant-item-text"><view class="merchant-item-name">客服消息</view><view class="merchant-item-desc">查看与回复顾客咨询<text wx:if="{{cloudMode}}"> · 未读 {{supportUnread === null ? '—' : supportUnread}}</text><text wx:if="{{supportError}}"> · {{supportError}}</text></view></view><text class="merchant-arrow">›</text></navigator>
       <navigator class="merchant-item merchant-last" url="/pages/admin-backup/admin-backup"><view class="merchant-item-symbol">💾</view><view class="merchant-item-text"><view class="merchant-item-name">数据备份与恢复</view><view class="merchant-item-desc">导出与导入商家数据</view></view><text class="merchant-arrow">›</text></navigator>
     </view>
     <view class="merchant-footnote">部分功能仍在逐步接入云端；操作结果以实际保存状态为准。</view>

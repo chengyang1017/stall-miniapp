@@ -1,23 +1,27 @@
 <view class="bill-page">
-  <view class="bill-header"><view class="bill-title">账单与营业统计</view><view class="bill-hint">本机演示订单 · 并非真实收款流水</view></view>
+  <view class="bill-header"><view class="bill-title">账单与营业统计</view><view class="bill-hint">{{cloudMode ? '云端数据库账单 · CNY · 北京时间' : '本机演示订单 · 并非真实收款流水'}}</view></view>
+  <view wx:if="{{loading}}" class="bill-warning">正在读取云端账单…</view>
+  <view wx:if="{{error}}" class="bill-warning">{{error}}<button disabled="{{exporting}}" size="mini" bindtap="refresh">重试</button></view>
   <view class="bill-filter">
-    <picker mode="date" value="{{day}}" bindchange="chooseDay"><view class="bill-date">选择日期：{{day}}　⌄</view></picker>
-    <view class="bill-actions"><button size="mini" bindtap="selectToday">今天</button><button size="mini" bindtap="selectAll">全部日期</button></view>
+    <picker disabled="{{exporting}}" mode="date" start="2000-01-01" end="2100-12-31" value="{{day}}" bindchange="chooseDay"><view class="bill-date">选择日期：{{day}}　⌄</view></picker>
+    <view class="bill-actions"><button disabled="{{exporting}}" size="mini" bindtap="selectToday">今天</button><button disabled="{{exporting}}" size="mini" bindtap="selectAll">全部日期</button></view>
     <view class="bill-hint">范围：{{allDates ? '全部日期' : day}}</view>
   </view>
-  <view class="bill-grid">
+  <view wx:if="{{!loading && !error}}" class="bill-grid">
     <view class="bill-stat"><text>订单金额（不含取消）</text><view>¥{{orderValue}}</view></view>
     <view class="bill-stat"><text>已确认收款</text><view>¥{{received}}</view></view>
-    <view class="bill-stat"><text>未确认收款金额</text><view>¥{{unpaid}}</view></view>
+    <view class="bill-stat"><text>未支付金额（不含取消）</text><view>¥{{unpaid}}</view></view>
     <view class="bill-stat"><text>订单数 / 取消 / 已送达</text><view>{{count}} / {{cancelled}} / {{delivered}}</view></view>
   </view>
   <view class="bill-warning">{{notice}} 即使订单已送达，也不代表已付款。</view>
-  <view class="bill-section"><text>订单明细（{{count}}）</text><button size="mini" type="primary" bindtap="exportCsv">导出 CSV</button></view>
-  <view wx:if="{{rows.length === 0}}" class="bill-empty">所选日期暂无订单</view>
+  <view class="bill-section"><text>订单明细（已加载 {{rows.length}} / {{count}}）</text><button disabled="{{exporting}}" size="mini" type="primary" bindtap="exportCsv">{{exporting ? '导出中…' : '导出 CSV'}}</button></view>
+  <view wx:if="{{rows.length === 0 && !loading && !error}}" class="bill-empty">所选日期暂无订单</view>
   <view wx:for="{{rows}}" wx:key="id" class="bill-order">
     <view class="bill-order-top"><text>{{item.date}} {{item.time}}</text><text class="bill-money">¥{{item.amount}}</text></view>
     <view class="bill-id">{{item.id}}</view>
     <view>{{item.items}}</view>
     <view class="bill-order-bottom"><text>{{item.status}} · {{item.payment}}</text><text>{{item.name}}</text></view>
   </view>
+  <view wx:if="{{moreError}}" class="bill-warning">{{moreError}}</view>
+  <button wx:if="{{hasMore}}" bindtap="loadMore" disabled="{{loadingMore || exporting || loading}}">{{loadingMore ? '加载中…' : '加载更多账单'}}</button>
 </view>

@@ -25,7 +25,7 @@ for (const name of filenames) {
   if (!data.length) fail(`Empty migration: ${name}`)
   else console.log(`SQL ${name} SHA256 ${createHash('sha256').update(data).digest('hex')}`)
 }
-filenames.length === 5 && last === 5 ? ok('Found 001-005 SQL migrations in order') : warn(`Expected five migrations; found ${filenames.length} (last=${last})`)
+filenames.length === 18 && last === 18 ? ok('Found 001-018 SQL migrations in order') : fail(`Expected migrations 001-018; found ${filenames.length} (last=${last})`)
 
 const srcDir = path.join(base, 'src')
 for (const name of (await readdir(srcDir)).filter(x => x.endsWith('.mjs')).sort()) {

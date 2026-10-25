@@ -1,22 +1,27 @@
 import { cloudProofUrl } from '../../utils/cloudProofRead' // PHASE38_PROOF_READ
 import { customerOrdersConfig, customerOrdersRequest } from '../../utils/customerOrdersApi' // PHASE35_CUSTOMER_ORDERS
 import { loadWorkflowOrders, chinaTime } from '../../utils/orderWorkflow'
+import { supportIdentity } from '../../utils/supportCloud'
 function workflowText(st: string): string {
   const labels: {[key: string]: string} = {new:'待接单',accepted:'已接单',preparing:'备货中',delivering:'配送中',delivered:'已送达',cancelled:'已取消',canceled:'已取消',abnormal:'配送异常',exception:'配送异常',refunded:'已退款'}
   return labels[st] || '待接单'
 }
 Page({
-  data: { found: false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '' },
+  detailSerial:0,detailVisible:false,
+  data: { found: false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
     this.setData({ order: { id: options.id || '' } })
   },
   async onShow() {
+    this.detailVisible=true;const serial=++this.detailSerial,identity=supportIdentity()
     const id = String(this.data.order.id || '')
     const cloud=customerOrdersConfig()
+    this.setData({cloudMode:!!cloud,proofImage:'',proofError:'',proofLoading:false})
     if (cloud) {
       this.setData({found:false})
       try {
         const result=await customerOrdersRequest(cloud,id)
+        if(!this.detailVisible||serial!==this.detailSerial||identity!==supportIdentity())return
         const o=result.order || {}
         const address=o.contactSnapshot || {}
         const slot=o.deliverySlotSnapshot || {}
@@ -24,28 +29,26 @@ Page({
           ...i,subtotal:(Number(i.lineTotalCents)/100).toFixed(2)
         }))
         const st=String(o.fulfillmentStatus||'new')
-        const paid=o.paymentStatus==='paid'
         this.setData({found:true,order:{...o,receiverName:address.receiverName||'',phone:address.phone||'',
-          area:address.areaId||'',detail:address.detail||'',note:String(address.note||''), /* PHASE41_ORDER_NOTES */slotText:[slot.date,slot.label,slot.start,slot.end].filter(Boolean).join(' '),
+          area:address.areaName||slot.areaName||address.areaId||'',detail:address.detail||'',note:String(address.note||''), /* PHASE41_ORDER_NOTES */slotText:[slot.date,slot.label,slot.start,slot.end].filter(Boolean).join(' '),
           totalText:(Number(o.totalCents)/100).toFixed(2)},items,
-          statusText:!paid&&st==='new'?'待支付':workflowText(st),paymentText:paid?'已付款':'待付款',
+          statusText:o.paymentStatus==='unpaid'&&st==='new'?'待支付':workflowText(st),paymentText:({unpaid:'待付款',paid:'已付款',refunded:'已退款',partially_refunded:'部分退款'} as Record<string,string>)[o.paymentStatus]||'支付状态待核实',
           createdText:o.createdAt?chinaTime(o.createdAt):'',deliveredText:o.deliveredAt?chinaTime(o.deliveredAt):'',
           issueText:String(o.issueReason||''),proofImage:'' /* PHASE40_ISSUE_REASON */})
         if(String(o.fulfillmentStatus||'')==='delivered'){
-          cloudProofUrl(cloud.apiBase,cloud.storeSlug,id,false).then((url:string)=>{
-            if(String(this.data.order.id||'')===id)this.setData({proofImage:url})
-          }).catch(()=>{})
+          this.renewProof()
         }
-      }catch(_){this.setData({found:false});wx.showToast({title:'订单详情加载失败',icon:'none'})}
+      }catch(_){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()){this.setData({found:false});wx.showToast({title:'订单详情加载失败',icon:'none'})}}
       return
     }
     const o = (loadWorkflowOrders() as any[]).find(item => item.id === id)
     if (!o) { this.setData({ found: false }); return }
     const status = String(o.fulfillmentStatus || 'new')
     const paymentStatus = String(o.paymentStatus || 'unpaid')
+    const publicOrder={...o};delete publicOrder.merchantNote;delete publicOrder.merchantNoteVersion
     this.setData({
       found: true,
-      order: o,
+      order: publicOrder,
       items: Array.isArray(o.items) ? o.items : [],
       statusText: paymentStatus !== 'paid' && status === 'new' ? '待支付' : workflowText(status),
       paymentText: paymentStatus === 'paid' ? '已付款' : '待付款（演示）',
@@ -55,7 +58,17 @@ Page({
       proofImage: String(o.deliveryPhoto || o.deliveryPhotoPath || o.proofImage || o.proofImageUrl || o.proofPhoto || o.deliveredPhoto || '')
     })
   },
-  previewProof() {
+  onHide(){this.detailVisible=false;this.detailSerial++;this.setData({proofImage:'',proofLoading:false,proofError:''})},
+  onUnload(){this.detailVisible=false;this.detailSerial++},
+  proofReadError(){this.setData({proofImage:'',proofError:'凭证链接过期或读取失败，请重新获取'})},
+  async renewProof(){
+    const cfg=customerOrdersConfig(),serial=this.detailSerial,identity=supportIdentity(),id=String(this.data.order.id||'')
+    if(!cfg||this.data.proofLoading||!this.data.found)return
+    this.setData({proofLoading:true,proofError:''})
+    try{const url=await cloudProofUrl(cfg.apiBase,cfg.storeSlug,id,false);if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({proofImage:url})}catch(_){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({proofError:'凭证暂不可用；请检查身份或稍后重新获取。'})}finally{if(serial===this.detailSerial)this.setData({proofLoading:false})}
+  },
+  async previewProof() {
+    if(this.data.cloudMode)await this.renewProof()
     if (!this.data.proofImage) return
     wx.previewImage({ current: this.data.proofImage, urls: [this.data.proofImage] })
   }

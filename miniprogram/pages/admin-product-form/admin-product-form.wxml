@@ -1,4 +1,4 @@
-<view class="product-form-page">
+<view class="product-form-page"><view wx:if="{{presentationError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{presentationError}}</view>
   <view wx:if="{{cloudError}}" style="padding:22rpx;color:#b33">{{cloudError}}</view>
   <view wx:if="{{cloudBusy || saveBusy || inventoryBusy}}" style="padding:22rpx">正在处理，请稍候…</view>
 <view class="card">
@@ -27,6 +27,7 @@
       <image wx:if="{{productImageUrl}}" src="{{productImageUrl}}" mode="aspectFill" style="display:block;width:240rpx;height:180rpx;border-radius:12rpx;margin:12rpx 0" />
       <button size="mini" bindtap="chooseProductImage" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">选择图片</button>
       <button wx:if="{{productImageUrl}}" size="mini" bindtap="removeProductImage" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">移除图片</button>
+      <view wx:if="{{imageUploadState}}" class="hint">{{imageUploadState}}</view>
     </view>
     <view class="field">原价 ¥<input type="digit" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="例如：15" value="{{priceText}}" bindinput="inputPrice" /></view>
     <view class="field">折后价 ¥（留空表示无折扣）<input type="digit" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}" placeholder="例如：12" value="{{discountText}}" bindinput="inputDiscount" /></view>
@@ -70,6 +71,11 @@
       </view>
       <text class="product-schedule-hint">启用计划时商品保持下架；到期保留售罄状态。取消计划后保持下架，需保存才生效。批量下架也会取消计划。</text>
       <button wx:if="{{scheduleEnabled}}" size="mini" bindtap="cancelSchedule" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}">取消计划并保持下架</button>
+    </view>
+    <view wx:if="{{createRetryAvailable && !editId && !saved}}" class="product-schedule-hint">
+      上次云端创建尚未确认，重试编号已保留。重开表单后也可使用原内容重试。
+      <button size="mini" bindtap="retryProductCreation" disabled="{{cloudBusy || saveBusy || inventoryBusy}}">重试上次创建</button>
+      <button size="mini" bindtap="forgetProductCreation" disabled="{{cloudBusy || saveBusy || inventoryBusy}}">已核对列表，放弃重试</button>
     </view>
     <button type="primary" bindtap="saveFromForm" loading="{{saveBusy}}" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">{{saved ? '内容已保存' : (draftId ? '发布为正式商品' : '保存商品')}}</button>
     <button bindtap="saveDraft" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">{{draftId ? '保存草稿更新' : '保存草稿'}}</button>

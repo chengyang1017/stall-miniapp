@@ -1,5 +1,7 @@
 import { getRemoteProducts, RemoteProduct } from '../../utils/remoteApi'
 import { loginWithWechat, authorizedGet, authorizedMutation, setLocalDevToken, localDevAllowed } from '../../utils/authApi'
+import { supportIdentity } from '../../utils/supportCloud'
+import { getMerchantContext } from '../../utils/merchantContext'
 
 const CONFIG_KEY = 'stall_cloud_catalog_config_v1'
 const HTTPS = /^https:\/\/[^\s/]+(?:\:\d+)?(?:\/[^\s]*)?$/
@@ -12,6 +14,8 @@ const SLUG = /^[a-z0-9][a-z0-9-]{1,62}$/
 
 type DisplayProduct = RemoteProduct & { priceText: string }
 Page({
+  onShow(){const c=getMerchantContext();this.setData({merchantReady:false,merchantProducts:[],categories:[],cloudOrders:[],selectedOrderId:'',orderDetailText:'',billSummary:null,productId:'',productName:'',productPrice:'',productImageKey:'',productImagePreview:'',merchantMessage:'维护诊断入口，请重新验证当前身份；日常经营使用商家工作台',...c?{apiBase:c.apiBase,storeSlug:c.storeSlug}:{}})},
+  onHide(){this.setData({merchantReady:false,cloudOrders:[],orderDetailText:'',billSummary:null,merchantProducts:[],categories:[]})},
   data: {
     apiBase: '', storeSlug: '', status: '尚未连接', busy: false,
     products: [] as DisplayProduct[], merchantProducts: [] as DisplayProduct[],
@@ -101,7 +105,7 @@ Page({
     if(from>to) { wx.showToast({title:'日期范围错误',icon:'none'}); return }
     this.setData({billBusy:true,billMessage:'正在读取云端账单…'})
     try {
-      const data=await authorizedGet(this.data.apiBase, `/v1/merchant/stores/${this.data.storeSlug}/billing?from=${from}&to=${to}`)
+      const data=await authorizedGet(this.data.apiBase, `/v1/merchant/stores/${this.data.storeSlug}/billing`,{from,to})
       const x=data.summary
       if(!x || x.orderCents===undefined || x.paidCents===undefined) throw new Error('invalid_response')
       const money=(n:any)=>(Number(n)/100).toFixed(2)
@@ -110,6 +114,7 @@ Page({
     finally {this.setData({billBusy:false})}
   },
   exportBilling() {
+    const context=supportIdentity()
     if(this.data.billBusy || !this.data.merchantReady || !this.data.billSummary) return
     const token=wx.getStorageSync('stall_server_session_v1')
     if(typeof token!=='string'||!token) { wx.showToast({title:'请重新登录',icon:'none'}); return }
@@ -117,6 +122,7 @@ Page({
     this.setData({billBusy:true,billMessage:'正在下载 CSV…'})
     wx.downloadFile({url:`${this.data.apiBase.replace(/\/+$/,'')}/v1/merchant/stores/${this.data.storeSlug}/billing/export?from=${from}&to=${to}`,header:{Authorization:`Bearer ${token}`},
       success:(result:any)=>{
+        if(context!==supportIdentity()||!this.data.merchantReady)return
         if(result.statusCode!==200) {wx.showToast({title:'导出失败，请缩小日期范围',icon:'none'});return}
         wx.shareFileMessage({filePath:result.tempFilePath,fileName:`billing-${from}-${to}.csv`,fail:()=>wx.showToast({title:'文件分享失败',icon:'none'})})
       }, fail:()=>wx.showToast({title:'CSV 下载失败',icon:'none'}),complete:()=>this.setData({billBusy:false,billMessage:'如下载成功，请在微信分享面板保存 CSV'})})
@@ -141,7 +147,7 @@ Page({
           nextLabel: actionLabels[actions[status]] || '' }
       })
       this.setData({ cloudOrders: orders, pendingCloudOrders: Number(result.pendingCount) || 0,
-        orderMessage: `已读取 ${orders.length} 笔云端订单${result.hasMore ? '（仅显示最近100笔）' : ''}` })
+        orderMessage: `已读取 ${orders.length} 笔云端订单${result.hasMore ? '（诊断页仅显示首30笔，完整分页请用订单管理）' : ''}` })
     } catch (_) { this.setData({ orderMessage: '读取失败：请检查登录状态、权限或后端连接' }) }
     finally { this.setData({ orderBusy: false }) }
   },
@@ -187,7 +193,7 @@ Page({
       } })
   },
   async submitCloudOrderStatus(id: string, status: string, reason = '') {
-    if (this.data.orderBusy || !this.validConfig()) return
+    if (this.data.orderBusy || !this.data.merchantReady || !this.validConfig()) return
     const token = wx.getStorageSync('stall_server_session_v1')
     if (typeof token !== 'string' || !token) { wx.showToast({ title: '请重新登录', icon: 'none' }); return }
     this.setData({ orderBusy: true })
@@ -299,6 +305,7 @@ Page({
   },
   async saveProduct() {
     if (this.data.busy || !this.data.merchantReady || !this.validConfig()) return
+    if(!this.data.productId){wx.navigateTo({url:'/pages/admin-product-form/admin-product-form'});return}
     const name = this.data.productName.trim(), raw = this.data.productPrice.trim()
     const value = Number(raw), cents = Math.round(value * 100)
     if (!name || name.length > 200 || !/^\d+(?:\.\d{1,2})?$/.test(raw) || !Number.isSafeInteger(cents) || cents < 0 || cents > 100000000) {

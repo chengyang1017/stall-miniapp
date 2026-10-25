@@ -1,6 +1,8 @@
+import { categoryRevision,categoryWrite } from './categoryManagement.mjs'
 import { randomUUID } from 'node:crypto'
 import { authenticate, permittedStore } from './auth.mjs'
-import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { registerImage,verifyProductImage } from './imageLifecycle.mjs'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { publishedSql, validTimeZone, localPublishTime } from './productPublishing.mjs'
 import { draftRoute } from './productDrafts.mjs'
@@ -11,10 +13,10 @@ const slugPattern = /^[a-z0-9][a-z0-9-]{1,62}$/
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const jsonHeaders = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' }
 function send(res,status,data) { res.writeHead(status,jsonHeaders); res.end(JSON.stringify(data)) }
-async function readJson(req) {
-  if (Number(req.headers['content-length'] || 0) > 16384) throw new Error('too_large')
+async function readJson(req,maxBytes=16384) {
+  if (Number(req.headers['content-length'] || 0) > maxBytes) throw new Error('too_large')
   let raw = ''
-  for await (const chunk of req) { raw += chunk.toString('utf8'); if(Buffer.byteLength(raw)>16384) throw new Error('too_large') }
+  for await (const chunk of req) { raw += chunk.toString('utf8'); if(Buffer.byteLength(raw)>maxBytes) throw new Error('too_large') }
   try { const obj = JSON.parse(raw); if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw Error(); return obj }
   catch { throw new Error('invalid_json') }
 }
@@ -27,19 +29,7 @@ function objectClient() {
   return new S3Client({ region: process.env.S3_REGION || 'auto', endpoint: process.env.S3_ENDPOINT,
     credentials: { accessKeyId: process.env.S3_ACCESS_KEY_ID, secretAccessKey: process.env.S3_SECRET_ACCESS_KEY } })
 }
-async function imageExists(key) {
-  if (key === null) return true
-  const client = objectClient()
-  if (!client) return false
-  try {
-    const head = await client.send(new HeadObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key }))
-    return (head.ContentLength || 0) > 0 && head.ContentLength <= 5 * 1024 * 1024 &&
-      ['image/jpeg', 'image/png', 'image/webp'].includes(String(head.ContentType || '').split(';')[0])
-  } catch (e) {
-    if (e.name === 'NotFound' || e.$metadata?.httpStatusCode === 404) return false
-    throw e
-  }
-}
+async function imageExists(pool,storeId,key) { return verifyProductImage(pool,storeId,key) }
 function imageUrl(key) {
   const base = (process.env.IMAGE_PUBLIC_BASE_URL || '').replace(/\/+$/, '')
   return key && /^https:\/\/[^/]+/.test(base) ? `${base}/${key.split('/').map(encodeURIComponent).join('/')}` : null
@@ -47,10 +37,11 @@ function imageUrl(key) {
 
 
 export async function catalogRoute(req,res,url,pool) {
-  const match = /^\/v1\/merchant\/stores\/([a-z0-9][a-z0-9-]{1,62})\/(categories|products|drafts|product-search|image-uploads)(?:\/([0-9a-f-]{36}))?$/.exec(url.pathname)
+  const match = /^\/v1\/merchant\/stores\/([a-z0-9][a-z0-9-]{1,62})\/(categories|products|drafts|product-search|image-uploads)(?:\/([0-9a-f-]{36}|order))?(?:\/(complete))?$/.exec(url.pathname)
   if (!match) return false
   const [,slug,kind,id] = match
-  if (!slugPattern.test(slug) || (id&&!uuidPattern.test(id))) { send(res,400,{error:'invalid_identifier'});return true }
+  if(match[4]&&(kind!=='image-uploads'||!id)){send(res,404,{error:'not_found'});return true}
+  if (!slugPattern.test(slug) || (id&&!uuidPattern.test(id)&&!(kind==="categories"&&id==="order"))) { send(res,400,{error:'invalid_identifier'});return true }
   const subject = await authenticate(pool,req)
   if (!subject) { send(res,401,{error:'unauthorized'});return true }
   const store = await permittedStore(pool,subject,slug)
@@ -67,51 +58,54 @@ export async function catalogRoute(req,res,url,pool) {
   if (kind === 'drafts') {
     let draftBody = {}
     if (req.method !== 'GET') { try { draftBody = await readJson(req) } catch(e) { jsonError(e,res); return true } }
-    await draftRoute(req,res,pool,store,id,draftBody,send,imageExists,imageUrl)
+    try{await draftRoute(req,res,pool,store,id,draftBody,send,key=>imageExists(pool,store.id,key),imageUrl)}catch(e){if(e.code==='23514')send(res,409,{error:'image_reference_changed_retry'});else throw e}
     return true
   }
   if (req.method === 'GET' && kind !== 'image-uploads' && (!id || kind === 'products')) {
     const table = kind==='categories' ? 'categories' : 'products'
     const columns = kind==='categories' ? 'id,name,sort_order AS "sortOrder"' : 'id,category_id AS "categoryId",name,price_cents AS "priceCents",active,sold_out AS "soldOut",image_object_key AS "imageObjectKey",description,discount_price_cents AS "discountPriceCents",discount_start AS "discountStart",discount_end AS "discountEnd",CASE WHEN discount_price_cents IS NOT NULL AND (discount_start IS NULL OR discount_start <= now()) AND (discount_end IS NULL OR discount_end > now()) THEN discount_price_cents ELSE price_cents END AS "effectivePriceCents"'
     const extra = kind === 'products' ? `,${inventoryColumns('products')},publish_at AS "publishAt",version,${publishedSql('products')} AS "effectiveActive"` : ''
-    const {rows}=await pool.query(`SELECT ${columns}${extra} FROM ${table} WHERE store_id=$1 ${id?'AND id=$2':''} ORDER BY ${kind==='categories'?'sort_order,name':'created_at DESC'} ${kind==='products'?'LIMIT 500':''}`,id?[store.id,id]:[store.id])
+    const {rows}=await pool.query(`SELECT ${columns}${extra} FROM ${table} WHERE store_id=$1 ${id?'AND id=$2':''} ORDER BY ${kind==='categories'?'sort_order,name,id':'created_at DESC'} ${kind==='products'?'LIMIT 500':'LIMIT 1001'}`,id?[store.id,id]:[store.id])
     if(id) { send(res,rows.length?200:404,rows.length?{product:{...rows[0],imageUrl:imageUrl(rows[0].imageObjectKey)}}:{error:'not_found'});return true }
-    send(res,200,{timeZone,items:kind==='products' ? rows.map(p=>({...p,imageUrl:imageUrl(p.imageObjectKey)})) : rows});return true
+    if(kind==='categories'&&rows.length>1000){send(res,413,{error:'category_limit'});return true}
+    send(res,200,{timeZone,...kind==='categories'?{revision:categoryRevision(rows)}:{},items:kind==='products' ? rows.map(p=>({...p,imageUrl:imageUrl(p.imageObjectKey)})) : rows});return true
   }
   if (!['POST','PATCH','DELETE'].includes(req.method)) { send(res,405,{error:'method_not_allowed'});return true }
   if (kind==='image-uploads') {
+    if(req.method==='POST'&&id&&match[4]==='complete'){
+      let body;try{body=await readJson(req)}catch(e){jsonError(e,res);return true}if(Object.keys(body).length){send(res,400,{error:'invalid_completion'});return true}
+      const image=(await pool.query("SELECT object_key FROM stored_images WHERE store_id=$1 AND id=$2 AND kind='product' AND source='upload'",[store.id,id])).rows[0]
+      if(!image){send(res,404,{error:'image_not_found'});return true}
+      const verified=await imageExists(pool,store.id,image.object_key);send(res,verified?200:409,verified?{ok:true,key:image.object_key}:{error:'image_upload_not_verified'});return true
+    }
     if (req.method!=='POST'||id) {send(res,405,{error:'method_not_allowed'});return true}
     let body;try{body=await readJson(req)}catch(e){jsonError(e,res);return true}
     const types={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}
     const ext=types[body.contentType]
     if(!ext||!Number.isInteger(body.sizeBytes)||body.sizeBytes<1||body.sizeBytes>5*1024*1024){send(res,400,{error:'invalid_image'});return true}
     if(!process.env.S3_BUCKET||!process.env.S3_ENDPOINT||!process.env.S3_ACCESS_KEY_ID||!process.env.S3_SECRET_ACCESS_KEY){send(res,503,{error:'object_storage_not_configured'});return true}
-    const key=`stores/${store.id}/products/${randomUUID()}.${ext}`
+    if(body.clientKey!==undefined&&!uuidPattern.test(body.clientKey)){send(res,400,{error:'invalid_upload_request_key'});return true}
+    let registered;try{registered=await registerImage(pool,store.id,`stores/${store.id}/products/${randomUUID()}.${ext}`,'product',process.env.S3_BUCKET,body.sizeBytes,body.contentType,body.clientKey||null)}catch(e){if(e.status===409){send(res,409,{error:e.message});return true}throw e}
+    const imageId=registered.id,key=registered.key
     const client=objectClient()
     const command=new PutObjectCommand({Bucket:process.env.S3_BUCKET,Key:key,ContentType:body.contentType})
     const uploadUrl=await getSignedUrl(client,command,{expiresIn:300})
-    send(res,200,{key,uploadUrl,contentType:body.contentType,expiresIn:300,maxBytes:5*1024*1024});return true
+    send(res,200,{imageId,key,uploadUrl,contentType:body.contentType,expiresIn:300,maxBytes:5*1024*1024});return true
   }
   let body={}
-  if(req.method!=='DELETE'){try{body=await readJson(req)}catch(e){jsonError(e,res);return true}}
-  if (kind==='categories') {
-    if(req.method==='POST' && !id){
-      const name=text(body.name,100)
-      const sortOrder=body.sortOrder===undefined?0:body.sortOrder
-      if(!name||!Number.isInteger(sortOrder)||Math.abs(sortOrder)>100000){send(res,400,{error:'invalid_category'});return true}
-      const {rows}=await pool.query('INSERT INTO categories(store_id,name,sort_order) VALUES($1,$2,$3) RETURNING id,name,sort_order AS "sortOrder"',[store.id,name,sortOrder]);send(res,201,{category:rows[0]});return true
-    }
-    if(id && req.method==='PATCH'){
-      const name=text(body.name,100)
-      if(!name){send(res,400,{error:'invalid_category'});return true}
-      const {rows}=await pool.query('UPDATE categories SET name=$3 WHERE store_id=$1 AND id=$2 RETURNING id,name',[store.id,id,name]);send(res,rows.length?200:404,rows.length?{category:rows[0]}:{error:'not_found'});return true
-    }
-    if(id && req.method==='DELETE'){
-      try {const {rowCount}=await pool.query('DELETE FROM categories WHERE store_id=$1 AND id=$2',[store.id,id]);send(res,rowCount?200:404,rowCount?{ok:true}:{error:'not_found'})}
-      catch(e){if(e.code==='23503')send(res,409,{error:'category_has_products'});else throw e}return true
-    }
-  }
+  if(req.method!=='DELETE'||kind==='categories'&&(req.headers['content-length']||req.headers['transfer-encoding'])){try{body=await readJson(req,kind==='categories'?65536:16384)}catch(e){jsonError(e,res);return true}}
+  if (kind==='categories') {await categoryWrite(req,res,pool,store,id,body,send);return true}
   if(kind==='products'){
+    const creating=req.method==='POST'&&!id
+    const createKey=creating?body.clientKey:null
+    const createPayload=creating?JSON.stringify(Object.fromEntries(Object.entries(body).filter(([key])=>key!=='clientKey'))):null
+    if(creating){
+      // Older clients must update: silently accepting keyless creation is unsafe.
+      if(typeof createKey!=='string'||!/^[A-Za-z0-9_-]{16,100}$/.test(createKey)){send(res,428,{error:'product_create_key_required_update_client'});return true}
+      // Replay before state-dependent image/schedule checks; timeouts remain retryable.
+      const receipt=(await pool.query('SELECT product_id,request_payload=$4::jsonb AS same_payload FROM product_create_requests WHERE store_id=$1 AND actor_subject=$2 AND client_key=$3',[store.id,subject,createKey,createPayload])).rows[0]
+      if(receipt){send(res,receipt.same_payload&&receipt.product_id?200:409,receipt.same_payload&&receipt.product_id?{id:receipt.product_id,replayed:true}:{error:'product_create_key_payload_conflict'});return true}
+    }
     // Narrow PATCHes preserve all unrelated fields, including concurrent edits.
     const patchColumns = { active: 'active', soldOut: 'sold_out', categoryId: 'category_id' }
     const patchKeys = Object.keys(body)
@@ -144,7 +138,7 @@ export async function catalogRoute(req,res,url,pool) {
       const end = body.discountEnd === undefined ? undefined : parseTime(body.discountEnd)
       if (description === false || (discountPrice === null && body.discountPriceCents !== null) || start === false || end === false || (start && end && Date.parse(start)>=Date.parse(end))) {send(res,400,{error:'invalid_promotion'});return true}
       if (discountPrice !== undefined && discountPrice !== null && discountPrice >= price) {send(res,400,{error:'invalid_discount_price'});return true}
-      if (imageKey !== null && !await imageExists(imageKey)) { send(res,400,{error:'image_not_uploaded'});return true }
+      if (imageKey !== null && !await imageExists(pool,store.id,imageKey)) { send(res,400,{error:'image_not_uploaded_or_unregistered'});return true }
       const scheduleChanged = Object.hasOwn(body,'publishLocalTime') || body.cancelSchedule === true
       let publishAt = null
       if (body.publishLocalTime != null) {
@@ -160,11 +154,21 @@ export async function catalogRoute(req,res,url,pool) {
       const client = await pool.connect()
       try{
         await client.query('BEGIN')
+        if(creating){
+          // Unique insert waits for concurrent creators. A rollback leaves no receipt.
+          const inserted=await client.query('INSERT INTO product_create_requests(store_id,actor_subject,client_key,request_payload) VALUES($1,$2,$3,$4::jsonb) ON CONFLICT DO NOTHING RETURNING client_key',[store.id,subject,createKey,createPayload])
+          if(!inserted.rows.length){
+            const receipt=(await client.query('SELECT product_id,request_payload=$4::jsonb AS same_payload FROM product_create_requests WHERE store_id=$1 AND actor_subject=$2 AND client_key=$3 FOR UPDATE',[store.id,subject,createKey,createPayload])).rows[0]
+            await client.query('ROLLBACK')
+            send(res,receipt?.same_payload&&receipt.product_id?200:409,receipt?.same_payload&&receipt.product_id?{id:receipt.product_id,replayed:true}:{error:'product_create_key_payload_conflict'});return true
+          }
+        }
         if (body.sourceDraftId) {
           const draft = await client.query('SELECT state,version,published_product_id,publish_payload=$3::jsonb AS same_payload FROM product_drafts WHERE store_id=$1 AND id=$2 FOR UPDATE',[store.id,body.sourceDraftId,publishPayload])
           const row = draft.rows[0]
           if (row?.state === 'published') {
-            await client.query('COMMIT')
+            if(row.same_payload&&creating)await client.query('UPDATE product_create_requests SET product_id=$4 WHERE store_id=$1 AND actor_subject=$2 AND client_key=$3',[store.id,subject,createKey,row.published_product_id])
+            await client.query(row.same_payload?'COMMIT':'ROLLBACK')
             send(res,row.same_payload?200:409,row.same_payload?{id:row.published_product_id}:{error:'draft_already_published_reload'});return true
           }
           if (!row || row.state !== 'draft' || row.version !== body.expectedDraftVersion) { await client.query('ROLLBACK');send(res,409,{error:'draft_changed_reload'});return true }
@@ -209,6 +213,7 @@ export async function catalogRoute(req,res,url,pool) {
             await configureInventory(client,stockProduct.rows[0],body.inventory,subject,!id)
           }
           await client.query('UPDATE products SET publish_at=$3,version=version+1 WHERE store_id=$1 AND id=$2',[store.id,rows[0].id,publishAt])
+          if(creating)await client.query('UPDATE product_create_requests SET product_id=$4 WHERE store_id=$1 AND actor_subject=$2 AND client_key=$3',[store.id,subject,createKey,rows[0].id])
           if (body.sourceDraftId) await client.query("UPDATE product_drafts SET state='published',published_product_id=$3,publish_payload=$4::jsonb,version=version+1,updated_at=now() WHERE store_id=$1 AND id=$2",[store.id,body.sourceDraftId,rows[0].id,publishPayload])
         }
         await client.query('COMMIT')

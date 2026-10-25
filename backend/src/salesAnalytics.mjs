@@ -1,3 +1,4 @@
+import { allowReportExport } from './reportExportLimits.mjs'
 import { createHash } from 'node:crypto'
 import { authenticate, permittedStore } from './auth.mjs'
 
@@ -96,6 +97,7 @@ export async function salesAnalyticsRoute(req,res,url,pool) {
     !/^[1-9][0-9]{0,3}$/.test(pageText)||page>2000 || page>1&&!input.has('snapshot') || input.has('snapshot')&&!/^[a-f0-9]{64}$/.test(input.get('snapshot')) || match[2]&&!['overview','products','daily'].includes(type)) {
     fail(res,400,'invalid_analytics_query');return true
   }
+  if(match[2]&&!allowReportExport(store.id)){fail(res,429,'report_export_rate_limited');return true}
   const client=await pool.connect();let open=false
   try {
     await client.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');open=true

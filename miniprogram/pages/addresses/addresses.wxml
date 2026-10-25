@@ -1,34 +1,38 @@
 <view class="page">
   <view class="heading">我的地址</view>
+  <view class="tip">{{cloudMode ? '当前登录顾客的云端地址 · 当前店铺配送区域' : '本机演示配送规则'}} · {{deliveryStatus}}</view>
+  <button wx:if="{{cloudMode}}" size="mini" bindtap="login" disabled="{{addressBusy}}">微信登录／重新验证身份</button>
+  <view wx:if="{{deliveryError}}" class="tip">{{deliveryError}}<button size="mini" bindtap="refresh">重新读取区域</button></view>
   <view wx:if="{{addresses.length===0}}" class="empty">尚未保存地址，请先在下面添加</view>
   <view wx:for="{{addresses}}" wx:key="id" class="card">
     <view class="address-name">{{item.receiverName}} · {{item.phone}}</view>
     <view class="address-detail">{{item.area}} {{item.detail}}</view>
+    <view wx:if="{{cloudMode && item.deliveryIssue}}" class="tip">{{item.deliveryIssue}}</view>
     <view wx:if="{{item.isDefault}}" class="default-tag">默认地址</view>
     <view class="actions">
-      <button size="mini" data-id="{{item.id}}" bindtap="choose">使用</button>
-      <button size="mini" data-id="{{item.id}}" bindtap="edit">编辑</button>
-      <button wx:if="{{!item.isDefault}}" size="mini" data-id="{{item.id}}" bindtap="setDefault">设为默认</button>
-      <button size="mini" data-id="{{item.id}}" bindtap="remove">删除</button>
+      <button size="mini" data-id="{{item.id}}" bindtap="choose" disabled="{{cloudMode && (deliveryBusy || deliveryError || item.deliveryIssue)}}">使用</button>
+      <button size="mini" data-id="{{item.id}}" bindtap="edit" disabled="{{addressBusy}}">编辑</button>
+      <button wx:if="{{!item.isDefault}}" size="mini" data-id="{{item.id}}" bindtap="setDefault" disabled="{{addressBusy}}">设为默认</button>
+      <button size="mini" data-id="{{item.id}}" bindtap="remove" disabled="{{addressBusy}}">删除</button>
     </view>
   </view>
   <view class="card">
     <view class="subheading">{{editingId ? '编辑地址' : '新增地址'}}</view>
-    <view class="field"><text>收货人姓名 *</text><input value="{{receiverName}}" maxlength="40" placeholder="请输入姓名" bindinput="changeName" /></view>
-    <view class="field"><text>中国大陆手机号 *</text><input value="{{phone}}" type="number" maxlength="11" placeholder="请输入11位手机号" bindinput="changePhone" /></view>
-    <view class="field"><text>配送地区 *</text><picker range="{{areas}}" range-key="name" bindchange="changeArea"><view class="select">{{area || '请选择配送地区'}}</view></picker></view>
-    <view class="field"><text>详细地址 *</text><input value="{{detail}}" maxlength="150" placeholder="楼栋、单元、门牌号" bindinput="changeDetail" /></view>
+    <view class="field"><text>收货人姓名 *</text><input value="{{receiverName}}" maxlength="40" placeholder="请输入姓名" bindinput="changeName" disabled="{{addressBusy}}" /></view>
+    <view class="field"><text>中国大陆手机号 *</text><input value="{{phone}}" type="number" maxlength="11" placeholder="请输入11位手机号" bindinput="changePhone" disabled="{{addressBusy}}" /></view>
+    <view class="field"><text>配送地区 *</text><picker range="{{areas}}" range-key="name" bindchange="changeArea" disabled="{{deliveryBusy || !areas.length || deliveryError}}"><view class="select">{{area || '请选择配送地区'}}</view></picker></view>
+    <view class="field"><text>详细地址 *</text><input value="{{detail}}" maxlength="150" placeholder="楼栋、单元、门牌号" bindinput="changeDetail" disabled="{{addressBusy}}" /></view>
     <view class="field">
       <text>地图位置（选填）</text>
-      <button size="mini" bindtap="chooseMapLocation">在地图上选择位置</button>
+      <button size="mini" bindtap="chooseMapLocation" disabled="{{addressBusy}}">在地图上选择位置</button>
       <view wx:if="{{mapAddress || locationName}}" class="map-location-preview">
         <text>{{locationName}}</text>
         <text>{{mapAddress}}</text>
         <text>请确认配送地区并另外填写楼栋、单元、门牌号</text>
       </view>
     </view>
-    <button type="primary" bindtap="save">保存地址</button>
+    <button type="primary" bindtap="save" loading="{{addressBusy}}" disabled="{{addressBusy || (cloudMode && (deliveryBusy || deliveryError))}}">保存地址</button>
     <button wx:if="{{editingId}}" bindtap="clearForm">取消编辑</button>
   </view>
-  <view class="tip">演示阶段仅保存在当前微信设备本地，不会同步到其他手机。</view>
+  <view class="tip">{{cloudMode ? '地址保存到服务器，按顾客身份与店铺隔离，可跨设备读取；历史订单地址不随修改变化。' : '演示阶段仅保存在当前微信设备本地，不会同步到其他手机。'}}</view>
 </view>

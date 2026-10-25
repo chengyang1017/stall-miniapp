@@ -5,3 +5,4 @@
 .hint{font-size:24rpx;color:#6d7b73;line-height:1.6;margin:18rpx 0}
 .preview{white-space:pre-wrap;font-size:25rpx;margin:18rpx 0;color:#334}
 button{margin-top:24rpx}
+.archive-row{padding:22rpx 0;border-bottom:1rpx solid #e5ebe7;overflow-wrap:anywhere}picker{padding:20rpx;margin-top:12rpx;background:#f3f7f4;border-radius:12rpx}navigator{margin-top:24rpx;color:#16865d}

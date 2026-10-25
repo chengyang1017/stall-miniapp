@@ -1,0 +1,1 @@
+.page{padding:28rpx;background:#f5f6f8;min-height:100vh;box-sizing:border-box}.card{background:white;border-radius:20rpx;padding:26rpx;margin-bottom:24rpx}.title{font-size:36rpx;font-weight:600;color:#16865d}.hint{font-size:26rpx;color:#68766d;line-height:1.7;overflow-wrap:anywhere}.code{width:100%;height:600rpx}button{margin-top:18rpx}.error{color:#b34534}

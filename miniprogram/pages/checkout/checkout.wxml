@@ -1,6 +1,10 @@
 <view class="page">
   <view class="heading">确认订单</view>
   <view wx:if="{{cloudMode && cloudError}}" class="hint" style="color:#b33;padding:16rpx;">{{cloudError}}</view>
+  <view wx:if="{{cloudMode && deliveryError}}" class="hint" style="color:#b33;padding:16rpx;">{{deliveryError}}</view>
+  <view wx:if="{{cloudMode && selectionNotice}}" class="hint">{{selectionNotice}}</view>
+  <view wx:if="{{cloudMode && cloudAreaName}}" class="hint">当前配送区域：{{cloudAreaName}}。可用时段会按区域、星期和特殊日期重新核对。</view>
+  <button wx:if="{{cloudMode && (cloudError || deliveryError)}}" size="mini" disabled="{{cloudBusy}}" bindtap="refreshCloudCheckout">重新读取营业和配送信息</button>
   <view class="card">
     <view class="subheading">收货地址</view>
     <view class="address-card" bindtap="openAddresses">
@@ -23,7 +27,7 @@
         </picker>
       </view>
       <text>配送时段 *</text>
-      <picker range="{{slots}}" range-key="label" value="{{slotIndex}}" bindchange="chooseSlot">
+      <picker range="{{slots}}" range-key="displayLabel" value="{{slotIndex}}" bindchange="chooseSlot" disabled="{{cloudBusy || !slots.length}}">
         <view class="select">{{selectedSlotText || '请选择配送时段'}}</view>
       </picker>
     </view>
@@ -41,10 +45,12 @@
       <text>{{item.name}} × {{item.quantity}}</text><text>¥{{item.subtotalText}}</text>
     </view>
     <view class="line total"><text>商品合计</text><text>¥{{totalText}}</text></view>
+    <view wx:if="{{cloudMode}}" class="line"><text>配送费（当前免配送费）</text><text>¥0.00</text></view>
+    <view wx:if="{{cloudMode}}" class="line total"><text>预计应付（以服务器为准）</text><text>¥{{totalText}}</text></view>
     <view class="hint" wx:if="{{cloudMode}}">最终金额以服务器核算为准，当前仅创建待支付订单，不会扣款。</view>
     <view class="hint" wx:else>配送费和具体日期尚未接入。订单只在本设备保存，不会扣款。</view>
   </view>
   <view wx:if="{{minimumOrderText !== '0.00'}}" style="margin:20rpx;color:#666;">起送 ¥{{minimumOrderText}} <text wx:if="{{!minimumReached}}">· 还差 ¥{{minimumRemainingText}}</text><text wx:else> · 已达起送金额</text></view>
-  <button wx:if="{{cloudMode}}" type="primary" loading="{{cloudBusy}}" disabled="{{totalCount === 0 || cloudBusy || cloudError !== ''}}" bindtap="confirmOrder">创建待支付订单</button>
+  <button wx:if="{{cloudMode}}" type="primary" loading="{{cloudBusy || orderSubmitting}}" disabled="{{totalCount === 0 || orderSubmitting || cloudBusy || cloudError !== '' || deliveryError !== '' || !minimumReached}}" bindtap="confirmOrder">创建待支付订单</button>
   <button wx:else type="primary" disabled="{{totalCount === 0}}" bindtap="confirmOrder">创建待支付订单（本地演示）</button>
 </view>
