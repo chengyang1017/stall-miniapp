@@ -65,6 +65,30 @@ test('live PostgreSQL store, order, inventory and ledger consistency (read only)
        FROM orders WHERE checkout_key IS NOT NULL
        GROUP BY store_id,customer_subject,checkout_key HAVING COUNT(*)>1
      ) dup`],
+   ['orphan order items are absent',`
+     SELECT COUNT(*)::int AS violations FROM order_items i
+     LEFT JOIN orders o ON o.id=i.order_id WHERE o.id IS NULL`],
+   ['orphan inventory reservations are absent',`
+     SELECT COUNT(*)::int AS violations FROM inventory_reservations r
+     LEFT JOIN orders o ON o.id=r.order_id
+     LEFT JOIN products p ON p.id=r.product_id
+     WHERE o.id IS NULL OR p.id IS NULL`],
+   ['inventory movement arithmetic balances',`
+     SELECT COUNT(*)::int AS violations FROM inventory_movements
+     WHERE before_quantity IS NOT NULL AND (
+       after_quantity IS NULL OR delta IS NULL OR after_quantity<>before_quantity+delta)`],
+   ['inventory movement store matches the product store',`
+     SELECT COUNT(*)::int AS violations FROM inventory_movements m
+     JOIN products p ON p.id=m.product_id
+     WHERE m.store_id<>p.store_id`],
+   ['inventory reservations have positive quantities',`
+     SELECT COUNT(*)::int AS violations FROM inventory_reservations
+     WHERE quantity<=0 OR quantity IS NULL`],
+   ['order inventory states match reservation resolution',`
+     SELECT COUNT(*)::int AS violations FROM orders o
+     WHERE o.inventory_state IN ('released','committed') AND EXISTS (
+       SELECT 1 FROM inventory_reservations r
+       WHERE r.order_id=o.id AND r.store_id=o.store_id AND r.state='held')`],
    ['payment event IDs are unique per provider',`
      SELECT COUNT(*)::int AS violations FROM (
        SELECT provider,provider_event_id FROM payment_events
