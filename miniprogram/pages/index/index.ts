@@ -8,6 +8,7 @@ import { getRemoteProductPage } from '../../utils/remoteApi'
 import { publicBusiness } from '../../modules/shared/api/business'
 import { loadCloudDelivery } from '../../utils/cloudCheckout'
 import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
+import { authorizedGet } from '../../modules/shared/runtime/auth'
 
 import {
   loadStore,
@@ -34,7 +35,7 @@ interface ProductView {
 }
 
 Page({
-  cloudSerial:0,cloudContext:'',pageVisible:false,
+  cloudSerial:0,cloudContext:'',pageVisible:false,merchantRouteSerial:0,
 
   data: {
     canOpenMerchant:CAN_OPEN_MERCHANT,
@@ -67,6 +68,26 @@ Page({
     const serial=++this.cloudSerial
     this.setData({entryLoading:true,entryError:'',cloudConnectionError:false})
     try{await resolveStoreEntry()}catch(e){if(serial===this.cloudSerial)this.setData({entryError:'暂时无法连接商店，请检查网络连接后重试。',entryLoading:false,storeName:'店铺入口未确认',cartCount:0,cartTotal:'0.00',businessInfo:{open:false,label:'尚未确认当前店铺',notice:''},hasMore:false,dealsHasMore:false,products:[],discountedProducts:[],remoteRows:[],dealRows:[],categories:[],cloudMode:true,cloudBusy:false,cloudConnectionError:true,deliverySummary:''});return}
+    if(!this.pageVisible||serial!==this.cloudSerial)return
+    // Resume merchant workspace only after server authorization, never from a cached role alone.
+    const merchantCfg=cloudCartConfig()
+    const merchantPreference=wx.getStorageSync('stall_merchant_home_preference_v1')
+    if(merchantCfg && merchantPreference===merchantCfg.apiBase+'|'+merchantCfg.storeSlug){
+      const merchantSerial=++this.merchantRouteSerial
+      try{
+        const result=await authorizedGet(merchantCfg.apiBase,'/v1/merchant/stores/'+merchantCfg.storeSlug+'/categories')
+        if(!this.pageVisible||serial!==this.cloudSerial||merchantSerial!==this.merchantRouteSerial)return
+        if(result&&Array.isArray(result.items)){
+          this.setData({entryLoading:false})
+          wx.navigateTo({url:'/pages/admin/admin'})
+          return
+        }
+      }catch(e){
+        // Transient API failures must not be interpreted as authorization grants.
+        // Explicitly denied sessions fall back to the normal customer shop.
+        if(/http_40[13]|not_logged_in/.test(String(e)))wx.removeStorageSync('stall_merchant_home_preference_v1')
+      }
+    }
     if(!this.pageVisible||serial!==this.cloudSerial)return
     this.setData({entryLoading:false});refreshPagePresentation(this);
     const cfg = cloudCartConfig()
