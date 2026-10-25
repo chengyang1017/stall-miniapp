@@ -25,8 +25,20 @@ test('real product row lock excludes a concurrent checkout transaction', {timeou
   second=await pool.connect()
   await first.query('BEGIN');firstOpen=true
   await first.query("SET LOCAL statement_timeout='5000ms'")
+  await first.query("SET LOCAL lock_timeout='1500ms'")
   await second.query('BEGIN');secondOpen=true
   await second.query("SET LOCAL statement_timeout='5000ms'")
+  await second.query("SET LOCAL lock_timeout='1500ms'")
+  // Recheck the database identity after connecting: a proxy may route to a
+  // different database than the name in the connection string.
+  for(const session of [first,second]){
+   const {rows:[identity]}=await session.query(
+    "SELECT current_database() AS name, current_setting('transaction_read_only') AS read_only")
+   assert.match(identity.name,/(?:^|[_-])(test|testing|staging|stage|dev)(?:$|[_-])/i,
+     'Actual connected database is not an isolated test database')
+   assert.equal(identity.read_only,'off',
+     'PostgreSQL SELECT FOR UPDATE requires a writable transaction; use an isolated test database')
+  }
   const {rows}=await first.query(`SELECT id FROM products
     WHERE stock_mode='finite' AND stock_quantity>=0
     ORDER BY id LIMIT 1 FOR UPDATE`)
