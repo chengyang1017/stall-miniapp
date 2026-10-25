@@ -72,20 +72,27 @@ Page({
     // Resume merchant workspace only after server authorization, never from a cached role alone.
     const merchantCfg=cloudCartConfig()
     const merchantPreference=wx.getStorageSync('stall_merchant_home_preference_v1')
+    const merchantIdentity=supportIdentity()
     if(merchantCfg && merchantPreference===merchantCfg.apiBase+'|'+merchantCfg.storeSlug){
       const merchantSerial=++this.merchantRouteSerial
       try{
         const result=await authorizedGet(merchantCfg.apiBase,'/v1/merchant/stores/'+merchantCfg.storeSlug+'/categories')
         if(!this.pageVisible||serial!==this.cloudSerial||merchantSerial!==this.merchantRouteSerial)return
-        if(result&&Array.isArray(result.items)){
+        // An in-flight authorization must not override a switch to customer mode,
+        // a logout, a session replacement, or a store change.
+        const currentCfg=cloudCartConfig()
+        const stillMerchant=wx.getStorageSync('stall_merchant_home_preference_v1')===merchantPreference
+        if(result&&Array.isArray(result.items)&&stillMerchant&&merchantIdentity===supportIdentity()&&currentCfg&&
+           currentCfg.apiBase===merchantCfg.apiBase&&currentCfg.storeSlug===merchantCfg.storeSlug){
           this.setData({entryLoading:false})
           wx.navigateTo({url:'/pages/admin/admin'})
           return
         }
       }catch(e){
-        // Transient API failures must not be interpreted as authorization grants.
-        // Explicitly denied sessions fall back to the normal customer shop.
-        if(/http_40[13]|not_logged_in/.test(String(e)))wx.removeStorageSync('stall_merchant_home_preference_v1')
+        // Clear only the SAME stale preference; do not overwrite a later mode change.
+        if(/http_40[13]|not_logged_in/.test(String(e))&&
+           wx.getStorageSync('stall_merchant_home_preference_v1')===merchantPreference&&
+           merchantIdentity===supportIdentity())wx.removeStorageSync('stall_merchant_home_preference_v1')
       }
     }
     if(!this.pageVisible||serial!==this.cloudSerial)return
