@@ -36,3 +36,20 @@ test('app opening cannot route to merchant without fresh authorized request',()=
 test('merchant logout clears saved merchant-first preference',()=>{
  assert.match(login,/wx.removeStorageSync\('stall_merchant_home_preference_v1'\)/)
 })
+
+test('merchant can choose the customer shop without creating another AppID',()=>{
+ const admin=read('miniprogram/pages/admin/admin.ts')
+ const layout=read('miniprogram/pages/admin/admin.wxml')
+ assert.match(admin,/openCustomerShop\(/)
+ assert.match(admin,/customer\|/)
+ assert.match(admin,/wx.switchTab/)
+ assert.match(layout,/bindtap="openCustomerShop"/)
+})
+test('customer profile shows merchant navigation only after a server check',()=>{
+ const profile=read('miniprogram/pages/profile/profile.ts')
+ const layout=read('miniprogram/pages/profile/profile.wxml')
+ assert.match(profile,/await authorizedGet\(/)
+ assert.match(profile,/merchantAuthorized:false/)
+ assert.match(profile,/async openMerchant\(/)
+ assert.match(layout,/wx:if="\{\{merchantAuthorized\}\}"/)
+})
