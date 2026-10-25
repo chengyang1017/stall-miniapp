@@ -89,6 +89,29 @@ test('live PostgreSQL store, order, inventory and ledger consistency (read only)
      WHERE o.inventory_state IN ('released','committed') AND EXISTS (
        SELECT 1 FROM inventory_reservations r
        WHERE r.order_id=o.id AND r.store_id=o.store_id AND r.state='held')`],
+   ['active holds match the purchased item quantity',`
+     SELECT COUNT(*)::int AS violations FROM inventory_reservations r
+     JOIN orders o ON o.id=r.order_id AND o.store_id=r.store_id
+     WHERE r.state='held' AND (
+       o.inventory_state<>'held' OR
+       r.quantity<>(SELECT COALESCE(SUM(i.quantity),0)::int
+                    FROM order_items i WHERE i.order_id=r.order_id AND i.product_id=r.product_id)
+     )`],
+   ['no product has multiple held reservations for the same order',`
+     SELECT COUNT(*)::int AS violations FROM (
+       SELECT store_id,order_id,product_id FROM inventory_reservations
+       WHERE state='held' GROUP BY store_id,order_id,product_id HAVING COUNT(*)>1
+     ) duplicate`],
+   ['held orders reserve each finite-stock order line',`
+     SELECT COUNT(*)::int AS violations FROM orders o
+     JOIN order_items i ON i.order_id=o.id
+     JOIN products p ON p.id=i.product_id AND p.store_id=o.store_id
+     WHERE o.inventory_state='held' AND p.stock_mode='finite'
+       AND NOT EXISTS (
+         SELECT 1 FROM inventory_reservations r
+         WHERE r.order_id=o.id AND r.store_id=o.store_id AND r.product_id=i.product_id
+           AND r.state='held' AND r.quantity=i.quantity
+       )`],
    ['payment event IDs are unique per provider',`
      SELECT COUNT(*)::int AS violations FROM (
        SELECT provider,provider_event_id FROM payment_events
