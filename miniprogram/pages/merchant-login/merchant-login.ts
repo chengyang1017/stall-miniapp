@@ -31,7 +31,7 @@ Page({
     wx.setStorageSync(CONFIG_KEY, { apiBase, storeSlug })
     return true
   },
-  async verifyExisting() {
+  async verifyExisting(openWorkspace = false) {
     if (!this.config()) return
     this.setData({ busy: true, status: '正在核实商家权限…' })
     try {
@@ -39,9 +39,12 @@ Page({
       const result = await authorizedGet(this.data.apiBase, `${basePath}/categories`)
       if (!result || !Array.isArray(result.items)) throw new Error('invalid_response')
       this.setData({ authenticated: true, status: `已登录，具有 ${this.data.storeSlug} 店铺访问权限` })
-      // Only a successful server authorization may enable merchant-first entry.
-      wx.setStorageSync('stall_merchant_home_preference_v1', this.data.apiBase + '|' + this.data.storeSlug)
-      wx.navigateTo({url:'/pages/admin/admin'})
+      // Passive session verification must not navigate away from Account & Permissions.
+      // Only an explicit login action chooses the merchant workspace.
+      if (openWorkspace) {
+        wx.setStorageSync('stall_merchant_home_preference_v1', this.data.apiBase + '|' + this.data.storeSlug)
+        wx.navigateTo({url:'/pages/admin/admin'})
+      }
     } catch (_) {
       this.setData({ authenticated: false, status: '登录未通过或会话已失效，请重新登录' })
     } finally { this.setData({ busy: false }) }
@@ -52,7 +55,7 @@ Page({
     try {
       await loginWithWechat(this.data.apiBase)
       this.setData({ busy: false })
-      await this.verifyExisting()
+      await this.verifyExisting(true)
     } catch (_) { this.setData({ busy: false, status: '微信登录失败，请检查后端微信配置及店铺授权' }) }
   },
   async loginDev() {
@@ -60,7 +63,7 @@ Page({
     try {
       setLocalDevToken(this.data.apiBase, this.data.devToken)
       this.setData({ devToken: '' })
-      await this.verifyExisting()
+      await this.verifyExisting(true)
     } catch (_) { this.setData({ authenticated: false, status: '测试会话无效或已失效' }) }
   },
   async logout() {
