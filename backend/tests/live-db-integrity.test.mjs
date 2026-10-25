@@ -26,6 +26,25 @@ test('live PostgreSQL store, order, inventory and ledger consistency (read only)
   await client.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
   await client.query("SET LOCAL statement_timeout='8000ms'")
   await client.query("SET LOCAL lock_timeout='1500ms'")
+  // The URL name alone is insufficient: a proxy can route to a different DB.
+  const identity=(await client.query("SELECT current_database() AS name, current_setting('transaction_read_only') AS read_only")).rows[0]
+  assert.match(identity.name,/(?:^|[_-])(test|testing|staging|stage|dev)(?:$|[_-])/i,
+    'Connected database must actually be a test/staging/dev database')
+  assert.equal(identity.read_only,'on','Database audit must be inside a read-only transaction')
+
+  // An empty database can satisfy every zero-violations audit without proving checkout works.
+  const sample=(await client.query(`
+    SELECT (SELECT COUNT(*)::int FROM stores) AS stores,
+           (SELECT COUNT(*)::int FROM products) AS products,
+           (SELECT COUNT(*)::int FROM orders) AS orders,
+           (SELECT COUNT(*)::int FROM order_items) AS items,
+           (SELECT COUNT(*)::int FROM inventory_reservations) AS reservations`)).rows[0]
+  for(const column of ['stores','products','orders','items']){
+    assert.ok(sample[column]>0,
+      'Missing '+column+' in isolated test database; seed real integration scenarios before auditing')
+  }
+  t.diagnostic('Test data present: stores='+sample.stores+', products='+sample.products+
+    ', orders='+sample.orders+', order items='+sample.items+', reservations='+sample.reservations)
   const checks=[
    ['orders have matching monetary totals',`
      SELECT COUNT(*)::int AS violations FROM orders
