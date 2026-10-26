@@ -225,6 +225,9 @@ export async function orderWorkflowRoute(req, res, url, pool) {
     const allowed = steps[current]===next || (next==='cancelled' && ['new','accepted','preparing'].includes(current)) || (next==='abnormal' && current==='delivering')
     if (!allowed) { await client.query('ROLLBACK'); reply(res,409,{error:'invalid_transition',current}); return true }
     if (order.inventory_state==='released' && next!=='cancelled') { await client.query('ROLLBACK');reply(res,409,{error:'inventory_released_requires_review'});return true }
+    // Payment authorization is independent of stock mode. Preserve legal unpaid
+    // cancellation, but never advance fulfillment through inventory_state='none'.
+    if (next!=='cancelled' && order.payment_status!=='paid') { await client.query('ROLLBACK');reply(res,409,{error:'payment_not_confirmed'});return true }
     if (order.inventory_state==='held') {
       if (order.payment_status==='unpaid' && next==='cancelled') await resolveOrderInventory(client,order,'released','cancel',subject,'商家取消未支付订单，释放预留')
       else if (order.payment_status==='paid') await resolveOrderInventory(client,order,'committed','payment',subject,'已确认付款，预留转为正式扣减（不再次扣库存）')

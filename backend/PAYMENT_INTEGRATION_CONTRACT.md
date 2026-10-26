@@ -47,8 +47,9 @@
 
 - `checkout.mjs`创建unpaid订单；`inventory.mjs`在创建时预留有限库存，后台任务处理到期释放。服务启动就会运行任务，不能为支付联调误连生产。
 - `orderWorkflow.mjs`负责履约步骤new→accepted→preparing→delivering→delivered；取消和异常有现有状态限制。送达必须走已校验图片的complete接口，且payment_status必须paid。
-- held订单在未支付时不能推进正常履约；已释放库存的订单也不能直接继续配送。支付成功时预留转committed，不应再次扣减库存。
-- **目前new队列和待接单统计仍包含未支付订单；不限库存订单的部分履约推进未统一以paid为门槛。** 因此原需求“支付成功才进入正常待接单流程”尚未完整接通，需与客户支付状态协议一起确认。本文不把现有队列当作支付已完成，也未擅自改造状态机。
+- 第七轮复核整改：有限/不限库存使用统一付款门槛。普通状态接口中，除符合原规则的取消外，合法履约变更（接单、备货、配送、配送异常）均需服务器订单的`payment_status='paid'`；`inventory_state='none'`不再绕过校验。送达仍走带凭证的complete接口并检查paid。refunded/partially_refunded不等于当前paid授权，测试这些字段不表示退款模块已实现。
+- 未支付仍允许创建/重放和读取本人订单，以及原状态机允许的取消。new/accepted/preparing才有取消边；有限库存held的释放仍要求unpaid且new/cancelled，遗留已推进订单不放宽释放规则。到期释放、取消原因、授权和店铺校验不变。已支付held转committed不再次扣库存；已释放库存不能直接恢复履约。
+- **new队列和待接单统计仍包含未支付订单，但显示在队列不代表可以接单。** 本次只修复履约接口付款门槛，不调整队列和报表口径；原需求“支付成功才进入正常待接单流程”的队列范围仍需与客户支付协议确认。paid字段的校验也不代表支付核验链已经接通。
 - 到期释放后收到迟到付款，或已取消/异常订单收到付款，不得直接重新占库存、自动送达或假称退款成功。客户需确定关单、补偿、人工复核和真实退款策略。
 
 ## 幂等与可信结果
@@ -61,6 +62,6 @@
 
 ## 待客户确认与后续验收
 
-需要客户签定上述接口及异常策略后，再单独授权联调支付成功、失败、关闭、重复通知、退款、付款后断网及晚到通知。本阶段未编写或运行测试，未生成任何支付参数、交易或退款记录。
+需要客户签定上述接口及异常策略后，再单独授权联调支付成功、失败、关闭、重复通知、退款、付款后断网及晚到通知。第七轮整改仅运行隔离内存夹具下的真实履约函数回归，paid/refunded为分支输入；没有调用支付服务或生成任何真实支付参数、交易、退款记录，尚未完成真实数据库或微信支付联调。
 
 源码依据：[checkout](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/checkout.mjs)、[履约与凭证](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/orderWorkflow.mjs)、[库存](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/inventory.mjs)、[基础结构](C:/Users/USER/WeChatProjects/miniprogram-1/backend/sql/001_init.sql)、[账单](C:/Users/USER/WeChatProjects/miniprogram-1/backend/src/billing.mjs)。
