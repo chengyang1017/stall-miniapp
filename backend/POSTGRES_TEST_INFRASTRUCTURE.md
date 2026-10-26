@@ -1,5 +1,9 @@
 # 第八轮 B0：独立 PostgreSQL 集成测试基础设施与安全整改
 
+> B3-R 当前使用限制（2026-10-26）：下面保留 B0 当时的实现/审核记录，不是当前启动指南。镜像已登记，但真实首次创建因 internal-only 网络未发布宿主端口而失败；现场和 failed 回执必须保留，first/restart 不能用于恢复。B4 阻塞。
+>
+> 新网络推荐 A（internal 内的运行器），涉及新拓扑/协议，本轮仅完成 [网络及恢复设计](PHASE8_NETWORK_RECOVERY_DESIGN.md)，未实施运行源码或操作 Docker/数据库。具体当前状态以 [测试状态](../docs/testing/TEST_STATUS.md) 为准，勿照早期“尚未准备材料”等描述重建或覆盖资源。
+
 基线：`96e6a52442c8b4450249ad6e1546e69ecb4bca0b`。
 
 本阶段仅修改 B0 基础设施、安全测试及本文档。没有执行 Docker 命令、连接数据库、运行迁移、创建密码、下载镜像、启动业务服务或 worker。离线安全测试不是 PostgreSQL 验收。
