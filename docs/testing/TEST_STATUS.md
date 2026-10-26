@@ -1,14 +1,14 @@
 # 微信商城测试状态
 
 维护日期：2026-10-26，北京时间（Asia/Shanghai，UTC+8）。
-源码审查基线：`b18a5d22974bf52205b542c71d3065d85a8a330e`，分支 `main`。
+本次 B2 执行基线：`edbf0a703940aa75acf97fd7541088773f184ef9`，分支 `main`。既有测试与镜像登记提交为 `b18a5d22974bf52205b542c71d3065d85a8a330e`。
 
 ## 当前结论
 
-**第八轮 B1 已完成；下一阶段是 B2 离线凭据准备，尚未执行。**
+**第八轮 B2 本地凭据、私人回执目录及实例身份准备已完成；首次创建仍需另行授权，尚未执行。**
 官方 PostgreSQL 固定镜像已登记，但这不是独立测试数据库已经创建或商城可以上线的证明。真实 PostgreSQL 迁移、并发、行锁、事务、死锁和故障恢复验收均未完成。
 
-本次仅调查 Git、源码和既有文档并维护五份档案，**未重新执行功能测试、安全测试、构建或类型检查**，未查询 Docker、数据库、微信或 R2。下表的通过数量均为历史运行报告。
+此前档案建立仅调查 Git、源码和文档。本次 B2 实际进行了 Docker/端口只读检查、仓库外凭据创建及 Windows ACL 核验；只更新本文和历史档案。**未重新执行功能测试、安全测试、构建或类型检查**，未连接数据库、微信或 R2。下表的测试通过数量仍均为历史运行报告。
 
 ## 证据分类
 
@@ -18,6 +18,7 @@
 | SRC | 本次阅读实际源码 | 测试对象、断言、参数化定义、权限和执行边界；不能证明运行通过 |
 | HISTORY | 用户提供的执行结果、既有报告或先前执行记录 | 某次历史运行的报告，不是本轮复测或当前环境证明 |
 | DOC-CHECK | 本次文档文件、引用、统计和 Git 范围核对 | 档案一致性，不是商城业务验收 |
+| LOCAL-PREP | B2 实际执行的本地元数据、文件及 Windows ACL 核验 | 此时点的凭据准备与隔离状态，不是 PostgreSQL 运行验收 |
 
 未取得原始 TAP/CI 日志、运行时间或环境凭据时，不补造这些信息。历史报告与源码有出入时同时记载，不能用报告覆盖实际实现。
 
@@ -42,27 +43,31 @@
 - 当前有 001—020 共 20 份 SQL 迁移及 B0 摘要清单。文件存在不等于目标实例已执行。
 - [server.mjs](../../backend/src/server.mjs) 启动监听后会启动库存 worker 和定位保留任务；不能为收集测试证据随意启动或 import 它。
 
-## 下一阶段：B2，仅离线准备
+## B2 实际准备结果（LOCAL-PREP）
 
-待用户另行明确授权后：
+完成时间：`2026-10-26T11:25:52.4300694Z`（北京时间 2026-10-26 19:25:52）；独立回读与 `icacls /verify /T` 随后通过。
 
-1. 在仓库外准备四份不同的 64 位小写十六进制测试密码文件，对应 bootstrap、migrator、app、observer。
-2. 准备仓库外、访问权限受限的私人回执目录，核实已有内容，不自动覆盖旧回执。
-3. 准备全新 v4 实例 UUID；只在档案中记录准备/核验状态，不记录密码、连接串或 secret 内容。
-4. 明确本机 Docker 管理权限独占及凭据保管责任，准备完成后停止。
+- 实例 UUID v4：`43805bf5-1391-4d3f-b8ce-e3bfa9448d48`。
+- 仓库外独占目录：`C:\Users\USER\StallPhase8-Test-43805bf5-1391-4d3f-b8ce-e3bfa9448d48`。
+- 凭据子目录：上述目录下的 `secrets`；文件名为 `admin.secret`、`migrator.secret`、`app.secret`、`observer.secret`，admin 对应 bootstrap 身份。
+- 私人回执子目录：上述目录下的 `receipts`，当前为空，未预造任何启动/初始化回执。
+- 四份密码由 .NET `RandomNumberGenerator` 各生成 32 字节，编码为 64 位小写十六进制；私下回读确认长度、字符集、非空及四者不同。文件无 BOM、无换行；不记录密码或其摘要。
+- 新目录使用带显式安全描述符的独占创建；密码文件使用 `CreateNew` 及显式 ACL 创建，已有对象不会被覆盖或复用。七个对象均为非重解析点、当前用户所有、禁用 ACL 继承，仅当前用户、SYSTEM、BUILTIN Administrators 三个主体拥有 FullControl；独立回读及 ACL 规范性检查通过。管理员权限仍可访问，不能将此描述为抵御本机管理员。
+- 创建前 HEAD 与在线远程 main 均为上述基线，工作区干净。只读快照 `2026-10-26T11:23:15.895Z`：context `desktop-linux`，端点 `npipe:////./pipe/dockerDesktopLinuxEngine`，Engine 29.6.2/Linux；检查 10 个容器、10 个卷、7 个网络，无 Phase8 名称/标签/挂载/项目冲突，固定镜像身份核验通过；55433 无监听且不在 IPv4/IPv6 排除端口范围内。
 
-B2 不等于首次创建：不得因此自动创建容器、卷、网络、数据库或执行迁移。实际创建前还要重新检查 context、固定引用、旧资源、端口及回执，并单独获得授权。
+下一阶段启动入口需要的环境变量**名称**（本次未持久设置或开启）：`STALL_PHASE8_AUTHORIZE`、`STALL_PHASE8_HOST_EXCLUSIVE`、`STALL_PHASE8_START`、`STALL_PHASE8_INSTANCE_ID`、`STALL_PHASE8_DOCKER_EXE`、`STALL_PHASE8_RECEIPT_DIR`、`STALL_PHASE8_ADMIN_PASSWORD_FILE`、`STALL_PHASE8_MIGRATOR_PASSWORD_FILE`、`STALL_PHASE8_APP_PASSWORD_FILE`、`STALL_PHASE8_OBSERVER_PASSWORD_FILE`。不得在档案中写入密码或完整连接串；初始化及数据库测试授权不包含在 B2 中。
+
+B2 不等于首次创建：本次未创建、启动、停止或删除任何 Docker 资源，未下载镜像、连接数据库或执行迁移。实际创建前仍须单独授权，并重新核验 context、固定镜像引用、旧资源、端口、ACL 和回执，确认本机 Docker 管理权限独占。当前资源快照不能消除检查与创建之间的竞争窗口。
 
 ## 尚未完成的验收
 
-- B2 凭据及私人回执目录准备。
 - 专用实例首次创建、真实 bootstrap/角色 ACL、001—020 迁移及 ready/schema 验收。
 - 真实 PG 多连接事务、幂等、最后库存竞争、SKIP LOCKED、死锁和未知 COMMIT 结果恢复。
 - 微信登录/权限、R2 私有对象、顾客与商家全链路、三种构建和真机验收。
 - 客户负责的支付/退款模块、可信通知及对账联调。
 - 数据库与图片实体协调备份、隔离恢复演练、生产部署和交付签收。
 
-详见 [覆盖矩阵](TEST_COVERAGE.md)、[问题与风险](KNOWN_ISSUES.md)、[发布验收清单](RELEASE_CHECKLIST.md)。
+详见 [覆盖矩阵](TEST_COVERAGE.md)、[问题与风险](KNOWN_ISSUES.md)、[发布验收清单](RELEASE_CHECKLIST.md)。这三份文件保留 B1 档案建立时的快照；本轮授权仅更新状态与历史两份文档，B2 准备进度以本文及 [B2 实际记录](TEST_HISTORY.md#6-第八轮-b2实际离线凭据准备) 为准。
 
 ## 持续维护规则
 
