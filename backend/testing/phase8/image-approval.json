@@ -1,9 +1,9 @@
 {
-  "approved": false,
+  "approved": true,
   "repository": "postgres:16-alpine",
-  "digest": null,
-  "imageId": null,
-  "reviewedBy": null,
-  "reviewedAt": null,
-  "note": "B0 offline placeholder. No image has been inspected or approved. Startup MUST refuse."
+  "digest": "sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+  "imageId": "sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+  "reviewedBy": "依据用户提供的官方 Registry 核验报告，由项目维护方授权登记",
+  "reviewedAt": "2026-10-26T10:33:23.210Z",
+  "note": "固定已核验的 Docker Official Image Registry 历史 OCI 多架构索引摘要，仅用于本机 linux/amd64 的 Phase8 隔离测试（PostgreSQL 16.15，Alpine 3.24）。官方历史索引、amd64 平台清单 sha256:cbf42f0edc946c0bc1b8eeed62403734e1f25dc67a3491455d07a92fdb558b28 及配置摘要 sha256:6a2e324ebe59af6031c4c1cd96c1d5072c2ebc36563d2196365e43b8297c062d 已核验；当前浮动标签已更新而 amd64 清单未变。本地 Image ID 与索引摘要相同，不作为独立来源证明。来源核验不等于逐层本地内容重算、漏洞审计或 PostgreSQL 运行验证。本次仅授权登记，不授权容器、数据库或迁移操作；登记前 B0 的 tag+digest 固定引用曾解析失败，登记后真实 ensureImage 复核通过；该差异原因未确定，首次创建前仍须重新核验。"
 }

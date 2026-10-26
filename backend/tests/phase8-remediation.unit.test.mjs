@@ -1,7 +1,7 @@
 // B0 remediation: pure safety/orchestration tests. NO Docker or PostgreSQL.
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { accessConfig, assertResources, TARGET } from '../testing/phase8/policy.mjs'
+import { accessConfig, approvedImage, assertResources, TARGET } from '../testing/phase8/policy.mjs'
 import { env,resources,approval,nonce } from './helpers/phase8-fixtures.mjs'
 import { controlledLaunch } from '../testing/phase8/launch.mjs'
 import { createDocker } from '../testing/phase8/docker.mjs'
@@ -85,11 +85,45 @@ test('R-P1 inspect cannot expose any Pool even with otherwise valid access autho
  await assert.rejects(()=>openVerifiedPool(env()),e=>e.phase8Code==='phase8_inspect_pool_not_exposed')
  const c=accessConfig(env(),'observer','inspect',approval);assert.equal(c.pg.user,'stall_test_observer')
 })
-test('R-P3 actual unapproved image file blocks controlled launch before any IO',async()=>{
- const io=launchIO();io.approval=await loadImageApproval()
+test('R-P3 synthetic unapproved image blocks controlled launch before any IO',async()=>{
+ // Approval is mutable operational state; this rejection case owns its fixture.
+ const io=launchIO();io.approval={...structuredClone(approval),approved:false}
  assert.equal(io.approval.approved,false)
  await assert.rejects(()=>controlledLaunch(env(),'first',io),e=>e.phase8Code==='phase8_image_not_approved');assert.deepEqual(io.calls,[])
 })
+test('R-P3 valid synthetic approval yields the exact pinned image identity',()=>{
+ const candidate=structuredClone(approval)
+ assert.deepEqual(approvedImage(candidate),{
+  reference:candidate.repository+'@'+candidate.digest,imageId:candidate.imageId
+ })
+ assert.equal(accessConfig(env(),'app','test',candidate).image.imageId,candidate.imageId)
+ assert.deepEqual(candidate,approval)
+})
+
+for(const [label,change] of [
+ ['missing approval',{approved:undefined}],['nonboolean approval',{approved:'true'}],
+ ['unexpected repository',{repository:'postgres:latest'}],
+ ['invalid index digest',{digest:'sha256:'+'c'.repeat(63)}],['missing index digest',{digest:null}],
+ ['invalid local image ID',{imageId:'sha256:'+'g'.repeat(64)}],['missing local image ID',{imageId:null}],
+ ['missing reviewer',{reviewedBy:undefined}],['blank reviewer',{reviewedBy:'  '}],
+ ['missing review timestamp',{reviewedAt:undefined}],['invalid review timestamp',{reviewedAt:'not-a-review-timestamp'}]
+])test('R-P3 '+label+' is rejected before any launch IO',async()=>{
+ const io=launchIO();io.approval={...structuredClone(approval),...change}
+ rejects(()=>approvedImage(io.approval),'phase8_image_not_approved')
+ await assert.rejects(()=>controlledLaunch(env(),'first',io),e=>e.phase8Code==='phase8_image_not_approved')
+ assert.deepEqual(io.calls,[])
+})
+
+test('R-P3 real approval record is policy-consistent without fixing its approval state',async()=>{
+ const record=await loadImageApproval()
+ assert.equal(typeof record.approved,'boolean');assert.equal(record.repository,TARGET.image)
+ if(record.approved){
+  assert.deepEqual(approvedImage(record),{reference:record.repository+'@'+record.digest,imageId:record.imageId})
+ }else{
+  rejects(()=>approvedImage(record),'phase8_image_not_approved')
+ }
+})
+
 test('R-P2 Docker always receives an explicit sanitized environment and pinned endpoint',async()=>{
  const calls=[],e=env();e.DATABASE_URL='SYNTHETIC_PARENT_DATABASE';e.PGHOST='SYNTHETIC_PARENT_HOST'
  const d=createDocker(e,async(executable,args,options)=>{calls.push({executable,args,options});return {stdout:JSON.stringify([{Name:'local',Endpoints:{docker:{Host:'npipe:////./pipe/dockerDesktopLinuxEngine'}}}])}})
