@@ -11,7 +11,9 @@
 
 B2 记录已提交为 `3051359520a8cb997908d4c000d65cfb6318061a`，也是本次 B3 基线，初查开始时工作区干净。B3 初查仅做只读复核并保留两份未提交档案；随后用户另行授权固定引用兼容修复。第 7 节保留初查失败，第 8 节记录最小修复及实际验证；均未修改凭据、ACL或镜像审核，未创建实例。
 
-标记口径：GIT＝确认提交及Diff；SRC＝确认源码定义；HISTORY＝用户提供或既有执行报告；DOC-CHECK＝文档一致性检查；LOCAL-PREP＝B2 实际本地准备与核验；B3-CHECK＝本次只读环境核验/离线检查。此前轮次数字为 HISTORY，第 7 节 124 项及第 8 节修复后 138 项为各次实际复测，不与历史重复累加。Git中存在真实数据库探针的早期提交，也不能证明它们运行过或Phase8实例已创建。
+上述镜像兼容修复已提交为 `85cceff85b8053cc5973a5f58b2f4964c5bf1f80`。本次用户明确授权一次受控首次创建；以该 SHA、干净 main 开始，第 9 节记录实际创建和启动后验收失败。此前“未创建”属于当时快照，不能覆盖当前部分创建现场。
+
+标记口径：GIT＝确认提交及Diff；SRC＝确认源码定义；HISTORY＝用户提供或既有执行报告；DOC-CHECK＝文档一致性检查；LOCAL-PREP＝B2 实际本地准备与核验；B3-CHECK＝只读环境核验/离线检查；B3-CREATE＝本次真实受控创建和失败后取证。第 7 节 124 项及第 8 节 138 项为各次复测，本次未重跑，不重复累加；本次 bootstrap 写入也不是业务 SQL 集成测试通过。
 
 配套档案：[当前状态](TEST_STATUS.md)、[覆盖矩阵](TEST_COVERAGE.md)、[问题清单](KNOWN_ISSUES.md)、[发布清单](RELEASE_CHECKLIST.md)。
 
@@ -28,6 +30,7 @@ B2 记录已提交为 `3051359520a8cb997908d4c000d65cfb6318061a`，也是本次 
 | 第八轮 B2：离线凭据准备 | **已完成（LOCAL-PREP）** | 四份不同的 64 位小写十六进制凭据、七个对象的受限 ACL、空回执目录核验通过 | 见第 6 节；未启动 Phase8 容器或连接数据库，不是数据库测试通过 |
 | 第八轮 B3：首次创建前初查 | 历史阻塞保留，未创建 | 初查离线安全测试 124/0/0；真实固定引用 inspect 失败 | 见第 7 节；不抹去失败记录 |
 | 第八轮 B3：固定引用兼容修复 | **镜像阻塞已解除，未创建** | 本次新增 14 项，138/0/0；受控 ensureImage 连续 3 次真实只读核验通过 | 见第 8 节；首次创建及数据库测试尚未执行 |
+| 第八轮 B3：本次受控首次创建 | **部分创建，启动后验收失败** | 仅执行一次，退出 1：phase8_port_binding_rejected；容器 running/healthy，回执 failed | 第 9 节；bootstrap 有完成日志，未独立 SQL 核验；001—020 未执行 |
 | 真实 PostgreSQL 业务集成测试 | **未执行** | 无 | 尚未执行真实迁移、并发、事务、索引与约束验证 |
 | 真机、支付及生产交付验收 | **未完成** | 无法从现有记录确认通过 | 不可据此认定可正式上线 |
 
@@ -184,17 +187,34 @@ B2 记录已提交为 `3051359520a8cb997908d4c000d65cfb6318061a`，也是本次 
 - **结论：首次创建前的镜像阻塞已解除；首次创建尚未执行。**仍须单独授权，并在实际动作前重新检查端点、资源/端口、材料 ACL 和空回执，确认 Docker 管理权限独占。bootstrap 是真实内部初始化写入，001—020 迁移另行授权，created_verified 不等于 ready；这些边界保留。
 - 本次仅修改 policy、bootstrap-entrypoint、合成夹具、整改测试及两份档案；未修改商城业务、真实凭据/ACL、审核记录或 Compose/launch/回执代码。全部验证和秘密/范围检查通过后，按本次授权以 `fix(test-postgres): resolve pinned image reference compatibility` 提交并普通推送，具体 SHA 以 Git 为准，不预填未生成的提交。
 
-## 9. 当前阻塞与下一步
+## 9. 第八轮 B3：受控首次创建实际记录（启动后验收失败）
+
+- 日期：2026-10-26；以下操作时刻以 UTC 记录，北京时间为 UTC+8。基线 `85cceff85b8053cc5973a5f58b2f4964c5bf1f80`、main，开始工作区干净。只授权专用资源首次创建和必要 initdb/建库/bootstrap，不授权 001—020 迁移或业务写入型测试。
+- 用户在执行前明确确认“本次窗口仅由当前任务管理 Docker”；现有其他项目容器可继续运行。只读机器检查无法独立证明没有其他人员/自动化，使用该用户确认作为 HOST_EXCLUSIVE 的操作性依据，未声称防御管理员或消除竞争。
+- 预检通过，快照 `2026-10-26T12:02:44.578Z`：desktop-linux，本机 npipe 端点、Linux Engine 29.6.2、固定 postgres@digest、原批准 Image ID/linux/amd64 均一致。枚举全部容器/卷/网络及 Compose 项目，原数量 10/10/7，无 Phase8 旧资源、标签、挂载或项目冲突；原商城、Glyphora 等项目保留。55433 无 TCP 占用或 IPv4/IPv6 排除范围冲突。
+- B2 材料：UUID `43805bf5-1391-4d3f-b8ce-e3bfa9448d48` 与原仓库外目录一致；四份密码各 64 字节、小写十六进制、彼此不同，七个原对象所有权/受保护 ACL 验证通过；receipts 原为空。未重新生成、覆盖密码或修改 ACL。
+- 唯一受控命令 `node backend/scripts/start-test-db.mjs --create-first` 于 `2026-10-26T12:03:29.831Z` 开始，`2026-10-26T12:03:50.297Z` 结束；仅在子进程设置源码规定的 AUTHORIZE、INSTANCE_ID、DOCKER_EXE、HOST_EXCLUSIVE、RECEIPT_DIR、START 和四份 PASSWORD_FILE 路径。密码未进入 argv/输出/Git，无全局环境或生产配置修改。
+- 实际结果：退出码 1、`phase8_port_binding_rejected`；没有 signal/子进程超时，未重试。受控入口已完成资源创建并执行 container start，失败在 `launch.mjs` 启动后的 `assertResources` 运行态门槛，不是镜像解析或启动前失败。不能把命令运行过或数据库 healthy 写成 created_verified。
+- 容器 `stall-phase8-pg16`：ID `355ecc6045fa467319f906363d521a8c764ed1aabde737a3ca364847b89cfd06`，启动时间 `2026-10-26T12:03:45.995727695Z`；`12:05:07.344Z` 和 `12:11:05.059Z` 只读核验为 running/healthy，restart policy=no。镜像 `postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36` 及批准 Image ID 匹配。
+- 卷 `stall-phase8-data` 为 local；网络 `stall-phase8-network` 为 internal bridge，ID `7918eeb7a1a787d8c4afb1871beecd1d36e61e16ba7d9fe52c0cc9a2227766af`，一个目标容器成员。实际总数 11 容器/11 卷/8 网络。资源项目/scope/实例 UUID/nonce 标签与私人回执一致，不记录 nonce 明文。数据卷专用，七个 bind（四个 secret、两个脚本、启动回执）均只读，源路径为原 B2 材料和仓库脚本；bootstrap.sh 在 inspect 中显示 Docker Desktop 的等价 host/c 路径，未指向其他项目。
+- 端口失败证据：HostConfig.PortBindings 配置准确为 `{"5432/tcp":[{"HostIp":"127.0.0.1","HostPort":"55433"}]}`；运行态 NetworkSettings.Ports 却为 `{"5432/tcp":[]}`，Windows 本机 55433 无 TCP 端点。重新调用真实运行态 assertResources（仅传入已读元数据）仍拒绝同一错误。配置不等于实际发布；Engine/网络层成因尚未确认，不自动放宽安全策略、改 internal、换端口或尝试重启。
+- 私人回执：原 receipts 下新建 `stall-phase8-b0.json`、`stall-phase8-b0.launch`；JSON 为 failed，容器 ID 与实际匹配；启动文件 MODE/实例/镜像/nonce 与 JSON 和资源标签一致。仅回执一致性/状态进入档案，不复制其内容或令牌。目录仍禁用 ACL 继承；新文件继承受限父目录的当前用户/SYSTEM/Administrators FullControl、当前用户所有，未出现额外主体或修改 ACL。
+- bootstrap 日志：只读取目标容器日志，在内存检查白名单，存在 `Phase8 bootstrap complete; business migrations NOT initialized.`、官方 init process complete 和 server ready 标记。原 bootstrap 脚本在 SQL COMMIT 后才打印完成标记，故可报告日志显示 bootstrap 已完成，且有真实 initdb/建库/角色和标识初始化写入；没有独立 SQL 身份/角色/持久标识核验，也不声明 ready。当前公开 observer 核验入口要求业务 schema ready，不能拿来当无迁移 bootstrap 入口，因此未调用、未直接连接 PostgreSQL。
+- 其他项目比较：原 10 个容器的 ID/运行状态/镜像配置/标签/挂载/端口配置以及 10 个卷静态身份一致，其他具名项目网络一致。但默认 bridge 的 ID 从 `9b4155efccc80a9c280a988914356b99c12f0c9a0995334df2fe71bbc36e0984` 变成 `47aa819ea371964586f64f3f7dafe864e14af45a879fb64c01bb075ae53c876f`；其驱动/internal/标签/空成员身份摘要一致。Phase8 未连接该 bridge，受控入口没有变更它的指令，但成因未确认，不能保证其他环境完全无影响。有界 Docker events 返回最近 256 条、主要是健康探测 exec，未保留创建早期全过程，不能由缺失事件推导“无变化”。没有清理、修复或回退该差异。
+- 本轮没有重新运行 138 项单元测试或任何业务测试；未执行业务迁移、主机 SQL 查询、后端/库存/追踪 worker、支付/R2 操作、部署。失败后只读 inspect/logs/events/Windows ACL/端口；未停止、删除、重建、重新启动容器、卷或网络，未改源码、配置、凭据或 ACL。
+- **结论：保留部分创建的运行容器、卷、网络和 failed 回执，停止并等待人工审查。**created_verified 未获得，bootstrap 仅有完成日志证据，ready 未获得；不具备进入 B4 迁移准备的条件。下一步应先审查运行态端口、默认 bridge ID 差异和失败回执处置，再单独授权后续行动，不得再次 --create-first 或自动修复。本次无论失败仍按授权永久提交两份非秘密档案；提交 SHA/普通 push 结果以实际 Git 为准。
+
+## 10. 当前阻塞与下一步
 
 1. **已完成：B1过时断言修复**。真实文件不再永久绑定未批准状态，安全拒绝断言保留；124/0/0为历史报告。
 2. **已完成：B1审核登记与修复提交**。Git确认提交 `b18a5d22974bf52205b542c71d3065d85a8a330e`；本轮档案提交前仍要核对远程没有意外推进。
 3. **已完成：B2离线凭据准备**：本次实际创建四份凭据、受限回执目录及新的 v4 UUID，独立回读核验通过。具体非秘密证据见第 6 节；严禁将密码或完整连接串提交仓库。
 4. **已解除：B3 固定引用兼容阻塞**：最小修复已获授权并验证，使用标准 postgres@digest，审核渠道、Image ID、完整 digest 和 ensureImage 身份核验仍保留。未批准浮动标签回退或镜像升级。
-5. **首次创建另行授权**：阻塞解除后，再次核对本机 Docker、镜像、资源/端口和回执，仅用受控入口创建测试容器；不得直接 `docker compose up`，不得触碰 `stall_dev` 或其他项目数据。首次启动有真实 bootstrap 写入，须明确授权范围。
+5. **本次首次创建部分成功但验收失败**：仅一次受控执行，容器 healthy、bootstrap 有完成日志，但运行态端口拒绝，回执 failed；默认 bridge ID 变化待查。先人工审查现场，不得重试、清理、自动修复或进入 B4；不把 healthy 当作 created_verified/ready。
 6. **迁移及真实数据库测试另行授权**：执行 20 份迁移和只读 schema/身份检查后，才能验证业务并发、锁、约束、订单/库存一致性。
 7. **最终上线验收**：支付/收款流程、商家/顾客端真机测试、备份恢复、生产部署、安全与权限等均需独立验收；不能因测试设施准备完毕直接交付商家。
 
-## 10. 后续每轮记录规范
+## 11. 后续每轮记录规范
 
 以后每次测试在此文件追加一个记录块，至少写明：
 
