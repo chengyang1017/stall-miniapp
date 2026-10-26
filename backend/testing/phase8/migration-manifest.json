@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "hashEncoding": "utf8-lf",
+  "files": [
+    {
+      "filename": "001_init.sql",
+      "sha256": "7876a187d0561585759e54e19247908290b13be58e3709c867df5869993d292c",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "002_auth.sql",
+      "sha256": "a2370a4e9bbcd9511ed6037431dc68d8b0807db9de713ee180877283c1a911c5",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "003_checkout.sql",
+      "sha256": "5fe3ee17a75e69905f1bb38802bd4ebd5cd2515d72b06645189391db8923f453",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "004_delivery_rules.sql",
+      "sha256": "52e1987396be58b96251812982b27180ae0e45ad3e55e996399b7885f64260ec",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "005_order_workflow.sql",
+      "sha256": "795f2f3c37833d60aacd85a91e8b793ebe8cd10683ff252845ae67d6e76484f6",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "006_product_description_discount.sql",
+      "sha256": "e17d68a733f170126941d0d7d11eb6cc4415497926744947924b927ffb1df52e",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "007_order_estimated_arrival.sql",
+      "sha256": "7aeb4830afb9ac11932227afe8c7067dd78d8c35ba162c79b6595086eddd9400",
+      "transaction": "bare"
+    },
+    {
+      "filename": "008_product_drafts_scheduling.sql",
+      "sha256": "1db370619a769be167bb97510a132f99f3ee959a029332dd493556081c3ebf3d",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "009_product_inventory.sql",
+      "sha256": "795a066f6acaf73cbfaeb469a0f7f504cb701a4d4831a4dd7ca0295daaddfa03",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "010_merchant_product_search_indexes.sql",
+      "sha256": "b1d481535ddd3e35dc397f954c77ba2bfa0a4d614cab950290084868ab686f7c",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "011_sales_analytics.sql",
+      "sha256": "82ff68d268ff7ad6ee33f7e6716bab074588e659943a3278cb7e94f0e0730802",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "012_merchant_order_query_indexes.sql",
+      "sha256": "b4ec8ab2849cc6b76995bf094013269512873907779633ddc299623725926194",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "013_support_messages.sql",
+      "sha256": "c5a62fbc3102f1568b73edba7ecda8fa11f61d9333a859433829d0b6b451e7d1",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "014_merchant_archives.sql",
+      "sha256": "23b57ba1a9d019b5ba1eb7dfcd99bd6d8b7e6e98c2a29b3263105faccc063c4f",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "015_image_lifecycle.sql",
+      "sha256": "aad5e4848ce31fc4c70bea6b64dcd47258c337cd25299ce609fc2dac7e58add7",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "016_customer_addresses_store_presentation.sql",
+      "sha256": "7564cc6962eee9e2ad2b2a917f3164c33b4d8e9ed78ace209e5fba475d0d2c64",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "017_customer_paging_product_create.sql",
+      "sha256": "c484ef8290f743272c20009e0f914253391df848ac241e9709683324512cdc8a",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "018_store_code_merchant_note.sql",
+      "sha256": "60bb88ef084ab986b69cd2de6ec7d78e3da90ae2280a3680b99d4f59f5c0d89f",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "019_delivery_tracking.sql",
+      "sha256": "9986c343cbb91a248fbe188d7871cd2c1d541f9de63992e295495d7d145a8493",
+      "transaction": "wrapped"
+    },
+    {
+      "filename": "020_product_reviews.sql",
+      "sha256": "1e85844b54c5f63dd67247093d6d08b57b90108390a354e4dbcaac3ebb59c0d8",
+      "transaction": "wrapped"
+    }
+  ]
+}

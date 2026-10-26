@@ -1,0 +1,2 @@
+*.sh text eol=lf
+migration-manifest.json text eol=lf

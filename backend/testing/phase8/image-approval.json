@@ -1,0 +1,9 @@
+{
+  "approved": false,
+  "repository": "postgres:16-alpine",
+  "digest": null,
+  "imageId": null,
+  "reviewedBy": null,
+  "reviewedAt": null,
+  "note": "B0 offline placeholder. No image has been inspected or approved. Startup MUST refuse."
+}
