@@ -1,14 +1,16 @@
 # 微信商城测试状态
 
 维护日期：2026-10-26，北京时间（Asia/Shanghai，UTC+8）。
-本次受控首次创建基线：`85cceff85b8053cc5973a5f58b2f4964c5bf1f80`，分支 `main`，开始时工作区干净；该提交已修复镜像引用并包含 B3 初查档案。此前检查/兼容修复基线为 `3051359520a8cb997908d4c000d65cfb6318061a`，B2 执行基线为 `edbf0a703940aa75acf97fd7541088773f184ef9`。
+本次只读故障诊断基线：`934a2039b9b5dd6e6971c2d1b71cbcaae84842a6`，main，开始工作区干净；该提交永久保存首次创建失败档案。创建时基线为 `85cceff85b8053cc5973a5f58b2f4964c5bf1f80`，此前记录保留。
 
 ## 当前结论
 
 **B3 已按明确授权执行一次受控首次创建，但启动后验收失败：phase8_port_binding_rejected。容器已运行且 healthy，专用卷/网络及 bootstrap 已产生；回执为 failed，未达到 created_verified，更不是 ready。保留现场，禁止盲目重试或进入 B4 迁移。**
+
+只读诊断补充：Compose 的请求正确；当前 Engine 的 internal-only 网络没有实际建立所需的宿主 NAT 端口映射，是 B0 网络设计与宿主访问要求的冲突，不是只需放宽元数据断言。默认 bridge 的重建已找到首次创建命令之前的 Engine 启动/缓存同步证据；不能据此推断数据损坏，也未验证其他应用全链路无影响。详见下方诊断及历史第 10 节。
 批准镜像未变，001—020 商城业务迁移未执行；真实 PostgreSQL 业务并发、行锁、事务、死锁和故障恢复验收均未完成。bootstrap 完成来自容器日志标记，尚未独立执行 SQL 身份/状态核验。
 
-本次新增操作仅为受控首次创建及必要 initdb/建库/bootstrap，失败后仅做只读 Docker/日志/回执检查并更新两份档案。没有单独从主机连接 PostgreSQL、执行业务迁移、修改凭据/ACL/源码、启动商城或 worker；未重跑安全单元、商城功能测试、构建或类型检查。下表保留此前各次测试证据，不把本次容器部分创建当作测试通过。
+首次创建阶段有已授权的 initdb/建库/bootstrap 写入；本次诊断只读取 Docker/Windows 元数据、本地日志和私人回执，并查阅官方资料，更新三份测试文档。未执行修复、容器操作、SQL、迁移、测试、配置或凭据修改，不把 healthy 或只读诊断当作业务验收。
 
 ## 证据分类
 
@@ -101,6 +103,16 @@ B2 不等于首次创建：本次未创建、启动、停止或删除任何 Dock
 - 其他项目：既有 10 个容器的 ID/运行状态/静态配置、10 个卷以及具名项目网络快照一致；**默认 bridge ID 从 `9b4155efccc80a9c280a988914356b99c12f0c9a0995334df2fe71bbc36e0984` 变为 `47aa819ea371964586f64f3f7dafe864e14af45a879fb64c01bb075ae53c876f`**。其驱动、标签、internal 状态和空成员快照一致，Phase8 容器未连接它。ID 变化原因未确认；受控代码未发出该网络变更指令，不能据此保证完全无影响。Docker events 只保留所查询窗口最近 256 条，主要为 healthcheck exec，未覆盖创建早期，不能用缺少事件排除风险。
 - **下一步：停止，待人工审查端口失败、默认 bridge 差异及 failed 回执处置。**未达到 B4 迁移准备条件；不得删除/清空现场或再次 --create-first。created_verified 未获得，ready 未获得；本次只提交两份非秘密档案以永久保存失败事实。
 
+## B3 只读诊断结论（故障尚未修复）
+
+- 现场快照 `2026-10-26T12:48:25.070Z`：同一容器/镜像/UUID/卷/网络，running、healthy、RestartCount=0、StartedAt 未变；failed 回执容器 ID/nonce 标签一致，mtime 仍为 `12:03:50.272Z`。Config.ExposedPorts 有 5432/tcp，HostConfig 有准确 loopback 绑定，NetworkSettings.Ports 为 `{"5432/tcp":[]}`，docker port 无输出，Windows Get-NetTCPConnection/netstat 均无 55433。确认实际未发布，不只是展示差异。
+- 内网机制：仅连接 `stall-phase8-network`，Internal=true、bridge、IPv4、未另设 gateway_mode；IPAM 有网关配置，但容器 endpoint Gateway 为空。匹配 Engine 29.6.2/Git `3d80467` 的 [bridge 驱动源码](https://github.com/moby/moby/blob/3d80467/daemon/libnetwork/drivers/bridge/bridge_linux.go#L1350) 对 internal 不设置 endpoint gateway，[端口映射源码](https://github.com/moby/moby/blob/3d80467/daemon/libnetwork/drivers/bridge/port_mapping_linux.go#L201) 按 gateway/NAT 条件选择绑定；本例条件不给出 host mapping。已有 [Moby 同版本讨论](https://github.com/moby/moby/discussions/53256) 报告同型现象。没有实施改网络 A/B 实验，也未读取 VM 防火墙，不能排除附加问题或宣称 Desktop 独有回归；但当前设计冲突已有足够代码与现场依据。
+- healthy 来自容器内部 pg_isready，不检查 Windows 55433。启动器 start 后核对运行态端口并失败，catch 保存 failed；两者同时成立符合代码顺序，不能修改 policy 来把空映射当作成功。
+- bridge 原因已缩小：Desktop 日志明确 `12:02:36.895Z` stopped→starting，daemon `12:02:42.386Z` 启动；新默认 bridge Created=`12:02:43.431Z`，`12:02:43.881Z` resyncer 注销旧 ID、登记新 ID；受控首次创建到 `12:03:29.831Z` 才开始。[同版本 daemon 源码](https://github.com/moby/moby/blob/3d80467/daemon/daemon_unix.go#L801) 在无活跃 sandbox 的初始化路径清除旧默认 bridge 再重建。旧 ID 曾由 Desktop API cache 提供，原清单不是原子快照。日志有恢复休眠及 cgroup pause 错误，但“为何原先停止、哪个请求唤醒、是否必须归因 Resource Saver”仍未确认。
+- 所有现有其他项目容器当前 exited、使用各自具名网络；默认 bridge 当前无成员，也没有容器配置指向它。未见数据损坏证据，未读取任何数据库，不能证明历史服务完全无影响。
+- 仅分析的选择：保留 DB internal、将测试运行器放到该网络；或保留 DB internal 另设受限双网卡 TCP 代理；或改用专用普通 bridge 并补齐可验证的出口/跨项目隔离。各方案都会改变已批准拓扑/身份规则，必须另行审查授权；没有证据表明原拓扑只靠重启或升级可解。
+- 现有启动器不提供 failed 实例接管/恢复：first 有 wx 与非空 PGDATA 保护；restart 拒绝 failed 回执、要求停止容器并在启动后验 ready。不能调用它探路，不能删旧回执或改写成功。后续需设计显式、留存原失败证据的恢复/核验入口，端口与 bootstrap 身份验收通过后才讨论 B4；本轮不实施。
+
 ## 尚未完成的验收
 
 - 处理本次启动后运行态端口失败、默认 bridge 身份变化以及 failed 回执，取得受控资源完整验收；不得自动修复/重试。
@@ -110,7 +122,7 @@ B2 不等于首次创建：本次未创建、启动、停止或删除任何 Dock
 - 客户负责的支付/退款模块、可信通知及对账联调。
 - 数据库与图片实体协调备份、隔离恢复演练、生产部署和交付签收。
 
-详见 [覆盖矩阵](TEST_COVERAGE.md)、[问题与风险](KNOWN_ISSUES.md)、[发布验收清单](RELEASE_CHECKLIST.md)。这三份文件保留 B1 档案建立时的快照；本轮授权仅更新状态与历史两份文档，最新进度以本文及历史中的 B2/B3 实际记录为准。
+详见 [问题与风险](KNOWN_ISSUES.md)（本次同步 B3 诊断）、[覆盖矩阵](TEST_COVERAGE.md) 与 [发布验收清单](RELEASE_CHECKLIST.md)（后两份保留早期快照）。最新进度以状态、历史和问题清单为准；未扩大到修改业务源码或配置。
 
 ## 持续维护规则
 

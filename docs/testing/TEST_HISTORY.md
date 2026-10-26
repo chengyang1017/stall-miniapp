@@ -13,6 +13,8 @@ B2 记录已提交为 `3051359520a8cb997908d4c000d65cfb6318061a`，也是本次 
 
 上述镜像兼容修复已提交为 `85cceff85b8053cc5973a5f58b2f4964c5bf1f80`。本次用户明确授权一次受控首次创建；以该 SHA、干净 main 开始，第 9 节记录实际创建和启动后验收失败。此前“未创建”属于当时快照，不能覆盖当前部分创建现场。
 
+第 9 节已随 `934a2039b9b5dd6e6971c2d1b71cbcaae84842a6` 提交并推送；本次以该基线、干净 main 仅做故障诊断，见第 10 节。旧结论保留并由新增证据补充，不修改失败回执、启动代码或容器。
+
 标记口径：GIT＝确认提交及Diff；SRC＝确认源码定义；HISTORY＝用户提供或既有执行报告；DOC-CHECK＝文档一致性检查；LOCAL-PREP＝B2 实际本地准备与核验；B3-CHECK＝只读环境核验/离线检查；B3-CREATE＝本次真实受控创建和失败后取证。第 7 节 124 项及第 8 节 138 项为各次复测，本次未重跑，不重复累加；本次 bootstrap 写入也不是业务 SQL 集成测试通过。
 
 配套档案：[当前状态](TEST_STATUS.md)、[覆盖矩阵](TEST_COVERAGE.md)、[问题清单](KNOWN_ISSUES.md)、[发布清单](RELEASE_CHECKLIST.md)。
@@ -31,6 +33,7 @@ B2 记录已提交为 `3051359520a8cb997908d4c000d65cfb6318061a`，也是本次 
 | 第八轮 B3：首次创建前初查 | 历史阻塞保留，未创建 | 初查离线安全测试 124/0/0；真实固定引用 inspect 失败 | 见第 7 节；不抹去失败记录 |
 | 第八轮 B3：固定引用兼容修复 | **镜像阻塞已解除，未创建** | 本次新增 14 项，138/0/0；受控 ensureImage 连续 3 次真实只读核验通过 | 见第 8 节；首次创建及数据库测试尚未执行 |
 | 第八轮 B3：本次受控首次创建 | **部分创建，启动后验收失败** | 仅执行一次，退出 1：phase8_port_binding_rejected；容器 running/healthy，回执 failed | 第 9 节；bootstrap 有完成日志，未独立 SQL 核验；001—020 未执行 |
+| 第八轮 B3：只读故障诊断 | 原拓扑端口发布冲突有代码及现场证据，未修复 | Compose 请求正确；实际未发布；bridge 重建发生于先前 Engine 初始化 | 第 10 节；无新测试通过数，failed 和 B4 禁止边界保留 |
 | 真实 PostgreSQL 业务集成测试 | **未执行** | 无 | 尚未执行真实迁移、并发、事务、索引与约束验证 |
 | 真机、支付及生产交付验收 | **未完成** | 无法从现有记录确认通过 | 不可据此认定可正式上线 |
 
@@ -204,17 +207,72 @@ B2 记录已提交为 `3051359520a8cb997908d4c000d65cfb6318061a`，也是本次 
 - 本轮没有重新运行 138 项单元测试或任何业务测试；未执行业务迁移、主机 SQL 查询、后端/库存/追踪 worker、支付/R2 操作、部署。失败后只读 inspect/logs/events/Windows ACL/端口；未停止、删除、重建、重新启动容器、卷或网络，未改源码、配置、凭据或 ACL。
 - **结论：保留部分创建的运行容器、卷、网络和 failed 回执，停止并等待人工审查。**created_verified 未获得，bootstrap 仅有完成日志证据，ready 未获得；不具备进入 B4 迁移准备的条件。下一步应先审查运行态端口、默认 bridge ID 差异和失败回执处置，再单独授权后续行动，不得再次 --create-first 或自动修复。本次无论失败仍按授权永久提交两份非秘密档案；提交 SHA/普通 push 结果以实际 Git 为准。
 
-## 10. 当前阻塞与下一步
+## 10. 第八轮 B3：首次创建失败的只读诊断
+
+### 10.1 范围与现场
+
+- Git 基线 `934a2039b9b5dd6e6971c2d1b71cbcaae84842a6`，main，开始工作区干净。2026-10-26，只读 Docker inspect/port/info/version/logs/events、Windows 监听/本地 Docker Desktop 日志及必要非秘密设置字段；另行查阅 Docker 文档与 Moby 源码/问题记录。不启动或停止任何资源，不执行 SQL/迁移/业务测试，不修改源代码、设置、密码、UUID、ACL或回执。
+- 快照 `12:48:25.070Z`：context desktop-linux、本机 npipe；Engine 29.6.2、GitCommit `3d80467`、Docker Desktop/WSL2 kernel `6.18.33.2-microsoft-standard-WSL2`、LiveRestore=false；网络无显式 gateway_mode 覆盖。容器仍为第 9 节相同 ID、镜像、UUID、专用卷/网络；running、healthy、RestartCount=0、StartedAt=`12:03:45.995727695Z` 未变。数据库内容未读取，不据此证明迁移/业务正确。
+
+### 10.2 端口原因：请求已保存，实际未映射
+
+| 检查 | 本次证据 | 结论 |
+| --- | --- | --- |
+| Config.ExposedPorts | 5432/tcp 存在 | 声明暴露，不等于宿主发布 |
+| HostConfig.PortBindings | 127.0.0.1:55433 → 5432/tcp | Compose 将正确请求提交并被 Engine 保存 |
+| NetworkSettings.Ports | `{"5432/tcp":[]}` | 无实际返回的宿主映射 |
+| Networks / NetworkMode | 唯一 stall-phase8-network；Internal=true、bridge、IPv4 | 没有其他外部 gateway endpoint |
+| 网络/endpoint 网关 | IPAM 有 172.22.0.1，endpoint Gateway 为空 | IPAM 子网配置不等于 endpoint 默认路由 |
+| docker port | 空输出 | 与运行态 inspect 一致 |
+| Windows Get-NetTCPConnection/netstat | 55433 均无结果 | 不只是 JSON 形式变化；未进行 TCP/SQL 连接探测 |
+| 现有 policy | 真实 assertResources 再次返回 phase8_port_binding_rejected | 正确拒绝实际不符合承诺的端口；不降低规则 |
+
+- 与本机 GitCommit 对应的 [Moby bridge_linux.go](https://github.com/moby/moby/blob/3d80467/daemon/libnetwork/drivers/bridge/bridge_linux.go#L1350)：internal endpoint 不设置 gateway；ProgramExternalConnectivity 根据 gateway endpoint 决定 IPv4/IPv6 绑定。配合 [default_gateway.go](https://github.com/moby/moby/blob/3d80467/daemon/libnetwork/default_gateway.go#L107) 对 internal 的默认网关处理和 [port_mapping_linux.go](https://github.com/moby/moby/blob/3d80467/daemon/libnetwork/drivers/bridge/port_mapping_linux.go#L187) 的选择条件，解释本例默认 NAT 下没有 host mapping。源码审查与现场一致，确认 B0“仅 internal 网络 + 要求宿主端口发布”的设计冲突；不是凭 issue 猜测。
+- [Moby 53256](https://github.com/moby/moby/discussions/53256) 同型 29.6.2 报告、[44986](https://github.com/moby/moby/issues/44986) 较早案例仅作旁证；[53960](https://github.com/moby/moby/issues/53960) 混有不同版本/kernel 的另一类故障，不能直接套用其所有结论。本轮未做改网络 A/B、未查询 VM iptables/nftables，故不声称排除额外 Desktop 转发故障、不认定是 Compose 专有 bug，也不保证升级即可解决。
+- healthy 的测试命令是在容器内部调用 pg_isready，不涉及宿主 loopback 端口。`launch.mjs:67` start 后到 `:70` assertResources，`:72` 成功回执前已抛错，`:74` catch 写 failed；健康与验收失败衡量不同条件，可以同时成立。
+
+### 10.3 回执与 bootstrap 的真实时间线
+
+- 回执 JSON 创建时间 `12:03:30.583Z`；专用卷创建 `12:03:35Z`，专网创建 `12:03:38.798689136Z`，容器创建 `12:03:43.138592873Z`，启动 `12:03:45.995727695Z`。
+- 带 Docker 时间戳的日志白名单：`12:03:47.706725815Z` 临时数据库接受连接；`12:03:47.940234329Z` bootstrap 完成标记；`12:03:48.144010015Z` 官方初始化完成；`12:03:48.179856792Z` 正式数据库接受连接。只取白名单标记，未输出原始日志、密码、SQL 参数或私有令牌。
+- 回执 mtime=`12:03:50.272Z`、status=failed；子进程 `12:03:50.297Z` 退出 1。回执容器 ID/镜像/实例 UUID/nonce 与资源标签一致；不复制 nonce 或完整回执。本次只读取，未改内容/时间，容器无重启，现有数据库和回执保留。日志支持 bootstrap hook 已完成，但没有独立 SQL 核验持久 UUID、权限/角色、业务表或 ready。
+
+### 10.4 默认 bridge：Engine 初始化与缓存同步，发生在创建命令之前
+
+- 旧 ID `9b4155efccc80a9c280a988914356b99c12f0c9a0995334df2fe71bbc36e0984`，新 ID `47aa819ea371964586f64f3f7dafe864e14af45a879fb64c01bb075ae53c876f`。
+- 可复核的仓库外本机日志，根目录为 `C:\Users\USER\AppData\Local\Docker\log`：
+  - `host/com.docker.backend.exe.log.20261026-204610.595:3569/3587/3608`：12:00:33、12:01:33、12:02:33 的 apicache GET 旧 bridge。
+  - 同文件 `:3669`：`12:02:36.895827900Z` 引擎 linux/wsl 从 stopped 进入 starting；`:3723`：恢复 Desktop、Idle=shutdown、cgroup pause 路径 no-such-device 错误。
+  - `vm/init.log.20261026-200419.626:5619`：`12:02:42.386303708Z` daemon 启动；`:5643` 标明 29.6.2/3d80467；`:5646` `12:02:43.818745021Z` 初始化完成。
+  - 新 bridge inspect Created=`12:02:43.431715414Z`；host 同文件 `:3800/:3802` 在 `12:02:43.881Z` 注销旧资源、登记新资源。
+- [同版本 daemon_unix.go](https://github.com/moby/moby/blob/3d80467/daemon/daemon_unix.go#L774) 的无活动 sandbox 初始化路径，会清除旧默认 bridge 再创建默认网络。这与本机日志/新网络创建时间相符，解释 ID 改变；**该时间早于首次创建命令 `12:03:29.831Z`，不是受控入口向 bridge 发出删除指令的证据**。先前比较跨越了初始化/缓存同步，不能当作原子快照。
+- 已确认 Engine 有重新启动/初始化过程；日志也有唤醒语义，但无法仅据此确认其原先停止的原因、哪个 API 请求触发唤醒，或严格归因 Resource Saver 设置。[Docker Resource Saver 文档](https://docs.docker.com/desktop/use-desktop/resource-saver/) 说明部分列表查询可由缓存处理，WSL 的暂停行为又有差异；不能把一般机制当成本机完整因果证明。
+- 当前 bridge 无成员；检查含停止项的 11 个容器，其他 10 个均 exited，配置使用各自具名项目网络，未发现任何容器配置指向默认 bridge。没有发现可验证的数据损坏或本轮造成的应用异常，亦没有访问数据库/做全链路测试，因此不承诺历史业务完全无影响。事件接口只保留最近 256 条健康探测相关事件，不能恢复创建早期全过程；本机持久日志提供了上述补充。
+
+### 10.5 修复选择与恢复前置条件（仅分析，未执行）
+
+| 选择 | 可行性与隔离代价 | 必要前置条件 |
+| --- | --- | --- |
+| 保留 DB internal，将测试进程放到同一专网 | 不依赖 Windows 发布端口；改变 host-only URL/runner 身份与拓扑契约 | 用户接受访问模型改变；审批运行器镜像、角色、只读材料/网络边界，新增安全入口和真实验收 |
+| 保留 DB internal，独立受限 TCP 代理连接内部网与专用入口网 | 数据库不直接获得外部网络；代理仅转发本机固定端口到该实例，不作为通用出口 | 新组件/镜像审核、限制代理目标/方向/权限、防跨项目访问、回执和安全策略显式扩展；禁止直接给 DB 接任意外网 |
+| 专用非 internal bridge + 强制出口/跨项目防火墙 | 更贴合现有 host loopback 使用方式，但会失去 internal 默认无外网保证 | 单独授权隔离设计和精确防火墙；在 Desktop VM/宿主层验证实际出口、loopback、其他项目隔离，不只是把 internal 改 false |
+
+- 维持当前完全相同拓扑，仅重启、改端口元数据断言或盲目升级，没有已验证解决依据；`routed/isolated` 模式也不是保持原 127.0.0.1:55433 NAT 契约的无风险开关。上述方案均未执行，未拉取镜像或修改全局 Desktop/daemon 设置。
+- **现有 B0 不支持当前失败实例的安全接管**：first 的 wx 回执/旧资源/非空 PGDATA 保护阻止重跑；restart 需要停止容器及允许状态的原回执，failed 不在 `readReceipt()` 白名单，启动后又要求业务 schema ready。restart 还会先创建自己的尝试回执，所以不能“调用看看”。现容器仍运行且仅 bootstrap，不能通过更改 failed、删回执或假称 ready 绕过。
+- 未来如选择保留该已初始化实例，需另行授权设计显式的失败实例核验/恢复流程：绑定原 UUID/不可变容器ID/卷/镜像/标签，保留原失败回执，独立追加审计；先有验证过的网络方案，再提供受最小 observer 权限约束的 bootstrap 只读身份/角色核验，确实满足资源条件后才作新的受控验收记录。不得覆盖原失败证据或批量改历史状态，不能承诺当前已有这种入口。
+- **B4 仍禁止**。修复方案、恢复机制及其真实验收均未授权或实现，本轮只提交三份诊断文档，没有新增测试通过数量。
+
+## 11. 当前阻塞与下一步
 
 1. **已完成：B1过时断言修复**。真实文件不再永久绑定未批准状态，安全拒绝断言保留；124/0/0为历史报告。
 2. **已完成：B1审核登记与修复提交**。Git确认提交 `b18a5d22974bf52205b542c71d3065d85a8a330e`；本轮档案提交前仍要核对远程没有意外推进。
 3. **已完成：B2离线凭据准备**：本次实际创建四份凭据、受限回执目录及新的 v4 UUID，独立回读核验通过。具体非秘密证据见第 6 节；严禁将密码或完整连接串提交仓库。
 4. **已解除：B3 固定引用兼容阻塞**：最小修复已获授权并验证，使用标准 postgres@digest，审核渠道、Image ID、完整 digest 和 ensureImage 身份核验仍保留。未批准浮动标签回退或镜像升级。
-5. **本次首次创建部分成功但验收失败**：仅一次受控执行，容器 healthy、bootstrap 有完成日志，但运行态端口拒绝，回执 failed；默认 bridge ID 变化待查。先人工审查现场，不得重试、清理、自动修复或进入 B4；不把 healthy 当作 created_verified/ready。
+5. **首次创建故障未修复**：只读诊断确认原 internal-only 网络与 host 发布要求冲突；bridge ID 变化已有先前 Engine 初始化/缓存同步证据。容器 healthy、回执 failed；需另外审查网络选择及显式恢复设计，不得重试、清理或进入 B4，不把 healthy 当作 created_verified/ready。
 6. **迁移及真实数据库测试另行授权**：执行 20 份迁移和只读 schema/身份检查后，才能验证业务并发、锁、约束、订单/库存一致性。
 7. **最终上线验收**：支付/收款流程、商家/顾客端真机测试、备份恢复、生产部署、安全与权限等均需独立验收；不能因测试设施准备完毕直接交付商家。
 
-## 11. 后续每轮记录规范
+## 12. 后续每轮记录规范
 
 以后每次测试在此文件追加一个记录块，至少写明：
 
