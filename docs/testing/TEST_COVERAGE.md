@@ -1,7 +1,20 @@
 # 微信商城测试覆盖矩阵
 
 审查日期：2026-10-26；源码基线 `b18a5d22974bf52205b542c71d3065d85a8a330e`。
-本次仅做源码和 Git 盘点，没有运行下述测试。证据分类及最近历史结果见 [TEST_STATUS](TEST_STATUS.md)。
+初始盘点没有重跑历史业务测试。2026-10-26 B3-V2 增补：基线 `083f67548d044c29ad4a9e0497d791e4348fd5f8`，本轮实际重跑原138项并新增97项V2安全测试，合计235通过、0失败、0跳过。其余历史数字仍是历史报告。证据分类见 [TEST_STATUS](TEST_STATUS.md)。
+
+## B3-V2 本轮覆盖（不代表真实 Docker / PostgreSQL）
+
+| 范围 | 状态与实际证据 | 仍缺验收 |
+| --- | --- | --- |
+| V2授权/镜像/身份/拓扑 | 部分验证：真实纯函数+合成metadata拒绝非法profile、未批准镜像、旧B0资源、错ID/nonce、额外成员/网卡、端口、IPv6、非isolated | 真实Engine实际状态、出口/宿主/跨项目阻断 |
+| 运行器加固与凭据 | 部分验证：实际命令编译与策略验证非root、只读root、cap-drop、NNP、无socket、单用途挂载；Compose纯解析核验secret目标 | 新Node/runner供应链、真实UID/ACL/Windows挂载兼容 |
+| grant/任务范围 | 部分验证：过期/错用途/错身份/URL/命令拒绝；真实临时文件wx/fsync消费与重复消费拒绝 | 真实bind挂载消费、超时退出、宿主故障/竞争场景 |
+| bootstrap只读核验 | 部分验证：真实runner/SQL接缝，合成行验证版本/角色/marker/ACL/空库，SQL范围只读 | 实际PG16角色ACL、bootstrap/无迁移状态 |
+| 事务/连接接缝 | 部分验证：三连接PID去重、阻塞关系SQL、实际表关系最终快照、异常连接销毁；模拟迁移失败ROLLBACK | 真实订单/库存事务、行锁/SKIP LOCKED/死锁/COMMIT不确定性；本轮未执行 |
+| 旧B3故障 | 失败保留：原138项端口及安全断言未改；V2明确拒绝旧failed回执 | 不提供旧实例恢复入口；B4仍阻塞 |
+
+新增97项见 `backend/tests/phase8-v2.unit.test.mjs`，工具响应由 `helpers/phase8-v2-fixtures.mjs` 提供，不复制数据库算法。连接观察槽使用app身份的READ ONLY事务，独立权限审计任务才使用observer角色。运行器目前只执行连接诊断，不包含真实业务场景套件。
 
 ## 状态含义
 

@@ -1,0 +1,11 @@
+{
+  "approved": false,
+  "repository": "stall-phase8-r2-runner",
+  "digest": null,
+  "imageId": null,
+  "baseReference": null,
+  "bundleSha256": null,
+  "reviewedBy": null,
+  "reviewedAt": null,
+  "note": "Pending separate Node base and packaged runner image supply-chain review. No synthetic digest or automatic approval."
+}

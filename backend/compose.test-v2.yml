@@ -1,0 +1,73 @@
+# Independent V2. No published host ports. Legacy B0 is neither included nor modified.
+name: stall-phase8-r2
+services:
+  postgres:
+    image: ${PHASE8_V2_PG_IMAGE:?Approved immutable PostgreSQL reference required}
+    pull_policy: never
+    container_name: stall-phase8-r2-pg16
+    restart: "no"
+    entrypoint: ["sh", "/phase8/bootstrap-entrypoint.sh"]
+    command: ["postgres", "-c", "log_statement=none", "-c", "log_min_error_statement=panic", "-c", "log_parameter_max_length_on_error=0", "-c", "listen_addresses=*", "-c", "port=5432"]
+    environment:
+      POSTGRES_USER: stall_test_bootstrap
+      POSTGRES_DB: stall_test_phase8
+      POSTGRES_PASSWORD_FILE: /run/secrets/phase8_admin_password
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      STALL_PHASE8_INSTANCE_ID: ${PHASE8_V2_INSTANCE:?New V2 identity required}
+      STALL_PHASE8_BOOTSTRAP_CONFIRM: CREATE_NEW_PHASE8_INSTANCE
+      STALL_PHASE8_LAUNCH_TOKEN: ${PHASE8_V2_NONCE:?Controlled launch required}
+      STALL_PHASE8_IMAGE: ${PHASE8_V2_PG_IMAGE:?Approved immutable PostgreSQL reference required}
+    volumes:
+      - data:/var/lib/postgresql/data
+      - ./testing/phase8/bootstrap.sh:/docker-entrypoint-initdb.d/10-phase8-bootstrap.sh:ro
+      - ./testing/phase8/bootstrap-entrypoint.sh:/phase8/bootstrap-entrypoint.sh:ro
+      - ${PHASE8_V2_LAUNCH_FILE:?Private V2 launch file required}:/run/phase8-launch:ro
+    secrets:
+      - source: admin
+        target: phase8_admin_password
+      - source: migrator
+        target: phase8_migrator_password
+      - source: app
+        target: phase8_app_password
+      - source: observer
+        target: phase8_observer_password
+    networks: [isolated]
+    labels:
+      stall.phase8.profile: internal-runner-v1
+      stall.phase8.instance: ${PHASE8_V2_INSTANCE:?New V2 identity required}
+      stall.phase8.launch: ${PHASE8_V2_NONCE:?Controlled launch required}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stall_test_bootstrap -d stall_test_phase8"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+volumes:
+  data:
+    name: stall-phase8-r2-data
+    labels:
+      stall.phase8.profile: internal-runner-v1
+      stall.phase8.instance: ${PHASE8_V2_INSTANCE:?New V2 identity required}
+      stall.phase8.launch: ${PHASE8_V2_NONCE:?Controlled launch required}
+networks:
+  isolated:
+    name: stall-phase8-r2-network
+    internal: true
+    enable_ipv6: false
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated
+      com.docker.network.enable_ipv6: "false"
+    labels:
+      stall.phase8.profile: internal-runner-v1
+      stall.phase8.instance: ${PHASE8_V2_INSTANCE:?New V2 identity required}
+      stall.phase8.launch: ${PHASE8_V2_NONCE:?Controlled launch required}
+secrets:
+  admin:
+    file: ${PHASE8_V2_ADMIN_FILE:?New V2 admin file required}
+  migrator:
+    file: ${PHASE8_V2_MIGRATOR_FILE:?New V2 migrator file required}
+  app:
+    file: ${PHASE8_V2_APP_FILE:?New V2 app file required}
+  observer:
+    file: ${PHASE8_V2_OBSERVER_FILE:?New V2 observer file required}

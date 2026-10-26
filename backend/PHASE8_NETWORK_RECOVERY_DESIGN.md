@@ -2,7 +2,7 @@
 
 日期：2026-10-26。审查基线：`70145de43af8d649f43883dd6254af639cba8cac`。
 
-**设计完成，运行源码未实施；B3 仍失败，B4 仍阻塞。**本轮不查询或操作实际 Docker，不连接数据库，不改凭据/UUID/回执；现场状态引用前一轮已提交证据，未冒充本轮重新核验。以下命名、协议、入口、权限和验收均为待实现设计，不是可运行命令。
+**B3-R历史设计保留；B3-V2已实现独立运行源码和离线安全回归，但真实环境未创建/验收；旧B3仍失败，B4仍阻塞。**最新实现基线 `083f67548d044c29ad4a9e0497d791e4348fd5f8`。本轮不操作实际Docker资源、不连接数据库、不读取旧凭据或改UUID/回执；下方1—7节保留原设计审查时点，第8节记录当前实现，不能把历史“待实现”或当前“源码完成”误当环境成功。
 
 ## 1. 决策
 
@@ -121,3 +121,17 @@
 | 真实 PostgreSQL | observer只读、三个独立PID、行锁/SKIP LOCKED、事务原子性/死锁/幂等/COMMIT不确定与最终状态 | 未运行；不是内存适配器结论 |
 
 本轮新增测试数为 **0**，未修改运行源码或测试。原因是所有候选网络修复都需要新拓扑/组件；不为未实现设计制造“通过”的测试或放松旧断言。已完成的是可执行后续实施的设计与现有离线回归，非环境修复或恢复成功。
+
+## 8. B3-V2 实施记录（2026-10-26）
+
+实现方案A，独立 `backend/compose.test-v2.yml` 和 `backend/testing/phase8-v2/`，入口 `backend/scripts/phase8-v2.mjs`。协议 `internal-runner-v1`；项目、容器、卷、网络严格使用本设计r2名称。原B0 Compose、策略、端口断言、启动器、failed回执、旧资源及材料保持不变。新实例必须另行准备UUID/密码，明确拒绝旧UUID和材料目录。
+
+已实现：宿主独占窗口声明、镜像审核与固定ID/摘要、创建前后拓扑校验、internal/isolated/禁IPv6/无宿主端口；非root只读root/ALL capabilities移除/NNP/资源上限/三个最小挂载；持久化一次性grant及时间上限；observer专用bootstrap只读SQL；原001—020哈希和事务初始化接缝；ready实际catalog/账本/ACL核验；真实pg三连接/PID/阻塞/最终状态夹具。没有任意命令、任意URL、API/worker启动或清理入口。
+
+运行器固定任务为bootstrap/initialize/ready/fixture。fixture目前只诊断三连接，不执行真实业务场景；第三观察连接是app身份的READ ONLY事务，observer凭据只在独立只读任务中使用，二者不混挂。grant绑定容器/数据库/网络/UUID/nonce/镜像/manifest/bundle/回执摘要，60秒内启动，最多5分钟执行；消费标记wx+fsync，不能重放。迁移必须另外授权，失败保留状态，不提供盲目恢复。
+
+构建只复制审计清单和20份SQL，使用锁文件与离线缓存，运行期不安装。`runner-image-approval.json` 仍未批准，未填写虚构digest；审批未完成时在任何Docker IO及材料读取前拒绝。Node base来源、缓存、镜像实际ID/RepoDigest和bundle仍需独立供应链审核。
+
+本轮验证：新增97项V2真实函数离线回归，保留原138项，共235通过、0失败、0跳过；14个新增MJS语法、TypeScript静态检查和Compose config纯解析通过。合成Docker/PG transport不证明真实网络或数据库正确；未创建构建目录/镜像/凭据/UUID/容器/卷/网络，未连接PG或运行迁移。旧现场本轮未重新查询，不宣称重新验证其健康或数据状态。
+
+下一步可进入**镜像审核准备**，随后新材料、创建、实际网络隔离和bootstrap验收分别授权。Windows/Linux挂载权限、isolated出口阻断、真实锁/事务/死锁/不确定COMMIT均未验证。管理员并行操作的TOCTOU窗口只能通过独占管理窗口和前后复核约束，未声称绝对原子。详见 [V2操作契约](testing/phase8-v2/README.md)。

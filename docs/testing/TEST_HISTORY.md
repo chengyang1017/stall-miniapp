@@ -308,3 +308,18 @@ Git HEAD / 分支 / 工作区是否干净：
 ```
 
 **长期原则：**不能只用聊天记录保存结果；不能将“以前通过”“模拟通过”“只读检查通过”写成“当前真实数据库全面通过”。商家不承担开发测试任务。
+
+## 14. 第八轮 B3-V2：独立运行器源码实现
+
+日期：2026-10-26（档案按北京时间）；Git 基线 `083f67548d044c29ad4a9e0497d791e4348fd5f8`，main，开始工作区干净。按用户授权只实现源码、合成安全回归与静态检查，没有进入真实资源准备。
+
+- 新增 `compose.test-v2.yml`、V2 host/controller/docker/policy/grants、固定 runner/sql/initialize/fixture、审核占位、Dockerfile 与 allowlist 构建上下文准备脚本。旧 B0 文件、failed 回执、容器/卷/网络、UUID、nonce 和凭据未操作；未读取旧密码。
+- 协议为 `internal-runner-v1`；目标项目 `stall-phase8-r2`、容器 `stall-phase8-r2-pg16`、卷 `stall-phase8-r2-data`、网络 `stall-phase8-r2-network`，internal + isolated、禁 IPv6、无宿主端口。
+- 运行器镜像独立审核、未批准默认拒绝；固定任务范围、60秒 grant 启动期限、5分钟执行上限、持久化 wx 消费、防重放、非root/只读root/cap-drop/NNP/最小挂载。bootstrap 仅只读 SQL；初始化与真实业务测试须额外授权。
+- 静态核对修正了新 Compose secret 目标、Node base CMD 继承，以及 order_items 无 store_id 时的最终快照关联查询；没有修改商城业务源码或原138项断言。
+- 新增 `backend/tests/phase8-v2.unit.test.mjs` 97项，实际运行 **97通过、0失败、0跳过**。调用真实 V2 函数并注入合成 Docker/PG 元数据；不是数据库行为模型或真实 SQL 验收。
+- 完整执行：`node --test backend/tests/phase8-safety.unit.test.mjs backend/tests/phase8-remediation.unit.test.mjs backend/tests/phase8-v2.unit.test.mjs`，**235通过、0失败、0跳过**（含原138项）。不与历史165项相加。
+- 14个新增MJS的 `node --check`、项目 `tsc --noEmit --pretty false` 通过。Docker CLI仅执行 `compose ... config --format json`，验证专用名称、零发布端口、isolated、IPv6关闭及四个secret目标；没有访问Engine资源。Git空白与范围检查作为提交门槛。
+- 未执行：构建上下文准备、npm安装、镜像下载/构建/审核、创建凭据/UUID、Docker资源创建或修改、DB连接/SQL/迁移、API/worker启动、真实业务测试。没有生成真实运行回执或数据库ready证据。
+
+结果：V2 源码与离线门槛已建立，**旧B3仍失败，B4仍阻塞**。可进入另行授权的 V2 镜像审核准备，不能自动启动。真实挂载/UID/ACL、网络出口隔离及 PostgreSQL 语义均待验收。详见 [V2 契约](../../backend/testing/phase8-v2/README.md)。本节随本轮授权提交普通推送，具体SHA以包含本节的Git提交为准，不预填尚未生成的SHA。

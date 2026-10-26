@@ -1,0 +1,14 @@
+# Build ONLY in the dedicated allowlisted context, after separate supply-chain approval.
+# No build/pull is performed by the host controller.
+ARG NODE_BASE
+FROM ${NODE_BASE}
+ARG BUNDLE_SHA256
+LABEL stall.phase8.bundle=${BUNDLE_SHA256}
+WORKDIR /opt/phase8/backend
+COPY payload/backend/package.json payload/backend/package-lock.json ./
+COPY npm-cache/ /tmp/npm-cache/
+RUN npm ci --offline --ignore-scripts --omit=dev --cache /tmp/npm-cache
+COPY payload/ /opt/phase8/
+USER 1000:1000
+ENTRYPOINT ["node", "/opt/phase8/backend/testing/phase8-v2/runner.mjs"]
+CMD []
