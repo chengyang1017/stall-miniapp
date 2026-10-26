@@ -94,7 +94,7 @@ test('R-P3 synthetic unapproved image blocks controlled launch before any IO',as
 test('R-P3 valid synthetic approval yields the exact pinned image identity',()=>{
  const candidate=structuredClone(approval)
  assert.deepEqual(approvedImage(candidate),{
-  reference:candidate.repository+'@'+candidate.digest,imageId:candidate.imageId
+  reference:'postgres@'+candidate.digest,imageId:candidate.imageId
  })
  assert.equal(accessConfig(env(),'app','test',candidate).image.imageId,candidate.imageId)
  assert.deepEqual(candidate,approval)
@@ -118,7 +118,7 @@ test('R-P3 real approval record is policy-consistent without fixing its approval
  const record=await loadImageApproval()
  assert.equal(typeof record.approved,'boolean');assert.equal(record.repository,TARGET.image)
  if(record.approved){
-  assert.deepEqual(approvedImage(record),{reference:record.repository+'@'+record.digest,imageId:record.imageId})
+  assert.deepEqual(approvedImage(record),{reference:'postgres@'+record.digest,imageId:record.imageId})
  }else{
   rejects(()=>approvedImage(record),'phase8_image_not_approved')
  }
@@ -225,4 +225,95 @@ test('R-P2 shell guard/source review: LF, fixed socket, observer privileges and 
  assert.match(boot,/--host=\/var\/run\/postgresql --port=5432/);assert.match(boot,/CREATE ROLE stall_test_observer LOGIN NOSUPERUSER/)
  assert.match(entry,/! -e "\$PGDATA\/PG_VERSION"/);assert.match(entry,/find "\$PGDATA" -mindepth 1/)
  assert.match(entry,/MODE=restart/);assert.match(entry,/PG\*\|POSTGRES_PASSWORD/)
+})
+
+// B3 regression: only injected Docker transport is used below; no real Docker or pg IO.
+for(const repository of ['postgres','docker.io/library/postgres:16-alpine','example.invalid/postgres:16-alpine']) {
+ test('R-B3 repository whitelist rejects '+repository+' before launch IO',async()=>{
+  const io=launchIO();io.approval={...approval,repository}
+  await assert.rejects(()=>controlledLaunch(env(),'first',io),e=>e.phase8Code==='phase8_image_not_approved')
+  assert.deepEqual(io.calls,[])
+ })
+}
+
+test('R-B3 approval cannot override the pinned reference using extra fields',()=>{
+ const candidate={...approval,reference:'untrusted:latest',image:'postgres:16-alpine'}
+ assert.deepEqual(approvedImage(candidate),{reference:'postgres@'+approval.digest,imageId:approval.imageId})
+ assert.equal(candidate.repository,'postgres:16-alpine')
+})
+
+function imageTransport(metadata,{missing=false}={}) {
+ const calls=[]
+ const docker=createDocker(env(),async(_exe,args)=>{
+  calls.push(args)
+  if(args[0]==='context')return {stdout:JSON.stringify([{Name:'local',Endpoints:{docker:{Host:'npipe:////./pipe/dockerDesktopLinuxEngine'}}}])}
+  assert.deepEqual(args.slice(2),['image','inspect','postgres@'+approval.digest])
+  if(missing)throw Error('synthetic image missing')
+  return {stdout:JSON.stringify([metadata])}
+ })
+ return {docker,calls}
+}
+
+test('R-B3 ensureImage inspects only the canonical pinned reference and verifies both identities',async()=>{
+ const {docker,calls}=imageTransport({Id:approval.imageId,RepoDigests:['postgres@'+approval.digest]})
+ await docker.bind();await docker.ensureImage(approvedImage(approval))
+ assert.deepEqual(calls.filter(c=>c[0]!=='context').map(c=>c.slice(2)),[['image','inspect','postgres@'+approval.digest]])
+})
+
+for(const [label,metadata] of [
+ ['wrong local Image ID',{Id:'sha256:'+'1'.repeat(64),RepoDigests:['postgres@'+approval.digest]}],
+ ['wrong RepoDigest',{Id:approval.imageId,RepoDigests:['postgres@sha256:'+'1'.repeat(64)]}],
+ ['missing RepoDigests',{Id:approval.imageId}]
+])test('R-B3 ensureImage rejects '+label+' without fallback',async()=>{
+ const {docker,calls}=imageTransport(metadata);await docker.bind()
+ await assert.rejects(()=>docker.ensureImage(approvedImage(approval)),e=>e.phase8Code==='phase8_local_image_digest_mismatch')
+ assert.equal(calls.filter(c=>c[0]!=='context').length,1)
+})
+
+test('R-B3 a missing pinned image never triggers tag lookup or pull',async()=>{
+ const {docker,calls}=imageTransport(null,{missing:true});await docker.bind()
+ await assert.rejects(()=>docker.ensureImage(approvedImage(approval)),e=>e.phase8Code==='phase8_docker_command_failed')
+ assert.deepEqual(calls.filter(c=>c[0]!=='context').map(c=>c.slice(2)),[['image','inspect','postgres@'+approval.digest]])
+})
+
+test('R-B3 container attestation accepts canonical pin and rejects other image references',()=>{
+ const r=resources();assert.equal(r[0].Config.Image,'postgres@'+approval.digest)
+ assert.doesNotThrow(()=>assertResources(...r,instance,{approval,nonce}))
+ for(const image of ['postgres:16-alpine',approval.repository+'@'+approval.digest,'untrusted@'+approval.digest,'postgres@sha256:'+'1'.repeat(64)]){
+  const changed=resources();changed[0].Config.Image=image
+  rejects(()=>assertResources(...changed,instance,{approval,nonce}),'phase8_container_rejected')
+ }
+})
+
+test('R-B3 container environment must match the same canonical pinned image',()=>{
+ const r=resources();const i=r[0].Config.Env.findIndex(v=>v.startsWith('STALL_PHASE8_IMAGE='))
+ r[0].Config.Env[i]='STALL_PHASE8_IMAGE='+approval.repository
+ rejects(()=>assertResources(...r,instance,{approval,nonce}),'phase8_container_environment_rejected')
+})
+
+test('R-B3 controlled launch propagates canonical image through checks and audit records',async()=>{
+ const io=launchIO(),images=[],records=[];const lock=io.lock
+ io.lock=async mode=>{const l=await lock(mode),write=l.write;l.write=async r=>{records.push(structuredClone(r));await write(r)};return l}
+ io.docker.ensureImage=async image=>{images.push(image)}
+ io.receiptText=r=>{assert.equal(r.image,'postgres@'+approval.digest);return 'SYNTHETIC'}
+ const createContainer=io.createContainer;io.createContainer=async r=>{assert.equal(r.image,'postgres@'+approval.digest);await createContainer(r)}
+ await controlledLaunch(env(),'first',io)
+ assert.deepEqual(images,[{reference:'postgres@'+approval.digest,imageId:approval.imageId}])
+ assert.ok(records.length>=3);assert.ok(records.every(r=>r.image==='postgres@'+approval.digest&&r.imageId===approval.imageId))
+})
+
+test('R-B3 Compose requires the supplied pinned reference and never supplies a floating fallback',async()=>{
+ const compose=await readFile(new URL('../compose.test.yml',import.meta.url),'utf8')
+ const imageLines=compose.split(/\r?\n/).filter(l=>/^\s+(?:image|STALL_PHASE8_IMAGE):/.test(l))
+ assert.equal(imageLines.length,2)
+ assert.ok(imageLines.every(l=>l.trim().split(': ').slice(1).join(': ')==='${STALL_PHASE8_IMAGE:?Reviewed immutable image reference required}'))
+ assert.match(compose,/pull_policy: never/)
+})
+
+test('R-B3 bootstrap image guard accepts only the canonical repository digest grammar',async()=>{
+ const entry=await readFile(new URL('../testing/phase8/bootstrap-entrypoint.sh',import.meta.url),'utf8')
+ const pattern=entry.match(/grep -Eq '(\^postgres[^']+\$)'/)
+ assert.ok(pattern);const guard=new RegExp(pattern[1])
+ assert.equal(guard.test('postgres@'+approval.digest),true)
+ for(const image of [approval.repository,approval.repository+'@'+approval.digest,'untrusted@'+approval.digest,'postgres@sha256:'+'a'.repeat(63)])assert.equal(guard.test(image),false)
 })

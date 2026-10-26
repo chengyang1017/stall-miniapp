@@ -12,12 +12,12 @@ export const env=()=>({STALL_PHASE8_AUTHORIZE:'LOCAL_PHASE8_DATABASE_ACCESS',STA
 export function resources({running=true}={}) {
  const labels={'com.docker.compose.project':TARGET.project,'stall.phase8.scope':TARGET.scope,'stall.phase8.instance':instance,'stall.phase8.launch':nonce}
  const ports={'5432/tcp':[{HostIp:'127.0.0.1',HostPort:'55433'}]}
- const container={Name:'/'+TARGET.container,Id:'f'.repeat(64),Image:approval.imageId,State:{Running:running},Config:{Image:approval.repository+'@'+approval.digest,
+ const container={Name:'/'+TARGET.container,Id:'f'.repeat(64),Image:approval.imageId,State:{Running:running},Config:{Image:'postgres@'+approval.digest,
   Entrypoint:['sh','/phase8/bootstrap-entrypoint.sh'],Cmd:['postgres','-c','log_statement=none','-c','log_min_error_statement=panic','-c','log_parameter_max_length_on_error=0','-c','listen_addresses=*','-c','port=5432'],
   Labels:{...labels,'com.docker.compose.service':TARGET.service},Env:['POSTGRES_DB='+TARGET.database,'POSTGRES_USER=stall_test_bootstrap',
    'POSTGRES_PASSWORD_FILE=/run/secrets/phase8_admin_password','PGDATA=/var/lib/postgresql/data','POSTGRES_HOST_AUTH_METHOD=scram-sha-256',
    'POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256','STALL_PHASE8_INSTANCE_ID='+instance,
-   'STALL_PHASE8_BOOTSTRAP_CONFIRM=CREATE_NEW_PHASE8_INSTANCE','STALL_PHASE8_LAUNCH_TOKEN='+nonce,'STALL_PHASE8_IMAGE='+approval.repository+'@'+approval.digest]},
+   'STALL_PHASE8_BOOTSTRAP_CONFIRM=CREATE_NEW_PHASE8_INSTANCE','STALL_PHASE8_LAUNCH_TOKEN='+nonce,'STALL_PHASE8_IMAGE=postgres@'+approval.digest]},
   HostConfig:{Privileged:false,PortBindings:structuredClone(ports),NetworkMode:TARGET.network},
   NetworkSettings:{Ports:running?structuredClone(ports):{},Networks:{[TARGET.network]:{}}},
   Mounts:[{Destination:'/var/lib/postgresql/data',Type:'volume',Name:TARGET.volume,RW:true},

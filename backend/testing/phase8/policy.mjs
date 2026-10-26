@@ -9,7 +9,8 @@ export function approvedImage(approval) {
     /^sha256:[a-f0-9]{64}$/.test(approval.digest || '') && /^sha256:[a-f0-9]{64}$/.test(approval.imageId || '') &&
     typeof approval.reviewedBy === 'string' && approval.reviewedBy.trim().length > 0 &&
     /^\d{4}-\d{2}-\d{2}T/.test(approval.reviewedAt || ''), 'phase8_image_not_approved')
-  return { reference: approval.repository + '@' + approval.digest, imageId: approval.imageId }
+  // The approved channel remains exact; local digest lookup uses the repository name without its tag.
+  return { reference: 'postgres@' + approval.digest, imageId: approval.imageId }
 }
 export function accessConfig(env, role = 'observer', purpose = 'inspect', approval) {
   requireSafe(['app', 'migrator', 'observer'].includes(role), 'phase8_invalid_role')

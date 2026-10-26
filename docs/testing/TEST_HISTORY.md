@@ -3,13 +3,15 @@
 > 项目：`chengyang1017/stall-miniapp`
 > 仓库位置：`docs/testing/TEST_HISTORY.md`
 > 原补录日期：2026-10-26；本次维护统一使用北京时间（Asia/Shanghai，UTC+8）。
-> 性质：此前轮次根据开发与执行报告补录，**不是本次重新执行测试的结果**；第 6 节 B2 单独记录本次实际本地准备证据。缺少原始测试日志、运行时间或提交关联的项目，标为“未独立复核”，不得当作新鲜测试证据。
+> 性质：此前轮次根据开发与执行报告补录，**不是本次重新执行测试的结果**；第 6 节保留 B2 实际准备证据，第 7 节记录本次 B3 只读复核及离线复测。缺少原始测试日志、运行时间或提交关联的项目，标为“未独立复核”，不得当作新鲜测试证据。
 
 ## 0. 本次维护的证据范围
 
 原档案源码基线为 `b18a5d22974bf52205b542c71d3065d85a8a330e`；本次 B2 执行基线为 `edbf0a703940aa75acf97fd7541088773f184ef9`。原档案建立没有环境操作，本次 B2 则实际执行只读 Docker/端口检查及仓库外凭据/ACL 准备，未重跑测试。原补录有用内容及 B1 中间失败保留，具体边界见第 6 节。
 
-标记口径：GIT＝确认提交及Diff；SRC＝确认源码定义；HISTORY＝用户提供或既有执行报告；DOC-CHECK＝文档一致性检查；LOCAL-PREP＝B2 实际本地准备与核验。测试通过数字全部属于HISTORY。Git中存在真实数据库探针的早期提交，也不能证明它们运行过或Phase8实例已创建。
+B2 记录已提交为 `3051359520a8cb997908d4c000d65cfb6318061a`，也是本次 B3 基线，初查开始时工作区干净。B3 初查仅做只读复核并保留两份未提交档案；随后用户另行授权固定引用兼容修复。第 7 节保留初查失败，第 8 节记录最小修复及实际验证；均未修改凭据、ACL或镜像审核，未创建实例。
+
+标记口径：GIT＝确认提交及Diff；SRC＝确认源码定义；HISTORY＝用户提供或既有执行报告；DOC-CHECK＝文档一致性检查；LOCAL-PREP＝B2 实际本地准备与核验；B3-CHECK＝本次只读环境核验/离线检查。此前轮次数字为 HISTORY，第 7 节 124 项及第 8 节修复后 138 项为各次实际复测，不与历史重复累加。Git中存在真实数据库探针的早期提交，也不能证明它们运行过或Phase8实例已创建。
 
 配套档案：[当前状态](TEST_STATUS.md)、[覆盖矩阵](TEST_COVERAGE.md)、[问题清单](KNOWN_ISSUES.md)、[发布清单](RELEASE_CHECKLIST.md)。
 
@@ -24,10 +26,12 @@
 | 第八轮 B1：中间失败（已解决） | 保留历史，不是当前失败 | **110 通过、1 失败、0 跳过**（HISTORY） | 旧用例要求真实审核文件永久未批准；后续已改用合成对象 |
 | 第八轮 B1：修复后最终回归 | 已完成，未在本次重跑 | **124 通过、0 失败、0 跳过**（HISTORY） | `b18a5d22974bf52205b542c71d3065d85a8a330e`；保留拒绝能力并新增13项覆盖 |
 | 第八轮 B2：离线凭据准备 | **已完成（LOCAL-PREP）** | 四份不同的 64 位小写十六进制凭据、七个对象的受限 ACL、空回执目录核验通过 | 见第 6 节；未启动 Phase8 容器或连接数据库，不是数据库测试通过 |
+| 第八轮 B3：首次创建前初查 | 历史阻塞保留，未创建 | 初查离线安全测试 124/0/0；真实固定引用 inspect 失败 | 见第 7 节；不抹去失败记录 |
+| 第八轮 B3：固定引用兼容修复 | **镜像阻塞已解除，未创建** | 本次新增 14 项，138/0/0；受控 ensureImage 连续 3 次真实只读核验通过 | 见第 8 节；首次创建及数据库测试尚未执行 |
 | 真实 PostgreSQL 业务集成测试 | **未执行** | 无 | 尚未执行真实迁移、并发、事务、索引与约束验证 |
 | 真机、支付及生产交付验收 | **未完成** | 无法从现有记录确认通过 | 不可据此认定可正式上线 |
 
-**计数口径：**165 项是前七轮的合并历史结果，111 项是 B0 独立的离线安全单元测试结果；它们不是本次统一重跑的 276 项结果。B1 的 110/1 是登记后的中间失败，已由后续124/0/0记录取代；124是原111演进后的测试集，不能与111再次相加。上述数字都不是本次重跑结果，也不提供全仓唯一测试总数。
+**计数口径：**165 项是前七轮的合并历史结果，111 项是 B0 独立的离线安全单元测试结果；它们不是本次统一重跑的 276 项结果。B1 的 110/1 是登记后的中间失败，已由后续124/0/0记录取代；B3 初查重跑124项，兼容修复增加14项后为138，不能把111、124、138相加，也不提供全仓唯一测试总数。
 
 ## 2. 第一至六轮：前端回归
 
@@ -150,16 +154,47 @@
 - **结论：B2 本地准备完成，真实 PostgreSQL 实例仍未创建。**未创建、启动、停止或删除容器、卷或网络；未连接数据库、运行迁移、启动后端/worker、访问支付或生产 R2。已有其他项目资源保留。
 - 下一步必须另行授权首次创建，并重新核验资源、端口、镜像、目录身份/ACL、空回执与受控启动策略。本次不能证明未来 Docker 管理权限独占，也不能消除检查/创建竞争窗口。迁移与真实数据库测试不在本次授权内。
 
-## 7. 当前阻塞与下一步
+## 7. 第八轮 B3：首次创建前只读验收（历史阻塞，未创建）
+
+- Git：HEAD `3051359520a8cb997908d4c000d65cfb6318061a`，main，开始时干净；B2 凭据未重新生成，未覆盖目录或回执。只允许本节和状态档案的非秘密记录变更。
+- 环境快照：`2026-10-26T11:41:30.242Z`（北京时间 19:41:30），Engine 29.6.2/Linux，Compose 5.3.1，context `desktop-linux`，端点 `npipe:////./pipe/dockerDesktopLinuxEngine`；使用 `C:\Users\USER\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe`。B0 受控 context 核验通过。
+- 枚举全部容器（含已停止项）、卷、网络的元数据和项目标签/挂载：10/10/7。Compose 项目为 backend、clyven_backend_server、glyphora_backend_server、shangchenghouduan_server；无 Phase8 名称/身份/挂载冲突。商城开发容器 `/backend-postgres-1` 使用 `backend_stall_dev_pgdata`，不与目标专用卷共享；其他项目资源未操作。55433 无 TCP 占用或 IPv4/IPv6 保留冲突。
+- B2 复核：UUID 仍为 `43805bf5-1391-4d3f-b8ce-e3bfa9448d48`；四个文件在原仓库外目录、各 64 字节且为不同的小写十六进制密码；七个对象非重解析点、当前用户所有、ACL 继承关闭且仅允许当前用户/SYSTEM/Administrators。独立 `Get-Acl`、私下文件回读、`icacls /verify /T` 通过，receipts 仍为空。没有输出秘密或完整连接串，没有修改材料或 ACL。
+- 镜像审核文件仍为 approved=true，批准索引及 Image ID 均为 `sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36`。本地浮动标签 inspect 成功，平台 linux/amd64，创建时间 `2026-10-21T22:57:10.664514874Z`；这些不是新的来源证明。
+- **真实阻塞**：真实 `createDocker().bind()` 通过后，`ensureImage()` 读取代码生成的 `postgres:16-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36` 重复返回 `phase8_docker_command_failed`。独立执行同一引用的只读 `docker image inspect` 返回 `Error response from daemon: No such image`，退出码 1。标准 `postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36` inspect 则退出 0，匹配 Image ID/RepoDigest 和平台；未以此绕过启动规则，也未重新标记或拉取。B1/B2 曾报告 tag+digest 成功，当前差异原因仍未确定，保留历史并以本次失败阻止首次创建。
+- 精确路径：`backend/testing/phase8/policy.mjs:12` 拼接 tag+digest；`docker.mjs:52` 的 ensureImage 按原样 inspect；`launch.mjs:32` 在创建 Docker 资源前核验镜像。`launch.mjs:30` 会先申请 `wx` 回执，镜像失败可能留下空回执；因此本轮没有调用真实 --create-first，也未产生尝试回执。
+- 启动源码审查：受控 create-first 与 restart 独立授权；首次旧资源一律拒绝，创建各阶段重查 context/nonce/拓扑并在 start 前重查不可变容器 ID；never pull、no-build/no-recreate；没有自动停止、删除、修复旧资源的路径。仅一个 PG 服务、专用卷、internal 网络和 127.0.0.1:55433，未接入 stall_dev、Glyphora 或商城服务/worker。
+- **数据库写入边界**：未来首次启动会执行官方 initdb/建库及本容器 hook（`bootstrap.sh:26` 固定 socket/libpq 目标，`:31`—`:67` 事务创建角色、ACL 和实例标识）；不等于完全无数据库写入，也不会执行 001—020 业务迁移。`launch.mjs:71` 只有 restart 才调用数据库核验；首次 created_verified 仅表示容器元数据核验，不代表 hook 已完成、healthcheck 健康或业务 schema ready。后续必须单独验收，不能直接运行初始化碰运气。
+- 本次实际执行 `node --test backend/tests/phase8-safety.unit.test.mjs backend/tests/phase8-remediation.unit.test.mjs`：**124 通过、0 失败、0 跳过、0 取消**。真实安全函数与假 Docker/PG transport；默认无参 CLI 子进程不连接数据库。未运行其他 backend 测试。结果为本次进程输出摘要，未另建原始日志文件。
+- 静态检查：15 个相关 MJS 的 node --check、审核 JSON 与迁移 manifest JSON 解析通过；Ubuntu `bash --noprofile --norc -n` 分别检查 bootstrap-entrypoint.sh、bootstrap.sh 通过，未执行脚本。Compose `config --format json` 使用受控环境及显式 empty.env 纯解析通过，私下核对实际四份 secret 和脚本路径/只读挂载。解析用合成令牌，回执路径尚不存在且未创建；这不能证明运行时 mount 或固定镜像可用。TypeScript/构建本轮未执行。
+- 未执行：Docker 创建/启动/停止/删除/拉取/重标记，数据库连接/迁移/写入，后端或 worker 启动、真实业务测试、部署。没有修改业务、安全策略、测试、审核配置或私人材料。
+- **初查结论（历史）：B3 首次创建前验收未全部通过，不具备执行条件。**当时两份档案未提交；后续用户明确授权最小兼容修复并在验证成功后提交/普通推送，见第 8 节。原失败证据保留。
+
+## 8. 第八轮 B3：固定镜像引用兼容修复（未创建）
+
+- 开始前 HEAD 仍为 `3051359520a8cb997908d4c000d65cfb6318061a`；仅有上述 TEST_STATUS.md、TEST_HISTORY.md 两份预期未提交修改，全部保留整合。没有任何真实回执需要迁移，也不重新生成 B2 材料。
+- 根因：审核 repository 是渠道名 `postgres:16-alpine`，原 policy 把它直接拼成 tag+digest 运行引用；本机镜像的 RepoDigest 是不带标签的 `postgres@sha256:…`，原别名 inspect 返回 No such image。官方 [Docker CLI 文档](https://docs.docker.com/reference/cli/docker/image/pull/) 提供 NAME@DIGEST 格式。本地现象证明应用引用构造不兼容，不能据此宣称所有 Docker 都禁止 tag+digest，也未证明此前 B1/B2 报告差异的 Engine 内部原因。
+- 最小源码修复：`backend/testing/phase8/policy.mjs` 仅修改 reference 构造为 `postgres@`+digest，仍要求 approved=true、repository 精确等于 postgres:16-alpine、完整摘要/Image ID、非空审核人和原时间校验。`bootstrap-entrypoint.sh` 同步其格式守卫；未改变批准配置、完整摘要或 Image ID。
+- 修复前：`postgres:16-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36`。修复后：`postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36`。不存在使用浮动标签的失败回退、pull、tag 或其他仓库选择路径。
+- 一致性：docker.ensureImage 继续同时核对 Image ID 与 RepoDigest；assertResources 严格匹配 Config.Image、实际 Image ID 和环境固定引用；launch/Compose/回执均使用 policy 的同一返回值，无需新增平行引用字段。同步独立合成夹具两处固定引用及两个既有测试的协议期望，不把生产函数用于生成测试期望；保留原未批准、错 repository、错摘要/ID、缺审核信息及所有资源隔离断言。
+- 新增 14 项 `R-B3`：3 项额外 repository 白名单拒绝；附加字段不得覆盖引用；ensureImage 仅查询 canonical pin；错误本地 ID、错误 RepoDigest、缺失 RepoDigests 各 1 项；镜像缺失不得回退；容器引用严格匹配；容器环境匹配；launch/审计记录传递；Compose 必须提供固定变量且无浮动默认；引导守卫仅接受 canonical digest 格式。transport 均为模拟；Compose/引导的单元断言为配置/守卫源码检查，不能冒充容器运行。
+- 实际命令：两份指定 Phase8 `node --test`，**138 通过、0 失败、0 跳过、0 取消**（原124项+14项）；15 个相关 MJS `node --check` 及 Ubuntu 两份 `bash --noprofile --norc -n` 通过。未运行其他 backend、真实业务或数据库测试，没有新增原始日志文件；结果取自实际进程输出。
+- 真实只读核验：`2026-10-26T11:52:34.112Z`（北京时间 19:52:34），desktop-linux，本机端点 `npipe:////./pipe/dockerDesktopLinuxEngine`，Engine 29.6.2/Linux。修复后的真实受控 ensureImage 连续 3 次通过；独立 inspect 返回原批准 Image ID/RepoDigest、linux/amd64。只读取本地元数据，未重新查询 Registry、下载镜像或访问数据库。
+- Compose `config --format json` 纯解析通过：service image、STALL_PHASE8_IMAGE 均准确为新的固定摘要引用，pull_policy=never，127.0.0.1:55433、专用 internal 网络及四份原 secret 源映射保持一致。使用合成启动令牌，不生成真实授权回执，receipts 仍为空。
+- **结论：首次创建前的镜像阻塞已解除；首次创建尚未执行。**仍须单独授权，并在实际动作前重新检查端点、资源/端口、材料 ACL 和空回执，确认 Docker 管理权限独占。bootstrap 是真实内部初始化写入，001—020 迁移另行授权，created_verified 不等于 ready；这些边界保留。
+- 本次仅修改 policy、bootstrap-entrypoint、合成夹具、整改测试及两份档案；未修改商城业务、真实凭据/ACL、审核记录或 Compose/launch/回执代码。全部验证和秘密/范围检查通过后，按本次授权以 `fix(test-postgres): resolve pinned image reference compatibility` 提交并普通推送，具体 SHA 以 Git 为准，不预填未生成的提交。
+
+## 9. 当前阻塞与下一步
 
 1. **已完成：B1过时断言修复**。真实文件不再永久绑定未批准状态，安全拒绝断言保留；124/0/0为历史报告。
 2. **已完成：B1审核登记与修复提交**。Git确认提交 `b18a5d22974bf52205b542c71d3065d85a8a330e`；本轮档案提交前仍要核对远程没有意外推进。
 3. **已完成：B2离线凭据准备**：本次实际创建四份凭据、受限回执目录及新的 v4 UUID，独立回读核验通过。具体非秘密证据见第 6 节；严禁将密码或完整连接串提交仓库。
-4. **首次创建另行授权**：再次核对本机 Docker、镜像、资源/端口和回执后，仅用受控入口创建测试容器；不得直接 `docker compose up`，不得触碰 `stall_dev` 或其他项目数据。
-5. **迁移及真实数据库测试另行授权**：执行 20 份迁移和只读 schema/身份检查后，才能验证业务并发、锁、约束、订单/库存一致性。
-6. **最终上线验收**：支付/收款流程、商家/顾客端真机测试、备份恢复、生产部署、安全与权限等均需独立验收；不能因测试设施准备完毕直接交付商家。
+4. **已解除：B3 固定引用兼容阻塞**：最小修复已获授权并验证，使用标准 postgres@digest，审核渠道、Image ID、完整 digest 和 ensureImage 身份核验仍保留。未批准浮动标签回退或镜像升级。
+5. **首次创建另行授权**：阻塞解除后，再次核对本机 Docker、镜像、资源/端口和回执，仅用受控入口创建测试容器；不得直接 `docker compose up`，不得触碰 `stall_dev` 或其他项目数据。首次启动有真实 bootstrap 写入，须明确授权范围。
+6. **迁移及真实数据库测试另行授权**：执行 20 份迁移和只读 schema/身份检查后，才能验证业务并发、锁、约束、订单/库存一致性。
+7. **最终上线验收**：支付/收款流程、商家/顾客端真机测试、备份恢复、生产部署、安全与权限等均需独立验收；不能因测试设施准备完毕直接交付商家。
 
-## 8. 后续每轮记录规范
+## 10. 后续每轮记录规范
 
 以后每次测试在此文件追加一个记录块，至少写明：
 

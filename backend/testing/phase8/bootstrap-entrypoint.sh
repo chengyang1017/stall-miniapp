@@ -13,7 +13,7 @@ env | while IFS='=' read -r phase8_key phase8_value; do
   case "$phase8_key" in PGDATA|PG_MAJOR|PG_VERSION|PG_SHA256) ;; PG*|POSTGRES_PASSWORD) exit 19 ;; esac
 done
 printf '%s' "${STALL_PHASE8_LAUNCH_TOKEN:-}" | grep -Eq '^[a-f0-9]{64}$' || exit 20
-printf '%s' "${STALL_PHASE8_IMAGE:-}" | grep -Eq '^postgres:16-alpine@sha256:[a-f0-9]{64}$' || exit 20
+printf '%s' "${STALL_PHASE8_IMAGE:-}" | grep -Eq '^postgres@sha256:[a-f0-9]{64}$' || exit 20
 grep -Fx "INSTANCE=$STALL_PHASE8_INSTANCE_ID" /run/phase8-launch >/dev/null || exit 20
 grep -Fx "TOKEN=$STALL_PHASE8_LAUNCH_TOKEN" /run/phase8-launch >/dev/null || exit 20
 grep -Fx "IMAGE=$STALL_PHASE8_IMAGE" /run/phase8-launch >/dev/null || exit 20
