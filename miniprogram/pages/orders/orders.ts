@@ -49,8 +49,20 @@ function normalize(o: any): any {
     other: isOther(o)
   }
 }
+function normalizeCloudOrder(value: unknown): any {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('invalid_order')
+  const order = value as Record<string, unknown>
+  if (typeof order.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(order.id)) throw Error('invalid_order_id')
+  // PostgreSQL bigint is returned as decimal text; reject coercible non-money
+  // values such as null, booleans, empty text, fractions and unsafe integers.
+  const raw = order.totalCents
+  if (typeof raw !== 'number' && !(typeof raw === 'string' && /^\d+$/.test(raw))) throw Error('invalid_order_total')
+  const cents = Number(raw)
+  if (!Number.isSafeInteger(cents) || cents < 0) throw Error('invalid_order_total')
+  return normalize({ ...order, id: order.id.toLowerCase(), totalText: (cents / 100).toFixed(2) })
+}
 Page({
-  serial:0,visible:false,
+  serial:0,visible:false,listContext:'',
   data: {
     cloudMode:false,loading:false,error:'',hasMore:false,nextCursor:'',
     tabs: TABS.map(t => ({ ...t, count: 0 })),
@@ -63,29 +75,58 @@ Page({
     this.setData({ createdId: options.created || '' })
   },
   onShow() {this.visible=true;this.refresh()},
-  onHide(){this.visible=false;this.serial++;if(customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
-  onUnload(){this.visible=false;this.serial++},
+  onHide(){this.visible=false;this.serial++;if(this.data.cloudMode||customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
+  onUnload(){this.visible=false;this.serial++;this.listContext=''},
   onPullDownRefresh(){this.refresh().finally(()=>wx.stopPullDownRefresh())},
   onReachBottom(){this.loadMore()},
-  async loadMore(){if(customerOrdersConfig()&&!this.data.loading&&this.data.hasMore&&this.data.nextCursor)await this.loadCloudPage(false)},
+  syncListContext(): boolean {
+    const cloud = !!customerOrdersConfig()
+    const context = cloud ? 'cloud:' + supportIdentity() : 'local'
+    if (context === this.listContext) return false
+    const hadContext = !!this.listContext
+    this.serial++
+    this.listContext = context
+    this.setData({cloudMode:cloud,allOrders:[],visibleOrders:[],loading:false,error:'',nextCursor:'',hasMore:false,
+      tabs:TABS.map(t=>({...t,count:0})),...hadContext?{createdId:''}:{}})
+    return true
+  },
+  currentCloudRequest(serial:number,context:string): boolean {
+    if (!this.visible || serial !== this.serial) return false
+    if (context !== supportIdentity()) { this.syncListContext(); return false }
+    return this.listContext === 'cloud:' + context
+  },
+  async loadMore(){
+    if (!this.visible) return
+    const changed = this.syncListContext()
+    if (!customerOrdersConfig()) { if (changed) await this.refresh(); return }
+    if (changed) { await this.loadCloudPage(true); return }
+    if (!this.data.loading && this.data.hasMore && this.data.nextCursor) await this.loadCloudPage(false)
+  },
   async loadCloudPage(reset:boolean){
+    if (!this.visible) return
+    if (this.syncListContext()) reset = true
     const cloud=customerOrdersConfig()
     if(!cloud||(!reset&&this.data.loading))return
     const serial=reset?++this.serial:this.serial,context=supportIdentity(),tab=this.data.activeTab
     this.setData({cloudMode:true,error:'',loading:true,...reset?{allOrders:[],visibleOrders:[],nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))}:{}})
     try{
       const data=await customerOrdersRequest(cloud,undefined,{tab,limit:20,...!reset?{cursor:this.data.nextCursor}:{}})
-      if(!this.visible||serial!==this.serial||context!==supportIdentity())return
-      if(!data||!Array.isArray(data.orders)||typeof data.hasMore!=='boolean'||data.hasMore&&typeof data.nextCursor!=='string')throw Error('invalid_order_page')
-      const incoming=data.orders.map((o:any)=>normalize({...o,totalText:(Number(o.totalCents)/100).toFixed(2)}))
-      const base=reset?[]:this.data.allOrders,seen=new Set(base.map(o=>o.id))
-      const orders=base.concat(incoming.filter((o:any)=>!seen.has(o.id)))
-      this.setData({allOrders:orders,visibleOrders:orders,hasMore:data.hasMore,nextCursor:data.nextCursor||'',tabs:TABS.map(t=>({...t,count:Number(data.counts&&data.counts[t.key])||0}))})
-    }catch(_){if(this.visible&&serial===this.serial&&context===supportIdentity())this.setData({error:'云端订单加载失败，请检查登录后重试；已读取的订单仍保留，未读取本机订单'})}
+      if(!this.currentCloudRequest(serial,context))return
+      if(!data||!Array.isArray(data.orders)||typeof data.hasMore!=='boolean'||data.hasMore&&(typeof data.nextCursor!=='string'||!/^[A-Za-z0-9_-]{1,600}$/.test(data.nextCursor)))throw Error('invalid_order_page')
+      const incoming=data.orders.map(normalizeCloudOrder)
+      const orders=reset?[]:[...this.data.allOrders],seen=new Set(orders.map(o=>o.id))
+      for (const order of incoming) {
+        if (seen.has(order.id)) continue
+        seen.add(order.id)
+        orders.push(order)
+      }
+      this.setData({allOrders:orders,visibleOrders:orders,hasMore:data.hasMore,nextCursor:data.hasMore?data.nextCursor:'',tabs:TABS.map(t=>({...t,count:Number(data.counts&&data.counts[t.key])||0}))})
+    }catch(_){if(this.currentCloudRequest(serial,context))this.setData({error:'云端订单加载失败，请检查登录后重试；已读取的订单仍保留，未读取本机订单'})}
     finally{if(serial===this.serial)this.setData({loading:false})}
   },
   async refresh() {
     if(customerOrdersConfig()){await this.loadCloudPage(true);return}
+    this.syncListContext()
     this.serial++
     this.setData({cloudMode:false,loading:false,error:'',hasMore:false,nextCursor:''})
     const orders = (loadWorkflowOrders() as any[]).map(normalize)
@@ -99,8 +140,10 @@ Page({
   switchTab(e: any) {
     const next = String(e.currentTarget.dataset.tab || 'all') as OrderTab
     if (!TABS.some(t => t.key === next)) return
+    const changed = this.syncListContext()
     this.setData({ activeTab: next })
     if(customerOrdersConfig())this.loadCloudPage(true)
+    else if(changed)this.refresh()
     else this.setData({visibleOrders:this.data.allOrders.filter(o=>matched(o,next))})
   },
   openOrder(e: any) {
