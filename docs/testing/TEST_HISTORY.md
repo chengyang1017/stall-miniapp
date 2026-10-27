@@ -970,3 +970,7 @@ TypeScript noEmit、check:boundaries（126/73/85模块）、4个测试MJS语法�
 本轮299项离线安全测试重新通过，0失败/跳过；不是数据库运行验收。真实新增变化仅为新的构建上下文、本地运行器镜像/BuildKit缓存和审核登记；未操作其他项目/历史Phase8数据库资源，无全局清理、云部署、Git提交推送。所有既有未提交修改保留。
 
 详细脱敏证据：PHASE8_V2_BOOTSTRAP_START_AUDIT.json。下一步只能先另行审查规范化指纹和完整元数据基线，补足不稳定顺序及真正字段变化的对抗性回归；不能继续沿用本轮授权自动修复或再启动。P0真实PG验收仍阻塞。
+
+## 20. B3-V2 runner GitHub 独立供应链证据审查（2026-10-27）
+
+基线 `cf89c59b189c63c9d515073f8a3d990b29d66e9b`。通过 GitHub 读取既有 RUNNER_BUILD_AUDIT、BUILD_INPUT_AUDIT、Dockerfile、V2 policy、README 和 runner 批准文件。既有审计报告一次 Buildx 构建成功、`npm ci --offline` 安装41包、固定 runner manifest/Image ID/RepoDigest 均为 `sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849`，Node 基础摘要 `sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae`，bundle `f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289`。构建日志同时含 Registry 授权/元数据查询，不称整体断网。上述均是**读取前一轮本机执行产生的审计证据**，不是本次重新执行 Docker inspect、镜像字节扫描或离线测试。本轮通过 GitHub 直接提交审查文档，无本地 Docker/工作区权限。批准保持 false，待本机实时核验及单独审批。详见 [独立供应链审查](PHASE8_V2_RUNNER_INDEPENDENT_REVIEW.md)。
