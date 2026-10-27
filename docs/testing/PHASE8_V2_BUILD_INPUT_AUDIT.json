@@ -1,0 +1,1350 @@
+{
+  "version": 1,
+  "kind": "phase8-v2-read-only-build-input-audit",
+  "observedAtUTC": "2026-10-27T02:15:29.772Z",
+  "gitBaseline": "80114f191668a8c9adb1da6b4de81a4a7ffadfef",
+  "materializedContext": false,
+  "contextSnapshotSha256": null,
+  "runnerImageBuilt": false,
+  "runnerApproved": false,
+  "legacyRuntimeMaterialRead": false,
+  "userClarification": "Five previously audited shared source libraries are allowed; old B0 instance credentials, receipts and runtime materials are excluded.",
+  "sourceBundle": {
+    "sha256": "f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289",
+    "encoding": "sha256(JSON.stringify(sourceManifest)), source bytes normalized UTF8-LF",
+    "files": [
+      {
+        "path": "backend/package-lock.json",
+        "sha256": "3ed18279d3d3931a95ac747e6d3a627ee9fa3d28ae4703146a0deb0429548dc9",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 22185,
+        "repositoryRawSha256": "306ec2ccef7e599b76f6b5d37e57039584a1d721ec5b42ee87b33064d4cbc3a1",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/package.json",
+        "sha256": "bbc73e1df938d86f27333b3a6d0c82392372b984b0c3d567457981fd29a97db7",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 759,
+        "repositoryRawSha256": "38138bb665137ccb58f74bba2826984e6ad0c3ef99746355ab2b588d42d18ced",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/001_init.sql",
+        "sha256": "7876a187d0561585759e54e19247908290b13be58e3709c867df5869993d292c",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 3649,
+        "repositoryRawSha256": "682f18dced3ce0a38ad3ff66017c6fcea80c8a4abb2854fdad357fafae8510de",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/002_auth.sql",
+        "sha256": "a2370a4e9bbcd9511ed6037431dc68d8b0807db9de713ee180877283c1a911c5",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 487,
+        "repositoryRawSha256": "7060d955bcdb166c499b9bc992f34ed6ba93e2125ba3f68d376d4fcf344b4ad4",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/003_checkout.sql",
+        "sha256": "5fe3ee17a75e69905f1bb38802bd4ebd5cd2515d72b06645189391db8923f453",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 495,
+        "repositoryRawSha256": "7123d772124fc6429fd44361d179bf0be5a9272b81f13eb580ed07f6e3f6307f",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/004_delivery_rules.sql",
+        "sha256": "52e1987396be58b96251812982b27180ae0e45ad3e55e996399b7885f64260ec",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 342,
+        "repositoryRawSha256": "3d986afad2c71256b93a53b7307db7ed480854493f93cdc40c445365f85471cc",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/005_order_workflow.sql",
+        "sha256": "795f2f3c37833d60aacd85a91e8b793ebe8cd10683ff252845ae67d6e76484f6",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 749,
+        "repositoryRawSha256": "bb7296a75d05aac1a3f3a5ed019e4ecbf8eb4ffaeb2dd063a3793c406be12072",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/006_product_description_discount.sql",
+        "sha256": "e17d68a733f170126941d0d7d11eb6cc4415497926744947924b927ffb1df52e",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 884,
+        "repositoryRawSha256": "e17d68a733f170126941d0d7d11eb6cc4415497926744947924b927ffb1df52e",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/007_order_estimated_arrival.sql",
+        "sha256": "7aeb4830afb9ac11932227afe8c7067dd78d8c35ba162c79b6595086eddd9400",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 351,
+        "repositoryRawSha256": "7aeb4830afb9ac11932227afe8c7067dd78d8c35ba162c79b6595086eddd9400",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/008_product_drafts_scheduling.sql",
+        "sha256": "1db370619a769be167bb97510a132f99f3ee959a029332dd493556081c3ebf3d",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 1248,
+        "repositoryRawSha256": "1db370619a769be167bb97510a132f99f3ee959a029332dd493556081c3ebf3d",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/009_product_inventory.sql",
+        "sha256": "795a066f6acaf73cbfaeb469a0f7f504cb701a4d4831a4dd7ca0295daaddfa03",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 3074,
+        "repositoryRawSha256": "795a066f6acaf73cbfaeb469a0f7f504cb701a4d4831a4dd7ca0295daaddfa03",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/010_merchant_product_search_indexes.sql",
+        "sha256": "b1d481535ddd3e35dc397f954c77ba2bfa0a4d614cab950290084868ab686f7c",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 476,
+        "repositoryRawSha256": "b1d481535ddd3e35dc397f954c77ba2bfa0a4d614cab950290084868ab686f7c",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/011_sales_analytics.sql",
+        "sha256": "82ff68d268ff7ad6ee33f7e6716bab074588e659943a3278cb7e94f0e0730802",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 881,
+        "repositoryRawSha256": "82ff68d268ff7ad6ee33f7e6716bab074588e659943a3278cb7e94f0e0730802",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/012_merchant_order_query_indexes.sql",
+        "sha256": "b4ec8ab2849cc6b76995bf094013269512873907779633ddc299623725926194",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 282,
+        "repositoryRawSha256": "b4ec8ab2849cc6b76995bf094013269512873907779633ddc299623725926194",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/013_support_messages.sql",
+        "sha256": "c5a62fbc3102f1568b73edba7ecda8fa11f61d9333a859433829d0b6b451e7d1",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 1575,
+        "repositoryRawSha256": "c5a62fbc3102f1568b73edba7ecda8fa11f61d9333a859433829d0b6b451e7d1",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/014_merchant_archives.sql",
+        "sha256": "23b57ba1a9d019b5ba1eb7dfcd99bd6d8b7e6e98c2a29b3263105faccc063c4f",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 1348,
+        "repositoryRawSha256": "23b57ba1a9d019b5ba1eb7dfcd99bd6d8b7e6e98c2a29b3263105faccc063c4f",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/015_image_lifecycle.sql",
+        "sha256": "aad5e4848ce31fc4c70bea6b64dcd47258c337cd25299ce609fc2dac7e58add7",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 8473,
+        "repositoryRawSha256": "aad5e4848ce31fc4c70bea6b64dcd47258c337cd25299ce609fc2dac7e58add7",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/016_customer_addresses_store_presentation.sql",
+        "sha256": "7564cc6962eee9e2ad2b2a917f3164c33b4d8e9ed78ace209e5fba475d0d2c64",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 2924,
+        "repositoryRawSha256": "7564cc6962eee9e2ad2b2a917f3164c33b4d8e9ed78ace209e5fba475d0d2c64",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/017_customer_paging_product_create.sql",
+        "sha256": "c484ef8290f743272c20009e0f914253391df848ac241e9709683324512cdc8a",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 892,
+        "repositoryRawSha256": "11c333543d704925ce110c4d9aca7c065baeb11d1ec5372ed8483f1d7d027c4d",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/018_store_code_merchant_note.sql",
+        "sha256": "60bb88ef084ab986b69cd2de6ec7d78e3da90ae2280a3680b99d4f59f5c0d89f",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 605,
+        "repositoryRawSha256": "a028890754578dadac59acf1d9d0e21649c79210410cb6c9d642060db031f500",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/019_delivery_tracking.sql",
+        "sha256": "9986c343cbb91a248fbe188d7871cd2c1d541f9de63992e295495d7d145a8493",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 2467,
+        "repositoryRawSha256": "9986c343cbb91a248fbe188d7871cd2c1d541f9de63992e295495d7d145a8493",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/sql/020_product_reviews.sql",
+        "sha256": "1e85844b54c5f63dd67247093d6d08b57b90108390a354e4dbcaac3ebb59c0d8",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 6946,
+        "repositoryRawSha256": "1e85844b54c5f63dd67247093d6d08b57b90108390a354e4dbcaac3ebb59c0d8",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/testing/phase8-v2/artifact.mjs",
+        "sha256": "696a396246c27b40090c70edb5f0046444af9bcb938a0d289d78a4423259ebb4",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 2120,
+        "repositoryRawSha256": "696a396246c27b40090c70edb5f0046444af9bcb938a0d289d78a4423259ebb4",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/testing/phase8-v2/fixture.mjs",
+        "sha256": "a435c91777067468c16a3c63edcc6a4924a663ff566551ee590553ccad237e27",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 2967,
+        "repositoryRawSha256": "a435c91777067468c16a3c63edcc6a4924a663ff566551ee590553ccad237e27",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/testing/phase8-v2/grants.mjs",
+        "sha256": "c33807bff1d2a31d96a93b2ab917007c60327f45032de29e44fe9384d1b044fe",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 2642,
+        "repositoryRawSha256": "c33807bff1d2a31d96a93b2ab917007c60327f45032de29e44fe9384d1b044fe",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/testing/phase8-v2/initialize.mjs",
+        "sha256": "7adc8f2c3fda9de9fe1854e1e027164c72f5e812deadc29a8a4aa591c5125bc0",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 2884,
+        "repositoryRawSha256": "7adc8f2c3fda9de9fe1854e1e027164c72f5e812deadc29a8a4aa591c5125bc0",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/testing/phase8-v2/policy.mjs",
+        "sha256": "2235d27f87d98f17db654bf8ebecf7954573c08ba557eed6dabf28f12b14e161",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 9543,
+        "repositoryRawSha256": "2235d27f87d98f17db654bf8ebecf7954573c08ba557eed6dabf28f12b14e161",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/testing/phase8-v2/runner.mjs",
+        "sha256": "d63dcd98f0e1d50fca7cdcf3d3936e328b962645c058d8cb38d66de27ffbea52",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 3520,
+        "repositoryRawSha256": "d63dcd98f0e1d50fca7cdcf3d3936e328b962645c058d8cb38d66de27ffbea52",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/testing/phase8-v2/sql.mjs",
+        "sha256": "e1d1c49bc29c26dec0f9041835f91524ad2cb7b5e2017286ad17c561420eb20b",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 5925,
+        "repositoryRawSha256": "e1d1c49bc29c26dec0f9041835f91524ad2cb7b5e2017286ad17c561420eb20b",
+        "kind": "v2-source-or-lock-or-migration"
+      },
+      {
+        "path": "backend/testing/phase8/leases.mjs",
+        "sha256": "96c6bc615df777ac5e85e333de7ff6c5cd49bd0cab6a534e18833e2d6ef928d3",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 1810,
+        "repositoryRawSha256": "96c6bc615df777ac5e85e333de7ff6c5cd49bd0cab6a534e18833e2d6ef928d3",
+        "kind": "approved-shared-source-library"
+      },
+      {
+        "path": "backend/testing/phase8/migration-manifest.json",
+        "sha256": "8254595fe11efc623adb452c7e92f8cb205ce7cd8f07c2a7a8107d77d7ef03e0",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 3604,
+        "repositoryRawSha256": "8254595fe11efc623adb452c7e92f8cb205ce7cd8f07c2a7a8107d77d7ef03e0",
+        "kind": "approved-shared-source-library"
+      },
+      {
+        "path": "backend/testing/phase8/migrations.mjs",
+        "sha256": "795098bcbc271866152d21bfa83939e29222ecbfd03e1d910204f5bb6184acaf",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 4021,
+        "repositoryRawSha256": "795098bcbc271866152d21bfa83939e29222ecbfd03e1d910204f5bb6184acaf",
+        "kind": "approved-shared-source-library"
+      },
+      {
+        "path": "backend/testing/phase8/policy.mjs",
+        "sha256": "0847c22fe76eb861fa46170381df6d0ad8e9b6d7e051409f9fec611ddcb66c50",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 9701,
+        "repositoryRawSha256": "0847c22fe76eb861fa46170381df6d0ad8e9b6d7e051409f9fec611ddcb66c50",
+        "kind": "approved-shared-source-library"
+      },
+      {
+        "path": "backend/testing/phase8/schema.mjs",
+        "sha256": "8f285e46c5f19a9740068f04d2c8a4579d2e0fadcffd1aa8bd62b7137268c3e4",
+        "sha256Encoding": "utf8-lf",
+        "bytesAfterLF": 6523,
+        "repositoryRawSha256": "8f285e46c5f19a9740068f04d2c8a4579d2e0fadcffd1aa8bd62b7137268c3e4",
+        "kind": "approved-shared-source-library"
+      }
+    ]
+  },
+  "additionalInputs": {
+    "dockerfile": {
+      "path": "backend/testing/phase8-v2/Dockerfile.runner",
+      "sha256": "a8518b86a2af948a3090a4630c49c6628d66560c3aceaf627a5bac89d3099eb7",
+      "bytes": 559
+    },
+    "packageLock": {
+      "path": "backend/package-lock.json",
+      "sha256": "306ec2ccef7e599b76f6b5d37e57039584a1d721ec5b42ee87b33064d4cbc3a1",
+      "bytes": 22769
+    },
+    "contextPreparer": {
+      "path": "backend/scripts/prepare-phase8-v2-context.mjs",
+      "sha256": "a429bfa232d9e769cb294f0e205a1fa49725fb14065329c62dc028ee64b998c2",
+      "bytes": 2187
+    },
+    "expectedDockerignore": {
+      "sha256": "b00fc2ccd042fb6ae2a4552769e8eaf06b65f6d1fa8a4f74118529d5b1575503",
+      "content": "**\n!Dockerfile\n!payload/\n!payload/**\n!npm-cache/\n!npm-cache/**\n"
+    },
+    "cacheIndexMaterialized": false
+  },
+  "dependencies": [
+    {
+      "lockPath": "node_modules/@aws-sdk/checksums",
+      "name": "@aws-sdk/checksums",
+      "version": "3.1001.5",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/checksums/-/checksums-3.1001.5.tgz",
+      "integrity": "sha512-6erto9nK2OZO/woEgmFIaPh5gChgdNd7nL6jgAf8TAXz3/QHC8Pan2TFe9GYp3IxOIKCCGWPylSjtOHKfNzQlw==",
+      "bytes": 27881,
+      "sha256": "b1ade849b8b7a315c3b6c082f401d1d29a906aa828d61e00d19563a816f81d6a",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 127,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/client-s3",
+      "name": "@aws-sdk/client-s3",
+      "version": "3.1156.0",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/client-s3/-/client-s3-3.1156.0.tgz",
+      "integrity": "sha512-Z2PqQqKMDVX56tNZ6ggmjoI5o/8+4+8ArmjLwE5ktYsEzs1BrvklBT1ZzI+s0Vcf3wfPguoEMD7EkMswmEta/A==",
+      "bytes": 412093,
+      "sha256": "6dab7eda27a36faddd03b63851d96474361fccf75b2a5d9e18e5cfc7b51a6218",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 442,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/core",
+      "name": "@aws-sdk/core",
+      "version": "3.978.5",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/core/-/core-3.978.5.tgz",
+      "integrity": "sha512-ruI0AWqcrfL20XDS6SwZIJFPOBZ6N0ADa9nLzWlBhxk1aoUjbUX3JkTR9vEmk7o35XpAHi68ahZ4T6RE2U9XyA==",
+      "bytes": 83246,
+      "sha256": "6bfdf258d9c37824c0f6678ee5b8126d8676c26421042d2aded6b88a6e8b06ef",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 321,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/credential-provider-env",
+      "name": "@aws-sdk/credential-provider-env",
+      "version": "3.972.76",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-env/-/credential-provider-env-3.972.76.tgz",
+      "integrity": "sha512-YxmL1Ar7bV9ZkJvtv+lj+MF6le76NnZnbmgySyZuxpZaCv0/1lZ3KxKy6RIj1h9ui2hWnVjZxbmTMeO0y/NrQA==",
+      "bytes": 6297,
+      "sha256": "252db0d01283e331851c36b6f4b4fc3a3ba7585626b2a2b01670724a8fe0e3da",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 10,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/credential-provider-http",
+      "name": "@aws-sdk/credential-provider-http",
+      "version": "3.972.78",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-http/-/credential-provider-http-3.972.78.tgz",
+      "integrity": "sha512-3VHknDRngoebsaqyT1iR75b5cBT2zfEtODK6yYmYltljkK1HEAQLs2FEd1IpWqAeOYdMGaG9wikngWLTufY7RA==",
+      "bytes": 5166,
+      "sha256": "ae524c2afe19885e6f434fba4950b57fcf9e22445ee2e4f5ae88beb95816cb98",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 27,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/credential-provider-ini",
+      "name": "@aws-sdk/credential-provider-ini",
+      "version": "3.973.21",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-ini/-/credential-provider-ini-3.973.21.tgz",
+      "integrity": "sha512-aLx9hbCX6mGAyv4ZZd8UagJ4RASHVJw6BFDSIyuKmLkqNL6H47EjBPK6qaJ4B5TDV6mc+vMa0SJFYyo4mkvVQg==",
+      "bytes": 11283,
+      "sha256": "13edaa0f0b4cf00b7da24060c9b4238c0803b23ec60005349fce970c3461b603",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 34,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/credential-provider-login",
+      "name": "@aws-sdk/credential-provider-login",
+      "version": "3.972.83",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-login/-/credential-provider-login-3.972.83.tgz",
+      "integrity": "sha512-9bJU6FjRacF4FK/QHf8Dyxhur7B1grRj8C1Yh4IkpoFW2exQflPdCv0VrbemLW9ZctLNle+AE7TETs9KNvuLYg==",
+      "bytes": 6362,
+      "sha256": "680b3643924f2d8418cedb3905798107f27a87b02d69a485677fdb364fa3fa71",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 15,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/credential-provider-node",
+      "name": "@aws-sdk/credential-provider-node",
+      "version": "3.972.88",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-node/-/credential-provider-node-3.972.88.tgz",
+      "integrity": "sha512-AG0KID5qhQPzrFkh5b0Cws1Amytvzo0L0Xj6hMgJXEwD6ZXAqninDhSNAWJiN5zU4YVVZnuidnqwPwYJ04IamA==",
+      "bytes": 9823,
+      "sha256": "5e6ac4feaa5b6bf4b40a527953f3f8a58813ec0b9ebad8cdb90fea08043ae1ef",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 16,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/credential-provider-process",
+      "name": "@aws-sdk/credential-provider-process",
+      "version": "3.972.76",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-process/-/credential-provider-process-3.972.76.tgz",
+      "integrity": "sha512-pdhKFTXv1zPYhh92MTlp0jVbLWvUEV9v+rziuEkoskGGQ2iJskxHTO38nA8UAbT/N4IM3n8OZJ9rIY5IBO15/A==",
+      "bytes": 7119,
+      "sha256": "8bd50cdd3e53c905933be77ab383021a3deb60f65f4ab138fbb525589d2b4d17",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 19,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/credential-provider-sso",
+      "name": "@aws-sdk/credential-provider-sso",
+      "version": "3.973.20",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-sso/-/credential-provider-sso-3.973.20.tgz",
+      "integrity": "sha512-DlxrAB3MnjNLx/da7b89W+3DyJQYso/q7Ns15MsST2IV2nkAYQOYTUCaffNSjgrpMP99Dm2mV2jxzcbyF94ZfA==",
+      "bytes": 9077,
+      "sha256": "91b769daba6428c9569a987da087436ed6c4528ecbdb5d36a9bd10bb0f45aca5",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 26,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/credential-provider-web-identity",
+      "name": "@aws-sdk/credential-provider-web-identity",
+      "version": "3.972.82",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-web-identity/-/credential-provider-web-identity-3.972.82.tgz",
+      "integrity": "sha512-LUo46IqPTJ4xKBsrLuoaxiv/D2GTBCcFDMD1y3jKIqPR/p7Rw14RJFZ0iRWftqZtyLPQX9JMGnSi3mBu4y/pNA==",
+      "bytes": 9077,
+      "sha256": "7cda1004a0274c798c8f1efb0e0789bcdb2fc8588ce059a5ad9502faf594c24a",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 13,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/middleware-sdk-s3",
+      "name": "@aws-sdk/middleware-sdk-s3",
+      "version": "3.972.81",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/middleware-sdk-s3/-/middleware-sdk-s3-3.972.81.tgz",
+      "integrity": "sha512-jfanv1pV0sJFZw6/DPiNjvK7B478god0zOum5yIWo+/+1Gy+CSXWpGBWx+3nBJyDvjcu/2kUMr4ADUp9BHH34Q==",
+      "bytes": 40928,
+      "sha256": "a4f8ca76469b84c899311df2b8a3c972ab5dcdbe049da801184242e463edd7be",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 139,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/nested-clients",
+      "name": "@aws-sdk/nested-clients",
+      "version": "3.997.50",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/nested-clients/-/nested-clients-3.997.50.tgz",
+      "integrity": "sha512-nKb8qu4QsnpZTq/6JIXc72mzuzfh7BK4sUQkpQznPec2z4W7Ob2xYkcM4i5e1yGTBnbJVeFv/0sf3jcz85hclA==",
+      "bytes": 93282,
+      "sha256": "df78c9abe428890bb230c66b5d782e0f4b0fb410851544a2d178c536b045260f",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 357,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/s3-request-presigner",
+      "name": "@aws-sdk/s3-request-presigner",
+      "version": "3.1156.0",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/s3-request-presigner/-/s3-request-presigner-3.1156.0.tgz",
+      "integrity": "sha512-M4yj4HmAPydhIMxKK90eTcnHr5FHBl000d2oFMAWpt+XPX86c2kmNJpiYbKrPLIe8jyK9sweRt5CDdWrhq/QTg==",
+      "bytes": 8734,
+      "sha256": "7e63d3c4dbf8974118675eb4178ec65e5ec4181ab234886f96b26cd4258213a5",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 16,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/signature-v4-multi-region",
+      "name": "@aws-sdk/signature-v4-multi-region",
+      "version": "3.996.49",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/signature-v4-multi-region/-/signature-v4-multi-region-3.996.49.tgz",
+      "integrity": "sha512-nvuAZNRrRRVCiARRKsYlQ0VnXiEQiq7vXPH+UA+LSo+kN3Djl9eo/V2r0udkw85PnsNshmv2Em1clld5M3j67w==",
+      "bytes": 8367,
+      "sha256": "d634b6db3b8ca8dfea47bb5637401f967834d4918e82f6b73ec65885cf417f29",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 16,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/token-providers",
+      "name": "@aws-sdk/token-providers",
+      "version": "3.1155.0",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/token-providers/-/token-providers-3.1155.0.tgz",
+      "integrity": "sha512-iIcQnYLhWuq9qOLQbIWFrxF3PF0svVeZvHnUS4DUnO4zUFmFHIyGyjqrntXG+e/5PUgfavV0pYfDIKHxTzN2LA==",
+      "bytes": 10173,
+      "sha256": "15652ac565d328ac610723db258e7b1045869ea6773ea1e13dcc6e5631a3869f",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 37,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/types",
+      "name": "@aws-sdk/types",
+      "version": "3.975.0",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/types/-/types-3.975.0.tgz",
+      "integrity": "sha512-WQlhs6juByzWOzj5fwxOx0mPJaEqMcG/sDpl3Id61B3XhKE63xY+0QWcnG+sWR/sCfprmreyUo1lM7IKZmHMzw==",
+      "bytes": 15155,
+      "sha256": "c98921662a01a5f53834e840476a985e202279975c9f19a58d849ad6cceadcf7",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 124,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws-sdk/xml-builder",
+      "name": "@aws-sdk/xml-builder",
+      "version": "3.972.41",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/xml-builder/-/xml-builder-3.972.41.tgz",
+      "integrity": "sha512-ctjVSyCMegrWfXlx6VqzSBFI6UqmQ5ZlnfMhdLIiWmhoH8UAQxSCP5N3OpG7X3k4LnS7ou74C4mt20+bfTW2aQ==",
+      "bytes": 9760,
+      "sha256": "34b42f96fba802377e95d740663e3213047db5e4edfeddcd58f92ea1ed142c24",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 28,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@aws/lambda-invoke-store",
+      "name": "@aws/lambda-invoke-store",
+      "version": "0.3.0",
+      "resolved": "https://registry.npmjs.org/@aws/lambda-invoke-store/-/lambda-invoke-store-0.3.0.tgz",
+      "integrity": "sha512-sl4Bm6yiMNYrZKkqqDFWN0UfnWhlS8ivKxrYl+6t0gCLrqr8y3B2IqZZbFRkfaVVp7C/baApyh71P+LeE1A2sQ==",
+      "bytes": 8318,
+      "sha256": "9ad184d7f16e463ca79668bdb5b16be0c421c1d1a289f6d6c5a26f39658cb667",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 7,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@smithy/core",
+      "name": "@smithy/core",
+      "version": "3.36.2",
+      "resolved": "https://registry.npmjs.org/@smithy/core/-/core-3.36.2.tgz",
+      "integrity": "sha512-oRw0rB9QSUiCZfEs23G5F4Af+b2rQt1lItIICWu5IejFNd+uPM8SWqiKLMpQ6bX1Q7slsLbjuoE2niErFtkVPQ==",
+      "bytes": 413139,
+      "sha256": "13dd02eeb9bf9ea90251b24c2ed996b8f6cf184ba816d9c634462c611efeb7e3",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 1166,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@smithy/credential-provider-imds",
+      "name": "@smithy/credential-provider-imds",
+      "version": "4.5.2",
+      "resolved": "https://registry.npmjs.org/@smithy/credential-provider-imds/-/credential-provider-imds-4.5.2.tgz",
+      "integrity": "sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==",
+      "bytes": 17698,
+      "sha256": "01ce4798200c999ed16b932c90adfa63e83cd9b437bd8809c3ac68ced0310612",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 56,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@smithy/fetch-http-handler",
+      "name": "@smithy/fetch-http-handler",
+      "version": "5.8.0",
+      "resolved": "https://registry.npmjs.org/@smithy/fetch-http-handler/-/fetch-http-handler-5.8.0.tgz",
+      "integrity": "sha512-ycSJu3tFAQ4v04CBB0agqFMVsSQ1iG3yw+SpgxRqKfaURpQD4CZ8Wn0zPMmSnOuTpTh65Vz+EA0rMrw089wvkA==",
+      "bytes": 12024,
+      "sha256": "e8d08130bff1b3aa99e738b9705fc9b5411dd6ce0f14371108a10ae968d79284",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 17,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@smithy/node-http-handler",
+      "name": "@smithy/node-http-handler",
+      "version": "4.12.1",
+      "resolved": "https://registry.npmjs.org/@smithy/node-http-handler/-/node-http-handler-4.12.1.tgz",
+      "integrity": "sha512-ThMkboGeONWXAelq9FvGsuJC4rOi+qyC4/zhUF58xYpxUg5sQKx2VXZYJmtNjr4dSuBJ1HeJXETQILCz3wOHvw==",
+      "bytes": 26840,
+      "sha256": "e9d05919fbdee16d095febc4fb5a88da22a8e9e5bb7afc7fbd9d86e4fccf8eeb",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 56,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@smithy/signature-v4",
+      "name": "@smithy/signature-v4",
+      "version": "5.7.4",
+      "resolved": "https://registry.npmjs.org/@smithy/signature-v4/-/signature-v4-5.7.4.tgz",
+      "integrity": "sha512-tHy0K0VtqNd5Y7Y41h0a0Lhh0L1GzC08dTWg0F7vRJWFtTENg7IZikf3wQkanYIRdb7ngoIPMTmqgUi401fEeQ==",
+      "bytes": 21171,
+      "sha256": "3429a3b77e64485b9bb173096a264d3b317547ecd301fb1fb24d4849275ed88e",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 47,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/@smithy/types",
+      "name": "@smithy/types",
+      "version": "4.19.0",
+      "resolved": "https://registry.npmjs.org/@smithy/types/-/types-4.19.0.tgz",
+      "integrity": "sha512-r7jh49VJxGerfAcTQA6gXcKc+98zOp/tqRwzYjgOE+iSQsP6cEU1hq2QzbuipmP68QtYdY9wKEhiCQZIzHgZ4Q==",
+      "bytes": 82447,
+      "sha256": "119a9e5d65890c59e7531443dab575fa19dbf25f1fa125cb30d66ddef2954f28",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 224,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/bowser",
+      "name": "bowser",
+      "version": "2.14.1",
+      "resolved": "https://registry.npmjs.org/bowser/-/bowser-2.14.1.tgz",
+      "integrity": "sha512-tzPjzCxygAKWFOJP011oxFHs57HzIhOEracIgAePE4pqB3LikALKnSzUyU4MGs9/iCEUuHlAJTjTc5M+u7YEGg==",
+      "bytes": 64403,
+      "sha256": "9701a257a1e25b0caf9740a48979d4d955e61c0e4dfa7508d4a789eb4e41caa0",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 14,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/pg",
+      "name": "pg",
+      "version": "8.23.1",
+      "resolved": "https://registry.npmjs.org/pg/-/pg-8.23.1.tgz",
+      "integrity": "sha512-aL96AHANtWjPLDOLqnhx+ngp9+UK7ETEU8VJrDCGvsSSi/mGLcWYsS6Herg7lmaBJe4uwrfqsa7gTEFaSizDoQ==",
+      "bytes": 28809,
+      "sha256": "0d7999c755c25f7c02fbd96196291148eda737bb91e78e4031b9ebe5ef7d7de7",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 20,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/pg-cloudflare",
+      "name": "pg-cloudflare",
+      "version": "1.4.1",
+      "resolved": "https://registry.npmjs.org/pg-cloudflare/-/pg-cloudflare-1.4.1.tgz",
+      "integrity": "sha512-6PQbsFWZcp9EmJEwy5cGQ2La+AMWpP46lgbb8X+U/XsHIUweYDNCpeuKck5RxL2MdVFi7krbbEi5nX4Zh7JhrQ==",
+      "bytes": 7245,
+      "sha256": "7a3b140775e885d245bcd0c08f60cc5d726449a4dfabda6a31537b7411ef38cc",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 13,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": true
+    },
+    {
+      "lockPath": "node_modules/pg-connection-string",
+      "name": "pg-connection-string",
+      "version": "2.14.1",
+      "resolved": "https://registry.npmjs.org/pg-connection-string/-/pg-connection-string-2.14.1.tgz",
+      "integrity": "sha512-qR3kGNPBLpCNtz0evbKA0Y/MRFXwSSdT+pTJvYp/bXTcReZbvX1kzF0IyTc1QnxqF7AZbOeBhNL8R5mYQZV/MA==",
+      "bytes": 5826,
+      "sha256": "22f69d9711c971d8b66eb78474073ba7f47f27bb69a4347c13cb8ab7c75dfaff",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 6,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/pg-int8",
+      "name": "pg-int8",
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/pg-int8/-/pg-int8-1.0.1.tgz",
+      "integrity": "sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw==",
+      "bytes": 1508,
+      "sha256": "f010d48974a96814e841edbb6fc6096385574610714d2a50e99811170c365e92",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 4,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/pg-pool",
+      "name": "pg-pool",
+      "version": "3.14.0",
+      "resolved": "https://registry.npmjs.org/pg-pool/-/pg-pool-3.14.0.tgz",
+      "integrity": "sha512-gKtPkFdQPU3DksooVLi9LsjZxrsBUZIpa+7aVx+LV5pNh0KzP4Zleud2po+ConrxbuXGBJ6Hfer6hdgpIBpBaw==",
+      "bytes": 9579,
+      "sha256": "0b0b8729c09d5eaa059313c9c3d11efc8907441386bbf86ccc57e1298c6ce71a",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 5,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/pg-protocol",
+      "name": "pg-protocol",
+      "version": "1.16.1",
+      "resolved": "https://registry.npmjs.org/pg-protocol/-/pg-protocol-1.16.1.tgz",
+      "integrity": "sha512-p9VOFMiHB/ZbJATetbg+99PxssTVSQRnyuPSQ67mN1+1KBOjZaZ83ZQzltnxPhJwSsC3nwVjJ10DVJlerbFzLg==",
+      "bytes": 39903,
+      "sha256": "e1315b9dc839a029109e3a521c1dd1d9c7265722fdbc50d27ff5f7274f70732f",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 42,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/pg-types",
+      "name": "pg-types",
+      "version": "2.2.0",
+      "resolved": "https://registry.npmjs.org/pg-types/-/pg-types-2.2.0.tgz",
+      "integrity": "sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==",
+      "bytes": 10344,
+      "sha256": "c4804fd058140c32f8fda78883ad45dee3eaa4fd9e9127b6eb659fefe51981bd",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 13,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/pgpass",
+      "name": "pgpass",
+      "version": "1.0.5",
+      "resolved": "https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz",
+      "integrity": "sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==",
+      "bytes": 4280,
+      "sha256": "ff794c956186430afd600b5bc4500f3f0faf34b62be6ff98494f4c7f4a6d8597",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 4,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/postgres-array",
+      "name": "postgres-array",
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/postgres-array/-/postgres-array-2.0.0.tgz",
+      "integrity": "sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA==",
+      "bytes": 2213,
+      "sha256": "dbf1035c777631d4b0a4b5c035b1f6247dd923db6b2ea115b93b1eabb172b3a0",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 5,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/postgres-bytea",
+      "name": "postgres-bytea",
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/postgres-bytea/-/postgres-bytea-1.0.1.tgz",
+      "integrity": "sha512-5+5HqXnsZPE65IJZSMkZtURARZelel2oXUEO8rH83VS/hxH5vv1uHquPg5wZs8yMAfdv971IU+kcPUczi7NVBQ==",
+      "bytes": 1724,
+      "sha256": "0395e34ecb9945b0003132af6e11463ec7ec8f17fb5cbdbccc5a822bd6807d96",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 4,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/postgres-date",
+      "name": "postgres-date",
+      "version": "1.0.7",
+      "resolved": "https://registry.npmjs.org/postgres-date/-/postgres-date-1.0.7.tgz",
+      "integrity": "sha512-suDmjLVQg78nMK2UZ454hAG+OAW+HQPZ6n++TNDUX+L0+uUlLywnoxJKDou51Zm+zTCjrCl0Nq6J9C5hP9vK/Q==",
+      "bytes": 2836,
+      "sha256": "a67a8d90e7b8f64041a6f425b102b27a3e86d5854ace7e9414a890912f3adb59",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 4,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/postgres-interval",
+      "name": "postgres-interval",
+      "version": "1.2.0",
+      "resolved": "https://registry.npmjs.org/postgres-interval/-/postgres-interval-1.2.0.tgz",
+      "integrity": "sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==",
+      "bytes": 2926,
+      "sha256": "e67563626b30aa7d22caf930e38529bb137476146a11eaaa0bb1e07c0a2413b1",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 5,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/split2",
+      "name": "split2",
+      "version": "4.2.0",
+      "resolved": "https://registry.npmjs.org/split2/-/split2-4.2.0.tgz",
+      "integrity": "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==",
+      "bytes": 4668,
+      "sha256": "e0061e7f042fc5ff6dcda8afb66619757d92ab1ff514a28a5904f2ebde27bf54",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 6,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/tslib",
+      "name": "tslib",
+      "version": "2.8.1",
+      "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz",
+      "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
+      "bytes": 18477,
+      "sha256": "66f635d5eeabae44807534976913a102cf615b9a045368359c9f79ae6ee2119e",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 14,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    },
+    {
+      "lockPath": "node_modules/xtend",
+      "name": "xtend",
+      "version": "4.0.2",
+      "resolved": "https://registry.npmjs.org/xtend/-/xtend-4.0.2.tgz",
+      "integrity": "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==",
+      "bytes": 2529,
+      "sha256": "bd22a01d43c799be7bb53dfa9e775b132045e39525e51efb977528a00041ba48",
+      "actualIntegrityVerified": true,
+      "packageIdentityVerified": true,
+      "indexChecksumVerified": true,
+      "indexIntegrityMatched": true,
+      "archiveEntries": 7,
+      "sensitiveChecks": {
+        "metadataCredentialFields": 0,
+        "packageJsonCredentialFields": 0,
+        "unsafePaths": 0,
+        "links": 0,
+        "suspiciousFiles": 0,
+        "secretShapes": 0
+      },
+      "optional": false
+    }
+  ],
+  "dependencyClosure": {
+    "ordinaryEdges": 148,
+    "optionalEdges": 1,
+    "requiredPeerEdges": 1,
+    "optionalPeerEdges": 1,
+    "optionalPeersAbsent": [
+      {
+        "from": "node_modules/pg",
+        "name": "pg-native",
+        "range": ">=3.0.1"
+      }
+    ],
+    "failures": []
+  },
+  "rootDependenciesMatch": true,
+  "cacheAudit": {
+    "readOnly": true,
+    "tarballsVerified": 41,
+    "bytesVerified": 1562730,
+    "archiveExtractedToFilesystem": false,
+    "payloadCodeExecuted": false,
+    "originalCacheModified": false,
+    "scope": "Only 41 lock-selected artifacts and their matching index records; unrelated global cache content not approved or copied.",
+    "secretCheckLimit": "Defined credential-key/file-name and private-key/GitHub-token shape checks, not a complete DLP, malware or vulnerability audit.",
+    "globalIndexBuckets": 7150,
+    "selectedIndexBuckets": 41,
+    "unselectedIndexBuckets": 7109,
+    "unrelatedIndexContentsRead": false
+  },
+  "nodeBase": {
+    "tag": "node:24.22.1-bookworm-slim",
+    "reference": "node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae",
+    "indexDigest": "sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205",
+    "platformDigest": "sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae",
+    "configDigest": "sha256:dc1f22974dab4be31a8b56d58cb1f8fc218e83de83ccd831d885b3d7ac1223fb",
+    "registryVerifiedAtUTC": "2026-10-27T02:14:00.956Z",
+    "registryDigestsUnchanged": true,
+    "localImageState": "not-verified-engine-pipe-unavailable",
+    "localImageId": null,
+    "localRepoDigests": null
+  },
+  "tools": {
+    "dockerClient": "29.6.2 windows/amd64",
+    "compose": "5.3.1",
+    "buildx": "0.35.0-desktop.2",
+    "hostNode": "v24.16.0",
+    "archiveReader": "installed npm tar 7.5.13",
+    "semverReader": "installed npm semver",
+    "engineVersion": null,
+    "builderDriver": null,
+    "imageStore": null
+  },
+  "plannedBuild": {
+    "notExecuted": true,
+    "platform": "linux/amd64",
+    "arguments": {
+      "NODE_BASE": "node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae",
+      "BUNDLE_SHA256": "f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289",
+      "SOURCE_DATE_EPOCH": 1793023505
+    },
+    "exporter": {
+      "type": "image",
+      "name": "docker.io/library/stall-phase8-r2-runner:review-dd83d09",
+      "push": false,
+      "store": true,
+      "name-canonical": true,
+      "oci-mediatypes": true,
+      "rewrite-timestamp": true
+    },
+    "localExporterCapabilityVerified": false,
+    "network": "none for RUN, not proof of offline BuildKit resolver",
+    "provenance": false,
+    "sbom": false
+  },
+  "remainingGates": [
+    "Engine reachability, Linux/containerd image-store and builder identity",
+    "Full local base layers and real Image ID/RepoDigest",
+    "Dedicated curated cache and physical context preparation under separate authorization",
+    "Full physical context file set/modes/mtime/extra-file audit and snapshot hash",
+    "Controlled image build, output descriptor and canonical-reference verification",
+    "Independent final runner-image approval"
+  ],
+  "digestMeaning": "evidenceSha256 hashes this inventory before adding that field, using UTF8 JSON.stringify with insertion-order keys. It is not a physical-context or image digest.",
+  "runtimeImportAudit": {
+    "parser": "Node vm.SourceTextModule for static imports; literal dynamic imports cross-checked, no module evaluation",
+    "runtimeMjsFiles": 11,
+    "relativeImportEdges": 21,
+    "unresolved": 0,
+    "nonBuiltinDependency": [
+      "pg"
+    ]
+  },
+  "evidenceSha256": "968c119f257124719806a2a661c68d08d5e707bde0addf330b04284c404ba0c9"
+}

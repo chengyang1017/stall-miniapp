@@ -1,6 +1,6 @@
 # 已知问题、修复记录与剩余风险
 
-更新日期：2026-10-27；本次供应链只读调查基线 `dd83d09d51797c05aff8a5a0db8e3793d49c54cd`。B3-R历史设计基线为 `70145de43af8d649f43883dd6254af639cba8cac`，既有测试记录仍以各历史提交为准。
+更新日期：2026-10-27；本次Engine/构建前只读审计基线 `80114f191668a8c9adb1da6b4de81a4a7ffadfef`。前轮供应链基线为 `dd83d09d51797c05aff8a5a0db8e3793d49c54cd`；B3-R历史设计基线为 `70145de43af8d649f43883dd6254af639cba8cac`，既有记录仍以各历史提交为准。
 上述为B3-R历史设计时点。最新B3-V2基线 `083f67548d044c29ad4a9e0497d791e4348fd5f8`：已实现独立运行器源码，原138项加新97项共235项离线通过；未实际运行Docker资源或SQL、未恢复旧现场。已修复表示源码/指定离线范围成立，不表示真实业务环境已验收。
 
 ## 已修复并保留历史的问题
@@ -58,10 +58,10 @@
 | R-16 | 恢复入口缺失，受阻 | B0 first不可重跑；restart拒绝failed、要求停止容器及ready，不支持当前运行且仅bootstrap的实例。须另行设计绑定身份、保留原失败回执、独立追加审计和bootstrap只读验收的恢复流程；严禁改回执为成功、清空卷或删除容器探路 |
 | R-17 | V2源码及97项离线回归完成，真实环境受阻 | A方案已实现独立internal-runner-v1控制器/运行器/授权协议；runner镜像未批准，无Docker socket/运行时安装；实际isolated/宿主/出口隔离与Windows挂载必须另行验收，不能凭标志通过 |
 | R-18 | 旧实例不可直接接管写测试 | 原HostConfig仍含发布请求，原网络不是新A的isolated规范；保留原ID/UUID/nonce/failed审计，无损只读识别有条件可设计。默认另建独立V2实例，不复用旧卷/材料，不静默豁免旧端口校验 |
-| R-19 | 2026-10-27：Engine不可达，供应链运行条件未验证 | 客户端29.6.2、Buildx0.35.0可用；desktop-linux本机管道不存在/不可达。本地Node镜像、实际image store/builder均未知，未擅自启动Docker。无法据历史containerd迹象批准当前构建路径 |
+| R-19 | 本轮复核仍受阻：Engine未恢复可达 | 客户端29.6.2、Compose5.3.1、Buildx0.35.0可用；desktop-linux本机管道仍不存在/不可达。已停止依赖Engine的镜像/store/builder/旧资源查询，未启动Docker。不得把未知写成镜像缺失或containerd不可用 |
 | R-20 | 固定runner引用需真实产物验证 | 首选containerd image store + image exporter的canonical name，必须实际image inspect固定引用/RepoDigest/ID/平台/label；普通build或load不能无条件保证。私有registry带地址前缀不符合现有精确repo规则，禁止去前缀或伪造digest绕过 |
-| R-21 | 缓存元数据完整不等于离线安装通过 | 实际用户缓存41/41索引和内容文件存在，未读取tarball内容/SRI校验或执行npm ci；不能复制整个全局缓存（可能含无关私有URL/元数据）。需按lock精选、内容校验和隔离offline构建，缺失/损坏时停止 |
-| R-22 | 源bundle与完整构建输入不同 | 当前bundle覆盖34源码/锁/SQL文件，不包含Dockerfile、npm-cache、Dockerignore、base和构建参数。未来须单独完整输入清单与摘要；记录最终OCI/config/image身份。npm缓存元数据/mtime及构建时间可能影响重复构建digest，未验证逐字节可重复性 |
+| R-21 | 41项内容完整性已核验；专用cache/Linux安装仍未验证 | 本轮41/41真实SHA512、包名版本、索引校验与归档依赖字段匹配，未发现指定敏感形态/危险归档路径；这是内容一致性证据，不是恶意代码/漏洞全审计。全局7150桶仅选41，不读其余7109桶内容，禁止整库复制；仍须独立精选/封存及Linux npm ci验收 |
+| R-22 | 已有完整候选输入审计；物理context/产物尚未生成 | 新增PHASE8_V2_BUILD_INPUT_AUDIT.json列34源码的LF及raw hash、41依赖真实SRI/SHA256、Dockerfile/base/计划参数和工具状态；源bundle、审计清单摘要、正式context、OCI和Image ID严格区分，后两类不能预填。未证明逐字节重复构建 |
 
 风险表中的“未验证”不是已证实业务缺陷；“已修复”也不是正式交付验收。发现新失败先保留原始断言及日志，确认夹具还是业务问题，未经授权不改生产规则。
 

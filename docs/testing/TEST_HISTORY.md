@@ -457,3 +457,76 @@ docker --context desktop-linux buildx build --builder desktop-linux `
 12个相关MJS的node --check通过；只读源码/manifest/迁移摘要/当前未批准拒绝断言通过。前轮235项离线安全回归**本轮未重跑**，仍作为历史结果；未新增测试或修改既有断言。网络操作仅官方网页/Registry元数据和授权Git同步；Registry匿名token不落盘。Docker只读查询失败未触发自动启动。
 
 仅准备调查完成，不具备直接创建V2或执行B4条件。Engine可达性、本地Node基础层、image-store/exporter实测、精选缓存及完整上下文、真正构建与人工审核均待后续授权。没有创建目录/密码/UUID/镜像/容器/卷/网络、下载依赖、读旧密码或failed回执、连接数据库、运行迁移/API/worker。文档随本轮授权提交普通Push；提交SHA由包含本节的Git提交确定，不预填未来SHA。
+
+## 16. 第八轮 B3-V2：Engine恢复核验与运行器构建前审计
+
+日期：2026-10-27；客户端Asia/Kuala_Lumpur与档案Asia/Shanghai均为UTC+8。起始HEAD及只读查询到的远程main均为 `80114f191668a8c9adb1da6b4de81a4a7ffadfef`，main，工作区干净。前轮曾报告Push认证失败，但本轮开始远程已追平，不推定由谁补推，也不追认前轮失败命令成功。
+
+本轮用户澄清：“仅禁止旧实例运行材料，保留已审计共享源码”。因此现有白名单中5项 `backend/testing/phase8/` 公共源码可列入审计；没有纳入或读取旧实例密码、私人回执、nonce文件、数据库文件或用户目录。没有修改任何商城业务、V2代码、依赖、安全策略或测试断言。
+
+### 16.1 Docker与资源状态
+
+实际只读命令：可见进程查询（Docker Desktop/com.docker.backend/com.docker.proxy/dockerd）、`docker context show`、`docker context inspect desktop-linux --format '{{json .Endpoints.docker}}'`、`docker --version`、`docker compose version`、`docker buildx version`、`docker --context desktop-linux version --format '{{json .Server}}'`。
+
+- CLI 29.6.2（dfc4efb），Compose 5.3.1，Buildx v0.35.0-desktop.2，宿主Node v24.16.0。
+- context为desktop-linux，实际配置端点 `npipe:////./pipe/dockerDesktopLinuxEngine`，SkipTLSVerify=false。
+- 被查询的Docker相关进程未列出；Engine返回“open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified”，Server=null。结论是**Engine没有恢复可达**；不扩张成数据/资源被删除的判断。
+- 按任务要求停止后续依赖Engine的info/image inspect/builder及资源查询。实际Engine版本、DriverStatus、containerd image store、builder驱动/平台/exporter、本地Node镜像ID/RepoDigest与完整基础层均未验证。
+- 旧B0容器/卷/网络、商城与Glyphora资源当前ID/状态/标签无法重新读取；没有触碰它们，没有重启Desktop/Engine、没有改变builder/存储后端或网络。历史failed回执未读未改。V2本轮未创建，历史尚未创建的记录未被运行时核验取代。
+
+### 16.2 官方基础镜像复核
+
+`2026-10-27T02:14:00.956Z`（UTC）再次从Docker Official Registry只读获取标签索引、固定amd64清单及配置JSON，重算响应字节SHA256，三个摘要均与第15节一致：
+
+| 类型 | SHA256 |
+| --- | --- |
+| node:24.22.1-bookworm-slim索引 | `55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205` |
+| linux/amd64 manifest | `2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae` |
+| 配置blob | `dc1f22974dab4be31a8b56d58cb1f8fc218e83de83ccd831d885b3d7ac1223fb` |
+
+Registry环境仍为NODE_VERSION=24.22.1、linux/amd64，来源注解仍指向官方提交 `80f02a542da739e6a662451d1db66456a0dea253:24/bookworm-slim`。没有请求镜像层或保存/打印临时匿名token。**官方存在不证明本机存在；本地状态未知，runner-image-approval.json仍为approved=false。**基础镜像支持Node>=20及UID1000需求，与当前Dockerfile兼容属于源码/元数据判断，不是实际构建通过。
+
+### 16.3 41包真实内容与依赖闭包
+
+本轮读取当前用户npm-cache中lock选择的41个内容文件，逐一重算实际SHA512并与lock的integrity比较，同时记录内容SHA256和字节数。合计 **1,562,730字节，41/41通过，0缺失、0损坏、0无法验证**。在内存中使用已安装npm附带tar 7.5.13解析归档，没有解压文件或执行其中代码。
+
+- 41份归档的package.json包名、版本及dependencies/optionalDependencies/peerDependencies字段与lock匹配。
+- 41份对应索引记录的校验和、请求key及integrity匹配；所选内容和索引在读前后的size/mtime保持一致。没有修改原缓存，没有执行npm install/ci/cache verify/add或在线npm下载。
+- 148条普通依赖边、1条optional边、1条必需peer边通过版本范围检查；另1条optional peer为 `pg-native >=3.0.1`，缺席符合其optional声明，不是缺失必需依赖。归档依赖与lock闭包无不一致。
+- 对所选索引metadata及归档的指定凭据字段、可疑文件名、私钥/GitHub令牌形态、路径逃逸/链接检查均无发现。没有保存索引原始headers或认证值；这不是完整DLP、恶意代码或漏洞审计，不承诺任意秘密均可识别。
+- 全局index-v5共7150个文件桶，选中41个，其余7109个仅读目录/文件存在性计数，**没有读取内容或批准纳入镜像**。全局缓存可能含其他项目资料，仍禁止整库复制；正式精选cache未生成，Linux/npm离线安装未运行。
+
+### 16.4 可审计输入清单与边界
+
+新增非秘密审计文档 [PHASE8_V2_BUILD_INPUT_AUDIT.json](PHASE8_V2_BUILD_INPUT_AUDIT.json)：
+
+- 精确列出现有34个白名单文件（含20份原始迁移及5项用户允许的共享源码）的相对路径、UTF8-LF内容SHA256、原始工作区字节SHA256及规范化字节数。源bundle SHA256仍为 `f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289`。LF与工作区CRLF的摘要分别标记，不混算。
+- Dockerfile、package-lock、上下文准备器和预期Dockerignore有单独摘要；41项依赖列出公开resolved地址、版本、实际SRI/SHA256、内容字节数和审计结果，不列原始缓存metadata或任何私人材料。
+- Node固定平台引用、Registry身份链、计划build参数/工具版本/未验证状态均有记录。计划SOURCE_DATE_EPOCH=1793023505沿用dd83d09的源码提交时间；当前80114f1为文档提交，没有改变源bundle。
+- 11个运行时MJS的静态import经Node VM解析、literal动态import交叉检查，21条相对import均在白名单内，非builtin依赖仅pg；未链接/求值模块，没有导入API/worker入口。最初附加分析尝试使用旧TypeScript JS API失败（本项目TS7没有该旧入口），改为已有Node解析能力后检查通过；未安装工具或修改源码，不将工具错误列为业务缺陷。
+- 审计清单自身 `evidenceSha256=968c119f257124719806a2a661c68d08d5e707bde0addf330b04284c404ba0c9`，按JSON字段说明可重算；它证明所记录清单的内容一致性，不是签名或物理context/最终镜像digest。
+- **正式context未生成**：sourceManifest不含正式cache索引/物理文件模式/mtime或未知额外文件；完整候选输入可审计，但正式上下文封存与实际OCI产物仍不存在。`contextSnapshotSha256`及本地Image ID/RepoDigest保留null，未造假填值。新增JSON只是docs/testing审计文档，不是可写构建目录、凭据文件或备份。
+
+### 16.5 固定摘要能力与验证结果
+
+现有精确策略仍要求 `stall-phase8-r2-runner@sha256:<真实产物>`、实际Image ID、RepoDigest、平台及bundle label一致。官方[image exporter文档](https://docs.docker.com/build/exporters/image-registry/)支持name-canonical、store、push参数；store依赖worker有image store，不能据CLI版本推断本机支持。[docker driver文档](https://docs.docker.com/build/builders/drivers/docker/)描述默认本地加载机制，也不是当前Engine的实测证明。
+
+当前结论：containerd+内置docker driver+image exporter（name-canonical=true/store=true/push=false）**有条件可行，但本机能力仍未核实**。不切换全局后端，不创建备用builder、不引入私有Registry或去前缀绕过精确repo；实际后端不兼容时先另行审批兼容设计。完整Node基础层、正式精选cache/context、真实构建、canonical引用inspect和人工审核均为后续门槛。
+
+本轮实际运行：
+
+```text
+node --test backend/tests/phase8-safety.unit.test.mjs backend/tests/phase8-remediation.unit.test.mjs backend/tests/phase8-v2.unit.test.mjs
+235通过 / 0失败 / 0跳过 / 0取消
+24个相关MJS的 node --check：通过
+node node_modules/typescript/lib/tsc.js --noEmit --pretty false：通过
+Docker Compose config --format json（合成变量与空文件占位，无Engine操作）：通过
+```
+
+Compose断言验证r2项目、无发布端口、pull_policy=never、internal/isolated/禁IPv6及4个secret目标。只对配置解析作结论，不代表挂载、网络或运行安全验收。41份内容校验不作为新增node:test数量累加到235。Git空白、文档/JSON摘要与秘密/范围检查作为提交前门槛。
+
+### 16.6 后续授权与Git边界
+
+仍不具备**直接执行**运行器构建的条件。下一轮应先单独授权恢复Desktop可达性（或由用户自行恢复），重新只读核对Engine/image store/builder/本地基础层及旧资源身份；随后分别授权精选cache与正式context、必要的固定base获取、受控构建/产物审核。只有后续实际兼容核验通过，才可申请包含构建写入的执行授权。不得自动开始这些步骤，旧B3仍失败，B4仍阻塞。
+
+本轮未创建/启停/修改Docker资源、拉取/构建/导入镜像、创建V2材料、读取旧实例密码/回执、连接数据库、执行迁移或启动API/worker。实际网络仅官方元数据及授权Git同步。拟提交仅三份档案及上述审计JSON；提交与普通Push结果以最终Git核验为准，不预填未来SHA，也不将本轮235项离线通过称为真实PostgreSQL集成通过。
