@@ -667,3 +667,57 @@ containerd本地Image ID等于manifest摘要，不等于官方config摘要，也
 Node固定基础镜像获取成功且本地身份匹配，R-23的缺失已解除；资源全量比较异常记为R-25，尚未完全查明。建议下一轮先进行单独只读差异调查，之后再申请仓库外精选缓存及正式上下文准备授权；不能自动构建、批准runner或创建V2。
 
 未重跑235项安全测试或41包SRI审计，均为历史证据；未修改34源码、输入审计JSON、镜像批准策略或任何商城功能。未创建上下文、V2密码/UUID/回执、容器/卷/网络，未连接数据库、运行迁移、后端或worker。旧B3失败与B4阻塞保持。本轮仅更新三份测试档案，核对diff/秘密/范围后按授权提交并普通Push，结果以最终Git核验为准，不预填未来SHA。
+
+## 19. 第八轮 B3-V2：资源差异复核与正式构建材料准备（2026-10-27）
+
+### 19.1 基线与阶段A决定
+
+本轮HEAD和远程main均为 `6ceff09e4080e2d1256ed7205e80a9ef4417c43e`，工作区干净。Engine仍为29.6.2/Linux-amd64，ID `055d945d-b3f7-4a50-adaa-423c2cde2b60`，desktop-linux端点 `npipe:////./pipe/dockerDesktopLinuxEngine`，overlayfs/io.containerd.snapshotter.v1。只读Docker及本机日志查询，不修改Desktop配置或Docker资源。最初尝试读取不存在的vm/dockerd.log失败，随后使用实际存在的vm/init.log；未安装工具或制造日志。
+
+**bridge变更的生命周期原因已有直接日志证据：**
+
+- `C:/Users/USER/AppData/Local/Docker/log/host/com.docker.backend.exe.log`，3910—3920行：`2026-10-27T02:47:57.267053200Z` idle→busy，原因是Docker-Client的 `/v1.55/images/create` 调用；同时间记录starting VM和engine start requested、linux/wsl stopped→starting。这是上轮获准pull触发的Desktop休眠恢复，没有执行显式管理启动/重启命令。
+- `C:/Users/USER/AppData/Local/Docker/log/vm/init.log`，4915行Engine Starting up=`02:48:03.571984342Z`，4920行Loading containers start；4943行Daemon initialized=`02:48:04.739378004Z`。
+- 新默认bridge `6ee5bbb1f0c0c790165339dc17c22038606b915ef3b0a1d3d2513f1bc1010c62` 创建时间 `02:48:04.336419132Z` 位于上述初始化窗口；旧ID `5e14091728c748828481f460475823e716caf025569eda7855cb59b4de746426` 的创建时间为 `02:26:25.950012349Z`，同样对应日志中此前一次Engine启动。由此确认变化对应Engine初始化时默认网络重建，不再仅凭ID差异猜测数据损坏。
+
+不把上述证据扩大为所有原始摘要差异均已完整解释。旧快照缺乏完整逐字段基线，挂载数组顺序还会变化；上轮断言失败记录原样保留。恢复日志4928—4938有11条历史sandbox not found警告，不能据此证明已停止应用重启后一定正常，也没有为验证而启动它们。日志说明Engine生命周期，不是数据库完整性证明。
+
+当前逐项核验11容器ID均在此前Git档案中，均为exited，结束时间未见相对已记录值的新变化；所有容器的NetworkMode及Networks均不引用默认bridge。11卷名称/既有卷关联、8网络及各项目专网ID匹配已记录身份，未发现关键容器/卷/专网身份异常；没有把数量一致当作充分条件。旧B0原容器ID、UUID/项目/scope标签及容器/卷/专网nonce在内存中核验一致，不记录nonce。原卷创建 `2026-10-26T12:03:35Z`、专网创建 `2026-10-26T12:03:38.798689136Z` 不变。所有既有业务仍未进行数据库或应用可用性验收，卷名称与创建时间不能证明内容未变。
+
+**阶段A结论：没有发现需要阻止文件材料准备的实质性资源风险证据，允许按本次分阶段授权进入阶段B。**不解除旧B3失败或B4阻塞，不修复原实例。新增输入审计记录保存排序后的安全资源快照，包含容器ID/状态/卷关联、卷创建元数据、网络ID/成员；排除原始nonce、环境变量、密码、私人回执内容和数据库文件，供今后逐字段比较。
+
+### 19.2 Node与构建输入复核
+
+固定 `node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae` 只读inspect通过：本地Image ID及RepoDigest与该平台摘要匹配，OCI平台manifest、linux/amd64，size1929。来源依据既有官方index/platform/config审计及第18节重新核验，不另行pull/tag或将本地ID当独立来源。本轮未重新访问Registry，runner审核仍approved=false。
+
+34白名单源文件的原字节及LF摘要均与原审计匹配，sourceManifest SHA-256仍 `f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289`。Dockerfile原字节摘要 `a8518b86a2af948a3090a4630c49c6628d66560c3aceaf627a5bac89d3099eb7`、lockfile及准备器3项额外输入均匹配。仅含已授权的5项旧B0共享源码，不包含旧实例运行材料。
+
+原缓存41个包的真实字节SHA-512、SHA-256、长度和匹配索引完整性重新核验：41/41通过，共1562730字节；未修改原缓存。依赖闭包重新计算：145条包间普通依赖+3条根依赖=148条，optional1、required peer1、optional peer1；仅允许缺省pg-native这一optional peer。匹配原清单包名版本及lockfile，包内容与此前tar身份/敏感文件审计完全相同，复用其内容检查结论；不是新一次恶意代码/漏洞全审计。元数据扫描的一个宽泛token字符串命中实际是合法包名@aws-sdk/token-providers的公共URL，不是令牌；没有输出秘密值或复制认证配置。
+
+### 19.3 阶段B实际写入与材料验收
+
+全新仓库外目录：`C:/Users/USER/StallPhase8-V2-Build-20261027-030427`。先确认不存在，再仅在当前进程设置实际源码规定的 `PHASE8_V2_BUILD_CONTEXT_AUTHORIZE=PREPARE_NEW_CONTEXT_ONLY` 与该绝对 `PHASE8_V2_BUILD_CONTEXT`，执行现有 `node backend/scripts/prepare-phase8-v2-context.mjs --prepare`。退出0，files34，bundleSha256与上述一致，dependenciesPrepared=false/imageBuilt=false是该脚本返回的当时结果，后续缓存单独准备。
+
+脚本创建34个payload白名单文件、payload/bundle.json、Dockerfile和.dockerignore；未绕过脚本复制源码、未修改白名单。只对本轮新目录及文件设置受限Windows ACL：当前用户、SYSTEM、Administrators；根禁继承，文件不引入其他主体。复制缓存后全部291个文件/目录对象ACL检查无额外主体。没有修改用户目录、原缓存或旧材料ACL；Windows stat mode不等于未来Linux镜像权限证明。
+
+精选缓存为新目录下npm-cache/_cacache：只复制41份已验证内容字节，以及对应41份最新、checksum有效的完整索引记录。保留原记录的key/integrity/size/time/metadata及其校验字符串，不整桶带入无关记录。原选定索引/内容复制前后摘要相同；新索引可由现有cacache读取，精确41个key与lock-selected公共Registry tarball集合一致。无其他7109个历史无关索引桶、.npmrc、认证文件、私人回执或数据库文件；原缓存没有执行清理、写入或修补。
+
+复制后验证：真实verifyArtifact(payload,bundleSha256)通过，Dockerfile/.dockerignore摘要匹配；41份缓存再次SHA-512/SHA-256匹配。精确119文件=34源码+bundle.json+Dockerfile+.dockerignore+41索引+41内容，无symlink或额外文件。物理文件清单记录相对路径、真实字节SHA-256、size、mtime、Windows mode，摘要 `31ceb4bcb711dfd7033d1d1bdcc71023f1761dfe88e21e429a09bc2a8d86d093`。它不是bundle摘要或镜像摘要，也不是逐字节重复构建证明。
+
+**精选数据/索引闭包准备成功，但尚未证明实际Linux npm ci --offline成功。**本轮按禁止范围未执行npm ci、安装脚本或Docker RUN。已审计pacote按完整lock的integrity读取cacache内容的接缝，实际npm版本、Linux安装及镜像构建仍需后续授权执行，若缓存不足必须失败关闭，不能联网补齐。不会仅凭缓存文件存在宣称可以成功构建。
+
+### 19.4 实际验证、文档与下一步
+
+实际运行：
+
+```text
+node --test backend/tests/phase8-safety.unit.test.mjs backend/tests/phase8-remediation.unit.test.mjs backend/tests/phase8-v2.unit.test.mjs
+```
+
+235通过、0失败、0跳过、0取消。是离线合成Docker/PG安全测试，不是真实数据库结果，新增测试0。4个MJS语法检查通过：prepare-phase8-v2-context、artifact、V2 policy、phase8-v2.unit.test。没有运行所有backend测试或任何数据库测试。本轮没有修改业务源码、安全测试或镜像审核配置。
+
+输入审计JSON保留原顶层时点与旧evidence摘要，新增materialPreparation记录实物、缓存、ACL、源输入及安全资源快照；原摘要放入previousEvidenceSha256，新evidence覆盖新增内容。顶层materializedContext=false等是原observedAtUTC的历史值，不描述本轮新实物，以materialPreparation为最新证据。物理context不是Git提交内容。
+
+可申请下一轮受控build授权，但执行前仍须复核119文件快照、基础镜像/独占窗口，定案rewrite-timestamp与unpack兼容参数；build本身的离线安装、exporter/canonical RepoDigest与最终runner审核尚未验证。不得自动build、image-store写入、创建V2密码/UUID/实例或连接数据库。旧B0现场及failed回执保留，001—020未执行，B4仍阻塞。
+
+本轮仅提交TEST_STATUS、TEST_HISTORY、KNOWN_ISSUES及输入审计JSON四份非秘密档案；检查范围、秘密模式、Git空白后按授权普通提交推送，最终SHA以Git核验为准。未创建/停止/启动/删除任何Docker资源，未pull/build/tag/import或连接数据库、迁移、启动商城后端/worker、部署。

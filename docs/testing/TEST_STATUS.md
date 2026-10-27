@@ -5,6 +5,15 @@
 
 ## 当前结论
 
+
+**最新进度（本轮基线 `6ceff09e4080e2d1256ed7205e80a9ef4417c43e`）：阶段A完成，阶段B材料已实际生成，镜像未构建。**Docker Desktop日志将上次bridge变化定位到02:47:57Z拉取请求触发idle→busy/VM启动、02:48:03Z Engine启动、02:48:04Z默认bridge重建和初始化完成窗口。11容器均停止、无默认bridge引用；逐项未发现容器ID、具名卷或项目专网身份异常。旧整体摘要差异并未逐字段完整还原，不能称所有数据/应用无影响；历史sandbox缺失警告与真实应用可用性尚未验证。详见历史第19节及R-25更新。
+
+正式新目录：`C:/Users/USER/StallPhase8-V2-Build-20261027-030427`。现有准备器复制34白名单源码，另有bundle.json/Dockerfile/.dockerignore；精选缓存41索引+41内容，合计119文件。原缓存只读，未复制7109个无关桶。34源码、3项额外输入、41包SHA-512/SHA-256和依赖闭包通过；复制后真实verifyArtifact及精确文件集合核验通过。BUNDLE_SHA256=`f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289`，物理文件清单摘要=`31ceb4bcb711dfd7033d1d1bdcc71023f1761dfe88e21e429a09bc2a8d86d093`。Windows ACL仅当前用户/SYSTEM/Administrators，291个对象检查无额外主体。
+
+**本轮实际重跑235项离线安全测试：235通过、0失败、0跳过；4个MJS语法检查通过。**未执行npm ci，因此只确认离线数据/索引闭包，尚不宣称Linux离线安装或构建成功。可申请下一轮受控build授权，须先复核物理输入未漂移、独占窗口及最终参数（含rewrite-timestamp/unpack）；不包含最终runner批准或V2创建。旧B3仍失败，B4仍阻塞。本轮无Docker资源写入、数据库连接/SQL、迁移、镜像构建或下载。
+
+原输入审计JSON的顶层字段保留旧时点，新增materialPreparation记录本轮实物及119文件摘要；当前evidence SHA256=`1585414d5c2abd9f7e640a8dcde4d8e1f342d019a0c69bd1ef052bacc8976c38`（原摘要随previousEvidenceSha256保留）。以下旧进度与判断均按各自时点阅读，以本段及历史第19节为最新。
+
 **最新进度：2026-10-27固定Node基础镜像已获用户明确确认后获取成功；资源全量比较验收存在异常。**本轮开始HEAD及远程main均为 `352f74849378acaaa33ecd99f14b9f86cbb2b758`，工作区干净。唯一Docker写操作为一次 `pull --platform linux/amd64 node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae`，退出码0，无重试。短名及docker.io/library完整固定引用均可解析，Image ID和RepoDigest均为该平台清单摘要，linux/amd64；不是官方配置摘要或最终runner镜像审核。下方“Node缺失”等为前轮时点记录，本段与历史第18节为最新状态。
 
 拉取后镜像数量36→37；11容器均停止、11卷、8网络。PostgreSQL批准镜像身份匹配；旧B0容器/卷/专网关键身份、状态及原回执stat未见变化。**全量选定元数据摘要比较报错 `Existing resource metadata changed`，不能声称全部资源保持原状。**默认bridge由 `5e14091728c748828481f460475823e716caf025569eda7855cb59b4de746426` 变为 `6ee5bbb1f0c0c790165339dc17c22038606b915ef3b0a1d3d2513f1bc1010c62`，创建时间变为 `2026-10-27T02:48:04.336419132Z`；原因未确认。原快照仅保留整体摘要、未完整保存逐字段基线，附加只读诊断未完全解释差异，详见R-25。
