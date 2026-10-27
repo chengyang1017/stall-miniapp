@@ -181,3 +181,7 @@ B3-R 的完整 A/B/C 比较、真实源码改动接缝、旧实例六问、只�
 ## 持续维护规则
 
 每次实际运行后更新状态和历史，附命令、源码 SHA、环境、通过/失败/跳过、原始日志或 CI 链接及副作用范围；功能变更同步调整覆盖和问题清单。修复问题须追加闭环证据，不抹去曾经的失败。本文档不启动自动测试或定时任务。文档自身的提交 SHA 以 Git 历史为准，不预填尚未产生的提交。
+
+## 2026-10-27：V2 runner GitHub 独立证据审查（非本地 Docker 复核）
+
+已从 GitHub 已提交构建审计检查固定 runner 摘要、Node 基础层、bundle、41 包离线安装记录、镜像静态属性及 BuildKit Registry 元数据查询。审查结果为**有条件、未批准**；无法直接访问操作者 Windows Docker Engine，未重新验证当前镜像、容器/卷/网络或本地工作区；未运行测试。`runner-image-approval.json` 维持 `approved=false`。批准前须本机只读复核固定镜像并另行取得对精确 digest 的人工授权。详见 [独立审查记录](PHASE8_V2_RUNNER_INDEPENDENT_REVIEW.md)。旧 B3 失败，V2 未创建，B4 仍阻塞。
