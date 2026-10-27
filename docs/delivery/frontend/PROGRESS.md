@@ -46,3 +46,11 @@ FE-03（P0身份隔离/可靠性）：已用真实编译auth模块复现切店�
 下一步 FE-02：安装并导入微信开发者工具，先用 Combined 完成 DEMO 页面截图和操作验收；与负责人协调旧夹具更新；获得明确 staging API / 测试身份后再开展跨设备业务联调。当前仍以 Combined 为首版候选，不自行切成双 AppID。
 
 相关：[测试](TEST_LOG.md)、[逐页验收](UI_CHECKLIST.md)、[阻塞](PLATFORM_BLOCKERS.md)、[交接](HANDOFF.md)、[如何预览](PREVIEW.md)。项目负责人原档案仅引用，不覆盖：[发布清单](../../testing/RELEASE_CHECKLIST.md)、[测试状态](../../testing/TEST_STATUS.md)。
+
+## 2026-10-27｜本轮Git同步与审核回执
+
+- 原4278c40802cdf7054a4a785bec00171743e5214f、FE-02的172aa7d254432f97de924ebcf8032361fc29cb22、FE-03的91074bc20666693effe12f29594c7a3253ab6b4c均已普通推送到origin/zh；FE-03推送后git ls-remote核验zh=91074bc20666693effe12f29594c7a3253ab6b4c、main仍b308134b2df02c207ce827658b409dffb9186a1e。
+- 已建立并附加草稿PR https://github.com/chengyang1017/stall-miniapp/pull/2，zh→main，包含测试/未验项/接口依赖/回退/Commit，无自动合并。
+- 本轮收尾只补充具体产品SHA与PR到永久文档，不改受测代码。最终143通过见fe03-verify-final.txt。下一项FE-04本地结算Tab导航候选，见上方；无须用户寻找新的提示词。
+- fetch观察到后端负责人分支推进至b6b66f9（BE-02准备未执行）。已只读复核其HANDOFF/RELEASE_GATE，前端接口/门禁结论未变化；没有执行其只读Docker脚本，也没有合并/覆盖后端代码。
+- 当前DEVELOPMENT：个人前端任务未全部验收，未进入RELEASE_CANDIDATE或DELIVERED。实际微信预览与iOS/Android待负责人反馈，staging/支付仍依赖后端与客户。

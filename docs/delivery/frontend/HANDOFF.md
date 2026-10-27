@@ -39,3 +39,7 @@
 没有新增后端接口需求。loginWithWechat仍POST /v1/auth/wechat，服务端token格式与现有Bearer约束一致；只在前端阻止旧上下文保存响应，新增15秒超时。服务端仍负责真实身份和商家membership。
 
 离线复现并修复旧登录覆盖新身份/退出、商家隐藏后跳转及旧logout finally覆盖新验证；22项新夹具最终通过，总前端回归143项。真实微信登录/会话撤销、staging和跨设备尚未验证，由负责人按PREVIEW_HANDOFF.md回传结果。负责人分支无需迁入本地，当前未改backend/src、SQL、Docker或其档案。
+
+## 2026-10-27｜审核与预览入口
+
+前端产品SHA91074bc20666693effe12f29594c7a3253ab6b4c，已推送zh，草稿PR https://github.com/chengyang1017/stall-miniapp/pull/2 待负责人审核；未合并。PREVIEW_HANDOFF.md现提供明确SHA与逐步操作，请负责人回传平台/设备证据。后端分支推进到b6b66f9后HANDOFF与RELEASE_GATE读取结果未变化，未迁入其文件。

@@ -1,5 +1,14 @@
 # 项目负责人预览交接
 
+## 最新可预览版本｜FE-03｜2026-10-27
+
+- **产品代码提交：91074bc20666693effe12f29594c7a3253ab6b4c**，已推送origin/zh且ls-remote核验一致；FE-02为172aa7d254432f97de924ebcf8032361fc29cb22。
+- 草稿PR：[#2](https://github.com/chengyang1017/stall-miniapp/pull/2)，zh → main，未合并。后续仅交接文档更新不会改变此代码基线；负责人可在干净授权目录明确检出该SHA，或核对zh最新历史中的产品代码一致性。
+- 本次构建：Combined/Customer/Merchant均通过（36/13/19页），最终143离线测试通过、0失败、0跳过；evidence/fe03-verify-final.txt。
+- 预览任务：下方FE-02的角色入口与FE-03的登录/权限/退出竞态步骤，尤其merchant-login在Combined/Merchant下的离开后回写、重复点击、错误和新身份保护。
+- 负责人执行平台与真机，本开发者不安装/登录/运行微信工具。状态WAITING_FOR_OWNER_PREVIEW，当前0条实际平台/真机反馈。
+
+
 ## FE-02｜2026-10-27｜WAITING_FOR_OWNER_PREVIEW
 
 责任：项目负责人在另一台电脑执行微信开发者工具和 iOS/Android 验证。前端开发者只交付源码、离线测试与说明，不要求其安装或登录微信。
