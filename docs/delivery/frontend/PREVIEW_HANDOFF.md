@@ -1,5 +1,16 @@
 # 项目负责人预览交接
 
+## 最新可预览版本｜FE-04｜2026-10-27
+
+**产品提交：27646b30ab3d9b13d26db93de71e37b853c236db**（zh）。已普通推送并用ls-remote核验远端一致，工作区当时干净。最后的文档回执不改变此受测产品代码。
+
+- 三目标36/13/19页构建、边界、产物PASS；`npm run verify:frontend`最终169通过/0失败/0跳过，原始日志evidence/fe04-verify-final.txt。
+- 预览清单：本文件FE-04增量（本地checkout→订单Tab、一次性新单提示、重复确认/取消/隐藏/营业暂停/改价重确认），并保留FE-02/03角色入口和登录竞态验收。
+- GitHub草稿PR [#2](https://github.com/chengyang1017/stall-miniapp/pull/2)仍待负责人审核，不自动合并。
+- 微信开发者工具、iOS、Android均WAITING_FOR_OWNER_PREVIEW，目前0条实际反馈；staging/真实登录/支付未验证。完整进度和未完工作见STATUS_AUDIT.md。
+- 当前DEVELOPMENT，不是“独立任务全部完成/最终交付”。下一项FE-05云端结算生命周期仍可离线推进。
+
+
 ## 最新可预览版本｜FE-03｜2026-10-27
 
 - **产品代码提交：91074bc20666693effe12f29594c7a3253ab6b4c**，已推送origin/zh且ls-remote核验一致；FE-02为172aa7d254432f97de924ebcf8032361fc29cb22。

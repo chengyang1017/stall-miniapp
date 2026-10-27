@@ -98,3 +98,7 @@ fetch后只读复核后端分支b6b66f9的交接与门禁，无接口增量。�
 读取补充源码时一条终端命令长时间未返回，已等待原会话结束并检查输出；不把等待当作测试成功。最终完整验证已经正常退出0。源码/文档diff检查排除保留原样的原始证据日志，避免改写历史输出中的空白。
 
 WECHAT-DEVTOOLS、iOS、Android三类验收均WAITING_FOR_OWNER_PREVIEW且无回传；真实staging/登录/支付/存储/多设备未运行，用例总数尚未枚举，不伪造0未运行。当前仍DEVELOPMENT。
+
+### FE-04 提交与推送核验
+
+产品SHA27646b30ab3d9b13d26db93de71e37b853c236db；普通git push origin zh成功，git ls-remote --heads origin zh返回相同SHA，status为zh...origin/zh且无修改。新增原任务书快照的Markdown尾随空白在提交前规范化；原失败/测试日志均未重写。最后的SHA/PR交接文档不改变产品、构建或测试文件，因此不为纯文档再次运行重复业务测试；受测代码一致性另用git diff核对。
