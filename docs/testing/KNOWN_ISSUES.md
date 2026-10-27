@@ -97,3 +97,7 @@ B3-V2 增补：原R-14/R-16/R-18继续开放；原失败实例没有改动或接
 - **R-17仍开放：最终镜像审核及真实运行条件待验。**runner-image-approval.json仍approved=false；USER/ENTRYPOINT为镜像配置证据，运行时只读根、capabilities、Windows挂载/ACL及V2 isolated网络等尚未实测。数据库实例/迁移/业务集成未执行，旧B3失败和B4阻塞不变。
 - **R-26新增边界：整个BuildKit过程并非完全断网。**虽pull=false且RUN network=none，实际日志仍有library/node的Registry认证及metadata查询。未见新基础层下载或额外镜像，只有批准的Node材料；不能把npm离线通过扩大成resolver完全离线。若将来要求整个构建零外网，须另行设计可验证限制，不能仅依赖network=none或prefer-local。
 - **构建警告保留：InvalidDefaultArgInFrom。**Dockerfile的NODE_BASE无默认值触发lint警告；本次显式固定参数、实际FROM和产物材料均匹配。不为消除警告修改已封存Dockerfile。BuildKit0.31.2同时rewrite-timestamp和unpack会冲突，本次显式rewrite=false/unpack=true，不宣称时间戳规范化或可重复镜像摘要。
+
+## B3-V2 runner 独立审核待办（2026-10-27）
+
+仓库中的构建审计支持对固定镜像身份和构建过程进行证据审查，但通过 GitHub 的本轮复核无法直接访问 Windows 上现存 Docker 镜像字节和资源，因而**不能独立断言当前镜像状态未变**。最终批准前须本地只读 inspect/内容与资源核验，随后对明确 digest 单独人工授权。`runner-image-approval.json` 继续 `approved=false`，旧 B3 与 B4 继续阻塞。见 [审查记录](PHASE8_V2_RUNNER_INDEPENDENT_REVIEW.md)。
