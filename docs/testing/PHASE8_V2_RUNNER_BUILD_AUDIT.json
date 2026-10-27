@@ -1,0 +1,1749 @@
+{
+  "version": 1,
+  "gitBaseline": "964273b09d2e33b1c40eaefd2874bc6382a8e2ce",
+  "state": "build-and-static-image-acceptance-complete-final-approval-pending",
+  "observedAtUTC": "2026-10-27T03:29:25.463Z",
+  "dockerEndpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+  "resourceSnapshot": {
+    "containers": [
+      {
+        "id": "45941853a7d833be35585f5f66d1da2065ac40500ade71f682db2cf63a0745d8",
+        "name": "/backend-postgres-1",
+        "state": "exited",
+        "finishedAt": "2026-10-26T09:28:49.900018795Z",
+        "imageId": "sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+        "networkMode": "backend_default",
+        "networks": [
+          {
+            "name": "backend_default",
+            "id": "1dd13ad0a2fad48c9e3ae94191f0ecb2f42112511829eddb82dc159cf8fae72c"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "backend_stall_dev_pgdata",
+            "destination": "/var/lib/postgresql/data"
+          }
+        ]
+      },
+      {
+        "id": "ab7b56b8db176a16cc1463a099792000a65b8770daca82419ad43547f6584835",
+        "name": "/clyven_backend_server-postgres-1",
+        "state": "exited",
+        "finishedAt": "2026-10-05T14:13:30.677711524Z",
+        "imageId": "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+        "networkMode": "clyven_backend_server_default",
+        "networks": [
+          {
+            "name": "clyven_backend_server_default",
+            "id": "9e94983b9531a895c548f706fb5870b05e86a4b514eecd5f56cd49c477f609e8"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "clyven_backend_server_shipin_backend_data",
+            "destination": "/var/lib/postgresql/data"
+          }
+        ]
+      },
+      {
+        "id": "17535509e609d4281bd8baeb4ccf0ddfeffcaf64ea74b8948ba565d084faa06a",
+        "name": "/glyphora_backend_server-postgres_test-1",
+        "state": "exited",
+        "finishedAt": "2026-09-10T14:54:22.196208119Z",
+        "imageId": "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+        "networkMode": "glyphora_backend_server_default",
+        "networks": [
+          {
+            "name": "glyphora_backend_server_default",
+            "id": "469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "glyphora_backend_server_glyphora_backend_test_data",
+            "destination": "/var/lib/postgresql/data"
+          }
+        ]
+      },
+      {
+        "id": "d823d411bd945b184686455b1af8391b1f07342bf23c9864cd39d96b269dc651",
+        "name": "/glyphora_backend_server-postgres-1",
+        "state": "exited",
+        "finishedAt": "2026-09-10T14:54:22.197725291Z",
+        "imageId": "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+        "networkMode": "glyphora_backend_server_default",
+        "networks": [
+          {
+            "name": "glyphora_backend_server_default",
+            "id": "469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "glyphora_backend_server_glyphora_backend_data",
+            "destination": "/var/lib/postgresql/data"
+          }
+        ]
+      },
+      {
+        "id": "64256f7f7974e9588b9376880e62b8d7ac51444abfcd2ae30cc08c4aad42e46c",
+        "name": "/glyphora_backend_server-redis_test-1",
+        "state": "exited",
+        "finishedAt": "2026-09-10T14:54:22.197036213Z",
+        "imageId": "sha256:b7fd1a2c89d09a836f659d72c52d27b9f71202c97014a47639f87c992e8c0f1b",
+        "networkMode": "glyphora_backend_server_default",
+        "networks": [
+          {
+            "name": "glyphora_backend_server_default",
+            "id": "469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "d0c612f986009adc5ace2c85efcc1cb6cb135379edd5596dd6627998a6e1504c",
+            "destination": "/data"
+          }
+        ]
+      },
+      {
+        "id": "9294df5d594480c4bbf11d8e1252e4c1eedcbf8b2b50e84d8eaf97472ff1abb4",
+        "name": "/glyphora_backend_server-redis-1",
+        "state": "exited",
+        "finishedAt": "2026-09-10T14:54:22.196234255Z",
+        "imageId": "sha256:b7fd1a2c89d09a836f659d72c52d27b9f71202c97014a47639f87c992e8c0f1b",
+        "networkMode": "glyphora_backend_server_default",
+        "networks": [
+          {
+            "name": "glyphora_backend_server_default",
+            "id": "469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "a04cbb249303f5795d576bf69dc987b11397dec44683bc736c669c37a3862e53",
+            "destination": "/data"
+          }
+        ]
+      },
+      {
+        "id": "a022681b2496bb7324f0676b01eef6426f4c1ae021284f059c87a46bab5f7cfc",
+        "name": "/shangchenghouduan_server-postgres_test-1",
+        "state": "exited",
+        "finishedAt": "2026-09-16T08:17:50.856527676Z",
+        "imageId": "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+        "networkMode": "shangchenghouduan_server_default",
+        "networks": [
+          {
+            "name": "shangchenghouduan_server_default",
+            "id": "63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "shangchenghouduan_server_shangchenghouduan_test_data",
+            "destination": "/var/lib/postgresql/data"
+          }
+        ]
+      },
+      {
+        "id": "5df8966045e96270b97f4211bf6a7fbdd0a613112856acf3b683d57d7c2ed9c3",
+        "name": "/shangchenghouduan_server-postgres-1",
+        "state": "exited",
+        "finishedAt": "2026-09-16T08:17:50.85626191Z",
+        "imageId": "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+        "networkMode": "shangchenghouduan_server_default",
+        "networks": [
+          {
+            "name": "shangchenghouduan_server_default",
+            "id": "63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "shangchenghouduan_server_shangchenghouduan_data",
+            "destination": "/var/lib/postgresql/data"
+          }
+        ]
+      },
+      {
+        "id": "2b82da11fce4c43b9aed7d20a76b61bfdd24257e56be61240872722f8a9ae6d9",
+        "name": "/shangchenghouduan_server-redis_test-1",
+        "state": "exited",
+        "finishedAt": "2026-09-16T08:17:50.856282572Z",
+        "imageId": "sha256:b7fd1a2c89d09a836f659d72c52d27b9f71202c97014a47639f87c992e8c0f1b",
+        "networkMode": "shangchenghouduan_server_default",
+        "networks": [
+          {
+            "name": "shangchenghouduan_server_default",
+            "id": "63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "e45bf72b142f055ba5b7cfe5046987c5ed529d7d0874ccfafee53a09abd0e413",
+            "destination": "/data"
+          }
+        ]
+      },
+      {
+        "id": "cbe24731b6636ec7d65c77e9d847a859080662b8aae2970518d2e405b1ed998a",
+        "name": "/shangchenghouduan_server-redis-1",
+        "state": "exited",
+        "finishedAt": "2026-09-16T08:17:50.857869041Z",
+        "imageId": "sha256:b7fd1a2c89d09a836f659d72c52d27b9f71202c97014a47639f87c992e8c0f1b",
+        "networkMode": "shangchenghouduan_server_default",
+        "networks": [
+          {
+            "name": "shangchenghouduan_server_default",
+            "id": "63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "b51b1b7c2c729ed95d62e45b3987f0133a7e0bb63ced107f05aef9754084dcb6",
+            "destination": "/data"
+          }
+        ]
+      },
+      {
+        "id": "355ecc6045fa467319f906363d521a8c764ed1aabde737a3ca364847b89cfd06",
+        "name": "/stall-phase8-pg16",
+        "state": "exited",
+        "finishedAt": "2026-10-27T02:16:22.509638868Z",
+        "imageId": "sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+        "networkMode": "stall-phase8-network",
+        "networks": [
+          {
+            "name": "stall-phase8-network",
+            "id": "7918eeb7a1a787d8c4afb1871beecd1d36e61e16ba7d9fe52c0cc9a2227766af"
+          }
+        ],
+        "volumes": [
+          {
+            "name": "stall-phase8-data",
+            "destination": "/var/lib/postgresql/data"
+          }
+        ]
+      }
+    ],
+    "volumes": [
+      {
+        "name": "a04cbb249303f5795d576bf69dc987b11397dec44683bc736c669c37a3862e53",
+        "createdAt": "2026-08-07T14:06:33Z",
+        "driver": "local",
+        "project": null
+      },
+      {
+        "name": "b51b1b7c2c729ed95d62e45b3987f0133a7e0bb63ced107f05aef9754084dcb6",
+        "createdAt": "2026-09-14T07:19:39Z",
+        "driver": "local",
+        "project": null
+      },
+      {
+        "name": "backend_stall_dev_pgdata",
+        "createdAt": "2026-10-24T02:48:51Z",
+        "driver": "local",
+        "project": "backend"
+      },
+      {
+        "name": "clyven_backend_server_shipin_backend_data",
+        "createdAt": "2026-09-21T20:54:11Z",
+        "driver": "local",
+        "project": "clyven_backend_server"
+      },
+      {
+        "name": "d0c612f986009adc5ace2c85efcc1cb6cb135379edd5596dd6627998a6e1504c",
+        "createdAt": "2026-08-07T14:06:33Z",
+        "driver": "local",
+        "project": null
+      },
+      {
+        "name": "e45bf72b142f055ba5b7cfe5046987c5ed529d7d0874ccfafee53a09abd0e413",
+        "createdAt": "2026-09-14T07:19:39Z",
+        "driver": "local",
+        "project": null
+      },
+      {
+        "name": "glyphora_backend_server_glyphora_backend_data",
+        "createdAt": "2026-08-07T14:06:33Z",
+        "driver": "local",
+        "project": "glyphora_backend_server"
+      },
+      {
+        "name": "glyphora_backend_server_glyphora_backend_test_data",
+        "createdAt": "2026-08-07T14:06:33Z",
+        "driver": "local",
+        "project": "glyphora_backend_server"
+      },
+      {
+        "name": "shangchenghouduan_server_shangchenghouduan_data",
+        "createdAt": "2026-09-14T07:19:39Z",
+        "driver": "local",
+        "project": "shangchenghouduan_server"
+      },
+      {
+        "name": "shangchenghouduan_server_shangchenghouduan_test_data",
+        "createdAt": "2026-09-14T07:19:39Z",
+        "driver": "local",
+        "project": "shangchenghouduan_server"
+      },
+      {
+        "name": "stall-phase8-data",
+        "createdAt": "2026-10-26T12:03:35Z",
+        "driver": "local",
+        "project": "stall-phase8-b0"
+      }
+    ],
+    "networks": [
+      {
+        "name": "backend_default",
+        "id": "1dd13ad0a2fad48c9e3ae94191f0ecb2f42112511829eddb82dc159cf8fae72c",
+        "createdAt": "2026-10-24T02:48:51.100716666Z",
+        "internal": false,
+        "ipv6": false,
+        "driver": "bridge",
+        "members": []
+      },
+      {
+        "name": "bridge",
+        "id": "1b2e20545bf3c86b7e1965bc1ae10c7cb865d57a1ec3b0c5350dac670de244e2",
+        "createdAt": "2026-10-27T03:27:18.102716505Z",
+        "internal": false,
+        "ipv6": false,
+        "driver": "bridge",
+        "members": []
+      },
+      {
+        "name": "clyven_backend_server_default",
+        "id": "9e94983b9531a895c548f706fb5870b05e86a4b514eecd5f56cd49c477f609e8",
+        "createdAt": "2026-09-21T20:54:11.641339119Z",
+        "internal": false,
+        "ipv6": false,
+        "driver": "bridge",
+        "members": []
+      },
+      {
+        "name": "glyphora_backend_server_default",
+        "id": "469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927",
+        "createdAt": "2026-08-07T14:06:33.322152507Z",
+        "internal": false,
+        "ipv6": false,
+        "driver": "bridge",
+        "members": []
+      },
+      {
+        "name": "host",
+        "id": "e170620f17aedea2cce703fb4081ff731c3d7ec5d1e01409baf081110b663a21",
+        "createdAt": "2026-08-07T14:05:10.520460947Z",
+        "internal": false,
+        "ipv6": false,
+        "driver": "host",
+        "members": []
+      },
+      {
+        "name": "none",
+        "id": "d7bc970371faad74a3e1ca3f789ec79dc3568bcdbc52ad69165898f965d1616f",
+        "createdAt": "2026-08-07T14:05:10.515299059Z",
+        "internal": false,
+        "ipv6": false,
+        "driver": "null",
+        "members": []
+      },
+      {
+        "name": "shangchenghouduan_server_default",
+        "id": "63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd",
+        "createdAt": "2026-09-14T07:19:39.614821207Z",
+        "internal": false,
+        "ipv6": false,
+        "driver": "bridge",
+        "members": []
+      },
+      {
+        "name": "stall-phase8-network",
+        "id": "7918eeb7a1a787d8c4afb1871beecd1d36e61e16ba7d9fe52c0cc9a2227766af",
+        "createdAt": "2026-10-26T12:03:38.798689136Z",
+        "internal": true,
+        "ipv6": false,
+        "driver": "bridge",
+        "members": []
+      }
+    ]
+  },
+  "defaultBridgeUnchanged": false,
+  "v2ResourcesAbsent": true,
+  "b0LabelsMatch": true,
+  "originalPrivateRuntimeMaterialsRead": false,
+  "imageIdsBefore": [
+    "sha256:00ee0b70085abb0756f2dd6bbc5a6dfcab65236e53facbd690e31a5d68b140c7",
+    "sha256:0271ef873ce2b48237b38eaa4e8d37884a4f963152fa9c2f1eec272ce73d2bde",
+    "sha256:04e3d1c8bbdd905441005262802217224d15330c711deecedcd66f65b945ffa0",
+    "sha256:0f9407ee523682e535c224adc77c3e35935ecc00598c1ac6966fae390ca868e0",
+    "sha256:1a49ddcb4ade40cce057eea529a76e98430feddea2a9f3fbf476a40c0170557a",
+    "sha256:28397bf1b1256238fdc0c424affc31d23c3c672e032f10c9f2cb7bb7b96de328",
+    "sha256:29052704100d9e74657a0730c783f062d63bc6e25538e9c623b4af6ab33883ad",
+    "sha256:29ee854b39c7cc4d13e7a64f4d74109fd85e89a0cf13748f662224ffe1bf2893",
+    "sha256:2c6a36bc279ffda0fbe5d05baad4cec88b263190676060117c157e49d1de3f33",
+    "sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae",
+    "sha256:303d59e2dfa4b74715b6c644139e387b5c441dee6d912b97b136b0a40a6a8d97",
+    "sha256:3044ba1ee29604aa9f2366d80dd6c26292fc4d4e26c46b2b975ec6dfc79e4df7",
+    "sha256:382bc15451a04c97ec8a33b98256f82e8ef502d1ba5ab20c1f00ea578fb81fe4",
+    "sha256:3fb2b3a12cb76c0c6559b51100d41b188a0931389d9e0cdf2962506930905217",
+    "sha256:4e79f23ff08df8719eca526c369d3232f51cb4e6d3da037b2eb9e110b27f71cf",
+    "sha256:620f8836a9133ab54ca6ec78566488bae7491a919646a4dec87d6de41207776c",
+    "sha256:65cdf52137ed2bfeeff67b0a0d5d836fbb973f4bf89ee4b43051ed60cf89515a",
+    "sha256:67b1a1f8849f25b0011d2622059e9feea7249c6f30b91a24d18b9f1c6d942361",
+    "sha256:69df57a5f5c1222c18f1525f954fb1128a645b15db23f87f03f3e962f6da3b5e",
+    "sha256:774ade840ed93fbd9739125fff747dcbcae5be7ffb0143db26694c05863c334b",
+    "sha256:7847771d4c8027a1d82ddee20f4632a04a4cdd1ed5ab4201a58fc80b25e7a1a5",
+    "sha256:8ba7d75770c22f05b1b9051564649338297791dbd549e71692638db87c97e930",
+    "sha256:9511ae6a52e07fa00f6105170a82cfdbd83063218037fbd6d2c8ab2650b85879",
+    "sha256:9db8191baddcd01d822d9c12303fba5b1bd2ffb3d2c1683f97289265c02f0583",
+    "sha256:a065be32c4362e787bccd1a6df7821a2f8adf75c8afa0a61ca968f3bb1b50c5a",
+    "sha256:a32764aff62da806f02520f4e5e2f9a22f97c338f4a4283528ee77e3d47b0193",
+    "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+    "sha256:b4a0afadf6b4300abca4723fa6f7a1c68a1d2fcb5c136f401adfaed5b85bbef8",
+    "sha256:b7fd1a2c89d09a836f659d72c52d27b9f71202c97014a47639f87c992e8c0f1b",
+    "sha256:bf68a0249a5303cafd1f63d3dcff609a319a9ef2f794b028759f329f7d816928",
+    "sha256:c99c7ddbd2590ab66ae593ab1ded350c7417815b818f7d8f9c1b42730af45e53",
+    "sha256:ca909f27d3a5c870477c295bbe2d70c58fcfc081ac3283c97178cc96b069c513",
+    "sha256:d525b9a8a68dd55379de54386b5aa65d124bd7f5e01f558eee18ad447623ebdb",
+    "sha256:e0f2d2a9a636ff6ecbfcab1d0e067effb9ce757ee42e56016ade3b19bd610d38",
+    "sha256:e3eb35b8819a6dcb6c50b440ea13c2275925253e10a5b5888b982582896482f4",
+    "sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+    "sha256:f9bae267abdcd95cfbca6f0cccedcc700035c546acb1c0079b6c889c00587995"
+  ],
+  "buildkitBefore": {
+    "records": 456,
+    "recordIds": [
+      "02bpyntwkxspfvd9zhjg7xb9b",
+      "05iqvlqnen4lnrqd457oc01ky",
+      "0b607w1exg3fo69bn99ga8b3p",
+      "0lqnhy68j7gh9jrfrtg7m2r4p",
+      "0msdr9gqgojuen0dt6gle23rj",
+      "0pr4iu9rtzg462o9i2roq1qbu",
+      "0qn2ubltew5x973kxbe1dvekf",
+      "0scimxh4eawsk3ysb6jxkkicj",
+      "0xv79u7p0nxcxl3iuuahhoyhl",
+      "10wtvvv71xk8yuut4w1mjami8",
+      "19rw5ed5l1etuf20h4yokz5iu",
+      "1g3ul6vqaoyx7hikz5kubw2hb",
+      "1jt0mjxvfo1qj98cwzwtibqn7",
+      "1lkql9sg2wqba69c771fzef73",
+      "1ml50mbm5f6vdvup1bciy2jes",
+      "1t1erw5rryq305tt8614ak7zj",
+      "1x07bwp7uluiq3r14ve72mqlx",
+      "2gfm5ig6kw5v6b0kexb1ay19u",
+      "2hoz55lbl2p146j8ndkvqji9s",
+      "2lyb1njmt9ftoy6d3m6dwn3ho",
+      "2t50omfvgiqr9bkmrrq4bsoip",
+      "2w6c0ka3g12t32mb5gyjxvhsq",
+      "2yoc2keuvp2kc50ng89qz6j48",
+      "2zrkjoy497glxg8el0nsp09j5",
+      "34xu6bkbewf17fo7245jl0fbv",
+      "350v3mc5iu0shsqa6l3lmcjym",
+      "35oef3zuqbwp78ref799scjbx",
+      "38mk58qy3nplh67d5qin1x6ko",
+      "3ffm6yuptsje7atfjyk7du4pe",
+      "3lojcre13o13ltxjz2v2cd29v",
+      "4302n33dgxwixwdjps25tqvvn",
+      "439z4t8xa66scesiyvtu6ebxz",
+      "45i27nay7rqubih2wntq9jxt2",
+      "479s1wjuuk6z0cstkf8u2iiya",
+      "4b1excap9tqh5osspwbxuttcn",
+      "4cc60vu8yvy1y0z01m12qxitd",
+      "4d2yfoixfxb032lg86vfh6sqs",
+      "4d34qrifisfb86ucyn6ak6qiu",
+      "4gfy59gpq5q6u4nswsdzf24lm",
+      "4js62kikpfwxli2gjnqq5yymr",
+      "4l6b1i21s4t5cv7a7vkhhr1fk",
+      "4lrdr2yjcsm1xy5u46qehknor",
+      "4oiafql8lkfjnkg3l2sgbhp1x",
+      "4qt6twc82zlem3io2c2c3e7sx",
+      "4s2pw1r15h95driz0wyw2r3pl",
+      "4s4xwj4ygu75k5o9d6z3hvb0p",
+      "4u9ldbzapkv17ylnt3fjn38lb",
+      "4z5kgiye954r3ajndu5oj61ob",
+      "5445ohimjmhmof4dxzjgg8g9z",
+      "55qtx5h8h6mohphc2fn0ullf8",
+      "56myu9piru6tdcoanm3c6175i",
+      "56o50e2tt4rlfdl9bj3um9y80",
+      "5cszwa54nq66zzhg4t2ihdf3x",
+      "5pgghkxxlmhl69calzp5q7xl9",
+      "5thp3o68q7xt08nz1inql3yk0",
+      "5uam48wm9mxsbonm7m4seo30k",
+      "63oeiqxkh72nuopm87m6hvyy6",
+      "6fz5a6v5hpcu4ufkvehvx2lan",
+      "6h0fvqwkuuio6zp39tbukwk97",
+      "6pl1czdydiv08ti316eu35goh",
+      "6pw3e1qafpidlw7908d796x3d",
+      "6t843c5ep5bl1sbttr1zvnsuq",
+      "6uo4qq48yhfxe2ev47g7j1m01",
+      "7107l9jmfbwc03qvm613jvwcj",
+      "74nua7s1ppkzilbvlhaz8losf",
+      "7k7rf65h9jlfcug9puzjk2po4",
+      "7ng3thkw60t26f8wx1vxde76k",
+      "800lacv1wwatx4vwwugnyjqk6",
+      "8c4zggc73xl5ywzhzn5bgu93h",
+      "8g5glrymsmhrk0x9tk52ovaos",
+      "8hhqeydnp8hsemztdqtyyijax",
+      "8hzoi4docup4jmujlxofp4g9m",
+      "8kntdu8jzr9bllwdqrnamrnke",
+      "8o0frbdkf1rnh75gujlh2ce6k",
+      "8wp7aj1ohqo6d364hc0oete9w",
+      "95s9qrejc598wza5lypfeu2i2",
+      "9djbpa5k67n8zngqtlvmrhewe",
+      "9gfpc8jbkgvsgskb1ydnfn6e2",
+      "9owb033mtbkbgz6rrv8aphvbb",
+      "9szznm8wleuyr1mvpf8f7644p",
+      "9tbkfyr5chqu7gmoya27u1xns",
+      "9xzqk7wn53e59qmitnbfnr0z5",
+      "a5ey4r1fbb65wvo7kx19dphth",
+      "a5wn3fuufve32hp0y4xkj0ymi",
+      "a7klq15sdrrmphemr1j15gzoe",
+      "aca21bnc3ekgslv24ddjr62j9",
+      "apual6iuf090x4e9al3laas6t",
+      "atk56ngtna4ugb8aehre0hzo3",
+      "auf89khpbctvk5g4uq7z2yylu",
+      "b00k1d3qow0ykdvhyoz67xihm",
+      "b0th9fte1dagvv4gx6nbzwe1s",
+      "b2l1wgh54ozliea5j6kdxeouz",
+      "b5aif52lvttqbgj3bs06ohftp",
+      "b6rbo825z7te9nozanibn48ak",
+      "bbdy4saqfdkt6cw26t70xea9v",
+      "bhdxh2qrmrvli3x0wkz3js4zx",
+      "bhxan4bxkdvww1d3dayyajq1r",
+      "bi0g045bdwauv0psj8tcygfif",
+      "bi2xncipuj3zdw4zy7gzrs69b",
+      "biwwpp894f0se5ffi5ln3wgvw",
+      "bkx4a7j1y35mgw4s8o2r18o6x",
+      "bu29dywxt5c4zda8t13xya8el",
+      "c5fl72ga9498hzntiad24ven1",
+      "cc14n3gvkh3uk58jyvc0nhj6h",
+      "cfa24ucscbc6b0bfumr4ic058",
+      "ck94id9hptc2bb2ootd9lvcaz",
+      "czzgwwn2y99g4yyps89e8oqun",
+      "d6gfhbr27m7iy0b3zsebdypg8",
+      "d9m51b05xnyrxzin6wen2gas5",
+      "dcbvr3t20c952bzo7ufgmf1uz",
+      "dfhs34gflco188hfic2zr9kw9",
+      "dt1k6478ajlf8cukaicucprpe",
+      "dulzd63orjqrwqshhjqux3a0w",
+      "duoa0yi0tv7qhdm4phkx9he45",
+      "e58fxqhxrw6n666tqyhvxtx0e",
+      "e5utb133zr1yd4emgi31ysyut",
+      "e799kxv5pv688lb8j2l1bymrd",
+      "e9fsi341l8g6mxfkhezynrzmg",
+      "edecon9wu2rjt8w36zv41vbgp",
+      "eid51vy5q3045hq8dcenhzau4",
+      "eoxg0oayqy6dhiycdg9da0m12",
+      "evrkk6v0but2xx9huk62a4jqo",
+      "ex359facoh254ohc2legj4vhm",
+      "f5ye3iw8qc7tgl09htfpdapod",
+      "f7vc5upxgwrmf3ytbmtje2l8x",
+      "fczo8m27kd1vyvsnajjwqs84x",
+      "ff1ady72pga26h3tkw80ewc5z",
+      "ft6lmfsxlf518jq5me0h2evp9",
+      "fvbujsz0qilx37y1b1z8rr9zd",
+      "fwj7sxr21fztsb1pnbblg6qc1",
+      "fyjxlajqs02efkgxos8qj1kwa",
+      "g6k52uan50boflbupzg1zcf8i",
+      "gtelx367uqmnfdpyilo20xj6e",
+      "gxkf029yx3g8nu1gph7n780q5",
+      "h4aw2krakhb7ks5k2h4jieai9",
+      "h51rtt5pg4fhmxqs2r9oksa1x",
+      "h6kok981dtaprnpyrhy1r0868",
+      "hybq2bwoy17ca0smaysfjj0jj",
+      "hygaokas6vmnmfciqwda25co9",
+      "hzv0525h4ftqtvq4p5opo59ex",
+      "i35qgannhy09gt6wuja5ko9sd",
+      "i9zcv3dd5efisihqt50fyqytu",
+      "igmji7phmfqqc0zeb5mc47ryk",
+      "ihm09blukj0j3ib0yoduvj0xj",
+      "iisb9mq35eupcg26qlybae98z",
+      "ijmjuq4kaalo9qprb42k97waj",
+      "ikyhb3scns4lx0shd2w9q172z",
+      "ilawqg8ob8x1onrejow90v1av",
+      "ilqwebmenzv3vlndc9ui49825",
+      "invss2ia03rl0woxvc26c2ydn",
+      "ipnd77utwlfsuos0y03cuclhw",
+      "itz52755ty5j17a3l00sdlxxi",
+      "ix3dq350f5nwr56ht6ozy7ixh",
+      "j6d49oxabdi8o4g8u09vhwkj8",
+      "j7841lkqpnv02nljngc8rgaiw",
+      "j7u0icij235ym82353twyg3up",
+      "jbokbwzekk8ku8q4w4ueyxav9",
+      "jcgfj9earkxzub9fcfncigkuq",
+      "jchihhtdu0w75ftxskqj75xta",
+      "jczuvih88m5r5n8mad48jfpt8",
+      "jdvzohk0ogdayvkw8ny1v6iqo",
+      "jf5p7zmti5pnr3htk0ibnlsmo",
+      "jft6w2xlb0vfi3cffhyxie5q0",
+      "jgz74ugbsz7lfdrxr9v8ekxu6",
+      "jlhrcwxgjkhw9x2g0swl5fmp1",
+      "jlxe1rkzbwzxsefbrwzf2gszm",
+      "jm34cie4yz3a2uda189mtalj3",
+      "jmpf537jhiqde347pi0gl0u18",
+      "jo5p9cjwhikf2z73unx65fvyi",
+      "jqabtobs3w6b9n8rus27pztlk",
+      "jqdrlwyvrij6kqnj2na76oj03",
+      "js73jwkjvsl7jylxval6sgq93",
+      "jtu68aj5ob28mrp7ztl182ic0",
+      "jybnncjbtij1mkn3mg32839oy",
+      "k0wxpxq5eoedubvm1ozvzj4j7",
+      "k2qhuh4c0vo3adh6gi72pejdt",
+      "k6898ozjshmz1ni83hg3b4azs",
+      "k73v6jzr5s9qph7gjfkpxvvei",
+      "kcecya0w3lc2uy3z6f1dy6yrt",
+      "kda5846yv82ugin3q2zzwhk54",
+      "keojkl61ujkwtqftu6du0dl75",
+      "kfwqp1v6o0atoxx75e07c1xwh",
+      "khu2b2px4lj8rp2waqab0d3wm",
+      "kjxd9q5h2ta2enieq9u81jbql",
+      "kl9szqkrbv1p3h6owyt1ya845",
+      "kml1retihsdt43tdo3zr3xcyx",
+      "knp1t8kkhpqpgge4bu4q58xfo",
+      "kq6tkwq5xqjgdo4zlzyv498zy",
+      "krakcp0ckheohiingijodt3eo",
+      "kt95rj9l9vkszurb2om7bl2no",
+      "kxvuqc0ynqq2zt2gnnnd4it7c",
+      "l3cukzbl49sx3rvnnxp3oolr1",
+      "l4ewe29bthpfwwx5ijr5um8jg",
+      "l68vic25wtl1ndgavxm2zhrye",
+      "l94fh3hsqc9m1x89wysz1sanx",
+      "laaisbua45acxgx4r9cdx2hpr",
+      "lbux7hmfnm2dxuuj1nganeryw",
+      "let4kld57behin8200jbdw241",
+      "leuqzcnfzhsey5cktpkpsx09u",
+      "lh6blzkc6jesco28hjvuxbvhf",
+      "li2f9n0ez7vunfknxyo1in56l",
+      "lkzq2u13udss70p9layg74zkn",
+      "llj4e8hv7nyv4u70zitkb7kcn",
+      "ln53euggo70o9c6bplphhdnn1",
+      "lnsgkyvfngsgci573dc6bhnr9",
+      "lshb0gxi5gic6zln8ermhage8",
+      "lt5lff4ntqxr0zn1h97usp8ql",
+      "lts8s03q85c1h941yvj1ee1tp",
+      "lyyqbxb4rdgvlmviie0t3x3m6",
+      "m24c8mb28z4sysqj40u2cgzfg",
+      "m7ss46lq0lbl1safpkamjwjy6",
+      "m909tdhct3xyfornmyrtwybvw",
+      "mbycfxybk32gp31ccv6tn86fk",
+      "me0hgbavdi9mqyqun1j4rvsyb",
+      "mk240iuv2x0wqglka84zn25lc",
+      "mkwlruvcgmug4mhqwezxl0c8v",
+      "mkzv7p8o3boltkhtl4a2ug9rq",
+      "mps7oxk35qn007tmn1ta5me08",
+      "mtay0a9yf6oo37uzv0qohhb0w",
+      "muvugsg2zb5ln9v7ylumrby63",
+      "mwwwxvymckd46gszhtusafetr",
+      "mx0zveoduq2cdm53wh6ypgc8s",
+      "myxwvbalaiszw3fask6mfmbe0",
+      "mzse2nmafbirg7jq0zsixk44j",
+      "n950xwifp41odlja6hyw3g54y",
+      "n9gsfqnhsbdxlnklyz4zn9j1q",
+      "nd29oxrmrnhkzae07armj3paf",
+      "nh08adlbnsiufgks7zvc1nl4g",
+      "nif76il3e4lqcxvd15w9j7d5j",
+      "nilkxqmvqni9gnz5r247rvqpo",
+      "nkj5wd6n7pcrc4sl8a9ush37d",
+      "nkk05ad35vyh2n733frsed51x",
+      "nkp8st06eqehfe55k0ijaf97c",
+      "nl8ftdbywfztlawr7wbnou2fy",
+      "npctitqdf593d59027by7y2yg",
+      "nrz2km3ebfh4s29u2g6n2dtpc",
+      "nsfnt9is0lwi3wpnevnklob7i",
+      "nsghlctdcs9imth66rxhu5h5j",
+      "nuigt1d8n8amgd5s67e5pp47f",
+      "nv49mriea2p94ar4qwbi2oh5n",
+      "nvsf6zw7plju76yl200h8gyxe",
+      "nvwnzvbvanyegea5skm0e4dqi",
+      "nzo283875n5pdr3tizdbsnfij",
+      "o2zv4d7dy3l7i7ib0sb6t61ts",
+      "o349mpil4sayb54hob2ayg0xs",
+      "o3o3ghf0jozkcshzdb1lx1gc8",
+      "o3wskre7w74qdebl2owyefkqy",
+      "o7nslk95vutfcxdmdmpcxb74s",
+      "o7nvyicnlla1h5mtq9w6dsilw",
+      "o7ztbb994nzcyg1mp1k0m9het",
+      "ocm16z7g8q60tcjpkslddz262",
+      "ofyeaybttb8t3aladwtcwtfx3",
+      "og96kh4yq0z7jmb7smli2xgbc",
+      "ogw1nhv8i8kq5163zlmtlpadc",
+      "oid8n6gqe448jeacqvwu4ugft",
+      "on4ywi7f588mdvvm5hlmmpf81",
+      "oqdyloz73og8za8063jw9v8wq",
+      "owjgpzyw68zjn70ay18jhabot",
+      "owvk4gfu7k564yucc8tpo3bie",
+      "p34g94jc25tiv7yh0lnkh77ks",
+      "p4nhukrgnhwctn8zcvwzt7p13",
+      "p5p11raddvnkxpj8ohvxfxxiv",
+      "p8idqq1twg82y1wqb6h5px7rn",
+      "p8ym5jekujzohmocrkv0z1hvt",
+      "p9spprirhbwselca9taz265sd",
+      "phdbsi266p9cosfli7xt8wn8f",
+      "piecg5xk4xza6x51gxaqstfsb",
+      "pk7cwo5z1l9scg1ri253djtgd",
+      "ppjxg4cgztsgps1666lorkho7",
+      "prf1xhb020s1i07qy241lbj7o",
+      "ps9h0c1u4hlpppzwia3womn2a",
+      "pvug33d340ip7zimgdg9itps0",
+      "pvwo8wsraa8vmljv6tsvmkuvq",
+      "pvxqe32vy56yk7ea91jwr7zfv",
+      "py2eekjx186l1iad2q7yzgmfn",
+      "pymc90bm82kpeajvxpmrl6arw",
+      "q1zp4bi14luewj3675rryh6a6",
+      "q8gs79u0d472vexklu4lg4cf3",
+      "q9oci4xx2kgossz18gga2bj0n",
+      "qdifygh8q65f494kkpeh4togx",
+      "qisfvowjd5jbs3mijzv4ehhjh",
+      "qq2vpodcfmerwyujym6d9pdwp",
+      "qq44n5rgmj75l9fcbc284u51x",
+      "qrhb2v87tbdxuqi0fhkcogt4s",
+      "qus0noijz6folfrxtw6kxknh1",
+      "qv65dhr1a8iyxzaxro1sqqwah",
+      "qvvqt6zhcriwu0eqrmftc5jzc",
+      "qw54i3ry3tr3gbkdmp8dr8paj",
+      "r219xfhmxd0xpcaxrexl12lcl",
+      "rars33szimahzf5sfmqwryfj5",
+      "rd4nqjqyls9eyz0to9a9l3abf",
+      "rdicjb5yxru3rw1xvuxhyyhj6",
+      "reokwcrr2wdy0wxvnps04s15n",
+      "rg0t0zib1ygllbsjg4phz9ha0",
+      "rm17a888a55v34xr1qqzzwknp",
+      "rn5xhlr0fe6abeqdk8p6vpezb",
+      "rp04gpaf1occystvhty5t8try",
+      "rpdl3m8lt2cb6hr87m8eqkpw3",
+      "rphwupsjjaelpj2w14dto6q55",
+      "rpuas2wbsoynlo0zaoynj01hd",
+      "rpwomfkrnak5imrzo88pdhbaq",
+      "rqindhxz59kmxevzxqn4d176g",
+      "rsm1g4gorva04ji4szcgqfz4q",
+      "rssrff3bby19e96mxwb7iyx39",
+      "rv05jtk2pmxlei8vs66yptdob",
+      "rxmefb6v8i6ptf57yfgt616il",
+      "s0js1tvkx7b8qc07nd9ks30wi",
+      "s0kjc0ljmceqnjw5893ps46ib",
+      "s5ynrjcui8u96hcwo03jyos46",
+      "s6h4597hcm0mmgi3yyu5gmp3j",
+      "s8gjkxbdns28ofj8wmtyy09x9",
+      "sdj3gnck4a16rsnadinkhzvav",
+      "sih25x8wkkpqhq6r26qpcpt7l",
+      "sjhtwdko7q43sgcqexke31v42",
+      "so4cyp2l2t0wd21og2gy2c8nj",
+      "stoinv48k7ava8mqdoh2ebfvz",
+      "sw77nfo9o9277te9ub16gx903",
+      "sxgfs182665z4v3uz5ovbmau4",
+      "sye7bvgfxmku0fprobbej3qp0",
+      "sywkgjjigyy9opazmbza6sk4k",
+      "sz9qhcailt3uvtz8s3ikc08m1",
+      "szellfgwc9q8v8cius9bgsla4",
+      "szhex7h1cq2wp49yd11g522gr",
+      "szhv28ybsojhik7udqit8zbyz",
+      "szo17pmucxt75jgavxqvdu1pn",
+      "t4penpd71p555lm0p0rqch6um",
+      "t4umid79bfau3ak807v51z4ec",
+      "tave4adtsip59lmq4spca07dv",
+      "tdo6eywu0a2dhex3iomggaz0s",
+      "tdw1p00pq7xdhyouo69mjy0zk",
+      "teirtym9gugca4lm6e8tubzfh",
+      "tgavoikddsegnzv08bag3cysn",
+      "tjg8g2xtuxkf98tkic4c47doc",
+      "tjoq9jm6pat7e6u6andgwl11b",
+      "tkaq08wvqhvx93rcn3ptaa27j",
+      "tkyudwwqx3ljwbuxd6vir8eu1",
+      "tld9ulxrb3l3ep21gtjkr7gjn",
+      "to17670o0ae0m02e5hueau48x",
+      "to9vt1l1cun0uyrfhvfla5ef9",
+      "tpq23vq3bot8n8p7m7aybaho7",
+      "ttoqnmed3ffzmha9o9shh9flr",
+      "twsrnkv3p15uk2sf88x9w409v",
+      "tymwouwfywifk3x5xwxy6kym9",
+      "u01tp7na7d78244ti6ijrnsip",
+      "u049a7sdkbroko8vr0vhkg1cb",
+      "u1snd8xnyrt2hp29kfhwb64gj",
+      "u2haat8k8p59ltekt2hxedoks",
+      "u423b8fi64vh0i4xyzmjjyg9l",
+      "u53t4lfc8krj0v8elkj0cvw3x",
+      "u8gfy22jrbg0ychmbuvxric2f",
+      "u9lovcuparoff3pgtexoniwv6",
+      "uacoopdppkevbezbkfsaxrygj",
+      "uccwphc7pfqz7cvbgtgyytx18",
+      "ud7qod5qu3p3zl6caf04gb1kc",
+      "uehqp19wuu3t5vthw1uz9enb9",
+      "ugpq4g7l8u4zyq9tfxsmb6uxp",
+      "urnly9zm3cpzjwjiswf601o60",
+      "utho2cujihnz7yymfl9toqjpz",
+      "ux2xvfbk3spr0r84gq78yhjdj",
+      "uzbtvgmhjrsjc5ta3h86l5g35",
+      "uzrherdsqi2guxapjxzoygcm4",
+      "v0fa823lz3ysq2u51rnzfsn1n",
+      "v3wx8qs9cylrnh2poqjgm0itc",
+      "va939m0cgxppg753qf7oy46y8",
+      "vaa1g4zmub82ccnhjbwv992xp",
+      "vbhg3kezmgs84n5w8x471ib6e",
+      "vcxjy49g75q3jsbt9m3z0g9lv",
+      "vg26el8e8y4dghl2s91yk0kso",
+      "vh5ktsfgtym6ld8rkhsrr0m8t",
+      "vhfn3i8w9w5gskzadxx5usqhy",
+      "viasycxttg8l0de72uumhpd4k",
+      "voq8scv3prrtfoon65s723ylq",
+      "vsi6q4o52evh7740jkvktafl6",
+      "vvd4k4spg8bmo8mr9yq3z7ahb",
+      "vwbtyh6zpwj541nkikl0yp3kz",
+      "vzwrjs34g7vsbf322jnr2911m",
+      "w0aotv107u3czi9zgrbke4sa5",
+      "w2cits1rbtasg1yvbaele23l5",
+      "w7y0ugnzcsgdrsxs3t61ry2k0",
+      "w8zxg1jfuvw69zhh35rksnned",
+      "w961hrc7xedevmbs1yoccu1y7",
+      "w9g6wzqj9xkaep6chz4oit7ih",
+      "wc6c1oengz4hrj217nt9zzmlu",
+      "wedmb4hmn032z7wv2xh7fggm2",
+      "wgqckdxzpkxjgwn34ldtr6dsy",
+      "wkbywmh6mwghkudm82tn8tew9",
+      "wpa1hvg2myjgb8oy54lgde34z",
+      "wrh87mtouj5qajlzemzzdzh4k",
+      "wvsjczbm6e9ja1sobtqgfwlkh",
+      "wwp865nbhrcrhlo9z631vfab7",
+      "wwqdpxnswrkdm4hyg1k2z95i1",
+      "wx198tz0ui26f5qfkjnxeiwf0",
+      "wyo9kbedh777sblqwkok2riz9",
+      "wzz3pz59r6lhbbjc4davqrwwm",
+      "x14gzq1buxccvysua4lumvtdv",
+      "x3gy8uojf4u5s0lromhlgn6jt",
+      "x3orwpd7q2l8opync6hzxdw5d",
+      "x52z01zu961ws3qaeoh6sjdxp",
+      "x66hjpo0td94etiqzmojkilf6",
+      "x7ev2v5fmnt2w5p48tkatiwgl",
+      "x8wf9kofr3xz7c5yrtuqdddec",
+      "x92ggh7a4a54tmy856j7pybpq",
+      "x9hoikr9d6o3og4irj6fhoxup",
+      "xcf0crw1j411s4h4zlt2tso7y",
+      "xgd0g8n1612qll41kfwk7tt32",
+      "xgmm4m8fdclbqb00bwcni7cnj",
+      "xgz5l01r2hlkuwuf8nfm90sic",
+      "xh7osg5dbc4tf72nozaw42oy6",
+      "xiqlt856kzzn89rp3p4jko10z",
+      "xkdjxuec0tiet5iy10xo4lbtn",
+      "xlx5xg56ajcrx0xzc23b8gu14",
+      "xnpjbj3gutk8vpqaaea5w0kf2",
+      "xv1thunkin7kxtzpulkwmebgu",
+      "xxmkai2lhxkezrm59snamobbk",
+      "y1tdwxpgrbp14n03nh3qqsyj9",
+      "y214k6hnnq62zs9w9jcs2vpxn",
+      "y2ut0r6u0boqn5gh529ueyhqt",
+      "y3hsn47fdinxm6awsk3sn7uti",
+      "y49fywlbp7f7qihp8svlq4jrp",
+      "y5ge0wxy8xny2vencinv4zb3x",
+      "y5i92ig3yo1f1ehamzchcvj7d",
+      "y6zak7q2qntg1192m7qfh91k1",
+      "y76b7i89ogidsg5gos0aaws2d",
+      "y7aamhtraa7mkt67r9glcbjcw",
+      "y7hfes0jdoehyz1lx30vvy4db",
+      "y9hnbjvor36c2bg2kt9b4n3t9",
+      "ycag8xi3e4x10qvqxhy5435t1",
+      "yd3f3td0s1rfuox9d21ibrp8x",
+      "yfb1lsakbipuwd8j4wf5s5gdy",
+      "yfhrrima5ajct8q89m48ouypv",
+      "yguj3ooh1k7ybefyuzgbdvo4y",
+      "yk956257vek0d0od6vk9id7q8",
+      "ymz6b3ai2eyx5nakcpmhner82",
+      "yndpg1ip551lnzq7p7i0t2re6",
+      "ynh7ue14km23qsbkj9nvbws2n",
+      "ysud14arx0gyxcbi1akqtz03n",
+      "yygy3beri5gtoh8dh7oqpw55a",
+      "z19ek8f7k3ruegsms6y3j836u",
+      "z55sloqpmc7ampgs4dzf5iryr",
+      "z5yz6by5s8cc4q4c8w2lj9pgq",
+      "z6cydjpz43udq3yfpexvpwvpg",
+      "z8xhh1cfm4kfrk7aixtzpggjm",
+      "z97si2m74cjn34djynzxidrq0",
+      "zcvfiykesy992plucq3qkr7o6",
+      "zgmho2v0tnfkashpydzaxzddf",
+      "zgyixnco351xpqfzuhnhbq45l",
+      "zjljickjqhhid9o4gs4hxc4ss",
+      "zlbg1u5mhi8rbpokkkliug099",
+      "zllbgaa62xo11b5x4acdei5so",
+      "zndd6iw3yrekizy4k8jipj1fo",
+      "zndrie07jz7aru0vpfiie2igg",
+      "zoyhbvsods1ovwj0pim73d5nf",
+      "zq8w2xydtobuogtw13zrnkywd",
+      "zrerp12zlftagvq4a5uukxiw5",
+      "zxa6imhrpx6vfmpeqwpx4ar8v",
+      "zypdsje9xwp98m2c98dagvxtl"
+    ]
+  },
+  "approvalChanged": false,
+  "buildExecuted": true,
+  "confirmationReceived": true,
+  "preflight": {
+    "localAndRemoteHead": "964273b09d2e33b1c40eaefd2874bc6382a8e2ce",
+    "initialWorktreeClean": true,
+    "context": "desktop-linux",
+    "engineVersion": "29.6.2",
+    "engineId": "055d945d-b3f7-4a50-adaa-423c2cde2b60",
+    "platform": "linux/amd64",
+    "imageStore": "overlayfs / io.containerd.snapshotter.v1",
+    "builder": "desktop-linux",
+    "driver": "docker",
+    "buildkitVersion": "0.31.2",
+    "buildxVersion": "0.35.0-desktop.2",
+    "contextFiles": 119,
+    "aclObjects": 291,
+    "sourceFiles": 34,
+    "cachePackagesVerifiedSha512": 41,
+    "symlinks": 0,
+    "extraFiles": 0,
+    "physicalSnapshotSha256": "31ceb4bcb711dfd7033d1d1bdcc71023f1761dfe88e21e429a09bc2a8d86d093",
+    "bundleSha256": "f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289",
+    "runnerApproved": false,
+    "metadataOutputPreviouslyAbsent": true,
+    "outputRepositoryPreviouslyAbsent": true,
+    "dockerProxyBuildArgsConfigured": false,
+    "defaultBridgeInitialization": {
+      "startingUTC": "2026-10-27T03:27:17.440200736Z",
+      "readyUTC": "2026-10-27T03:27:18.455955451Z",
+      "createdUTC": "2026-10-27T03:27:18.102716505Z",
+      "noDefaultBridgeConsumers": true
+    },
+    "limitedToResourceMetadata": true
+  },
+  "plannedCommand": {
+    "executable": "C:/Users/USER/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe",
+    "args": [
+      "--context",
+      "desktop-linux",
+      "buildx",
+      "build",
+      "--builder",
+      "desktop-linux",
+      "--platform",
+      "linux/amd64",
+      "--pull=false",
+      "--no-cache",
+      "--network=none",
+      "--provenance=false",
+      "--sbom=false",
+      "--progress=plain",
+      "--build-arg",
+      "NODE_BASE=node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae",
+      "--build-arg",
+      "BUNDLE_SHA256=f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289",
+      "--output",
+      "type=image,name=docker.io/library/stall-phase8-r2-runner:build-964273b,store=true,push=false,name-canonical=true,oci-mediatypes=true,unpack=true,rewrite-timestamp=false",
+      "--metadata-file",
+      "C:/Users/USER/WeChatProjects/miniprogram-1/docs/testing/PHASE8_V2_RUNNER_BUILD_METADATA.json",
+      "C:/Users/USER/StallPhase8-V2-Build-20261027-030427"
+    ],
+    "cwd": "C:/Users/USER/WeChatProjects/miniprogram-1",
+    "attemptLimit": 1,
+    "noRetry": true,
+    "registryPush": false,
+    "sourceDateEpochAdded": false,
+    "reasonForNoRewrite": "BuildKit0.31.2 rejects rewrite-timestamp combined with unpack; no timestamp normalization/reproducible image claim in this build",
+    "networkScope": "none applies to RUN only; Moby driver with pull=false prefers complete existing local base, no external Dockerfile frontend or additional source images"
+  },
+  "references": [
+    "https://docs.docker.com/build/exporters/image-registry/",
+    "https://docs.docker.com/reference/cli/docker/buildx/build/",
+    "https://github.com/moby/buildkit/blob/v0.31.2/exporter/containerimage/export.go",
+    "https://github.com/docker/buildx/blob/v0.35.0/build/opt.go"
+  ],
+  "preflightQueryNotes": [
+    "Initial --host plus named builder du refused context mismatch without building; corrected read-only query to --context desktop-linux",
+    "Buildx translates image exporter to Moby exporter on docker driver; canonical identity acceptance requires actual post-build resolution"
+  ],
+  "confirmationText": "授权一次构建，并独占本次 Docker 管理窗口",
+  "preBuildRevalidatedAtUTC": "2026-10-27T03:32:30.241Z",
+  "actualCommand": {
+    "executable": "C:/Users/USER/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe",
+    "args": [
+      "--context",
+      "desktop-linux",
+      "buildx",
+      "build",
+      "--builder",
+      "desktop-linux",
+      "--platform",
+      "linux/amd64",
+      "--pull=false",
+      "--no-cache",
+      "--network=none",
+      "--provenance=false",
+      "--sbom=false",
+      "--progress=plain",
+      "--build-arg",
+      "NODE_BASE=node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae",
+      "--build-arg",
+      "BUNDLE_SHA256=f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289",
+      "--output",
+      "type=image,name=docker.io/library/stall-phase8-r2-runner:build-964273b,store=true,push=false,name-canonical=true,oci-mediatypes=true,unpack=true,rewrite-timestamp=false",
+      "--metadata-file",
+      "C:/Users/USER/WeChatProjects/miniprogram-1/docs/testing/PHASE8_V2_RUNNER_BUILD_METADATA.json",
+      "C:/Users/USER/StallPhase8-V2-Build-20261027-030427"
+    ],
+    "cwd": "C:/Users/USER/WeChatProjects/miniprogram-1",
+    "attemptLimit": 1,
+    "noRetry": true,
+    "registryPush": false,
+    "sourceDateEpochAdded": false,
+    "reasonForNoRewrite": "BuildKit0.31.2 rejects rewrite-timestamp combined with unpack; no timestamp normalization/reproducible image claim in this build",
+    "networkScope": "none applies to RUN only; Moby driver with pull=false prefers complete existing local base, no external Dockerfile frontend or additional source images"
+  },
+  "buildStartedAtUTC": "2026-10-27T03:32:30.241Z",
+  "childEnvironmentKeys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "PATHEXT",
+    "Path",
+    "ProgramData",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERNAME",
+    "USERPROFILE",
+    "windir"
+  ],
+  "buildFinishedAtUTC": "2026-10-27T03:32:39.694Z",
+  "buildResult": {
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "",
+    "stderr": "#0 building with \"desktop-linux\" instance using docker driver\n\n#1 [internal] load build definition from Dockerfile\n#1 transferring dockerfile: 598B 0.0s done\n#1 WARN: InvalidDefaultArgInFrom: Default value for ARG ${NODE_BASE} results in empty or invalid base image name (line 4)\n#1 DONE 0.1s\n\n#2 [internal] load metadata for docker.io/library/node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae\n#2 ...\n\n#3 [auth] library/node:pull token for registry-1.docker.io\n#3 DONE 0.0s\n\n#2 [internal] load metadata for docker.io/library/node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae\n#2 DONE 2.1s\n\n#4 [internal] load .dockerignore\n#4 transferring context: 103B done\n#4 DONE 0.0s\n\n#5 [1/6] FROM docker.io/library/node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae\n#5 resolve docker.io/library/node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae 0.0s done\n#5 DONE 0.1s\n\n#6 [2/6] WORKDIR /opt/phase8/backend\n#6 DONE 0.0s\n\n#7 [internal] load build context\n#7 transferring context: 1.74MB 0.2s done\n#7 DONE 0.2s\n\n#8 [3/6] COPY payload/backend/package.json payload/backend/package-lock.json ./\n#8 DONE 0.1s\n\n#9 [4/6] COPY npm-cache/ /tmp/npm-cache/\n#9 DONE 0.1s\n\n#10 [5/6] RUN npm ci --offline --ignore-scripts --omit=dev --cache /tmp/npm-cache\n#10 3.382 \n#10 3.382 added 41 packages, and audited 42 packages in 3s\n#10 3.383 \n#10 3.383 found 0 vulnerabilities\n#10 DONE 3.5s\n\n#11 [6/6] COPY payload/ /opt/phase8/\n#11 DONE 0.1s\n\n#12 exporting to image\n#12 exporting layers\n#12 exporting layers 0.6s done\n#12 exporting manifest sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849 0.0s done\n#12 exporting config sha256:abd8b7640f70fdd7d92d8c90496c5af4ee80d16e35f5d62c2d6a68389f77e29f 0.0s done\n#12 naming to docker.io/library/stall-phase8-r2-runner:build-964273b done\n#12 unpacking to docker.io/library/stall-phase8-r2-runner:build-964273b@sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849\n#12 unpacking to docker.io/library/stall-phase8-r2-runner:build-964273b@sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849 1.5s done\n#12 DONE 2.2s\n\n#13 resolving provenance for metadata file\n#13 DONE 0.0s\n\n \u001b[33m1 warning found (use docker --debug to expand):\n\u001b[0m - InvalidDefaultArgInFrom: Default value for ARG ${NODE_BASE} results in empty or invalid base image name (line 4)\n"
+  },
+  "imageAcceptance": {
+    "observedAtUTC": "2026-10-27T03:33:59.017Z",
+    "tag": "docker.io/library/stall-phase8-r2-runner:build-964273b",
+    "imageId": "sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849",
+    "repoDigests": [
+      "stall-phase8-r2-runner@sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849",
+      "stall-phase8-r2-runner:build-964273b@sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849"
+    ],
+    "manifestDigest": "sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849",
+    "configDigest": "sha256:abd8b7640f70fdd7d92d8c90496c5af4ee80d16e35f5d62c2d6a68389f77e29f",
+    "canonicalReference": "stall-phase8-r2-runner@sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849",
+    "fullyQualifiedCanonicalReference": "docker.io/library/stall-phase8-r2-runner@sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849",
+    "canonicalBothResolved": true,
+    "platform": "linux/amd64",
+    "user": "1000:1000",
+    "entrypoint": [
+      "node",
+      "/opt/phase8/backend/testing/phase8-v2/runner.mjs"
+    ],
+    "cmd": [],
+    "cmdFieldOmitted": true,
+    "labels": {
+      "stall.phase8.bundle": "f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289"
+    },
+    "descriptor": {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849",
+      "size": 2195,
+      "annotations": {
+        "config.digest": "sha256:abd8b7640f70fdd7d92d8c90496c5af4ee80d16e35f5d62c2d6a68389f77e29f"
+      }
+    },
+    "rootfsBaseDiffIdPrefixMatched": true,
+    "baseDiffIds": [
+      "sha256:9b35de7893378218e365c34c2c735fb0032a859112fb7345ca8ea73f9aa1db70",
+      "sha256:b405c072d1d6b8d191f8fe47db6e3c37ff40836c3970c2c03e51b1adc16563fb",
+      "sha256:0ff2c5ad5da71f20291ad85c9f543eaf29984d9883c8c51a0bb117ec2abe097a",
+      "sha256:881f54f72c69e2a38c7f8a642780e61968bea9efe74300b88a2df728c24c7b0b",
+      "sha256:3e12bfea3588951aab89585809de07499eb5094dc38891bdb294e67d7a9327c0"
+    ],
+    "layers": [
+      "sha256:9b35de7893378218e365c34c2c735fb0032a859112fb7345ca8ea73f9aa1db70",
+      "sha256:b405c072d1d6b8d191f8fe47db6e3c37ff40836c3970c2c03e51b1adc16563fb",
+      "sha256:0ff2c5ad5da71f20291ad85c9f543eaf29984d9883c8c51a0bb117ec2abe097a",
+      "sha256:881f54f72c69e2a38c7f8a642780e61968bea9efe74300b88a2df728c24c7b0b",
+      "sha256:3e12bfea3588951aab89585809de07499eb5094dc38891bdb294e67d7a9327c0",
+      "sha256:31d1997d74804fc1a75a9ec329c2f814e7686b66f49f65a13bf27243447a8c98",
+      "sha256:b5d2564b1c81607d9ff918da5bda7d65119d42ee990174b86930b4014de06e64",
+      "sha256:16f0805059c00a3adfc55cac5709e8fc81625dfdd1a35d7622917403420fd609",
+      "sha256:397aef7d354664a5167c5d139d4173d622b400a0b37048190aa8e6e964a43c71",
+      "sha256:d7ee5c3b8d50a930aa5c52c7fe4cdf18147381343baa507c8eafe560b4df56df"
+    ],
+    "baseMaterialRecord": [
+      {
+        "uri": "pkg:docker/node?digest=sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae&platform=linux%2Famd64",
+        "digest": {
+          "sha256": "2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae"
+        }
+      }
+    ],
+    "imageContentVerified": true,
+    "containerStartedForVerification": false,
+    "archiveVerification": {
+      "method": "docker image save stdout parsed in memory; no file extraction or container creation",
+      "archiveBytes": 84835840,
+      "ociBlobDigestsVerified": true,
+      "imageConfigDigestVerified": true,
+      "baseLayerPrefixPreviouslyVerified": true,
+      "addedLayerDiffIdsVerified": 5,
+      "sourceFilesVerified": 34,
+      "bundleVerified": true,
+      "installedDependencies": [
+        {
+          "name": "@aws-sdk/checksums",
+          "version": "3.1001.5",
+          "packageJsonSha256": "7d98c929509fa45a110cd78f95beb46df3979e7b833a17adf4a81721e0ca4edb"
+        },
+        {
+          "name": "@aws-sdk/client-s3",
+          "version": "3.1156.0",
+          "packageJsonSha256": "6f7c021211762ac1c14a08a5c1848ff03292c7a872a1edbc3ce0f9671f57d7f3"
+        },
+        {
+          "name": "@aws-sdk/core",
+          "version": "3.978.5",
+          "packageJsonSha256": "75d5315b5e76190800af3b9cb41fb45b628e5efa3395c37a37fcd7249e6eb555"
+        },
+        {
+          "name": "@aws-sdk/credential-provider-env",
+          "version": "3.972.76",
+          "packageJsonSha256": "333d2dedc60dbbeb01351757dd01557ba04b2bb42cbcb138db86700d3723fc0d"
+        },
+        {
+          "name": "@aws-sdk/credential-provider-http",
+          "version": "3.972.78",
+          "packageJsonSha256": "694dd53329ddcbf205d503bb05bec3377973c6d4b3ecddea96589b32e54a9f00"
+        },
+        {
+          "name": "@aws-sdk/credential-provider-ini",
+          "version": "3.973.21",
+          "packageJsonSha256": "463192acf5056f6450741f10f34a7593bb7f16c11e3b0c0986d40769cf9d009c"
+        },
+        {
+          "name": "@aws-sdk/credential-provider-login",
+          "version": "3.972.83",
+          "packageJsonSha256": "25e5f589d10c225b08257d561523cd502bd8fba0581ba0b0257afb3df7001fcc"
+        },
+        {
+          "name": "@aws-sdk/credential-provider-node",
+          "version": "3.972.88",
+          "packageJsonSha256": "e47ab67d441088ddafb2cb7bcbd8aa157fb6e5b3766fd9d011e05fbc5326c291"
+        },
+        {
+          "name": "@aws-sdk/credential-provider-process",
+          "version": "3.972.76",
+          "packageJsonSha256": "af5b113076cb4b5c1fb17dc6b793a2b1913df23fde3e0b2c84d41b5b9ab9731c"
+        },
+        {
+          "name": "@aws-sdk/credential-provider-sso",
+          "version": "3.973.20",
+          "packageJsonSha256": "a3e997bb52e61c58f5dc8b40bd2662463231442ba3a681cfdfbc82035062e330"
+        },
+        {
+          "name": "@aws-sdk/credential-provider-web-identity",
+          "version": "3.972.82",
+          "packageJsonSha256": "c09f815bf1ebd2d69c96f00cec5cae30d611ec5657358ada0333226e4ab24611"
+        },
+        {
+          "name": "@aws-sdk/middleware-sdk-s3",
+          "version": "3.972.81",
+          "packageJsonSha256": "475972bb9a75f4255bb91594f6804d596ae7efa5ec816285ca2616f87432be9e"
+        },
+        {
+          "name": "@aws-sdk/nested-clients",
+          "version": "3.997.50",
+          "packageJsonSha256": "df5ce3eefc813dd51efd6d47ae81aae9e15802b6582659522e2fbbed173e09c3"
+        },
+        {
+          "name": "@aws-sdk/s3-request-presigner",
+          "version": "3.1156.0",
+          "packageJsonSha256": "93538722c00465f5e455ed847b8e35b1b793fc71c1dff3e58fbf8314ea23f889"
+        },
+        {
+          "name": "@aws-sdk/signature-v4-multi-region",
+          "version": "3.996.49",
+          "packageJsonSha256": "b0510b534a79f6321ff5e1b57574a22d2344ad83ef02b6a7acb6c9686ea36582"
+        },
+        {
+          "name": "@aws-sdk/token-providers",
+          "version": "3.1155.0",
+          "packageJsonSha256": "a625f08bbc02ee18484cadec3804a1a7f0ac3967edfa912dfd9cedb292ada049"
+        },
+        {
+          "name": "@aws-sdk/types",
+          "version": "3.975.0",
+          "packageJsonSha256": "1bb9d7394c3247448409966ce741e4fbc7468122543c9bf263bf52c4703cd037"
+        },
+        {
+          "name": "@aws-sdk/xml-builder",
+          "version": "3.972.41",
+          "packageJsonSha256": "103e94854d3f01cdb7eda3d170d3a8775e4fb107da472a1347418abb76116e08"
+        },
+        {
+          "name": "@aws/lambda-invoke-store",
+          "version": "0.3.0",
+          "packageJsonSha256": "67dd0cc15cb17df9e12654a78486e710e13a2e96623cb28c683056378fa973dc"
+        },
+        {
+          "name": "@smithy/core",
+          "version": "3.36.2",
+          "packageJsonSha256": "c4c5d891394314b4e81bb9a596ddf3f505b944693df756f36fbb7251cb943a1f"
+        },
+        {
+          "name": "@smithy/credential-provider-imds",
+          "version": "4.5.2",
+          "packageJsonSha256": "1e3b437bfaf7800cbcd770cc744084ab9e3b6c445196b707fde90e2f66e0403c"
+        },
+        {
+          "name": "@smithy/fetch-http-handler",
+          "version": "5.8.0",
+          "packageJsonSha256": "3319f9f00b71ae85d49473c1f5d5a0151c89547d7724753abe8d189471decffe"
+        },
+        {
+          "name": "@smithy/node-http-handler",
+          "version": "4.12.1",
+          "packageJsonSha256": "e685e00a1e28371390ffab5711e5300b81743b7a7d5f5bf1a994e40197467221"
+        },
+        {
+          "name": "@smithy/signature-v4",
+          "version": "5.7.4",
+          "packageJsonSha256": "d4794533b211f0100c0be02a8d35b677db84d84a7061ad7c0c6bb0bc5394cf11"
+        },
+        {
+          "name": "@smithy/types",
+          "version": "4.19.0",
+          "packageJsonSha256": "3de7840fd63a03c33bb687fbdc4794884598402600b2ee02c68856e78e41bd52"
+        },
+        {
+          "name": "bowser",
+          "version": "2.14.1",
+          "packageJsonSha256": "b12b643998a1a7febff9933b5a05e53045c722ff4de13fab751391b2d346a974"
+        },
+        {
+          "name": "pg",
+          "version": "8.23.1",
+          "packageJsonSha256": "b1e53333a3d0c2c47c49a5cb919d221135dc03145df740925b899bc2baacc435"
+        },
+        {
+          "name": "pg-cloudflare",
+          "version": "1.4.1",
+          "packageJsonSha256": "93b30ce3bed1ce3b836aa344c8afdaab74a42c03720e8d5baa801b6ae84ca3e7"
+        },
+        {
+          "name": "pg-connection-string",
+          "version": "2.14.1",
+          "packageJsonSha256": "53d453c5a426e69a11ff479e0d8a293505faa1833e6eb3ff7ceefdaac569e3ea"
+        },
+        {
+          "name": "pg-int8",
+          "version": "1.0.1",
+          "packageJsonSha256": "147155887a41bb6f69ff98b3dde827b7e6a8214c3a71938da4babf8e12adff2e"
+        },
+        {
+          "name": "pg-pool",
+          "version": "3.14.0",
+          "packageJsonSha256": "0a9924def9e06f791b09a44eaefb227f323a39199887f6ce17b44cb5a9193134"
+        },
+        {
+          "name": "pg-protocol",
+          "version": "1.16.1",
+          "packageJsonSha256": "a4a4e23027b26c72be7729d045d0100ad9329959db0449c535fa7b2ba2e717c6"
+        },
+        {
+          "name": "pg-types",
+          "version": "2.2.0",
+          "packageJsonSha256": "3ec0293cb38cc8d9475e3eb32ac5f19d195bf9fccc8b19a0714e6ecd6e7c2cf0"
+        },
+        {
+          "name": "pgpass",
+          "version": "1.0.5",
+          "packageJsonSha256": "d75240eb4fe759c10db9f903838275348676a8bdc1f329e20a833713cd7c99bd"
+        },
+        {
+          "name": "postgres-array",
+          "version": "2.0.0",
+          "packageJsonSha256": "dcd6a505fcbc032b409ee2838ab2c776dea3a9cfe02b736364b6cb82a946665f"
+        },
+        {
+          "name": "postgres-bytea",
+          "version": "1.0.1",
+          "packageJsonSha256": "9125568c5fb51a65b8f11adb0080c2775b99ee82822d73bff8b56b2a9d47d7aa"
+        },
+        {
+          "name": "postgres-date",
+          "version": "1.0.7",
+          "packageJsonSha256": "03f9edefa96697072075e02df045cc61ed4ca2f8dfffb1ff87f4070bc3404151"
+        },
+        {
+          "name": "postgres-interval",
+          "version": "1.2.0",
+          "packageJsonSha256": "cc3056db105e66c9128cb8a387cda782d5f1ae9281be90de0b8d26a90af89c57"
+        },
+        {
+          "name": "split2",
+          "version": "4.2.0",
+          "packageJsonSha256": "87b734c3087c8d9ed5d76d1bff00db30f960831ba8705dd18d73b180d08d2140"
+        },
+        {
+          "name": "tslib",
+          "version": "2.8.1",
+          "packageJsonSha256": "f02b4851df316f29bdfcd404aa1eb41e4e216b5859015f81fcd3e91caf8be931"
+        },
+        {
+          "name": "xtend",
+          "version": "4.0.2",
+          "packageJsonSha256": "b02ffef8cda96c5c3ee00a00390e63f608362c2ddfb3ed754e181d013a45d48a"
+        }
+      ],
+      "pgVersion": "8.23.1",
+      "pgMainFileVerified": true,
+      "pgMainSha256": "3fad6e6d3d976edbabe0cbc9e1d39f4340bcb719bbbb186a0d3a24f3dbd4a94c",
+      "limitations": [
+        "No runtime module import or connection executed",
+        "Does not prove runtime ACL/bind mounts, real database behavior or absence of all possible image malware",
+        "Base file contents inherited from audited official image, not re-audited source-by-source"
+      ]
+    }
+  },
+  "buildObservations": {
+    "npmOfflineInstallationSucceeded": true,
+    "npmAddedPackages": 41,
+    "registryAuthenticationAndMetadataObserved": true,
+    "wholeBuildAirGapped": false,
+    "baseImageNewLayerDownloadObserved": false,
+    "warning": "InvalidDefaultArgInFrom: NODE_BASE has no default, actual provided fixed build argument verified",
+    "metadataProvenanceVsImageAttestation": "--provenance=false disabled output attestation, Buildx still wrote local build provenance in metadata",
+    "initialInspectTemplateError": "Config.Cmd omitted in image; corrected to JSON inspect and treated omitted Cmd as empty array; no image change",
+    "archiveInspectionToolCorrection": "First read-only helper used nonexistent tar.Parse constructor; installed npm tar exports Parser. Corrected helper, repeated only image-save read, no build retry or input change."
+  },
+  "postBuild": {
+    "observedAtUTC": "2026-10-27T03:36:04.659Z",
+    "resourceSnapshot": {
+      "containers": [
+        {
+          "id": "45941853a7d833be35585f5f66d1da2065ac40500ade71f682db2cf63a0745d8",
+          "name": "/backend-postgres-1",
+          "state": "exited",
+          "finishedAt": "2026-10-26T09:28:49.900018795Z",
+          "imageId": "sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+          "networkMode": "backend_default",
+          "networks": [
+            {
+              "name": "backend_default",
+              "id": "1dd13ad0a2fad48c9e3ae94191f0ecb2f42112511829eddb82dc159cf8fae72c"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "backend_stall_dev_pgdata",
+              "destination": "/var/lib/postgresql/data"
+            }
+          ]
+        },
+        {
+          "id": "ab7b56b8db176a16cc1463a099792000a65b8770daca82419ad43547f6584835",
+          "name": "/clyven_backend_server-postgres-1",
+          "state": "exited",
+          "finishedAt": "2026-10-05T14:13:30.677711524Z",
+          "imageId": "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+          "networkMode": "clyven_backend_server_default",
+          "networks": [
+            {
+              "name": "clyven_backend_server_default",
+              "id": "9e94983b9531a895c548f706fb5870b05e86a4b514eecd5f56cd49c477f609e8"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "clyven_backend_server_shipin_backend_data",
+              "destination": "/var/lib/postgresql/data"
+            }
+          ]
+        },
+        {
+          "id": "17535509e609d4281bd8baeb4ccf0ddfeffcaf64ea74b8948ba565d084faa06a",
+          "name": "/glyphora_backend_server-postgres_test-1",
+          "state": "exited",
+          "finishedAt": "2026-09-10T14:54:22.196208119Z",
+          "imageId": "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+          "networkMode": "glyphora_backend_server_default",
+          "networks": [
+            {
+              "name": "glyphora_backend_server_default",
+              "id": "469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "glyphora_backend_server_glyphora_backend_test_data",
+              "destination": "/var/lib/postgresql/data"
+            }
+          ]
+        },
+        {
+          "id": "d823d411bd945b184686455b1af8391b1f07342bf23c9864cd39d96b269dc651",
+          "name": "/glyphora_backend_server-postgres-1",
+          "state": "exited",
+          "finishedAt": "2026-09-10T14:54:22.197725291Z",
+          "imageId": "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+          "networkMode": "glyphora_backend_server_default",
+          "networks": [
+            {
+              "name": "glyphora_backend_server_default",
+              "id": "469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "glyphora_backend_server_glyphora_backend_data",
+              "destination": "/var/lib/postgresql/data"
+            }
+          ]
+        },
+        {
+          "id": "64256f7f7974e9588b9376880e62b8d7ac51444abfcd2ae30cc08c4aad42e46c",
+          "name": "/glyphora_backend_server-redis_test-1",
+          "state": "exited",
+          "finishedAt": "2026-09-10T14:54:22.197036213Z",
+          "imageId": "sha256:b7fd1a2c89d09a836f659d72c52d27b9f71202c97014a47639f87c992e8c0f1b",
+          "networkMode": "glyphora_backend_server_default",
+          "networks": [
+            {
+              "name": "glyphora_backend_server_default",
+              "id": "469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "d0c612f986009adc5ace2c85efcc1cb6cb135379edd5596dd6627998a6e1504c",
+              "destination": "/data"
+            }
+          ]
+        },
+        {
+          "id": "9294df5d594480c4bbf11d8e1252e4c1eedcbf8b2b50e84d8eaf97472ff1abb4",
+          "name": "/glyphora_backend_server-redis-1",
+          "state": "exited",
+          "finishedAt": "2026-09-10T14:54:22.196234255Z",
+          "imageId": "sha256:b7fd1a2c89d09a836f659d72c52d27b9f71202c97014a47639f87c992e8c0f1b",
+          "networkMode": "glyphora_backend_server_default",
+          "networks": [
+            {
+              "name": "glyphora_backend_server_default",
+              "id": "469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "a04cbb249303f5795d576bf69dc987b11397dec44683bc736c669c37a3862e53",
+              "destination": "/data"
+            }
+          ]
+        },
+        {
+          "id": "a022681b2496bb7324f0676b01eef6426f4c1ae021284f059c87a46bab5f7cfc",
+          "name": "/shangchenghouduan_server-postgres_test-1",
+          "state": "exited",
+          "finishedAt": "2026-09-16T08:17:50.856527676Z",
+          "imageId": "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+          "networkMode": "shangchenghouduan_server_default",
+          "networks": [
+            {
+              "name": "shangchenghouduan_server_default",
+              "id": "63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "shangchenghouduan_server_shangchenghouduan_test_data",
+              "destination": "/var/lib/postgresql/data"
+            }
+          ]
+        },
+        {
+          "id": "5df8966045e96270b97f4211bf6a7fbdd0a613112856acf3b683d57d7c2ed9c3",
+          "name": "/shangchenghouduan_server-postgres-1",
+          "state": "exited",
+          "finishedAt": "2026-09-16T08:17:50.85626191Z",
+          "imageId": "sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b",
+          "networkMode": "shangchenghouduan_server_default",
+          "networks": [
+            {
+              "name": "shangchenghouduan_server_default",
+              "id": "63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "shangchenghouduan_server_shangchenghouduan_data",
+              "destination": "/var/lib/postgresql/data"
+            }
+          ]
+        },
+        {
+          "id": "2b82da11fce4c43b9aed7d20a76b61bfdd24257e56be61240872722f8a9ae6d9",
+          "name": "/shangchenghouduan_server-redis_test-1",
+          "state": "exited",
+          "finishedAt": "2026-09-16T08:17:50.856282572Z",
+          "imageId": "sha256:b7fd1a2c89d09a836f659d72c52d27b9f71202c97014a47639f87c992e8c0f1b",
+          "networkMode": "shangchenghouduan_server_default",
+          "networks": [
+            {
+              "name": "shangchenghouduan_server_default",
+              "id": "63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "e45bf72b142f055ba5b7cfe5046987c5ed529d7d0874ccfafee53a09abd0e413",
+              "destination": "/data"
+            }
+          ]
+        },
+        {
+          "id": "cbe24731b6636ec7d65c77e9d847a859080662b8aae2970518d2e405b1ed998a",
+          "name": "/shangchenghouduan_server-redis-1",
+          "state": "exited",
+          "finishedAt": "2026-09-16T08:17:50.857869041Z",
+          "imageId": "sha256:b7fd1a2c89d09a836f659d72c52d27b9f71202c97014a47639f87c992e8c0f1b",
+          "networkMode": "shangchenghouduan_server_default",
+          "networks": [
+            {
+              "name": "shangchenghouduan_server_default",
+              "id": "63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "b51b1b7c2c729ed95d62e45b3987f0133a7e0bb63ced107f05aef9754084dcb6",
+              "destination": "/data"
+            }
+          ]
+        },
+        {
+          "id": "355ecc6045fa467319f906363d521a8c764ed1aabde737a3ca364847b89cfd06",
+          "name": "/stall-phase8-pg16",
+          "state": "exited",
+          "finishedAt": "2026-10-27T02:16:22.509638868Z",
+          "imageId": "sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+          "networkMode": "stall-phase8-network",
+          "networks": [
+            {
+              "name": "stall-phase8-network",
+              "id": "7918eeb7a1a787d8c4afb1871beecd1d36e61e16ba7d9fe52c0cc9a2227766af"
+            }
+          ],
+          "volumes": [
+            {
+              "name": "stall-phase8-data",
+              "destination": "/var/lib/postgresql/data"
+            }
+          ]
+        }
+      ],
+      "volumes": [
+        {
+          "name": "a04cbb249303f5795d576bf69dc987b11397dec44683bc736c669c37a3862e53",
+          "createdAt": "2026-08-07T14:06:33Z",
+          "driver": "local",
+          "project": null
+        },
+        {
+          "name": "b51b1b7c2c729ed95d62e45b3987f0133a7e0bb63ced107f05aef9754084dcb6",
+          "createdAt": "2026-09-14T07:19:39Z",
+          "driver": "local",
+          "project": null
+        },
+        {
+          "name": "backend_stall_dev_pgdata",
+          "createdAt": "2026-10-24T02:48:51Z",
+          "driver": "local",
+          "project": "backend"
+        },
+        {
+          "name": "clyven_backend_server_shipin_backend_data",
+          "createdAt": "2026-09-21T20:54:11Z",
+          "driver": "local",
+          "project": "clyven_backend_server"
+        },
+        {
+          "name": "d0c612f986009adc5ace2c85efcc1cb6cb135379edd5596dd6627998a6e1504c",
+          "createdAt": "2026-08-07T14:06:33Z",
+          "driver": "local",
+          "project": null
+        },
+        {
+          "name": "e45bf72b142f055ba5b7cfe5046987c5ed529d7d0874ccfafee53a09abd0e413",
+          "createdAt": "2026-09-14T07:19:39Z",
+          "driver": "local",
+          "project": null
+        },
+        {
+          "name": "glyphora_backend_server_glyphora_backend_data",
+          "createdAt": "2026-08-07T14:06:33Z",
+          "driver": "local",
+          "project": "glyphora_backend_server"
+        },
+        {
+          "name": "glyphora_backend_server_glyphora_backend_test_data",
+          "createdAt": "2026-08-07T14:06:33Z",
+          "driver": "local",
+          "project": "glyphora_backend_server"
+        },
+        {
+          "name": "shangchenghouduan_server_shangchenghouduan_data",
+          "createdAt": "2026-09-14T07:19:39Z",
+          "driver": "local",
+          "project": "shangchenghouduan_server"
+        },
+        {
+          "name": "shangchenghouduan_server_shangchenghouduan_test_data",
+          "createdAt": "2026-09-14T07:19:39Z",
+          "driver": "local",
+          "project": "shangchenghouduan_server"
+        },
+        {
+          "name": "stall-phase8-data",
+          "createdAt": "2026-10-26T12:03:35Z",
+          "driver": "local",
+          "project": "stall-phase8-b0"
+        }
+      ],
+      "networks": [
+        {
+          "name": "backend_default",
+          "id": "1dd13ad0a2fad48c9e3ae94191f0ecb2f42112511829eddb82dc159cf8fae72c",
+          "createdAt": "2026-10-24T02:48:51.100716666Z",
+          "internal": false,
+          "ipv6": false,
+          "driver": "bridge",
+          "members": []
+        },
+        {
+          "name": "bridge",
+          "id": "1b2e20545bf3c86b7e1965bc1ae10c7cb865d57a1ec3b0c5350dac670de244e2",
+          "createdAt": "2026-10-27T03:27:18.102716505Z",
+          "internal": false,
+          "ipv6": false,
+          "driver": "bridge",
+          "members": []
+        },
+        {
+          "name": "clyven_backend_server_default",
+          "id": "9e94983b9531a895c548f706fb5870b05e86a4b514eecd5f56cd49c477f609e8",
+          "createdAt": "2026-09-21T20:54:11.641339119Z",
+          "internal": false,
+          "ipv6": false,
+          "driver": "bridge",
+          "members": []
+        },
+        {
+          "name": "glyphora_backend_server_default",
+          "id": "469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927",
+          "createdAt": "2026-08-07T14:06:33.322152507Z",
+          "internal": false,
+          "ipv6": false,
+          "driver": "bridge",
+          "members": []
+        },
+        {
+          "name": "host",
+          "id": "e170620f17aedea2cce703fb4081ff731c3d7ec5d1e01409baf081110b663a21",
+          "createdAt": "2026-08-07T14:05:10.520460947Z",
+          "internal": false,
+          "ipv6": false,
+          "driver": "host",
+          "members": []
+        },
+        {
+          "name": "none",
+          "id": "d7bc970371faad74a3e1ca3f789ec79dc3568bcdbc52ad69165898f965d1616f",
+          "createdAt": "2026-08-07T14:05:10.515299059Z",
+          "internal": false,
+          "ipv6": false,
+          "driver": "null",
+          "members": []
+        },
+        {
+          "name": "shangchenghouduan_server_default",
+          "id": "63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd",
+          "createdAt": "2026-09-14T07:19:39.614821207Z",
+          "internal": false,
+          "ipv6": false,
+          "driver": "bridge",
+          "members": []
+        },
+        {
+          "name": "stall-phase8-network",
+          "id": "7918eeb7a1a787d8c4afb1871beecd1d36e61e16ba7d9fe52c0cc9a2227766af",
+          "createdAt": "2026-10-26T12:03:38.798689136Z",
+          "internal": true,
+          "ipv6": false,
+          "driver": "bridge",
+          "members": []
+        }
+      ]
+    },
+    "selectedResourceMetadataExactlyMatchesPrebuild": true,
+    "engineIdUnchanged": true,
+    "nodeAndPostgresImageIdentityUnchanged": true,
+    "uniqueImagesBefore": 37,
+    "uniqueImagesAfter": 38,
+    "addedImageIds": [
+      "sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849"
+    ],
+    "removedImageIds": [],
+    "v2ResourcesAbsent": true,
+    "databaseContentInspected": false,
+    "buildkit": {
+      "recordsBefore": 456,
+      "recordsAfter": 469,
+      "newRecordIds": [
+        "x1kr6c9wc6mtx6i8djp6ci4av",
+        "d6u2n5a9rrc2tbe0yjm05nsfw",
+        "ioplspd7xn8c206i7pzo5rswk",
+        "o05bjuo9weiweiv4f1q4qhcjs",
+        "teyj8mnupzpbewsqnj4m4ev0r",
+        "zk3ip60x22fjwgkozndbi2c1i",
+        "794vwtfq82h04lwmz9ks1ssfd",
+        "q74yf73kkberre9p3hn4k6pt7",
+        "khwt9mzp6fdn7a0tq0urj9o16",
+        "9iq1n9yje9r1abzfnaw97drw0",
+        "ooicyeriu1zylp0g7gb9474hj",
+        "kz1op0tjo0xcvkgv5mujgoa14",
+        "jyi86pieayk751zayv2ehu8on"
+      ],
+      "removedRecordIds": [],
+      "sizesAreNotImageStorageGrowthProof": true
+    }
+  },
+  "completedAtUTC": "2026-10-27T03:37:34.134Z",
+  "executionCount": 1,
+  "metadataSha256": "f1de5565528627f9bbe951f0f0782e9d2313b34f87db734b0efa7c0c1f241ba6",
+  "validation": {
+    "offlineSafety": {
+      "tests": 235,
+      "passed": 235,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "newTests": 0,
+      "realDockerOrDatabaseInTests": false
+    },
+    "postBuild119InputFilesUnchanged": true,
+    "approvalRemainsFalse": true,
+    "scope": "Build and static image inspection only; no runtime container or database acceptance"
+  },
+  "readyForSeparateFinalImageReview": true,
+  "runtimeAuthorizationGranted": false,
+  "unverified": [
+    "Runner process startup and runtime import of pg",
+    "Nonroot execution, Windows mounts/ACL and runtime hardening on real runner container",
+    "V2 network isolated/IPv6/egress checks on real resources",
+    "PostgreSQL identity/bootstrap, migrations001-020, concurrency, locks, rollback and failure recovery",
+    "Online vulnerability/UGC/payment or production deployment acceptance",
+    "Bit-for-bit rebuild reproducibility"
+  ],
+  "metadataNormalizedLfSha256": "f1de5565528627f9bbe951f0f0782e9d2313b34f87db734b0efa7c0c1f241ba6",
+  "metadataEncodingNote": "metadataSha256 describes actual Buildx Windows output bytes; Git LF/CRLF normalization can change raw bytes. metadataNormalizedLfSha256 supports LF comparison. Neither is a signed attestation.",
+  "evidenceSha256": "77d06a6419abdf82bbc68020b782e3ffd2de752f49d28655235466e5c3d54681"
+}

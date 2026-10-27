@@ -6,6 +6,17 @@
 ## 当前结论
 
 
+**最新：Node运行器一次受控构建及静态镜像身份验收完成，最终批准仍待单独授权。**本轮开始本地/远程main均为 `964273b09d2e33b1c40eaefd2874bc6382a8e2ce`，工作区干净。预检重新核对119文件/ACL、34源码、41缓存、Engine/builder和两份基础镜像后，用户明确回复“授权一次构建，并独占本次 Docker 管理窗口”。重新核验后仅执行一次已展示Buildx命令，2026-10-27 03:32:30—39Z，退出0；npm ci --offline --ignore-scripts --omit=dev实际安装41包。没有重试或修改封存输入。
+
+实际镜像 `stall-phase8-r2-runner:build-964273b`，Image ID及manifest摘要均 `sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849`；配置摘要另为 `sha256:abd8b7640f70fdd7d92d8c90496c5af4ee80d16e35f5d62c2d6a68389f77e29f`。裸 `stall-phase8-r2-runner@sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849` 及docker.io/library全名均实际解析成功，不是手工tag或推算的RepoDigest。linux/amd64，USER1000:1000、固定ENTRYPOINT及bundle标签匹配。只读镜像字节流核对34源码、bundle、41个安装包及pg8.23.1；未创建或运行容器。
+
+构建前后选定容器/卷/网络元数据快照完全匹配，Node/PG镜像未变，V2资源仍不存在；仅新增1镜像（37→38）及13条BuildKit缓存（456→469），无缓存清理。默认bridge在本轮预检前的Engine初始化窗口再次重建，已纳入预检基线，构建期间未变。未读取旧私人凭据/回执、卷或数据库内容，旧B3失败/B4阻塞保持。
+
+**边界：RUN禁网且npm离线安装成功，但日志实际有Registry认证和基础镜像元数据查询，不能声称整个构建完全断网。**未观察到新Node层下载，没有额外基础镜像、Registry Push或镜像批准。`runner-image-approval.json`仍approved=false，不能运行V2。已具备进入独立最终镜像审核的证据条件；运行时权限/挂载、网络隔离、数据库/迁移/业务并发仍未验收。本轮235项离线安全测试实际重跑全通过，0失败/跳过；封存119文件构建后再次匹配。
+
+完整命令、输出与安全快照：[运行器构建审计](PHASE8_V2_RUNNER_BUILD_AUDIT.json)；实际Buildx产物记录：[构建元数据](PHASE8_V2_RUNNER_BUILD_METADATA.json)。详细时间线见历史第20节。以下原阶段记录保留，最新结论以本段及第20节为准。
+
+
 **最新进度（本轮基线 `6ceff09e4080e2d1256ed7205e80a9ef4417c43e`）：阶段A完成，阶段B材料已实际生成，镜像未构建。**Docker Desktop日志将上次bridge变化定位到02:47:57Z拉取请求触发idle→busy/VM启动、02:48:03Z Engine启动、02:48:04Z默认bridge重建和初始化完成窗口。11容器均停止、无默认bridge引用；逐项未发现容器ID、具名卷或项目专网身份异常。旧整体摘要差异并未逐字段完整还原，不能称所有数据/应用无影响；历史sandbox缺失警告与真实应用可用性尚未验证。详见历史第19节及R-25更新。
 
 正式新目录：`C:/Users/USER/StallPhase8-V2-Build-20261027-030427`。现有准备器复制34白名单源码，另有bundle.json/Dockerfile/.dockerignore；精选缓存41索引+41内容，合计119文件。原缓存只读，未复制7109个无关桶。34源码、3项额外输入、41包SHA-512/SHA-256和依赖闭包通过；复制后真实verifyArtifact及精确文件集合核验通过。BUNDLE_SHA256=`f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289`，物理文件清单摘要=`31ceb4bcb711dfd7033d1d1bdcc71023f1761dfe88e21e429a09bc2a8d86d093`。Windows ACL仅当前用户/SYSTEM/Administrators，291个对象检查无额外主体。

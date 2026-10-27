@@ -88,3 +88,12 @@ B3-V2 增补：原R-14/R-16/R-18继续开放；原失败实例没有改动或接
 - **R-25：bridge变化已有实际生命周期解释，整体原始摘要仍不能完全还原。**本机host日志3910—3920记录02:47:57Z镜像create API请求唤醒idle VM；vm/init.log4915—4945记录02:48:03—04Z Engine启动/网络初始化完成，与新bridge创建02:48:04.336Z对应。无现有容器使用默认bridge，容器/卷/项目专网逐项未发现关键身份异常；因此没有阻止文件准备的实质性资源风险证据。不能升级为数据无损/应用全链路验收。恢复时11条sandbox not found警告保留，不能证明历史已停止应用重启后网络一定正常；不启动它们验证。
 - **R-21/R-22：精选缓存与正式context已准备。**34源码/41包复核及复制后完整性通过，41索引记录/41内容文件、无其他桶。119文件物理清单已封存；只包含5份获准旧B0共享源码，无实例运行材料。ACL仅当前用户/SYSTEM/Administrators。未执行npm ci，真实Linux安装、UID及镜像层权限仍待验。
 - **R-20/R-17：最终runner仍未构建和批准，V2仍未创建。**材料满足申请受控构建的输入前提，不等于canonical exporter、离线安装或隔离网络已验收。需另行确认构建选项与独占窗口并授权build/image-store写入，不自动操作。旧B0现场、failed回执及B4阻塞保留。
+
+
+## 2026-10-27运行器实际构建与身份验收（基线964273b）
+
+- **R-20更新：本机canonical导出/解析条件已实际验证。**一次Buildx退出0，Moby/containerd image exporter产生真实RepoDigests；裸及完全限定固定引用均解析同一manifest。没有手工tag、Registry Push、修改安全策略或自动批准。
+- **R-21/R-22更新：Linux离线npm安装和静态镜像内容已验证。**本次禁网RUN实际安装41包；读取镜像save字节流，仅在内存解析，验证34源码、bundle、41包及pg主文件。不是运行器启动、pg连接、漏洞全审计或位级重复构建证明。封存119输入文件未变。
+- **R-17仍开放：最终镜像审核及真实运行条件待验。**runner-image-approval.json仍approved=false；USER/ENTRYPOINT为镜像配置证据，运行时只读根、capabilities、Windows挂载/ACL及V2 isolated网络等尚未实测。数据库实例/迁移/业务集成未执行，旧B3失败和B4阻塞不变。
+- **R-26新增边界：整个BuildKit过程并非完全断网。**虽pull=false且RUN network=none，实际日志仍有library/node的Registry认证及metadata查询。未见新基础层下载或额外镜像，只有批准的Node材料；不能把npm离线通过扩大成resolver完全离线。若将来要求整个构建零外网，须另行设计可验证限制，不能仅依赖network=none或prefer-local。
+- **构建警告保留：InvalidDefaultArgInFrom。**Dockerfile的NODE_BASE无默认值触发lint警告；本次显式固定参数、实际FROM和产物材料均匹配。不为消除警告修改已封存Dockerfile。BuildKit0.31.2同时rewrite-timestamp和unpack会冲突，本次显式rewrite=false/unpack=true，不宣称时间戳规范化或可重复镜像摘要。

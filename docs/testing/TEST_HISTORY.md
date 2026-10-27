@@ -721,3 +721,79 @@ node --test backend/tests/phase8-safety.unit.test.mjs backend/tests/phase8-remed
 可申请下一轮受控build授权，但执行前仍须复核119文件快照、基础镜像/独占窗口，定案rewrite-timestamp与unpack兼容参数；build本身的离线安装、exporter/canonical RepoDigest与最终runner审核尚未验证。不得自动build、image-store写入、创建V2密码/UUID/实例或连接数据库。旧B0现场及failed回执保留，001—020未执行，B4仍阻塞。
 
 本轮仅提交TEST_STATUS、TEST_HISTORY、KNOWN_ISSUES及输入审计JSON四份非秘密档案；检查范围、秘密模式、Git空白后按授权普通提交推送，最终SHA以Git核验为准。未创建/停止/启动/删除任何Docker资源，未pull/build/tag/import或连接数据库、迁移、启动商城后端/worker、部署。
+
+## 20. 第八轮 B3-V2：Node运行器受控构建与镜像身份验收（2026-10-27）
+
+### 20.1 构建前核验与本轮人工确认
+
+开始本地HEAD及远程main均为 `964273b09d2e33b1c40eaefd2874bc6382a8e2ce`，main工作区干净。Engine29.6.2/Linux-amd64、ID `055d945d-b3f7-4a50-adaa-423c2cde2b60`、desktop-linux、端点 `npipe:////./pipe/dockerDesktopLinuxEngine`、overlayfs/io.containerd.snapshotter.v1均匹配。现有desktop-linux builder为docker driver、BuildKit0.31.2，支持linux/amd64；未创建/切换/启动builder。
+
+重新读取并验证119个精确物理文件集合及每项内容/mtime/mode，物理清单SHA仍 `31ceb4bcb711dfd7033d1d1bdcc71023f1761dfe88e21e429a09bc2a8d86d093`；291个ACL对象仅当前用户/SYSTEM/Administrators，根禁继承，无symlink或额外文件。bundle及34源码实际verifyArtifact通过，源码bundle仍 `f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289`；41个精选包真实SHA-512及索引匹配，Dockerfile和.dockerignore精确匹配。未修改既有构建目录或原缓存。
+
+固定Node和PostgreSQL批准镜像的本地ID、RepoDigest及linux/amd64匹配。与第19节安全快照比对：11容器ID/停止状态/结束时间/卷及专网关联、11卷及创建元数据、项目专网ID均一致，旧B0三资源标签/UUID/nonce内存比对通过，V2资源不存在。默认bridge在本轮预检时已变为 `1b2e20545bf3c86b7e1965bc1ae10c7cb865d57a1ec3b0c5350dac670de244e2`，创建03:27:18.102716505Z；本机vm/init.log对应03:27:17.440200736Z Starting up及03:27:18.455955451Z Daemon initialized，无既有容器引用默认bridge。将该初始化后的状态封存为本次构建前基线；不据此推断应用或数据库内容已验收。
+
+读取[Docker image exporter文档](https://docs.docker.com/build/exporters/image-registry/)、[Buildx命令参考](https://docs.docker.com/reference/cli/docker/buildx/build/)、[BuildKit0.31.2 exporter源码](https://github.com/moby/buildkit/blob/v0.31.2/exporter/containerimage/export.go)、[Buildx0.35.0 opt.go](https://github.com/docker/buildx/blob/v0.35.0/build/opt.go)。image/store/name-canonical/push参数有对应实现；docker driver会将image转到Moby exporter，真实canonical结果仍需产物核验。未取得额外Moby路径源码（请求的版本路径404），不把未读代码当作已证实能力。BuildKit rewrite-timestamp=true与unpack=true冲突，因此选择rewrite=false/unpack=true，不加SOURCE_DATE_EPOCH、不更改封存输入或承诺位级可重复构建。pull=false在Moby driver使用prefer-local，但不等于严格禁止resolver访问Registry。
+
+完整展示命令、固定材料、镜像存储和缓存写入范围后，按本轮第五节另行请求授权；用户明确回复：**“授权一次构建，并独占本次 Docker 管理窗口”**。这是本轮确认，不复用上轮pull或更早创建授权。随后再次核验输入、Engine/context、资源基线、输出名称无冲突及metadata文件尚不存在，才执行构建。
+
+### 20.2 唯一一次实际构建命令与结果
+
+工作目录为本项目根目录，通过Docker绝对路径执行以下命令。子进程只保留必要Windows路径/用户目录/临时目录等环境键，不传旧B0凭据、任意Buildx/BuildKit覆盖或代理构建参数。
+
+```powershell
+& 'C:\Users\USER\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe' `
+  --context desktop-linux buildx build `
+  --builder desktop-linux `
+  --platform linux/amd64 `
+  --pull=false --no-cache --network=none `
+  --provenance=false --sbom=false --progress=plain `
+  --build-arg NODE_BASE=node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae `
+  --build-arg BUNDLE_SHA256=f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289 `
+  --output 'type=image,name=docker.io/library/stall-phase8-r2-runner:build-964273b,store=true,push=false,name-canonical=true,oci-mediatypes=true,unpack=true,rewrite-timestamp=false' `
+  --metadata-file 'C:\Users\USER\WeChatProjects\miniprogram-1\docs\testing\PHASE8_V2_RUNNER_BUILD_METADATA.json' `
+  'C:\Users\USER\StallPhase8-V2-Build-20261027-030427'
+```
+
+构建03:32:30.241Z开始，03:32:39.694Z结束（客户端UTC+8为11:32:30—39），**退出码0，执行次数1**。没有自动重试、改Dockerfile、回退标签、下载补包、Registry Push或清理。
+
+实际RUN保持 `npm ci --offline --ignore-scripts --omit=dev --cache /tmp/npm-cache`，日志added41 packages/audited42 packages，约3秒完成；RUN network=none。日志的“found 0 vulnerabilities”不等于在线漏洞数据库审计或安全认证，不扩大其结论。
+
+**实际网络边界：**BuildKit输出有library/node Registry pull-token认证和固定基础镜像load metadata步骤，不能声称整个构建完全断网。没有观察到新基础层下载或额外基础镜像，FROM使用精确固定平台摘要，产物materials与原Node层前缀匹配。若未来要求整个resolver零外网，需另行设计并验证，不能依赖本次pull=false或network=none作证明。
+
+构建保留一项InvalidDefaultArgInFrom警告：NODE_BASE无默认值；本次实际明确提供了批准固定值。未为消除警告修改输入。--provenance=false关闭镜像输出attestation，但Buildx仍写本地metadata provenance，不把它等同于签名供应链证明。
+
+### 20.3 实际镜像身份和静态文件核验
+
+| 字段 | 实际结果 |
+| --- | --- |
+| 输出名称 | docker.io/library/stall-phase8-r2-runner:build-964273b |
+| Docker本地Image ID | sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849 |
+| OCI平台manifest digest | sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849，size2195 |
+| config digest | sha256:abd8b7640f70fdd7d92d8c90496c5af4ee80d16e35f5d62c2d6a68389f77e29f |
+| RepoDigest 1 | stall-phase8-r2-runner@sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849 |
+| RepoDigest 2 | stall-phase8-r2-runner:build-964273b@sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849 |
+| platform | linux/amd64 |
+| USER | 1000:1000 |
+| ENTRYPOINT | node /opt/phase8/backend/testing/phase8-v2/runner.mjs |
+| CMD | 空；inspect省略Cmd字段，按空数组解释 |
+| bundle label | f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289 |
+
+裸 `stall-phase8-r2-runner@sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849` 及 `docker.io/library/` 完整前缀固定引用均通过真实image inspect解析同一ID。RepoDigest来自实际Engine返回，未手工拼接当作成功、未docker tag。manifest和本地ID同值是当前containerd表示，不把它们算作独立来源证明；config摘要不同，分别记录。
+
+从实际image save stdout读取84835840字节，**只在内存解析，没有落地镜像归档、解包文件或创建/运行验收容器**。核对OCI blob SHA-256、manifest与config digest；原Node基础层5个DiffID前缀一致；新增5层的真实未压缩DiffID匹配。按层次处理whiteout后，34源文件及bundle摘要全部匹配；41个已安装依赖的package.json名称/版本匹配lock，pg8.23.1及pg/lib/index.js存在。未通过运行Node或连接数据库来补做验证，不能证明运行时模块导入、权限或网络行为。
+
+只读辅助查询中的工具错误原样记录：最初Go模板因Cmd字段省略报错，改为JSON inspect后处理空数组；首次内存归档辅助代码用了当前tar不导出的Parse构造器，更正为实际Parser后重新执行只读image save核验成功。两者不是镜像构建失败或业务缺陷，没有重试build、改断言/业务源码或修改镜像。
+
+### 20.4 资源变化、回归与当前授权边界
+
+构建后选定容器/卷/网络元数据与本次预检完整安全快照**精确一致**，包含默认bridge；旧B0及其他项目11容器均仍停止，11卷和8网络身份/关联未变。Node/PG批准镜像身份未变。唯一新增镜像即本次runner，37→38，没有删除镜像。BuildKit缓存记录456→469，新增13、移除0；记录ID清单在审计JSON中。缓存条目计数不等于净磁盘增长，未清理缓存或其他项目数据。
+
+V2容器/卷/网络/密码/UUID/回执未创建；旧B0私人凭据和failed回执未读取或修改。旧B3失败仍保留，B4阻塞。上述资源元数据精确匹配不等于数据库内容或其他应用全链路验收；未启动它们。
+
+实际重跑三份既有Phase8离线安全测试：**235通过、0失败、0跳过、0取消，新增0项**。它们使用合成Docker/PG transport，不是本轮运行器或数据库集成测试。构建后再核对原119封存文件及mtime全部匹配；安全策略、Dockerfile、业务源码和runner-image-approval.json未改，批准状态仍false。
+
+完整证据见 [PHASE8_V2_RUNNER_BUILD_AUDIT.json](PHASE8_V2_RUNNER_BUILD_AUDIT.json)，含实际命令/授权文字/构建日志、前后安全快照、镜像/内容及缓存检查；[PHASE8_V2_RUNNER_BUILD_METADATA.json](PHASE8_V2_RUNNER_BUILD_METADATA.json)是Buildx实际写出的产物元数据，原字节SHA-256 `f1de5565528627f9bbe951f0f0782e9d2313b34f87db734b0efa7c0c1f241ba6`。审计JSON自身evidence摘要为 `77d06a6419abdf82bbc68020b782e3ffd2de752f49d28655235466e5c3d54681`，不等同于镜像签名或外部见证。
+
+**具备申请最终运行器镜像独立审核的证据条件，尚未获准运行。**下一轮可审查真实canonical digest/Image ID/base/bundle及供应链记录后另行决定是否登记批准；本轮不能自动将approved改true。运行时USER、只读根、capabilities、挂载ACL、真实V2 isolated/IPv6/出口、PostgreSQL bootstrap/001—020/业务并发事务与故障恢复全部仍待独立授权和验收。未部署、启动后端/worker或操作数据库。
+
+本轮仅提交上述三份永久档案及两份非秘密构建记录，不提交仓库外上下文或任何密码/私人材料；检查Diff/秘密/远程基线后普通提交推送，最终提交SHA以Git核验为准。
