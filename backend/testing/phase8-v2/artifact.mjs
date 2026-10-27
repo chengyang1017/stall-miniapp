@@ -5,7 +5,9 @@ import { check } from './policy.mjs'
 export const hash=b=>createHash('sha256').update(b).digest('hex')
 export const normalized=b=>Buffer.from(b.toString('utf8').replace(/\r\n/g,'\n'))
 export const RUNTIME_FILES=Object.freeze(['backend/package.json','backend/package-lock.json',
-  ...['policy','grants','artifact','sql','fixture','initialize','runner'].map(n=>'backend/testing/phase8-v2/'+n+'.mjs'),
+  ...['policy','grants','artifact','sql','fixture','initialize','runner','business'].map(n=>'backend/testing/phase8-v2/'+n+'.mjs'),
+  // Exact business dependency closure, not the server (which starts workers).
+  ...['checkout','inventory','auth','wechatApplications','deliveryRules','productPublishing','orderWorkflow','customerPagination','merchantOrderQuery','imageLifecycle'].map(n=>'backend/src/'+n+'.mjs'),
   ...['policy.mjs','leases.mjs','migrations.mjs','schema.mjs','migration-manifest.json'].map(n=>'backend/testing/phase8/'+n)])
 export async function sourceManifest(root) {
   const {join}=await import('node:path'),manifest=JSON.parse(await readFile(join(root,'backend/testing/phase8/migration-manifest.json'),'utf8'))

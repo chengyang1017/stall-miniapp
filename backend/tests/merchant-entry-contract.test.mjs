@@ -30,7 +30,8 @@ test('app opening cannot route to merchant without fresh authorized request',()=
  const section=index.slice(index.indexOf('const merchantPreference='),index.indexOf("this.setData({entryLoading:false});refreshPagePresentation(this);"))
  assert.match(section,/await authorizedGet\(/)
  assert.match(section,/Array\.isArray\(result.items\)/)
- assert.ok(section.indexOf('await authorizedGet(')<section.indexOf("wx.navigateTo({url:'/pages/admin/admin'})"))
+ assert.ok(section.indexOf('await authorizedGet(')<section.indexOf('openMerchantWorkspace()'))
+ assert.match(read('miniprogram/modules/integration/singleAppHost.ts'),/wx.navigateTo\(\{url:'\/pages\/admin\/admin'\}\)/)
  assert.match(auth,/Authorization: `Bearer \$\{token\}`/)
 })
 test('merchant logout clears saved merchant-first preference',()=>{
@@ -42,7 +43,8 @@ test('merchant can choose the customer shop without creating another AppID',()=>
  const layout=read('miniprogram/pages/admin/admin.wxml')
  assert.match(admin,/openCustomerShop\(/)
  assert.match(admin,/customer\|/)
- assert.match(admin,/wx.switchTab/)
+ assert.match(admin,/if\(!CAN_OPEN_CUSTOMER\)return/)
+ assert.match(read('miniprogram/modules/integration/singleAppHost.ts'),/wx.switchTab/)
  assert.match(layout,/bindtap="openCustomerShop"/)
 })
 test('customer profile shows merchant navigation only after a server check',()=>{

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "preview:phone": "node scripts/phone-preview.mjs",
     "build": "node scripts/build-miniapp.mjs combined",
     "build:combined": "node scripts/build-miniapp.mjs combined",
     "build:customer": "node scripts/build-miniapp.mjs customer",

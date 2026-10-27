@@ -35,6 +35,7 @@ function makeProfile(authorizedGet) {
     showToast: args => calls.push(['showToast',args.title])
   }
   const globals = {wx,authorizedGet,
+    CAN_OPEN_MERCHANT:true,openMerchantWorkspace:()=>wx.navigateTo({url:'/pages/admin/admin'}),
     getCloudContext:()=>({apiBase:'https://test.example',storeSlug:'demo'}),
     supportIdentity:()=>identity}
   const p = {data:{merchantAuthorized:true,supportUnread:0},merchantSerial:0,merchantOpening:false,serial:0,
@@ -125,6 +126,7 @@ test('merchant login: invalid permission response never navigates',async()=>{
 test('merchant workbench: customer switch navigates to home tab',()=>{
   const calls=[],storage=new Map()
   const fn=handler(admin,'openCustomerShop','revision:',{
+    CAN_OPEN_CUSTOMER:true,openCustomerShop:()=>calls.push('/pages/index/index'),
     getCloudContext:()=>({apiBase:'https://test.example',storeSlug:'demo'}),
     wx:{switchTab:args=>calls.push(args.url),setStorageSync:(k,v)=>storage.set(k,v)}})
   fn.call({})

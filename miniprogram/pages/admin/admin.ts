@@ -4,18 +4,32 @@ import { merchantBusiness, patchMerchantBusiness, businessContextKey } from '../
 import { fetchMerchantPendingCount } from '../../modules/merchant/api/orders'
 import { loadWorkflowOrders } from '../../modules/merchant/demo/orders'
 import { merchantSupportGet,supportIdentity } from '../../modules/merchant/api/support'
+import { authorizedGet } from '../../modules/shared/runtime/auth'
+import { CAN_OPEN_CUSTOMER,openCustomerShop } from '../../modules/integration/singleAppHost'
 Page({
   openCustomerShop(){
+    if(!CAN_OPEN_CUSTOMER)return
     const cfg=getCloudContext()
     if(cfg)wx.setStorageSync('stall_merchant_home_preference_v1','customer|'+cfg.apiBase+'|'+cfg.storeSlug)
-    wx.switchTab({url:'/pages/index/index'})
+    openCustomerShop()
   },
+ accessSerial:0,
  revision:null as string|null, serial:0,pendingSerial:0, loadedContext:'',supportSerial:0,supportTimer:0 as any,
- data:{supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',pendingNewOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
- onShow(){this.refreshNewOrderNotice();this.refreshMinimum();this.refreshSupport()},
+ data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',pendingNewOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
+ async onShow(){
+  const cfg=getCloudContext(),serial=++this.accessSerial,identity=supportIdentity()
+  this.setData({workspaceAuthorized:false,accessLoading:!!cfg,accessError:''})
+  if(cfg){
+   try{const r=await authorizedGet(cfg.apiBase,'/v1/merchant/stores/'+cfg.storeSlug+'/categories');if(serial!==this.accessSerial||identity!==supportIdentity())return;if(!r||!Array.isArray(r.items))throw Error('invalid_permission_response')}
+   catch(_){if(serial===this.accessSerial)this.setData({accessLoading:false,accessError:'未取得此店铺商家权限或登录已失效，请验证账号'});return}
+  }
+  if(serial!==this.accessSerial)return
+  this.setData({workspaceAuthorized:true,accessLoading:false})
+  this.refreshNewOrderNotice();this.refreshMinimum();this.refreshSupport()
+ },
  async refreshSupport(){clearTimeout(this.supportTimer);const serial=++this.supportSerial,identity=supportIdentity();this.setData({supportUnread:null,supportError:''});if(!getCloudContext())return;try{const r=await merchantSupportGet('unread');if(serial===this.supportSerial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){if(serial===this.supportSerial&&identity===supportIdentity())this.setData({supportError:'未读读取失败，进入客服重试'})}finally{if(serial===this.supportSerial)this.supportTimer=setTimeout(()=>this.refreshSupport(),30000)}},
- onHide(){this.supportSerial++;clearTimeout(this.supportTimer);this.setData({supportUnread:null,supportError:''})},
- onUnload(){this.serial++;this.pendingSerial++;this.supportSerial++;clearTimeout(this.supportTimer)},
+ onHide(){this.accessSerial++;this.serial++;this.pendingSerial++;this.supportSerial++;clearTimeout(this.supportTimer);this.setData({workspaceAuthorized:false,supportUnread:null,supportError:''})},
+ onUnload(){this.accessSerial++;this.serial++;this.pendingSerial++;this.supportSerial++;clearTimeout(this.supportTimer)},
  onMinimumOrderInput(e:any){if(!this.data.settingsSaving)this.setData({minimumOrderInput:String(e.detail.value||'')})},
  async refreshMinimum(){
   const cfg=getCloudContext(),serial=++this.serial,context=businessContextKey();this.loadedContext=context

@@ -1,7 +1,7 @@
 // Real connections and SQL only, not a simulated database or copied business algorithm.
 import { check } from './policy.mjs'
 export function fixture(pool,g) {
-  check(g.purpose==='fixture'&&g.role==='app','fixture_role_rejected')
+  check(['fixture','business'].includes(g.purpose)&&g.role==='app','fixture_role_rejected')
   const routePool=client=>{let busy=false;return {query:(s,a)=>{check(!busy,'connection_borrowed');return client.query(s,a)},async connect(){check(!busy,'connection_borrowed');busy=true;let done=false;return {query:(s,a)=>{check(!done,'connection_released');return client.query(s,a)},release(error){if(!done){done=true;busy=false;if(error)client.release(error)}}}}}}
   return {namespace:'p8r2_'+g.runId.replaceAll('-',''),
     async connections(action){const clients=[];try{

@@ -3,10 +3,12 @@
   <view class="cloud-card">
     <view class="cloud-title">云端商品连接测试</view>
     <view class="cloud-hint">仅测试远程读取，不会覆盖已有本地商品或订单。正式部署请配置微信 request 合法域名。</view>
+    <block wx:if="{{!cloudOnly}}">
     <view class="cloud-label">API HTTPS 地址</view>
     <input class="cloud-input" placeholder="https://api.example.com" value="{{apiBase}}" bindinput="onApiInput" />
     <view class="cloud-label">店铺标识（slug）</view>
     <input class="cloud-input" placeholder="my-store" value="{{storeSlug}}" bindinput="onSlugInput" />
+    </block>
     <button type="primary" disabled="{{busy}}" bindtap="loadProducts">读取顾客可见商品</button>
     <view class="cloud-hint">{{status}}</view>
     <view wx:for="{{products}}" wx:key="id" class="cloud-item"><text>{{item.name}}</text><text>¥{{item.priceText}} {{item.soldOut ? '售罄' : ''}}</text></view>

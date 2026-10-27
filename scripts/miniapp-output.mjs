@@ -13,9 +13,10 @@ export function assertPreviewCompatibleJS(source, filename){
 }
 
 // Inspection only: no miniapp APIs or business functions are executed.
-export function checkOutput(target){
+export function checkOutput(target,folder=target){
  const plan=config.targets[target];if(!plan)throw Error('Unknown output target')
- const output=path.join(ROOT,'dist',target),root=path.join(output,'miniprogram')
+ if(folder!==target&&!(target==='combined'&&folder==='phone-preview'))throw Error('Unknown output folder')
+ const output=path.join(ROOT,'dist',folder),root=path.join(output,'miniprogram')
  const manifest=JSON.parse(fs.readFileSync(path.join(output,'build-manifest.json'),'utf8'))
  const app=JSON.parse(fs.readFileSync(path.join(root,'app.json'),'utf8'))
  const locationDesc=app.permission?.['scope.userLocation']?.desc

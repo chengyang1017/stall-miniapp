@@ -72,7 +72,9 @@ test('switching from merchant workspace to customer uses the home tab', () => {
   const {ts,wxml} = pageSource('pages/admin/admin')
   assert.match(wxml, /bindtap="openCustomerShop"/)
   assert.match(ts, /openCustomerShop\(\)/)
-  assert.match(ts, /wx\.switchTab\(\{url:'\/pages\/index\/index'\}\)/)
+  assert.match(ts, /import \{ CAN_OPEN_CUSTOMER,openCustomerShop \} from '..\/..\/modules\/integration\/singleAppHost'/)
+  assert.match(ts, /if\(!CAN_OPEN_CUSTOMER\)return/)
+  assert.match(read('miniprogram/modules/integration/singleAppHost.ts'), /wx\.switchTab\(\{url:'\/pages\/index\/index'\}\)/)
   assert.ok(tabs.has('pages/index/index'))
 })
 
@@ -82,7 +84,9 @@ test('profile merchant shortcut is gated by verified authorization', () => {
   assert.match(ts, /if\(!this\.data\.merchantAuthorized\|\|this\.merchantOpening\)return/)
   assert.match(ts, /await authorizedGet\(/)
   assert.match(ts, /Array\.isArray\(result\.items\)/)
-  assert.match(ts, /wx\.navigateTo\(\{url:'\/pages\/admin\/admin'\}\)/)
+  assert.match(ts, /openMerchantWorkspace\(\)/)
+  assert.match(ts, /if\(!CAN_OPEN_MERCHANT\)return/)
+  assert.match(read('miniprogram/modules/integration/singleAppHost.ts'), /wx\.navigateTo\(\{url:'\/pages\/admin\/admin'\}\)/)
   assert.ok(merchant.has('pages/admin/admin'))
 })
 

@@ -2,8 +2,11 @@
 // Never embed WX_APPSECRET here or trust a client-supplied merchant role.
 const TOKEN_KEY = 'stall_server_session_v1'
 import { rememberSessionScope } from './sessionScope'
+import { CLOUD_ONLY } from '../../../config/cloud'
+import { assertPreviewWechatApp,previewApiAllowed } from './phonePreview'
 export function requestIdentity():string{const c=wx.getStorageSync('stall_cloud_catalog_config_v1') as any;return JSON.stringify([wx.getStorageSync(TOKEN_KEY),c?.apiBase,c?.storeSlug])}
 function isLocalDevApi(apiBase: string): boolean {
+  if (CLOUD_ONLY) return false
   // Mini Program runtimes need not provide the browser URL constructor.
   // Permit loopback HTTP only inside the WeChat developer simulator.
   const isLoopback = /^http:\/\/(?:127\.0\.0\.1|localhost):8787\/?$/.test(String(apiBase).trim())
@@ -19,13 +22,18 @@ export function setLocalDevToken(apiBase: string, token: string): void {
 export function localDevAllowed(apiBase: string): boolean { return isLocalDevApi(apiBase) }
 
 export function loginWithWechat(apiBase: string): Promise<void> {
+  try { if (!previewApiAllowed(apiBase)) throw Error('untrusted_preview_endpoint'); assertPreviewWechatApp() }
+  catch (error) { return Promise.reject(error) }
+  const identity = requestIdentity()
   return new Promise((resolve, reject) => {
     wx.login({ success: login => {
       if (!login.code) return reject(new Error('wx_login_failed'))
+      if (identity !== requestIdentity()) return reject(new Error('session_or_store_changed'))
       wx.request({
         url: `${apiBase.replace(/\/$/, '')}/v1/auth/wechat`,
-        method: 'POST', data: { code: login.code },
+        method: 'POST', data: { code: login.code }, timeout: 15000,
         success: (res: any) => {
+          if (identity !== requestIdentity()) return reject(new Error('session_or_store_changed'))
           if (res.statusCode !== 200 || !res.data || typeof res.data.token !== 'string') return reject(new Error('server_login_failed'))
           wx.setStorageSync(TOKEN_KEY, res.data.token)
           rememberSessionScope(res.data.token,res.data.cacheScope)
@@ -37,6 +45,7 @@ export function loginWithWechat(apiBase: string): Promise<void> {
 }
 
 export function authorizedGet(apiBase: string, path: string, query?: Record<string,string|number|boolean>): Promise<any> {
+  if (!previewApiAllowed(apiBase)) return Promise.reject(Error('untrusted_preview_endpoint'))
   const identity=requestIdentity()
   if (!/^\/v1\/[a-zA-Z0-9/_-]+$/.test(path)) return Promise.reject(new Error('invalid_path'))
   const token = wx.getStorageSync(TOKEN_KEY)

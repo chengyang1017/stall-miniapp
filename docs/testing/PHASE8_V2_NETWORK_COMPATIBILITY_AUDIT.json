@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "checkedAt": "2026-10-27T14:56:15.859Z",
+  "engine": {
+    "id": "055d945d-b3f7-4a50-adaa-423c2cde2b60",
+    "version": "29.6.2",
+    "os": "linux",
+    "architecture": "x86_64",
+    "compose": "5.3.1",
+    "endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+  },
+  "network": {
+    "Name": "stall-phase8-r2-network",
+    "Id": "e269447bc2094406480763cbfde870c32c2ccc298d756910daad21c13cce81d4",
+    "Created": "2026-10-27T14:43:50.847655525Z",
+    "Scope": "local",
+    "Driver": "bridge",
+    "EnableIPv4": true,
+    "EnableIPv6": false,
+    "IPAM": {
+      "Driver": "default",
+      "Options": {},
+      "Config": [
+        {
+          "Subnet": "172.23.0.0/16"
+        }
+      ]
+    },
+    "Internal": true,
+    "Attachable": false,
+    "Ingress": false,
+    "ConfigFrom": {
+      "Network": ""
+    },
+    "ConfigOnly": false,
+    "Options": {
+      "com.docker.network.bridge.gateway_mode_ipv4": "isolated",
+      "com.docker.network.enable_ipv4": "true"
+    },
+    "Labels": {
+      "com.docker.compose.network": "isolated",
+      "com.docker.compose.project": "stall-phase8-r2",
+      "stall.phase8.instance": "b986df49-4ffc-4b26-bfe4-13e97e1e30ef",
+      "stall.phase8.launch": "[REDACTED: verified by hash]",
+      "stall.phase8.profile": "internal-runner-v1"
+    },
+    "Containers": {},
+    "Status": {
+      "IPAM": {
+        "Subnets": {
+          "172.23.0.0/16": {
+            "IPsInUse": 2,
+            "DynamicIPsAvailable": 65534
+          }
+        }
+      }
+    }
+  },
+  "container": {
+    "id": "04d174ff32ab69b3eae39ee5b067d309a26132f87185baabcfada5247d0b593f",
+    "status": "created",
+    "startedAt": "0001-01-01T00:00:00Z",
+    "restartCount": 0
+  },
+  "labelsConsistent": true,
+  "globalDaemonIPv6Default": "not inspected; not inferred from target network",
+  "noDockerWrites": true,
+  "noDatabaseConnections": true,
+  "composePureParse": {
+    "version": "5.3.1",
+    "internal": true,
+    "enable_ipv6": false,
+    "redundantDriverOption": "false",
+    "gateway_mode_ipv4": "isolated",
+    "publishedPorts": 0
+  },
+  "readonlyValidation": {
+    "networkIsolation": "passed",
+    "fullTopology": "passed",
+    "recoveryPlan": "passed",
+    "originalEvidenceHashesMatch": true,
+    "noRecoveryCommandExecuted": true
+  },
+  "tests": {
+    "newRecovery": 50,
+    "combinedOfflinePassed": 299,
+    "failed": 0,
+    "skipped": 0
+  },
+  "currentSourceBundleSha256": "6a040792d3c8f8a205dd578cb04cf5c4dc5ada98af00573b62b2ec59a4cc2a29",
+  "approvedImageBundleSha256": "2d6720dc8d9ea7b23969d010ed580b9b33bd3b672d68d7387e8b68ca5c3ec2e5",
+  "imageRebuilt": false
+}

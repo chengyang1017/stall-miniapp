@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "checkedAt": "2026-10-27T15:15:55.986Z",
+  "instance": "b986df49-4ffc-4b26-bfe4-13e97e1e30ef",
+  "dbId": "04d174ff32ab69b3eae39ee5b067d309a26132f87185baabcfada5247d0b593f",
+  "networkId": "e269447bc2094406480763cbfde870c32c2ccc298d756910daad21c13cce81d4",
+  "stage1": {
+    "firstResourceCheck": "passed",
+    "newImageBuiltAndReviewed": true,
+    "bundleSha256": "6a040792d3c8f8a205dd578cb04cf5c4dc5ada98af00573b62b2ec59a4cc2a29",
+    "imageId": "sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303",
+    "reference": "stall-phase8-r2-runner@sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303",
+    "configDigest": "sha256:727a4a6bf6045594329954421dbe0cecc0fed44ce83471a6a218b59191f5a3d3",
+    "npmOfflinePackages": 41,
+    "registryPush": false,
+    "registryMetadataQueries": true
+  },
+  "stage2": {
+    "command": "node backend/scripts/phase8-v2.mjs --recover-created",
+    "exitCode": 1,
+    "error": "phase8_v2_recovery_resource_changed",
+    "stoppedBeforeRecoveryClaim": true,
+    "containerStatus": "created",
+    "running": false,
+    "startedAt": "0001-01-01T00:00:00Z",
+    "initdbExecuted": false,
+    "bootstrapExecuted": false,
+    "sqlConnectionOpened": false,
+    "runnerCreated": false,
+    "businessMigrationsRun": 0,
+    "businessTestsRun": 0
+  },
+  "diagnosis": {
+    "observations": [
+      {
+        "rawSpecSha256": "8ab77cda8beb918ecc2541aa77fe582cbb99ef92b08ac262113182349a993c7f",
+        "configSha256": "502033d92cfb49d49c6839788cba6a593ff217acd2bad5b8fd21e0e71d5ad09a",
+        "hostConfigSha256": "9e542aa673c79a051c2c7250370d94740810adfe507480795f2ac5c44e32362d",
+        "mountSetSha256": "34f0e3b83eef133a5492a092fff344d2a135efded3f575e0e589a66e2e2e8ee0",
+        "mountOrder": [
+          "/run/secrets/phase8_migrator_password",
+          "/run/secrets/phase8_observer_password",
+          "/var/lib/postgresql/data",
+          "/docker-entrypoint-initdb.d/10-phase8-bootstrap.sh",
+          "/phase8/bootstrap-entrypoint.sh",
+          "/run/phase8-launch",
+          "/run/secrets/phase8_admin_password",
+          "/run/secrets/phase8_app_password"
+        ]
+      },
+      {
+        "rawSpecSha256": "6a0cc5d7a15b87041b2b34acd0c8e8f366447b4b525e23c140600f4e48247224",
+        "configSha256": "502033d92cfb49d49c6839788cba6a593ff217acd2bad5b8fd21e0e71d5ad09a",
+        "hostConfigSha256": "9e542aa673c79a051c2c7250370d94740810adfe507480795f2ac5c44e32362d",
+        "mountSetSha256": "34f0e3b83eef133a5492a092fff344d2a135efded3f575e0e589a66e2e2e8ee0",
+        "mountOrder": [
+          "/run/phase8-launch",
+          "/run/secrets/phase8_admin_password",
+          "/run/secrets/phase8_app_password",
+          "/run/secrets/phase8_migrator_password",
+          "/run/secrets/phase8_observer_password",
+          "/var/lib/postgresql/data",
+          "/docker-entrypoint-initdb.d/10-phase8-bootstrap.sh",
+          "/phase8/bootstrap-entrypoint.sh"
+        ]
+      },
+      {
+        "rawSpecSha256": "8ab77cda8beb918ecc2541aa77fe582cbb99ef92b08ac262113182349a993c7f",
+        "configSha256": "502033d92cfb49d49c6839788cba6a593ff217acd2bad5b8fd21e0e71d5ad09a",
+        "hostConfigSha256": "9e542aa673c79a051c2c7250370d94740810adfe507480795f2ac5c44e32362d",
+        "mountSetSha256": "34f0e3b83eef133a5492a092fff344d2a135efded3f575e0e589a66e2e2e8ee0",
+        "mountOrder": [
+          "/run/secrets/phase8_migrator_password",
+          "/run/secrets/phase8_observer_password",
+          "/var/lib/postgresql/data",
+          "/docker-entrypoint-initdb.d/10-phase8-bootstrap.sh",
+          "/phase8/bootstrap-entrypoint.sh",
+          "/run/phase8-launch",
+          "/run/secrets/phase8_admin_password",
+          "/run/secrets/phase8_app_password"
+        ]
+      },
+      {
+        "rawSpecSha256": "12da9e92f3aef3de5c0fdef1a0d91ba24b5d04955cdfdbe8c0d8e9ee435f0cdb",
+        "configSha256": "502033d92cfb49d49c6839788cba6a593ff217acd2bad5b8fd21e0e71d5ad09a",
+        "hostConfigSha256": "9e542aa673c79a051c2c7250370d94740810adfe507480795f2ac5c44e32362d",
+        "mountSetSha256": "34f0e3b83eef133a5492a092fff344d2a135efded3f575e0e589a66e2e2e8ee0",
+        "mountOrder": [
+          "/var/lib/postgresql/data",
+          "/docker-entrypoint-initdb.d/10-phase8-bootstrap.sh",
+          "/phase8/bootstrap-entrypoint.sh",
+          "/run/phase8-launch",
+          "/run/secrets/phase8_admin_password",
+          "/run/secrets/phase8_app_password",
+          "/run/secrets/phase8_migrator_password",
+          "/run/secrets/phase8_observer_password"
+        ]
+      },
+      {
+        "rawSpecSha256": "0101b82d745d3457ba3b49afd4bcd91dbe35a16be47517aa188d36577f8de2ff",
+        "configSha256": "502033d92cfb49d49c6839788cba6a593ff217acd2bad5b8fd21e0e71d5ad09a",
+        "hostConfigSha256": "9e542aa673c79a051c2c7250370d94740810adfe507480795f2ac5c44e32362d",
+        "mountSetSha256": "34f0e3b83eef133a5492a092fff344d2a135efded3f575e0e589a66e2e2e8ee0",
+        "mountOrder": [
+          "/run/secrets/phase8_admin_password",
+          "/run/secrets/phase8_app_password",
+          "/run/secrets/phase8_migrator_password",
+          "/run/secrets/phase8_observer_password",
+          "/var/lib/postgresql/data",
+          "/docker-entrypoint-initdb.d/10-phase8-bootstrap.sh",
+          "/phase8/bootstrap-entrypoint.sh",
+          "/run/phase8-launch"
+        ]
+      },
+      {
+        "rawSpecSha256": "3c9b56d5093ebbfc6dc0ab92de714a2674b80dc39b9c747d0816e84ddacc0bd1",
+        "configSha256": "502033d92cfb49d49c6839788cba6a593ff217acd2bad5b8fd21e0e71d5ad09a",
+        "hostConfigSha256": "9e542aa673c79a051c2c7250370d94740810adfe507480795f2ac5c44e32362d",
+        "mountSetSha256": "34f0e3b83eef133a5492a092fff344d2a135efded3f575e0e589a66e2e2e8ee0",
+        "mountOrder": [
+          "/docker-entrypoint-initdb.d/10-phase8-bootstrap.sh",
+          "/phase8/bootstrap-entrypoint.sh",
+          "/run/phase8-launch",
+          "/run/secrets/phase8_admin_password",
+          "/run/secrets/phase8_app_password",
+          "/run/secrets/phase8_migrator_password",
+          "/run/secrets/phase8_observer_password",
+          "/var/lib/postgresql/data"
+        ]
+      }
+    ],
+    "mountSetStable": true,
+    "configStable": true,
+    "hostConfigStable": true,
+    "originalAnchorMatchesAnExactRotation": false,
+    "conclusion": "Inspect ordering instability confirmed; original fingerprint mismatch not fully explained",
+    "originalAnchorOrderProof": {
+      "boundedPermutationsChecked": 40320,
+      "exactOriginalDigestMatched": false,
+      "matchingMountOrder": null,
+      "actualRecordsOrAnchorModified": false
+    }
+  },
+  "originalEvidenceUnchanged": true,
+  "recoveryFilesPresent": [],
+  "noDockerCleanup": true
+}

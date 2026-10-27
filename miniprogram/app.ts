@@ -1,11 +1,13 @@
 
 import { captureStoreEntry } from './utils/storeEntry'
+import { initializePhonePreview } from './modules/shared/runtime/phonePreview'
 import { syncCartTabBadge } from './utils/cart' // CART_TAB_BADGE_V1
 import { cloudCartConfig, syncCloudBadge } from './utils/cloudCart'
 
 // app.ts
 App<IAppOption>({
   onShow(options: any) {
+    initializePhonePreview()
     captureStoreEntry(options && options.query)
 
     const cfg = cloudCartConfig()
@@ -19,6 +21,7 @@ App<IAppOption>({
   globalData: {},
 
   onLaunch(options: any) {
+    initializePhonePreview()
     captureStoreEntry(options && options.query)
 
     // 展示本地存储能力

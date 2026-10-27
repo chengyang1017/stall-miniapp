@@ -7,7 +7,11 @@
     </view>
   </view>
 
-  <view wx:if="{{items.length === 0}}" class="empty">购物车还是空的</view>
+  <view wx:if="{{cloudMode && cloudLoading}}" class="empty">正在读取云端商品…</view>
+  <view wx:if="{{cloudMode && cloudError}}" class="empty">{{cloudError}}</view>
+  <view wx:if="{{cloudMode && deliveryError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{deliveryError}}</view>
+  <view wx:if="{{cloudMode && deliveryLoading}}" style="padding:16rpx;color:#777;font-size:24rpx">正在核对配送规则，暂不能结算…</view>
+  <view wx:if="{{items.length === 0 && !cloudLoading && !cloudError}}" class="empty">购物车还是空的</view>
 
   <view wx:for="{{items}}" wx:key="productId" class="cart-item">
     <!-- CART_THUMB_AND_FOOTER_V1 -->
@@ -95,7 +99,7 @@
       <view class="cart-footer-count">共 {{totalCount}} 件商品</view>
       <view class="total">¥{{totalText}}</view>
     </view>
-    <view wx:if="{{minimumOrderText !== '0.00'}}" style="font-size:24rpx;color:#666;margin-bottom:12rpx;">起送 ¥{{minimumOrderText}} <text wx:if="{{!minimumReached}}">· 还差 ¥{{minimumRemainingText}}</text><text wx:else> · 已达起送金额</text></view>
-    <button type="primary" disabled="{{totalCount === 0 || !minimumReached || (cloudMode && cloudError)}}" bindtap="checkout">去结算</button>
+    <view wx:if="{{minimumOrderText && minimumOrderText !== '0.00'}}" style="font-size:24rpx;color:#666;margin-bottom:12rpx;">起送 ¥{{minimumOrderText}} <text wx:if="{{!minimumReached}}">· 还差 ¥{{minimumRemainingText}}</text><text wx:else> · 已达起送金额</text></view>
+    <button type="primary" disabled="{{totalCount === 0 || !minimumReached || (cloudMode && (cloudLoading || deliveryLoading || cloudError || deliveryError || !cloudDeliveryReady))}}" bindtap="checkout">去结算</button>
   </view>
 </view>

@@ -1,4 +1,4 @@
-import { PUBLIC_API_BASE,DEFAULT_STORE_SLUG } from '../config/cloud'
+import { PUBLIC_API_BASE,DEFAULT_STORE_SLUG,CLOUD_ONLY } from '../config/cloud'
 import { getCloudContext } from '../modules/shared/runtime/context'
 import { localDevAllowed } from '../modules/shared/runtime/auth'
 let pending:{kind:'store'|'scene';value:string}|null=null
@@ -12,6 +12,7 @@ export function captureStoreEntry(query:Record<string,string|undefined>={}){
 }
 export async function resolveStoreEntry():Promise<void>{
  const current=getCloudContext()
+ if(!pending&&CLOUD_ONLY){pending={kind:'store',value:current?.storeSlug||DEFAULT_STORE_SLUG};generation++}
  if(!pending&&!current&&DEFAULT_STORE_SLUG){pending={kind:'store',value:DEFAULT_STORE_SLUG};generation++}
  if(!pending)return
  const entry=pending,serial=generation

@@ -19,8 +19,12 @@ export function guardedPool(rawPool, verify) {
             throw error
           }
         },
-        release(error) { if (!released) { released = true; active.delete(lease); raw.release(error || failure || undefined) } }
+        release(error) { if (!released) { released = true; active.delete(lease); raw.removeListener?.('error',onError);raw.release(error || failure || undefined) } }
       }
+      // Active pg clients emit transport errors too; do not crash the runner or
+      // let a terminated connection return to the idle pool as reusable.
+      const onError=error=>{failure ||= error;lease.release(error)}
+      raw.on?.('error',onError)
       try { await verify(lease); requireSafe(!closed, 'phase8_pool_closed'); active.add(lease); return lease }
       catch (error) { lease.release(error); throw error }
     },

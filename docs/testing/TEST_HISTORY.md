@@ -1,5 +1,9 @@
 # 微信商城测试历史记录（补录）
 
+> 最新补充：第24节记录真实PG测试准备与新r2容器启动前验收失败；没有执行迁移或数据库测试。第23节三端构建通过结果保持。
+
+> 最新补充：2026-10-27三目标导航修复与199项离线回归，详见第23节；早期独立构建失败为历史结果，不代表当前状态。
+
 > 项目：`chengyang1017/stall-miniapp`
 > 仓库位置：`docs/testing/TEST_HISTORY.md`
 > 原补录日期：2026-10-26；本次维护统一使用北京时间（Asia/Shanghai，UTC+8）。
@@ -797,3 +801,172 @@ V2容器/卷/网络/密码/UUID/回执未创建；旧B0私人凭据和failed回�
 **具备申请最终运行器镜像独立审核的证据条件，尚未获准运行。**下一轮可审查真实canonical digest/Image ID/base/bundle及供应链记录后另行决定是否登记批准；本轮不能自动将approved改true。运行时USER、只读根、capabilities、挂载ACL、真实V2 isolated/IPv6/出口、PostgreSQL bootstrap/001—020/业务并发事务与故障恢复全部仍待独立授权和验收。未部署、启动后端/worker或操作数据库。
 
 本轮仅提交上述三份永久档案及两份非秘密构建记录，不提交仓库外上下文或任何密码/私人材料；检查Diff/秘密/远程基线后普通提交推送，最终提交SHA以Git核验为准。
+
+## 21. 云端购物车配送未配置显示修复（2026-10-27，未提交）
+
+基线HEAD为 `cf89c59b189c63c9d515073f8a3d990b29d66e9b`，开始工作区干净。本轮用户授权本地修复/回归/编译，不授权修改数据库或配送配置；没有进行Commit、Push或其他Git写操作。
+
+### 根因与实现
+
+实际读取cart.ts、cart.wxml、cloudCheckout.ts、cloudCart.ts及身份/金额/配送模块后确认：loadCloudDelivery对configured=false抛错符合拒绝下单要求，但cart.refreshCloud把它和商品读取放入共享Promise.all/catch，任何配送失败都会把正常商品结果清空。页面也没有实际展示cloudError。
+
+cart.ts现在保留并发读取，但每个异步分支单独处理错误、立即发布自己的结果；商品不必等待配送完成即可显示。配送未配置或读取失败仅设置deliveryError/cloudDeliveryReady=false，不抹去已取得的价格和数量；按钮disabled和checkout处理函数均检查配送状态。起送门槛必须来自合法服务端规则，不伪造默认门槛；非法配送金额按配送错误处理。商品失败显示明确错误和未知金额“--”，不读取演示价格。仅清理过期展示，不因云端读取失败调用购物车删除或写入。
+
+新增本次视图上下文键（身份+apiBase+storeSlug）及序号检查，两路成功/失败都受同一失效规则约束；hide/unload使请求失效，云端/本地切换重置展示。checkout在上下文已变化时重新读取并拒绝使用旧视图导航，防止旧商品/加载状态覆盖新页面。cloudCheckout.ts和后端未修改：真实loadCloudCheckout仍因未配置配送拒绝；backend/src/checkout.mjs第59—60行仍执行verifyDelivery并在失败时回滚/返回409。
+
+cart.wxml补齐商品/配送错误与加载文案，错误时不显示“空购物车”冒充成功空结果，隐藏未知起送金额并禁用结算。没有自动配置配送、改价、删除商品或变更服务端订单校验。
+
+### 实际回归证据
+
+新增 `backend/tests/frontend-navigation-cart-cloud.test.mjs`：20项，包括19项真实页面/服务函数VM执行、1项WXML契约。使用Node原生TypeScript剥离、可控Promise及假微信请求，执行实际cart Page、cloudCartDetails、loadCloudDelivery/loadCloudCheckout、身份上下文、金额与库存纯函数；不复制对应业务算法。外部网络/微信存储均隔离。数据使用用户报告的商品ID/“动画”/1500分/2件，生产代码无对应硬编码。
+
+覆盖未配置配送先/后到达均保留动画×2/¥30.00、等待配送时禁止结算、正常配送两种乱序、商品失败、双路失败、非法商品价格、店铺暂停、非法配送起送额、身份/店铺/端点切换、旧请求成功/失败、隐藏/卸载、云端转演示、点击结算时身份变化、重试恢复，以及结算服务继续严格拒绝未配置配送。验证存储购物车条目/数量不因云端错误删除或写入，未知价格不显示NaN或演示金额。
+
+初次19项中18通过、1失败：演示测试夹具错误使用active字段且缺discountPrice，实际本地模型要求available/discountPrice；修正夹具为真实结构，未修改业务规则或降低断言。另补非法配送门槛回归后最终20/20通过。原frontend-navigation-guards仅更新夹具以提供新增上下文字段和加载状态，原断言全部保留。
+
+| 实际命令 | 实际结果 |
+| --- | --- |
+| node --test backend/tests/frontend-navigation-cart-cloud.test.mjs | 20通过、0失败、0跳过 |
+| node --test backend/tests/frontend-navigation*.test.mjs | 108通过、0失败、0跳过、0取消；包含新增20，不重复累加 |
+| node node_modules/typescript/lib/tsc.js --noEmit --pretty false | 退出0 |
+| node --check backend/tests/frontend-navigation-cart-cloud.test.mjs | 退出0 |
+| npm run build:combined | 退出0；125源模块、36页、258产物 |
+| npm run build:customer | 退出1；既有index/index.ts第88行引用/pages/admin/admin，customer页面清单不包含它 |
+| npm run build:merchant | 退出1；既有admin/admin.ts第11行引用/pages/index/index，merchant清单不包含它 |
+| npm run check:boundaries | combined/customer/merchant依赖及循环边界均通过 |
+| npm run check:build-output | combined通过后，缺dist/customer/build-manifest.json而退出1；customer构建前已失败，不能宣称全目标产物通过 |
+| 单独checkOutput('combined') | 通过 |
+| git diff --check | 通过 |
+
+两处独立构建阻碍均用git show HEAD与当前文件逐字归一换行比较相同，路线在基线已存在；本次不修改index/admin或放宽构建保护。失败的customer/merchant产物仅位于Git忽略的dist，不视为成功产物。Combined是本次已完成的编译；未执行微信平台WXML编译、开发者工具或真机验收，未调用真实商品/配送API。
+
+本轮预期变更：cart.ts、cart.wxml、新cart-cloud回归文件、旧guards夹具，以及TEST_STATUS/TEST_HISTORY两份真实结果档案。所有改动保留未提交。没有连接/修改数据库、修改配送配置、启动后端、部署或操作Docker；第八轮运行器批准状态不变。本次不修复无关的独立构建导航遗留问题。
+
+## 22. 真实手机云端预览源码准备（2026-10-27，未提交）
+
+用户要求顾客/商家都通过真实Node.js+PostgreSQL体验，而不是本机演示或假订单；随后明确“尚未准备Staging，先完成离线源码方案”，并说明当前是微信测试AppID、人在马来西亚。此处离线指不部署/不操作实际环境，不是新增离线商城。基线HEAD仍为cf89c59，上轮购物车6个未提交文件在开始时均存在，完整保留。
+
+实际调查：源发布API/default store为空，根工程AppID为wxeb1890c397d038d8（仅用户描述为测试号，不能靠字串判断平台权限）；project.private仅核对urlCheck=false，不复制、不修改。backend只有.env.example，本次进程相关DB/微信/存储变量未设置；没有数据库/服务器连接，无法确认实际店铺、授权或外部Staging是否存在。现有微信code2Session/会话、商家permittedStore、store-entry、商品/配送/订单接口已存在，因此不重建认证、数据库或业务API。现有server启动会启动库存与定位任务，本轮没有import/start它。
+
+新增公开profile校验与preview:phone --check/--prepare；必须提供HTTPS Staging origin、真实storeSlug及AppID。禁止凭据、HTTP/回环/私有主机、无显式staging标签和touristappid；空模板拒绝，不编造域名。--check不联网，--prepare未来复用Combined编译到dist/phone-preview，固定PUBLIC_API_BASE/DEFAULT_STORE_SLUG/CLOUD_ONLY/PREVIEW_APP_ID并启用urlCheck，保留原全量产物检查，不改原配置源码或申请第二AppID。
+
+Shared运行期pin可信来源，首次/来源变更清旧Token与偏好但不删除购物车；跨环境再回来即使旧preview marker相同也清不匹配来源会话。云端上下文不因缺缓存而变成演示模式。wx.login仅向该后端发送code；校验实际AppID，阻断过期登录响应，preview中连模拟器也拒绝本地Token。个人中心提供微信登录与服务器授权后的商家入口，工作台先验证授权再读经营数据，普通顾客/过期会话不加载卡片。商家登录和旧维护页在该模式隐藏/固定API与店铺，不要求手机输入Token。后端支付、库存、订单状态和权限机制未修改。
+
+新增phone-preview-safety 35项；连同frontend-navigation*.test.mjs、auth-sessions、wechat-login、miniapp-preview-audit、miniapp-preview-build-guard、build-role-contracts联合执行：171通过、0失败、0跳过、0取消。已包含新35及前轮购物车20，不重复累加。这些是实际源码函数+模拟微信/网络或假pool、语法/编译/静态检查，不是微信身份或PostgreSQL运行验收。初次28项有4项失败：3项为VM对象原型比较，归一JSON值且保留结构断言；1项修正hostname策略不把.test顶级域当显式Staging标识，后续增加回归全部通过。未删除/跳过断言。
+
+TypeScript noEmit、phone-preview/phone-preview-profile/build-miniapp/miniapp-output/phone-preview-safety 5个MJS语法检查、Combined/Customer/Merchant源依赖边界通过；Combined构建126模块/36页/259产物及原产物检查通过。没有真实Staging配置，未执行真实配置的phone --prepare/微信平台编译，未生成带假域名的交付包；仅测试空模板提前拒绝。Customer/Merchant独立构建的既有导航阻碍仍按前轮记录，当前手机方案不依赖它们。
+
+测试号能力未冒充可用：访问微信官方登录/网络/测试号/预览文档被工具限制，保留URL供管理员核对；是否有同AppID有效AppSecret/code2Session、request/upload/download域名和体验成员准入需要平台证据。正式AppID可用同一业务逻辑，但OpenID/商家成员不自动跨AppID共享。普通预览二维码来自IDE，不冒用原release店铺码。没有可信支付不能伪造付款来演示履约。
+
+完整文件职责、一次配置/多次预览、私网DB+HTTPS API拓扑、账号绑定及扫码/错误诊断流程见PHONE_PREVIEW.md，apps/BUILDING.md增加入口。需下一轮分别授权部署、DNS/TLS、私有凭据、独立DB初始化/真实店铺与商家绑定及实际手机操作；不能用直接暴露stall_dev或Phase8数据库替代Staging。本轮没有安装软件/依赖、Docker操作、真实微信登录、API访问、数据库/配置写入、迁移、服务启动、预览上传、发布或Git Commit/Push；官方文档只读访问尝试不涉及用户服务。
+
+## 23. 独立构建跨端导航整改（2026-10-27，未提交）
+
+本轮HEAD仍为cf89c59b189c63c9d515073f8a3d990b29d66e9b，开始时保留全部既有购物车、手机预览与交付清单未提交修改。实际源码中index.ts与admin.ts直接导航到另一端页面，虽然导入图隔离检查通过，构建器对导航字面量的检查仍正确拒绝；修复首个Customer错误后，进一步发现profile.ts也有直接商家导航，因此一并整改。
+
+复用已有singleAppHost别名机制：首页/个人中心调用openMerchantWorkspace，Customer常量关闭商家入口与权限查询；Combined商家偏好恢复仍要求服务端响应及身份/店铺/页面可见性/当前偏好一致。Combined适配器保留navigateTo工作台与switchTab顾客首页。admin使用CAN_OPEN_CUSTOMER与openCustomerShop适配器，Merchant角色别名指向本角色navigation，隐藏并拒绝顾客切换，不写错误偏好。Combined显式切换仍保存customer偏好。未改服务器鉴权、支付、正式微信配置、依赖包、数据库或既有演示数据层；构建越界断言完全保留。
+
+新增backend/tests/build-navigation-isolation.test.mjs共21项。18项运行实际页面函数和实际按目标选择的导航适配器（模拟微信/网络边界），覆盖Combined双向导航、独立端拒绝、旧偏好、伪造UI授权、服务端拒绝/非法响应、身份/店铺/隐藏/偏好改变的过期请求、进入工作台前/点击时权限复核、两种含商家构建的授权闸门；3项调用真实构建器，逐端核对页面归属、首页、源文件/产物隔离、导航和完整checkOutput。不是仅通过正则判定运行行为。
+
+3份旧测试frontend-navigation-runtime、frontend-navigation、merchant-entry-contract适配了入口移动后的VM依赖/源码证据位置；保留原目的地、偏好、授权与时序断言，没有删除/跳过用例，并补角色门槛/真实适配器证据。原phone-preview和购物车回归完整保留。
+
+实际执行：新文件单独21通过；联合旧171项、merchant-entry-contract7项及新增21项，共199通过、0失败、0跳过、0取消。命令如下，199已包含所有子集，不与历史轮次累计：
+
+```powershell
+node --test backend/tests/build-navigation-isolation.test.mjs backend/tests/phone-preview-safety.test.mjs backend/tests/frontend-navigation*.test.mjs backend/tests/auth-sessions.test.mjs backend/tests/wechat-login.test.mjs backend/tests/miniapp-preview-audit.test.mjs backend/tests/miniapp-preview-build-guard.test.mjs backend/tests/build-role-contracts.test.mjs backend/tests/merchant-entry-contract.test.mjs
+```
+
+TypeScript noEmit、check:boundaries（126/73/85模块）、4个测试MJS语法检查通过。真实编译结果：Combined126模块/36页/259产物，Customer73模块/13页/137产物，Merchant85模块/19页/154产物，各自完整产物校验通过。新增测试会重复执行三种纯构建，便于后续复现，输出仅使用构建器已有的dist受控目录。
+
+未进行微信平台编译、真实AppID/真机登录、数据库迁移/连接、云资源购买/部署或Git提交/推送。独立AppID后端认证、正式云发布配置、生产迁移/部署模板、支付及端到端验收仍未完成，不把“三端纯编译通过”当作可正式发布。
+
+
+## 24. 真实 PostgreSQL 集成测试准备及首次资源验收失败（2026-10-27，未提交）
+
+开始HEAD为cf89c59b189c63c9d515073f8a3d990b29d66e9b，保留全部前轮未提交修改。用户先授权全新stall-phase8-r2资源、四份新凭据/UUID、必要本地运行器构建和审核、仅新集群001—020测试迁移及真实集成测试，再明确确认独占Docker管理窗口。禁止访问stall_dev、stall_restore_20261027、旧B0/其他现有库；保留失败现场，无自动清理。
+
+现有V2固定fixture仅检查3个不同PID，不能当业务集成验收。新增business固定任务，绑定app角色、business-consistency-v1范围、独立写入授权和同实例ready回执；白名单增加真实checkout/orderWorkflow/inventory及依赖闭包，不打包server入口。每个场景独立新UUID商户/店铺/商品/会话，直接调用真实函数；并发使用数据库pg_blocking_pids观察，不用固定sleep当正确性证据。最终断言真实订单/明细/预留/库存流水/状态事件，不使用第七轮内存SQL适配器。无删除/清空/触发器绕过。断言失败报告先保存，再使宿主任务失败。
+
+实际准备：新UUID b986df49-4ffc-4b26-bfe4-13e97e1e30ef，专用仓库外StallPhase8-R2目录，4个不同64位随机hex凭据，ACL仅当前用户/SYSTEM/Administrators。新构建目录StallPhase8-V2-Integration-Build-b986df49-4ffc-4b26-bfe4-13e97e1e30ef，45源码/bundle与41个包真实SHA-512核验，130文件，无旧B0运行材料。构建第一次CLI因host与builder组合不允许在构建开始前拒绝；改用显式desktop-linux context后实际build成功，无Registry Push，RUN禁网且npm ci --offline --ignore-scripts --omit=dev安装41包成功。基础镜像元数据有Registry查询，不能说构建全程断网。
+
+运行器manifest/Image ID：sha256:a6d03ce3ee71c18236737ea011b5b5ee4a68bc6988dc5c08f0acad8623c951db；配置摘要另为sha256:b246ea70777f4020ab6dda384c2562a013dbd31b11c80c5d2cfc8984648fe00e。canonical stall-phase8-r2-runner@上述manifest实际可解析，linux/amd64、USER1000:1000、固定ENTRYPOINT和bundle匹配。bundle SHA256为2d6720dc8d9ea7b23969d010ed580b9b33bd3b672d68d7387e8b68ca5c3ec2e5。按本轮授权更新runner审核记录；该登记不证明运行隔离/数据库测试通过。
+
+受控create-db首先在资源预留前报private_acl_rejected。实际ACL正确，定位到宿主PowerShell脚本使用$env.NAME而非$env:NAME；修复并加回归，保留所有ACL断言。活动pg连接事件处理也补强为传输错误销毁租约并禁止复用，离线EventEmitter回归通过；真正数据库断线场景仍未运行。
+
+再次执行唯一受控创建入口后实际只创建：
+
+- 容器stall-phase8-r2-pg16：04d174ff32ab69b3eae39ee5b067d309a26132f87185baabcfada5247d0b593f，状态created，Running=false，未启动。
+- 卷stall-phase8-r2-data：local、无自定义driver options；未读取卷内容。
+- 网络stall-phase8-r2-network：e269447bc2094406480763cbfde870c32c2ccc298d756910daad21c13cce81d4，internal=true、isolated、EnableIPv6=false、无成员、无宿主端口。
+- 原始失败记录stage=container，code=phase8_v2_network_rejected；未生成created_verified回执。
+
+原因：Engine/Compose实际Options只返回gateway_mode_ipv4=isolated、enable_ipv4=true，省略重复enable_ipv6=false，而原策略要求该字符串也存在。不是数据库、订单或库存的测试失败。随后用户明确限制“只处理重复配置；如果不能只改本轮Compose解决则停止”。仅改Compose不能在不调整元数据策略的前提下满足原断言，因此停止；未执行已讨论的一次性恢复设计，撤下未执行的策略兼容/恢复入口改动。没有重跑create-first、修改failed回执、启动/重建/删除资源。历史Phase8、商城与其他项目未收到本任务写操作；Engine曾由用户手动启动，不能据此推断所有其他应用链路无影响。
+
+本轮26个真实场景源码清单如下，全部未运行（不是node:test的skipped，也不是通过）：
+
+| # | 场景 | 实际状态 |
+| --- | --- | --- |
+| 1 | same key serial retry creates one order and one reservation | 未运行 |
+| 2 | concurrent same key waits and returns one committed order | 未运行 |
+| 3 | concurrent same key different payload conflicts without extra decrement | 未运行 |
+| 4 | two customers contend for last item using observed PostgreSQL row blocking | 未运行 |
+| 5 | many simultaneous requests cannot oversell available stock | 未运行 |
+| 6 | insufficient stock rejects without any partial order | 未运行 |
+| 7 | multi-product insufficiency rolls back every product and order line | 未运行 |
+| 8 | product delisted during checkout lock wait is not purchased | 未运行 |
+| 9 | real SQL failure after INSERT INTO order_items rolls back and same key can retry | 未运行 |
+| 10 | real SQL failure after UPDATE products SET stock_quantity=stock_quantity-$3 rolls back and same key can retry | 未运行 |
+| 11 | successful COMMIT with lost result is reconciled by retry key | 未运行 |
+| 12 | expiry workers compete without releasing stock twice | 未运行 |
+| 13 | terminated checkout connection rolls back real stock and permits safe retry | 未运行 |
+| 14 | opposite cart order uses consistent product lock order without deadlock | 未运行 |
+| 15 | concurrent accept serializes an explicitly paid test fixture without duplicate commit | 未运行 |
+| 16 | two concurrent cancellations create one event and one release | 未运行 |
+| 17 | cancellation racing expiry commits one release atomically | 未运行 |
+| 18 | unpaid finite order cannot be accepted | 未运行 |
+| 19 | unpaid unlimited order cannot be accepted | 未运行 |
+| 20 | merchant cannot change order through another store path | 未运行 |
+| 21 | unrelated merchant identity is rejected before changing another tenant | 未运行 |
+| 22 | database unique index independently rejects duplicate retry key | 未运行 |
+| 23 | customer cannot read another customer order | 未运行 |
+| 24 | CHECK and composite foreign key constraints reject invalid inventory | 未运行 |
+| 25 | SKIP LOCKED skips a genuinely eligible locked expired order | 未运行 |
+| 26 | real deadlock yields 40P01 and both transactions leave no stock change | 未运行 |
+
+其中COMMIT丢结果用例在真实COMMIT成功后由受控transport丢弃返回值，只验证已知提交后的幂等核对，不等同全套随机网络COMMIT未知结果。真实后端终止、死锁40P01、SKIP LOCKED与约束必须实际运行才有证据。并发接单使用隔离库内显式paid状态夹具，只用于状态机，绝不是微信支付验收或真实收款。开放营业时段受现有规则00:00–23:59约束，运行落入最后一分钟会明确失败而非绕过营业校验。
+
+离线结果：新增phase8-business.unit.test.mjs 14项全部通过；与既有三份安全测试联合249通过、0失败、0跳过、0取消。旧235全部保留。合成授权/报告/租约测试不计入26项真实PG结果。前端199及类型/边界/构建最终检查另见TEST_STATUS最新补充。
+
+数据库实际执行结果：0条测试业务SQL、0次连接、0份业务迁移、26项未运行。Docker创建流程在start之前失败，因此initdb/bootstrap未执行，逻辑库stall_test_phase8尚未创建，不能称ready。资源保留供审查；下一步必须先单独批准等价网络元数据策略修复及绑定本轮资源的显式恢复设计，不能绕过启动器或把失败回执改成成功。没有Git提交/推送、正式迁移、云部署、微信支付、全局清理或旧资源操作。
+
+
+## 25. 网络元数据兼容与一次性恢复源码（2026-10-27，未提交）
+
+本轮只读诊断Engine29.6.2/Linux amd64、Desktop4.85.0、Compose5.3.1，desktop-linux仍为本机端点。目标网络ID/容器ID/UUID和原始证据摘要与第24节一致，容器created、StartedAt为零、RestartCount0。Compose纯解析保留enable_ipv6=false、重复driver false、internal和isolated，无宿主端口；实际inspect明确EnableIPv6=false而不返回重复option。未读取/修改daemon全局设置，未用目标状态推断全局默认。
+
+修复仅调整读取策略：要求实际字段明确布尔false，重复option可缺省，如存在必须精确字符串false；实际字段缺失/null/字符串/0/true或冲突option均拒绝，保持单网卡/成员/标签/UUID/固定镜像/挂载/无端口/internal/isolated。额外拒绝IPv6Gateway。同一真实资源的新纯策略、完整拓扑、恢复计划函数只读核验通过；没有调用恢复控制器。原始inspect工具输出一次包含内部启动标记，后续仅记录哈希/匹配布尔值及脱敏网络数据，不重复写入仓库。
+
+新增固定--recover-created入口和checked-in recovery-anchor.json，绑定本轮UUID、容器/网络ID及创建时间、卷元数据、EngineID/版本、PG镜像、配置/挂载摘要、原attempt/failure/launch字节摘要。只接收全新never-started created状态和恰好三个本轮资源，拒绝旧B0、退出过/重启过实例、额外运行器。需原授权/独占窗口加START_PINNED_CREATED_ONCE新授权。启动前wx+fsync排他写新尝试记录并重复核验，成功才新增db.created附原failure/锚点摘要；失败保留独立failure，不删除/改写任何原证据，不自动重试。这些均为源码，未执行真实claim或start。
+
+新增phase8-recovery.unit.test.mjs 50项：16类IPv6/隔离拒绝、完整拓扑、资源/配置/状态/身份/证据拒绝、授权顺序、额外成员、启动前后漂移、失败不提升状态、重复执行拒绝，以及真实临时文件的并发排他claim。除临时文件IO外是实际纯策略/控制器+合成Docker transport，不是数据库或Docker集成验收。首次47项中1项期望错误码错误，实际正确拒绝额外网卡为network_mode_rejected；修正精确期望，不放宽断言。最终新增50通过，与原249项联合299通过、0失败、0跳过、0取消。7个MJS语法、TypeScript、边界、Compose纯解析通过。
+
+当前源码bundle=6a040792d3c8f8a205dd578cb04cf5c4dc5ada98af00573b62b2ec59a4cc2a29，既有批准镜像bundle=2d6720dc8d9ea7b23969d010ed580b9b33bd3b672d68d7387e8b68ca5c3ec2e5，两者不同；本轮不构建、不修改镜像审核记录，未来运行器需重新审核版本配对，不能声称新源码已进入镜像。恢复脚本只启动PG仍需下一轮明确授权和现场再核验；SQL bootstrap核验、001—020迁移和26项业务测试是另外的操作范围。
+
+详细设计见PHASE8_V2_RECOVERY.md，脱敏元数据见PHASE8_V2_NETWORK_COMPATIBILITY_AUDIT.json。所有私人材料只读，没有创建/修改恢复回执，没有启动/停止/删除/重建容器，没有改网络、卷、密码或旧实例，没有数据库连接、迁移/集成测试、Git提交/推送。P0真实PG验收仍阻塞。
+
+
+## 26. 新运行器对齐与受控恢复再次受阻（2026-10-27，未提交）
+
+用户本轮授权先只读审核，如runner版本不匹配则构建/审核新镜像；第一阶段通过后，仅恢复本轮指定PG并允许initdb/bootstrap，不允许001—020或26项集成测试。另通过异步确认授权一个仅挂observer凭据的只读bootstrap验收运行器。上述权限没有用于绕过任何检查。
+
+第一次单次只读预检通过：同一UUID b986df49-4ffc-4b26-bfe4-13e97e1e30ef、容器04d174ff32ab69b3eae39ee5b067d309a26132f87185baabcfada5247d0b593f、网络e269447bc2094406480763cbfde870c32c2ccc298d756910daad21c13cce81d4、卷创建信息、标签、原证据摘要及ACL匹配，未写恢复文件。源码bundle为6a040792d3c8f8a205dd578cb04cf5c4dc5ada98af00573b62b2ec59a4cc2a29，旧已批准镜像bundle为2d6720dc8d9ea7b23969d010ed580b9b33bd3b672d68d7387e8b68ca5c3ec2e5，不匹配，因此没有直接使用旧镜像。
+
+新仓库外上下文C:/Users/USER/StallPhase8-V2-Bootstrap-Build-20261027-151135通过45文件bundle与41包SHA-512校验，130个构建输入文件。固定Node base不变。一次Buildx成功，npm ci --offline --ignore-scripts --omit=dev安装41包；无Registry Push，无新增基础镜像，RUN禁网但有Registry基础镜像元数据认证/查询。新canonical运行器stall-phase8-r2-runner@sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303实际可解析；Image ID同该manifest，配置摘要另为sha256:727a4a6bf6045594329954421dbe0cecc0fed44ce83471a6a218b59191f5a3d3。平台linux/amd64、USER1000:1000、固定ENTRYPOINT及当前bundle标签匹配；已按本轮授权登记审核，不修改业务代码或安全策略。
+
+之后仅调用一次node backend/scripts/phase8-v2.mjs --recover-created。退出1、phase8_v2_recovery_resource_changed，发生在reserveRecovery之前。没有db.recovery.attempt.json/db.recovery.failed.json/db.created.json；没有发出container start命令。容器仍created、Running=false、StartedAt为零、ExitCode0；未执行initdb/bootstrap，逻辑库和连接身份尚未通过SQL验收。未创建observer运行器、未连接PG、未执行迁移或26项测试。原始attempt/failure/launch字节摘要未变。
+
+按用户“任何不匹配即停止”要求，没有修改或重新核准锚点，没有修复指纹算法、重试启动、删除/重建或清理资源。仅继续只读诊断并保存证据。连续inspect展示Mounts数组顺序变化，原始整体指纹随之变化；Config、HostConfig和按Destination排序的挂载集合摘要在观测中一致。对同一8个挂载的40320种排列作纯内存哈希比对（未写回资源/锚点），没有复现原始整体指纹。因此已确认有顺序敏感的指纹模型缺陷，但还不能把原摘要差异全部归因于挂载顺序，更不能推断数据损坏或擅自替换原锚点。
+
+本轮299项离线安全测试重新通过，0失败/跳过；不是数据库运行验收。真实新增变化仅为新的构建上下文、本地运行器镜像/BuildKit缓存和审核登记；未操作其他项目/历史Phase8数据库资源，无全局清理、云部署、Git提交推送。所有既有未提交修改保留。
+
+详细脱敏证据：PHASE8_V2_BOOTSTRAP_START_AUDIT.json。下一步只能先另行审查规范化指纹和完整元数据基线，补足不稳定顺序及真正字段变化的对抗性回归；不能继续沿用本轮授权自动修复或再启动。P0真实PG验收仍阻塞。

@@ -1,11 +1,11 @@
 {
-  "approved": false,
+  "approved": true,
   "repository": "stall-phase8-r2-runner",
-  "digest": null,
-  "imageId": null,
-  "baseReference": null,
-  "bundleSha256": null,
-  "reviewedBy": null,
-  "reviewedAt": null,
-  "note": "Pending separate Node base and packaged runner image supply-chain review. No synthetic digest or automatic approval."
+  "digest": "sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303",
+  "imageId": "sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303",
+  "baseReference": "node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae",
+  "bundleSha256": "6a040792d3c8f8a205dd578cb04cf5c4dc5ada98af00573b62b2ec59a4cc2a29",
+  "reviewedBy": "依据用户本轮明确授权，固定输入本地构建及只读镜像身份审核登记",
+  "reviewedAt": "2026-10-27T15:13:03.613Z",
+  "note": "与本轮当前45文件源码bundle匹配，固定Node基线，41包离线完整性核验与安装成功；linux/amd64、非root及固定入口已核验，canonical引用真实可解析。无Registry Push，RUN禁网但有基础镜像Registry元数据查询。本轮仅允许指定PG恢复和只读bootstrap验收，不授权001—020业务迁移或26项测试。"
 }

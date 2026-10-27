@@ -1,5 +1,16 @@
 # 三目标构建说明（Phase 30）
 
+## 真实手机云端预览补充（2026-10-27）
+
+顾客与商家同一AppID的真机手感预览复用Combined，不申请第二个小程序、不依赖独立角色构建。操作手册与测试号/正式AppID边界见 [PHONE_PREVIEW.md](../docs/testing/PHONE_PREVIEW.md)。获得独立HTTPS Staging、真实店铺及微信平台配置后：
+
+```powershell
+npm run preview:phone -- --check C:\YourApprovedConfig\phone-staging.json
+npm run preview:phone -- --prepare C:\YourApprovedConfig\phone-staging.json
+```
+
+仅公开配置，模板apps/phone-preview.example.json故意留空并拒绝生成。成功时导入dist/phone-preview到微信工具；生成配置强制CLOUD_ONLY与域名检查，不回退本机演示，不需要手机输入Token/API/店铺。原项目、普通Combined和现有未提交源码不被配置器改写；--prepare只重建自身标记的固定生成目录。实际微信编译、扫码、真实登录、数据库/部署均是另行授权后的操作，本轮尚未完成。以下原阶段说明保留历史时点，不作为独立角色构建当前全绿的证明。
+
 根目录仍是 Combined 微信开发者工具工程；根 project.config.json 未改动。`apps/build-targets.json` 是三目标页面归属、入口、依赖别名的唯一构建清单，不复制完整源码树。
 
 在项目根目录执行（无需启动后端）：

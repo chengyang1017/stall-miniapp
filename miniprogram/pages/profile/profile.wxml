@@ -1,4 +1,9 @@
 <view class="profile-page">
+  <view wx:if="{{phonePreview}}" class="profile-note">Staging 真机预览 · 非生产环境 · {{previewApi}}</view>
+  <view wx:if="{{cloudSupport || phonePreview}}" class="profile-section">
+    <button type="primary" loading="{{loginBusy}}" disabled="{{loginBusy}}" bindtap="loginWechat">微信登录／重新验证身份</button>
+    <view class="profile-note">{{loginStatus}}</view>
+  </view>
   <view class="profile-hero">
     <view class="profile-avatar">我</view>
     <view class="profile-identity">

@@ -5,6 +5,42 @@
 
 ## 当前结论
 
+**最新：新运行器已对齐，但本轮恢复因容器规格摘要不匹配在启动前停止（2026-10-27）。**初次只读预检的UUID/资源ID/标签/ACL/证据摘要通过；发现旧镜像bundle与源码不同，按授权重新构建并审核。新canonical镜像sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303匹配当前45文件bundle 6a040792d3c8f8a205dd578cb04cf5c4dc5ada98af00573b62b2ec59a4cc2a29；41包离线安装成功，无Registry Push。
+
+一次受控--recover-created调用退出1，错误phase8_v2_recovery_resource_changed，发生在排他claim之前。容器仍created/Running=false/零StartedAt；没有recovery attempt、failure或created_verified回执。未调用start、未执行initdb/bootstrap、未创建已授权的observer验收运行器、未连接SQL，001—020和26项测试均未执行。原始失败材料摘要保持不变。按用户要求未修改指纹算法/锚点、未重试或扩大权限。
+
+只读重复inspect确认Mounts数组顺序不稳定，Config、HostConfig及按目标排序的挂载集合摘要在观测中一致；但对8个挂载的40320种顺序作纯内存比对，仍不能复现原锚点摘要。可确认顺序敏感的指纹模型存在问题，**不能证明全部原摘要差异只有排序原因**。需要下一轮先核查完整规范化指纹设计与历史锚点证据，不能直接重写锚点通过。详细记录：[PHASE8_V2_BOOTSTRAP_START_AUDIT.json](PHASE8_V2_BOOTSTRAP_START_AUDIT.json)。本轮离线安全299通过、0失败/跳过，不能当作数据库初始化成功。所有未提交修改保留，无Git提交/推送。
+
+**最新：网络兼容修复及绑定本轮资源的一次性恢复入口源码完成，尚未启动（2026-10-27）。**只读核实Engine29.6.2、Compose5.3.1；Compose显式关闭IPv6，目标inspect实际EnableIPv6=false，重复driver option缺省。新策略仍要求明确的false，并保留internal/isolated/无端口/单网卡等检查；缺失实际字段或矛盾option仍拒绝。同一真实资源的只读完整拓扑/恢复计划校验通过，未把Engine全局默认值当作证据。
+
+新增50项恢复安全回归，联合原249项共299通过、0失败/跳过；7个MJS语法、TypeScript、边界及Compose纯解析通过。恢复入口仅支持固定锚点中本轮never-started容器，校验ID/创建时间/标签/配置挂载/Engine和原失败文件摘要，排他新attempt，绝不重写原failed；本轮没有调用入口或写私人回执。容器仍created，26项真实PG测试未运行，迁移未执行。
+
+policy属于镜像白名单，当前源码bundle变化，旧镜像批准仍仅对应旧封存输入；本轮未重建或自动更新审核。后续实际启动和bootstrap必须再次明确授权并重新预检，运行器需审定版本配对。详见[PHASE8_V2_RECOVERY.md](PHASE8_V2_RECOVERY.md)和历史第25节。原有修改保留，没有Git提交/推送、Docker资源写入或数据库连接。
+
+**最新：真实 PostgreSQL 集成测试受控准备完成，但首次创建验收失败，26项真实业务用例未执行（2026-10-27）。**用户授权全新stall-phase8-r2项目/容器/卷/internal网络、独立凭据/UUID、仅新集群测试迁移，并另行确认Docker独占窗口。Engine最初不可达；用户手动启动后，只读核验Engine29.6.2/linux与资源名称无冲突，未使用开发/恢复/历史Phase8数据库。
+
+复用V2添加business固定任务及26个真实业务/SQL场景；新增14项离线安全测试。249项安全测试通过（原235+新增14，0失败/跳过）；导航/预览/构建199项回归另行记录，不把它们当数据库测试。运行器固定输入本地构建成功，41包npm离线安装成功，canonical固定引用及非root/bundle已验收并按本轮授权登记。没有运行器容器或数据库SQL连接。
+
+创建入口先发现并修复ACL核验器$env.NAME错误，首个拒绝发生在资源/attempt创建前。继续同一受控入口后，新建r2容器04d174ff32ab69b3eae39ee5b067d309a26132f87185baabcfada5247d0b593f、r2-data卷及r2-network网络（e269447bc2094406480763cbfde870c32c2ccc298d756910daad21c13cce81d4）；容器在启动前验收失败，仍created/未运行。实际EnableIPv6=false但Engine省略重复driver option，原策略报phase8_v2_network_rejected。用户随后限定只能修改本轮Compose、否则停止；无法仅通过Compose解决该策略/元数据等价性问题，已停止真实操作，未保留放宽策略/恢复入口的改动。原failed记录、UUID及资源完整保留，不重跑create-first、不清理。
+
+本轮UUID：b986df49-4ffc-4b26-bfe4-13e97e1e30ef。仓库外材料位于C:/Users/USER/StallPhase8-R2-b986df49-4ffc-4b26-bfe4-13e97e1e30ef，密码不写入档案。**未执行initdb/bootstrap、001—020迁移、订单/库存SQL或微信支付；数据库集成测试是26项未运行，不是0失败即通过。**P0真实PG验收阻断未解除。详见历史第24节。所有既有未提交修改保留，未提交/推送Git。
+
+本轮最终补验：既有导航/预览/身份/构建联合199项再次199通过、0失败/跳过/取消（含三目标实际纯编译）；TypeScript noEmit、依赖边界、10个相关MJS语法和全部目标产物检查通过。45文件当前compact JSON bundle摘要与封存镜像输入一致；最初核对命令误用pretty JSON加换行，改为准备器实际compact编码后匹配，未修改源码或审核摘要迁就检查。git diff --check通过。249项离线安全和199项前端/构建结果分开列示，均不能作为26项数据库用例的执行证据。
+
+**最新：独立端导航构建阻断已修复（2026-10-27，未提交）。**以当前工作区为基础保留购物车/真机预览修改，将首页和个人中心进入商家工作台、工作台返回顾客首页统一接入现有按目标替换的singleAppHost导航适配器。Merchant新增角色内导航别名与canOpenCustomer=false；Customer继续使用CAN_OPEN_MERCHANT=false，不检查商家入口权限，不因旧Combined偏好跳入商家。Combined保持原工作台入口、顾客首页tab及切换偏好，所有云端工作台仍需服务器授权。未删除构建越界检查或混入另一端页面。
+
+新增build-navigation-isolation 21项：实际页面/导航适配器、身份/店铺/隐藏/偏好变化的异步回归，以及3次真实纯编译和产物校验；21通过。与前轮171项及7项merchant-entry-contract联合本轮实际执行199项：199通过、0失败、0跳过、0取消，包含上述21项，不另相加。3份旧测试仅适配导航从页面迁移到适配器的引用/VM依赖，原权限、目标、时序与偏好断言保留，并增加角色门槛断言。
+
+TypeScript noEmit、依赖边界、4个测试MJS语法检查通过。Combined126模块/36页/259产物、Customer73模块/13页/137产物、Merchant85模块/19页/154产物均实际编译成功；独立包不包含另一角色模块/页面或integration源码，全部产物检查通过。上述是TS及离线验收，不是微信平台编译/手机或真实API验证。生产迁移工具、生产部署模板、正式云配置、支付、真实PG并发/恢复和真机仍受阻；详见TENCENT_DELIVERY_READINESS.md。没有新增演示数据，没有数据库/部署/购买操作，没有Git写入。以下历史构建失败按当时结果保留，以本段及历史第23节为最新。
+
+**最新真机预览准备（2026-10-27，源码未提交）：**已完成现有Combined商城的可信Staging配置/构建入口、只走云端的运行模式、实际wx.login接缝和商家工作台前置权限检查，未开发另一套演示商城或生成商品/订单。35项新增安全测试与既有导航/身份/预览检查联合171通过、0失败/跳过；TypeScript、依赖边界、5个MJS语法及Combined编译通过。配置空模板会在创建预览输出前拒绝。
+
+**尚不具备直接真机连通条件：**用户确认未准备Staging API和实际店铺。当前AppID由用户描述为测试号，平台能力/Secret/域名/成员绑定未实际核实；root私有urlCheck=false不能当手机证据，专用输出不复制它。真实profile --prepare、微信平台编译/预览上传、手机扫码/登录/实际操作均未执行。不得将169项离线通过当作真机成功。下一步需独立授权HTTPS Staging/私有数据库/凭据及实际商家绑定，不公开开发数据库；支付等原服务端限制保留。操作文档：[PHONE_PREVIEW.md](PHONE_PREVIEW.md)。上轮购物车未提交修复完整保留；本轮未部署、迁移或进行Git写操作。
+
+**最新购物车修复（2026-10-27，未提交）：**本地源码确认商品/配送共用catch导致配送未配置时隐藏正常商品。现在两路请求分别发布结果和错误，配送未配置仍显示“动画×2，¥30.00”，结算按钮和处理函数均拒绝；商品失败显示错误及未知金额，不回退演示价格。持久化云端/本地购物车不因读取失败而删除；增加身份、API端点、店铺、请求序号及hide/unload失效保护。loadCloudDelivery/结算加载器与后端校验未放宽。
+
+本轮新20项（含19项真实页面/服务函数VM测试和1项模板契约检查）20通过；全套前端导航108通过、0失败/跳过，已包含上述20项，不相加。TypeScript noEmit、新测试MJS语法、依赖边界检查及Combined编译/产物检查通过。Customer/Merchant独立构建分别被既有index.ts→admin和admin.ts→index跨端导航阻断，未改这些源码；全目标build-output检查因此缺customer manifest失败，不能称三端均通过。未在微信工具/真机或真实API验证，未运行数据库/配送配置操作或任何Git写操作。详见历史第21节；既有B3-V2镜像审核状态未改变。
+
 
 **最新：Node运行器一次受控构建及静态镜像身份验收完成，最终批准仍待单独授权。**本轮开始本地/远程main均为 `964273b09d2e33b1c40eaefd2874bc6382a8e2ce`，工作区干净。预检重新核对119文件/ACL、34源码、41缓存、Engine/builder和两份基础镜像后，用户明确回复“授权一次构建，并独占本次 Docker 管理窗口”。重新核验后仅执行一次已展示Buildx命令，2026-10-27 03:32:30—39Z，退出0；npm ci --offline --ignore-scripts --omit=dev实际安装41包。没有重试或修改封存输入。
 

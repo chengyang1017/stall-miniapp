@@ -2,10 +2,13 @@
   <view class="merchant-login-card">
     <view class="merchant-login-title">商家登录</view>
     <view class="merchant-login-desc">登录后由服务器核实你是否拥有此店铺的管理权限。顾客不能通过这个入口获得商家权限。</view>
+    <view wx:if="{{cloudOnly}}" class="merchant-login-desc">当前店铺 {{storeSlug}} · 可信Staging已由构建配置固定，无需输入地址或Token。</view>
+    <block wx:if="{{!cloudOnly}}">
     <view class="merchant-login-label">后端地址</view>
     <input class="merchant-login-input" value="{{apiBase}}" placeholder="https://api.example.com" bindinput="onBaseInput" />
     <view class="merchant-login-label">店铺标识</view>
     <input class="merchant-login-input" value="{{storeSlug}}" placeholder="例如 stall-demo" bindinput="onSlugInput" />
+    </block>
     <button type="primary" loading="{{busy}}" disabled="{{busy}}" bindtap="loginWechat">微信登录并验证商家身份</button>
     <view class="merchant-login-result">{{status}}</view>
     <button wx:if="{{authenticated}}" bindtap="logout">退出本机商家登录</button>

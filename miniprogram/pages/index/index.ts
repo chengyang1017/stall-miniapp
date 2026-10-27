@@ -73,7 +73,7 @@ Page({
     const merchantCfg=cloudCartConfig()
     const merchantPreference=wx.getStorageSync('stall_merchant_home_preference_v1')
     const merchantIdentity=supportIdentity()
-    if(merchantCfg && merchantPreference===merchantCfg.apiBase+'|'+merchantCfg.storeSlug){
+    if(CAN_OPEN_MERCHANT && merchantCfg && merchantPreference===merchantCfg.apiBase+'|'+merchantCfg.storeSlug){
       const merchantSerial=++this.merchantRouteSerial
       try{
         const result=await authorizedGet(merchantCfg.apiBase,'/v1/merchant/stores/'+merchantCfg.storeSlug+'/categories')
@@ -85,7 +85,7 @@ Page({
         if(result&&Array.isArray(result.items)&&stillMerchant&&merchantIdentity===supportIdentity()&&currentCfg&&
            currentCfg.apiBase===merchantCfg.apiBase&&currentCfg.storeSlug===merchantCfg.storeSlug){
           this.setData({entryLoading:false})
-          wx.navigateTo({url:'/pages/admin/admin'})
+          openMerchantWorkspace()
           return
         }
       }catch(e){

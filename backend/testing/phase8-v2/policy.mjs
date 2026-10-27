@@ -7,7 +7,8 @@ export const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a
 export const HEX=/^[0-9a-f]{64}$/, DIGEST=/^sha256:[0-9a-f]{64}$/
 export const PURPOSES=Object.freeze({bootstrap:{role:'observer',scope:'bootstrap-select',state:'bootstrap'},
   initialize:{role:'migrator',scope:'manifest-001-020',state:'bootstrap'},ready:{role:'observer',scope:'ready-select',state:'ready'},
-  fixture:{role:'app',scope:'fixture-connections',state:'ready'}})
+  fixture:{role:'app',scope:'fixture-connections',state:'ready'},
+  business:{role:'app',scope:'business-consistency-v1',state:'ready'}})
 export const check=(value,code)=>requireSafe(value,'phase8_v2_'+code)
 export function images(pg,runner) {
   const database=approvedImage(pg)
@@ -19,12 +20,14 @@ export function images(pg,runner) {
 export function configuration(env,action,pg,runner) {
   check(env.PHASE8_V2_PROFILE===V2.profile,'profile_rejected')
   check(env.PHASE8_V2_AUTHORIZE==='ISOLATED_V2_ONLY'&&env.PHASE8_V2_HOST_EXCLUSIVE==='I_CONTROL_LOCAL_DOCKER','not_authorized')
-  check(['create-db','run'].includes(action)&&env.PHASE8_V2_ACTION===action,'action_not_authorized')
+  check(['create-db','recover-created','run'].includes(action)&&env.PHASE8_V2_ACTION===action,'action_not_authorized')
+  if(action==='recover-created')check(env.PHASE8_V2_RECOVER_CREATED==='START_PINNED_CREATED_ONCE','recovery_not_authorized')
   check(UUID.test(env.PHASE8_V2_INSTANCE||'')&&env.PHASE8_V2_INSTANCE!=='43805bf5-1391-4d3f-b8ce-e3bfa9448d48','instance_rejected')
   if(action==='run') {
     check(UUID.test(env.PHASE8_V2_RUN_ID||'')&&Object.hasOwn(PURPOSES,env.PHASE8_V2_PURPOSE||''),'purpose_rejected')
     if(env.PHASE8_V2_PURPOSE==='initialize')check(env.PHASE8_V2_MIGRATE==='INITIALIZE_NEW_V2_ONCE','migration_not_authorized')
     if(env.PHASE8_V2_PURPOSE==='fixture')check(env.PHASE8_V2_TEST==='V2_FIXTURE_ONLY','fixture_not_authorized')
+    if(env.PHASE8_V2_PURPOSE==='business')check(env.PHASE8_V2_TEST==='V2_BUSINESS_TESTS_ONLY','business_not_authorized')
   }
   check(!['DATABASE_URL','PGHOST','PGPORT','PGUSER','PGPASSWORD','PGSERVICE','PGOPTIONS'].some(k=>env[k]),'connection_override_rejected')
   return {profile:V2.profile,instance:env.PHASE8_V2_INSTANCE,runId:env.PHASE8_V2_RUN_ID,purpose:env.PHASE8_V2_PURPOSE,images:images(pg,runner)}
@@ -49,19 +52,28 @@ function base(c,name,image,config,nonce,running) {
   check(noPorts(c),'host_port_rejected')
   check(h.NetworkMode===V2.network&&Object.keys(c.NetworkSettings.Networks||{}).join()===V2.network,'network_mode_rejected')
 }
+// EnableIPv6 is the authoritative, mandatory boolean in NetworkInspect. Engine
+// may omit the redundant driver option; a present contradictory/ambiguous value
+// remains an error. No daemon defaults or falsy coercion are used as evidence.
+export function networkIsolation(network){
+  const options=network?.Options
+  check(network?.Name===V2.network&&network.Driver==='bridge'&&network.Internal===true&&network.EnableIPv6===false&&
+    options&&typeof options==='object'&&!Array.isArray(options)&&
+    options['com.docker.network.bridge.gateway_mode_ipv4']==='isolated'&&
+    (!Object.hasOwn(options,'com.docker.network.enable_ipv6')||options['com.docker.network.enable_ipv6']==='false')&&
+    (!Object.hasOwn(options,'com.docker.network.enable_ipv4')||options['com.docker.network.enable_ipv4']==='true')&&
+    Object.keys(options).every(k=>['com.docker.network.bridge.gateway_mode_ipv4','com.docker.network.enable_ipv6','com.docker.network.enable_ipv4'].includes(k)), 'network_rejected')
+}
 export function topology(db,volume,network,c,r,sources,{running=true,runner=null}={}) {
   receipt(r,c);base(db,V2.container,c.images.database,c,r.nonce,running)
   check(db.Id===r.dbId&&network?.Id===r.networkId,'resource_identity_rejected')
   check(volume?.Name===V2.volume&&volume.Driver==='local'&&empty(volume.Options)&&labels(volume.Labels,c,r.nonce),'volume_rejected')
-  const options=network?.Options||{}
-  check(network?.Name===V2.network&&network.Driver==='bridge'&&network.Internal===true&&network.EnableIPv6===false&&
-    options['com.docker.network.bridge.gateway_mode_ipv4']==='isolated'&&options['com.docker.network.enable_ipv6']==='false'&&
-    Object.keys(options).every(k=>['com.docker.network.bridge.gateway_mode_ipv4','com.docker.network.enable_ipv6','com.docker.network.enable_ipv4'].includes(k))&&
-    labels(network.Labels,c,r.nonce),'network_rejected')
+  networkIsolation(network)
+  check(labels(network.Labels,c,r.nonce),'network_rejected')
   const expected=running?[db.Id,...runner&&runner.State.Running?[runner.Id]:[]]:[]
   check(JSON.stringify(Object.keys(network.Containers||{}).sort())===JSON.stringify(expected.sort()),'network_members_rejected')
   const e=db.NetworkSettings.Networks[V2.network]
-  check((!running||e.NetworkID===network.Id&&isIP(e.IPAddress)===4&&!e.Gateway)&&!e.GlobalIPv6Address,'endpoint_rejected')
+  check((!running||e.NetworkID===network.Id&&isIP(e.IPAddress)===4&&!e.Gateway)&&!e.GlobalIPv6Address&&!e.IPv6Gateway,'endpoint_rejected')
   check(JSON.stringify(db.Config.Entrypoint)===JSON.stringify(['sh','/phase8/bootstrap-entrypoint.sh'])&&JSON.stringify(db.Config.Cmd)===JSON.stringify(
     ['postgres','-c','log_statement=none','-c','log_min_error_statement=panic','-c','log_parameter_max_length_on_error=0','-c','listen_addresses=*','-c','port=5432']),'entrypoint_rejected')
   const vars=db.Config.Env||[],map=new Map(vars.map(s=>{const i=s.indexOf('=');return [s.slice(0,i),s.slice(i+1)]}))

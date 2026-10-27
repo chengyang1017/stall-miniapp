@@ -9,6 +9,7 @@ import { loadMigrations } from '../phase8/migrations.mjs'
 import { openSQL,inspectBootstrap,verifySQL } from './sql.mjs'
 import { initialize } from './initialize.mjs'
 import { fixture } from './fixture.mjs'
+import { runBusiness } from './business.mjs'
 export async function claimOnce(directory) {
   const {join}=await import('node:path');let f
   try{f=await open(join(directory,'consumed'),'wx',0o600);await f.writeFile('consumed\n');await f.sync()}
@@ -29,7 +30,8 @@ export async function runJob(io) {
     else if(g.purpose==='ready'){
       const c=await pool.connect();try{await c.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');await verifySQL(c,g,migrations,'ready');await c.query('ROLLBACK')}finally{c.release()}
       result={status:'ready_verified',ready:true}
-    }else{
+    }else if(g.purpose==='business')result=await runBusiness(pool,g)
+    else{
       const f=fixture(pool,g);const pids=await f.connections(async x=>x.pids)
       result={status:'fixture_connected',ready:true,distinctConnections:pids.length}
     }

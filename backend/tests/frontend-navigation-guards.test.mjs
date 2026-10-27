@@ -45,12 +45,14 @@ function execute({cloud=false,minimumReached=true,cloudError='',totalCount=2,sho
   }
   const context={wx,
     cloudCartConfig:()=>cloud?{storeSlug:'test'}:null,
+    cloudCartViewKey:()=> 'synthetic-current-context',
     clearDirectPurchase:()=>directClear.push(true),
     getCartDetails:()=>cart,
     minimumOrderShortfall:()=>shortfall
   }
   const fn=vm.runInNewContext(`(function(){${body}})`,context,{timeout:250})
-  fn.call({data:{minimumReached,cloudError,totalCount}})
+  fn.call({cloudContext:'synthetic-current-context',data:{minimumReached,cloudError,totalCount,
+    cloudMode:cloud,deliveryError:'',cloudLoading:false,deliveryLoading:false,cloudDeliveryReady:true}})
   return {navigation,toasts,directClear}
 }
 
