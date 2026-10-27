@@ -14,3 +14,10 @@
 - Next BE task: once operator can access Windows Docker Engine, **read-only** re-check immutable runner image identity against committed audit, document results and request separate digest-specific approval. Do not create V2 DB automatically.
 - Coordination: share `HANDOFF.md` with frontend owner, let them proceed with demo and static builds while backend/WeChat credentials remain blocked.
 - Review links: `docs/testing/PHASE8_V2_RUNNER_INDEPENDENT_REVIEW.md`; `backend/PAYMENT_INTEGRATION_CONTRACT.md`; `backend/APP_SEPARATION_READINESS.md`; `backend/testing/phase8-v2/README.md`.
+
+## BE-02 — Read-only runner identity check prepared (2026-10-27)
+
+- Added `backend/scripts/audit-phase8-v2-runner-readonly.ps1` and `docs/delivery/backend/BE02_RUNNER_AUDIT.md`.
+- **Not executed locally:** no Docker access from GitHub; script itself has not been validated by a local PowerShell run. Treat any console check as pending.
+- Approval remains `false`; no containers, networks, volumes, DB, or migrations created/modified.
+- Next: operator performs read-only identity and supply-chain inspection locally and returns actual output; decide separately whether to approve exact digest.
