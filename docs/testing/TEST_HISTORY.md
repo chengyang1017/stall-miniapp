@@ -323,3 +323,137 @@ Git HEAD / 分支 / 工作区是否干净：
 - 未执行：构建上下文准备、npm安装、镜像下载/构建/审核、创建凭据/UUID、Docker资源创建或修改、DB连接/SQL/迁移、API/worker启动、真实业务测试。没有生成真实运行回执或数据库ready证据。
 
 结果：V2 源码与离线门槛已建立，**旧B3仍失败，B4仍阻塞**。可进入另行授权的 V2 镜像审核准备，不能自动启动。真实挂载/UID/ACL、网络出口隔离及 PostgreSQL 语义均待验收。详见 [V2 契约](../../backend/testing/phase8-v2/README.md)。本节随本轮授权提交普通推送，具体SHA以包含本节的Git提交为准，不预填尚未生成的SHA。
+
+## 15. 第八轮 B3-V2：运行器镜像供应链准备
+
+日期：2026-10-27（客户端Asia/Kuala_Lumpur，档案Asia/Shanghai，同为UTC+8）。起始HEAD `dd83d09d51797c05aff8a5a0db8e3793d49c54cd`，main，工作区干净。仅更新本档案、TEST_STATUS和KNOWN_ISSUES；不修改V2源码、策略、Dockerfile、依赖或审核文件。
+
+### 15.1 官方Node候选与来源
+
+推荐候选 **`docker.io/library/node:24.22.1-bookworm-slim` / linux/amd64**，不是自动批准。24.x已按官方日程于2026-10-20进入Maintenance LTS，支持至2028-04-30；24.22.1为2026-10-21的安全发布。26.x计划2026-10-28进入LTS，本次不为了新版本临时更换主版本。选择Debian/glibc版避免引入Alpine/musl适配差异；没有声称已完成漏洞扫描。
+
+来源交叉核对：
+
+- [官方镜像维护清单](https://github.com/docker-library/official-images/blob/master/library/node)：Maintainers为Node.js Docker Team，GitRepo为nodejs/docker-node；该版本bookworm-slim目录指向提交 `80f02a542da739e6a662451d1db66456a0dea253`。
+- [该提交的Dockerfile](https://github.com/nodejs/docker-node/blob/80f02a542da739e6a662451d1db66456a0dea253/24/bookworm-slim/Dockerfile)：NODE_VERSION=24.22.1、node UID/GID1000；官方构建步骤包含Node发行包签名/校验和核验。本轮没有重新下载二进制或独立执行GPG验证。
+- [Node官方发布](https://nodejs.org/en/blog/release/v24.22.1)、[官方支持日程](https://github.com/nodejs/Release/blob/main/schedule.json)。
+
+Registry读取时点 `2026-10-27T01:49:01.682Z`（UTC）。仅以临时匿名只读token请求 `registry-1.docker.io/v2/library/node` 的manifests及配置JSON；token只在内存，不打印、不保存。没有请求镜像层、npm tarball或其他依赖。再次读取索引，摘要未变。
+
+| 身份 | 实际值 | 本轮证据 |
+| --- | --- | --- |
+| 多架构OCI索引 | `sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205` | 原始响应字节重算SHA256=响应Docker-Content-Digest |
+| linux/amd64平台manifest | `sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae` | 索引descriptor、1929字节长度、响应头与重算SHA256一致 |
+| OCI配置blob | `sha256:dc1f22974dab4be31a8b56d58cb1f8fc218e83de83ccd831d885b3d7ac1223fb` | manifest.config.digest=配置响应字节SHA256；不是本地Image ID的替代值 |
+| 配置创建时间 | `2026-10-21T11:35:50.393702483Z` | config.created；不是本机下载/审核时间 |
+| 基础Debian摘要 | `sha256:ec31d744f83f4a73447ba045aaab9409997efe5cc706eca4890c1be36cc1606a` | amd64 descriptor的base.digest注解，本轮未另行拉取/批准该基础镜像 |
+| 来源注解 | `nodejs/docker-node.git#80f02a542da739e6a662451d1db66456a0dea253:24/bookworm-slim` | 与官方维护清单/源码一致，不作为独立签名证明 |
+| 配置环境 | NODE_VERSION=24.22.1、YARN_VERSION=1.22.22、标准PATH | 符合V2允许的环境字段；base默认root，最终Dockerfile改为1000:1000 |
+| 本地Image ID / RepoDigest | **未知** | 本机Engine不可达，不能把配置摘要或Registry摘要填充为本地观测值 |
+
+完整索引含6个descriptor：
+
+| 平台/类型 | 摘要 |
+| --- | --- |
+| linux/amd64 | `sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae` |
+| amd64对应attestation-manifest（unknown/unknown） | `sha256:3089de3a9d5cf514855082aa236fe9a1bf4b264d7460dccf98a9977c6af365cd` |
+| linux/arm64/v8 | `sha256:294d33a992da016e059121deb0c979dffb4478b77a304376bca41393297c1ea2` |
+| arm64对应attestation-manifest（unknown/unknown） | `sha256:f6322dd419dac62e3f5462da86f11a1cb8fe0a7b52ab85d72721fb4a6681c6a4` |
+| linux/ppc64le | `sha256:41a7d6337c4dfc9f286af709ad6551d931660f822c464e134f329a799a7f9cb9` |
+| ppc64le对应attestation-manifest（unknown/unknown） | `sha256:ec43273f93e3f68d1ecb2f98de307afb48f77fc608db7305e1daebcd2bcd3b52` |
+
+attestation descriptor本身不等于已验证签名/完整证明链。本次未获取或验证其payload。摘要相同的重复读取也不算独立来源证据。后续固定baseReference建议明确使用已核对的amd64平台引用 `node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae`，同时保留索引与config关系；未登记到审核文件。
+
+### 15.2 本机Docker检查及限制
+
+- Docker CLI 29.6.2，windows/amd64；Buildx `v0.35.0-desktop.2`。当前context为desktop-linux，端点 `npipe:////./pipe/dockerDesktopLinuxEngine`，符合V2允许的本机端点格式。
+- version/server、info/DriverStatus、image ls及候选image inspect均无法连接该管道；在解除文件沙箱限制的只读复核中仍是“系统找不到指定文件”。**仅证明Engine不可达，不推断Docker Desktop一定已停止，也不判定镜像不存在。**未启动、唤醒或更改Docker配置。
+- 因此本地候选镜像、实际Engine版本、containerd/classic image store、内置builder及其已缓存基础层均未验证。没有根据旧PostgreSQL Image ID等历史表现推断当前存储后端。
+- buildx version/build --help只读取CLI能力。首次buildx ls因尝试打开用户目录下.lock被沙箱拒绝，未获得builder清单；未提升权限重跑该命令。后续仅读取已有buildx实例配置目录，没有实例记录；默认context builder可能不以该文件形式存储，不能据此说“没有builder”。
+- 未枚举或访问旧B0数据库/密码/回执。旧资源运行状态本轮未重新核验；没有停止、重启或修改任何项目资源。
+
+### 15.3 锁文件、缓存、白名单与摘要
+
+lockfileVersion=3，根name/version/三项依赖与package.json一致；41个非dev包，148条普通依赖边全部能在lock中解析且版本满足范围。41项resolved均为registry.npmjs.org，均有SHA512 integrity；无缺失resolved/integrity、无hasInstallScript、无os/cpu限制，1个optional包为pg-cloudflare。声明的Node engine范围兼容24候选；没有执行包代码或网络npm查询。
+
+实际用户缓存 `C:\Users\USER\AppData\Local\npm-cache`：41/41所需内容文件存在，相应41个request-cache索引的URL与integrity匹配；`C:\Users\USER\.npm`不存在。最初沙箱重定向LOCALAPPDATA下未找到缓存，不将该虚拟路径结果误作主机缺失。只读取匹配索引和文件stat，**未读取tarball内容/SRI重算，未运行npm ci/verify/install或改变缓存**。所以结论是“缓存元数据齐全，离线安装尚未验证”，不是“离线安装通过”。
+
+构建上下文准备器静态契约：仓库外全新目录，授权开关，已有目录拒绝；仅复制34个白名单文件（含20份001—020原SQL），统一LF；生成bundle.json、Dockerfile、Dockerignore。白名单不含.env、凭据、回执、server入口或整个仓库；源码只读manifest和原迁移哈希检查通过。**本轮未调用--prepare，未创建构建目录。**
+
+| 输入摘要 | 当前值 |
+| --- | --- |
+| 源码bundle.json的预期SHA256 | `f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289` |
+| Dockerfile.runner原始字节SHA256 | `a8518b86a2af948a3090a4630c49c6628d66560c3aceaf627a5bac89d3099eb7` |
+| package-lock.json原始字节SHA256 | `306ec2ccef7e599b76f6b5d37e57039584a1d721ec5b42ee87b33064d4cbc3a1` |
+| prepare-phase8-v2-context.mjs原始字节SHA256 | `a429bfa232d9e769cb294f0e205a1fa49725fb14065329c62dc028ee64b998c2` |
+
+源bundle不是完整构建上下文摘要：不覆盖Dockerfile、Dockerignore、npm-cache、base或构建参数。下阶段需另生成完整输入清单，校验实际payload没有额外文件/重解析链接，记录文件字节/模式、精选缓存SRI和构建参数，保存清单自身SHA；不能把上表bundle字段冒充完整context hash。已有准备器不自动完成缓存精选或完整上下文审计。
+
+不得复制整个用户npm-cache到构建上下文：可能携带其他项目/私有URL/缓存元数据。应单独授权，从lock所指的41份内容按SRI校验后重建专用最小cache/index，不拷贝.npmrc、认证headers、日志或用户配置。当前没有该专用缓存或完成记录，不能直接build。
+
+Dockerfile在构建阶段通过 `npm ci --offline --ignore-scripts --omit=dev` 使用COPY进来的cache；基础层完整可用、缓存字节有效及npm兼容时，npm不需要公网依赖下载。现有Dockerfile把cache留在最终镜像中，故精选无敏感元数据是硬前提。最终USER=1000:1000；只读root/cap-drop/NNP由V2容器创建及身份策略强制，不是Dockerfile自身实现只读root。尚未实际创建运行器或验证Windows挂载可读性。
+
+### 15.4 固定镜像方案比较与结论
+
+| 方案 | 是否可满足当前策略 | 运行前置条件/边界 |
+| --- | --- | --- |
+| **首选：内置docker driver + containerd image store + image exporter** | 条件可行：exporter支持store及canonical name，image store可产生真实RepoDigest；本地记录必须实际可按裸repo@digest解析 | 先核实真实Engine/image store/builder和完整base。`push=false`，保持 `stall-phase8-r2-runner` 的现有精确repo；不是推到Docker Hub library仓库。当前Engine不可达，未证明本机支持 |
+| OCI layout导出、审计后导入Docker containerd store | 条件可行，不保证任意docker load都保留所需引用 | docker driver不能直接提供OCI exporter；需要另行审核/授权docker-container或其他builder、固定BuildKit镜像及新增资源。需审计index/manifest/config、引用注解和导入后实际inspect；本轮未创建builder或OCI文件 |
+| 专用本地/私有Registry分发 | **当前不可直接采用** | 通常得到 `localhost:port/...@digest` 或私有域名引用，现有policy/grant精确repo拒绝；需要额外registry镜像/端口/权限。不得剥掉前缀伪造RepoDigest。若首选不可用，须另行审批显式分发身份设计及回归，不能偷偷放宽 |
+| 普通build/--load、再手动tag或拼接digest | 不足以证明 | classic store常只有配置Image ID；即使某containerd版本能显示digest，也必须核验真实固定引用、manifest对应和本地数据，不把tag/字符串当来源证明 |
+
+机制依据：[Docker image exporter](https://docs.docker.com/build/exporters/image-registry/) 的name-canonical/store/push参数、[docker driver](https://docs.docker.com/build/builders/drivers/docker/) 的本地存储行为、[containerd store说明](https://docs.docker.com/desktop/features/containerd/)、[Moby containerd ImageInspect源码](https://github.com/moby/moby/blob/master/daemon/containerd/image_inspect.go)。Moby该源码的ID可能是target descriptor摘要，而非config摘要；具体以本机实际版本为准。RepoDigest在本地可由descriptor派生，不是独立的外部来源签名。OCI边界见[exporter文档](https://docs.docker.com/build/exporters/oci-docker/)。这些是官方机制与源码支持的方案，不是本机实测通过。
+
+审核完成必须同时留存：原base官方来源/索引/平台/config及实际本地身份、34文件bundle、完整context清单、lock+精选缓存SRI、Dockerfile、构建参数/工具版本/日志、产物OCI根descriptor/平台manifest/config、实际Image ID及RepoDigests和固定引用inspect结果。三个digest层次不能互相填充。仍保持审核文件approved=false，只有后续明确授权且全部验证后才能登记。
+
+### 15.5 下次所需授权及实际命令（本轮未执行）
+
+授权应分开：①允许用户启动/恢复Docker Desktop并做本机只读复核；②如果缺基础层，明确授权获取上述固定Node引用（不是跟随浮动标签）；③允许仓库外生成唯一全新上下文及精选缓存、读取已核对的41份tarball进行SRI校验；④确认containerd + 内置docker driver后，授权一次受控镜像构建及本地image-store写入/构建缓存，不包含任何V2 DB/runner容器创建；⑤独立人工审核登记。OCI备用builder/私有registry绝不隐含在④中。
+
+未来只读前置命令：
+
+```powershell
+docker context inspect desktop-linux
+docker --context desktop-linux info --format '{{json .DriverStatus}}'
+docker --context desktop-linux buildx inspect desktop-linux
+docker --context desktop-linux image inspect node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae
+```
+
+不加buildx `--bootstrap`，不创建新builder。核对image store/builder端点、Linux/amd64及完整本地基础层；若需要切换image store，须单独评估其他项目影响并授权，不能为构建擅改。当前本地是否有镜像未知，所以不自动执行pull；若②另行批准且确定缺失，才可精确获取：
+
+```powershell
+docker --context desktop-linux pull --platform linux/amd64 node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae
+```
+
+③授权后，全新目录名只是候选路径，不是本轮创建的目录：
+
+```powershell
+$env:PHASE8_V2_BUILD_CONTEXT_AUTHORIZE = 'PREPARE_NEW_CONTEXT_ONLY'
+$env:PHASE8_V2_BUILD_CONTEXT = 'C:\Users\USER\StallPhase8-V2-Runner-Context-dd83d09'
+node backend/scripts/prepare-phase8-v2-context.mjs --prepare
+```
+
+然后必须完成精选缓存/SRI/额外文件/完整context清单检查；**现有脚本不会完成此步，本轮没有实施缓存准备工具，未完成时不得跳到下面build命令**。确认上下文、base和工具版本未漂移，④授权后候选命令为：
+
+```powershell
+docker --context desktop-linux buildx build --builder desktop-linux `
+  --platform linux/amd64 --pull=false --network none --provenance=false --sbom=false `
+  --build-arg NODE_BASE=node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae `
+  --build-arg BUNDLE_SHA256=f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289 `
+  --build-arg SOURCE_DATE_EPOCH=1793023505 `
+  --output 'type=image,name=docker.io/library/stall-phase8-r2-runner:review-dd83d09,push=false,store=true,name-canonical=true,oci-mediatypes=true,rewrite-timestamp=true' `
+  --metadata-file C:\Users\USER\StallPhase8-V2-Runner-Context-dd83d09\build.metadata.json `
+  C:\Users\USER\StallPhase8-V2-Runner-Context-dd83d09
+```
+
+以上时间戳取源码基线commit，不是今天时间；base/bundle/工具链改变时重新审核。metadata输出放上下文根目录时须确认Dockerignore将其排除，且预先不存在，防止覆盖旧审计材料。使用单平台和关闭自动provenance/SBOM避免隐含scanner镜像下载；来源证据以显式输入/构建记录保留。时间归一机制见[Docker文档](https://docs.docker.com/build/ci/github-actions/reproducible-builds/)，未验证重复构建能产生相同digest。
+
+`--network none`约束RUN网络，`--pull=false`只是不强制更新基础镜像；它们不等于禁止BuildKit resolver联网或证明所有基础层本地齐全。须先核实完整base和内置frontend，记录任何resolver访问；不能在缺基础层时偷偷下载或声称整个构建已离线通过。若上述exporter属性/默认builder在实际Engine不支持，停止，不回退浮动标签、--load假digest或自动创建备用builder。
+
+构建后从metadata提取真实根descriptor摘要，再按 `stall-phase8-r2-runner@sha256:<实际产物摘要>` 执行只读image inspect（不使用带tag@digest形式）；确认RepoDigests包含精确短引用或现有策略允许的docker.io/library完整形式，读取实际Image ID（不可预填config digest）、Linux/amd64、NODE_VERSION、USER、ENTRYPOINT/CMD和bundle label，必要时离线审计层内容/额外文件。未通过时保持未批准。新digest不能在构建前编造。
+
+### 15.6 本轮验证与结论
+
+12个相关MJS的node --check通过；只读源码/manifest/迁移摘要/当前未批准拒绝断言通过。前轮235项离线安全回归**本轮未重跑**，仍作为历史结果；未新增测试或修改既有断言。网络操作仅官方网页/Registry元数据和授权Git同步；Registry匿名token不落盘。Docker只读查询失败未触发自动启动。
+
+仅准备调查完成，不具备直接创建V2或执行B4条件。Engine可达性、本地Node基础层、image-store/exporter实测、精选缓存及完整上下文、真正构建与人工审核均待后续授权。没有创建目录/密码/UUID/镜像/容器/卷/网络、下载依赖、读旧密码或failed回执、连接数据库、运行迁移/API/worker。文档随本轮授权提交普通Push；提交SHA由包含本节的Git提交确定，不预填未来SHA。

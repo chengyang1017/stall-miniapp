@@ -1,18 +1,22 @@
 # 微信商城测试状态
 
-维护日期：2026-10-26，北京时间（Asia/Shanghai，UTC+8）。
-本次 B3-V2 实现基线：`083f67548d044c29ad4a9e0497d791e4348fd5f8`，main，开始工作区干净。前轮 B3-R 设计基线为 `70145de43af8d649f43883dd6254af639cba8cac`。首次创建失败记录为 `934a2039b9b5dd6e6971c2d1b71cbcaae84842a6`，此前历史保留。
+维护日期：2026-10-27，档案使用北京时间（Asia/Shanghai，UTC+8）；执行客户端为Asia/Kuala_Lumpur，同为UTC+8。
+本次运行器供应链准备基线：`dd83d09d51797c05aff8a5a0db8e3793d49c54cd`，main，开始工作区干净。前轮 B3-V2 实现基线为 `083f67548d044c29ad4a9e0497d791e4348fd5f8`，B3-R 设计基线为 `70145de43af8d649f43883dd6254af639cba8cac`。首次创建失败记录为 `934a2039b9b5dd6e6971c2d1b71cbcaae84842a6`，此前历史保留。
 
 ## 当前结论
 
-**B3 已按明确授权执行一次受控首次创建，但启动后验收失败：phase8_port_binding_rejected。容器已运行且 healthy，专用卷/网络及 bootstrap 已产生；回执为 failed，未达到 created_verified，更不是 ready。保留现场，禁止盲目重试或进入 B4 迁移。**
+**B3 已按明确授权执行一次受控首次创建，但启动后验收失败：phase8_port_binding_rejected。历史创建/诊断时容器运行且 healthy，专用卷/网络及 bootstrap 已产生；回执为 failed，未达到 created_verified，更不是 ready。本轮Engine不可达，未重新确认旧资源当前运行状态。保留现场，禁止盲目重试或进入 B4 迁移。**
+
+**2026-10-27供应链准备：推荐官方 `node:24.22.1-bookworm-slim`（linux/amd64），来源及完整摘要已核对；没有批准镜像。**官方索引、amd64清单和配置内容的SHA-256分别匹配响应/descriptor；官方构建提交为 `80f02a542da739e6a662451d1db66456a0dea253`。主机实际npm缓存41/41所需包的索引与内容文件存在，148条依赖边解析正确，但未读取tarball内容校验、未运行npm ci。34文件源码bundle可只读生成摘要，实际构建目录未创建。
+
+当前阻碍：Docker CLI 29.6.2、Buildx 0.35.0-desktop.2可用，desktop-linux指向允许的本机管道，但 `npipe:////./pipe/dockerDesktopLinuxEngine` 不存在/不可达；本地Node镜像、实际Engine版本、image store及builder能力**未验证**，不能写成“镜像不存在”。优先评估containerd image store的image exporter + canonical name（不push）；只有真实固定引用、RepoDigest、Image ID、bundle及加固metadata全部通过才可登记。不能以普通tag、构造RepoDigest字符串或切换私有registry名称绕过当前策略。具体候选摘要、缓存边界和下一次授权命令见[历史第15节](TEST_HISTORY.md#15-第八轮-b3-v2运行器镜像供应链准备)。
 
 **B3-V2：方案 A 的独立源码和安全回归已实现；真实环境尚未创建/验收。**新增 `internal-runner-v1` 宿主控制器、固定任务运行器、严格网络/镜像/挂载/身份策略、一次性 grant、只读 bootstrap 核验、原始迁移衔接和真实 pg 连接夹具。运行器镜像审核仍为 `approved=false`，真实操作默认拒绝；新凭据、UUID、镜像及资源均未生成。旧 B3 继续失败，B4 继续阻塞，没有放宽旧端口断言或接管 failed 实例。
 
 只读诊断补充：Compose 的请求正确；当前 Engine 的 internal-only 网络没有实际建立所需的宿主 NAT 端口映射，是 B0 网络设计与宿主访问要求的冲突，不是只需放宽元数据断言。默认 bridge 的重建已找到首次创建命令之前的 Engine 启动/缓存同步证据；不能据此推断数据损坏，也未验证其他应用全链路无影响。详见下方诊断及历史第 10 节。
 批准镜像未变，001—020 商城业务迁移未执行；真实 PostgreSQL 业务并发、行锁、事务、死锁和故障恢复验收均未完成。bootstrap 完成来自容器日志标记，尚未独立执行 SQL 身份/状态核验。
 
-首次创建阶段有已授权的 bootstrap 写入，前轮诊断仅读现场。本轮 B3-V2 仅开发独立代码、合成 transport 回归、静态检查和 Compose config 纯解析；没有 Docker Engine 资源操作、数据库连接/SQL、迁移或凭据/回执访问，不把单元测试当作环境恢复成功。
+首次创建阶段有已授权的 bootstrap 写入，前轮诊断仅读现场。前轮 B3-V2 交付独立代码、合成 transport 回归、静态检查和 Compose config 纯解析；本轮供应链调查只读源码、缓存元数据、官方Registry及Docker镜像查询。两轮均没有Docker资源操作、数据库连接/SQL、迁移或私人凭据/回执访问，不把单元测试或镜像元数据当作环境恢复成功。
 
 ## 证据分类
 
@@ -42,6 +46,7 @@
 | B3 本次受控首次创建 | 1 次执行，退出码 1；phase8_port_binding_rejected（B3-CREATE） | 原入口启动后运行态端口检查拒绝 | 容器 healthy、回执 failed；不计入任何测试通过数量，未重试 |
 | B3-R 设计阶段 | 原138项重跑：138通过、0失败、0跳过；新增0项 | 既有两份Phase8离线安全测试，15个MJS语法检查 | 假Docker/PG transport，不验新架构；无源码修复，B3仍失败/B4仍阻塞 |
 | B3-V2 实现阶段 | 原138项 + 新97项：235通过、0失败、0跳过；本轮实际运行 | `phase8-v2.unit.test.mjs`，合成 Docker/PG transport；14个新增MJS语法检查、TypeScript静态检查、Compose纯解析通过 | 没有真实容器/DB；runner 镜像未批准，旧B3失败/B4阻塞保持 |
+| V2供应链准备（2026-10-27） | 12个MJS语法及只读manifest/lock/未批准拒绝断言通过；235项为前轮历史，本轮未重跑 | 官方Registry只读元数据、实际用户缓存索引/文件stat、源码白名单及SHA核对 | Engine不可达；未构建/下载/生成上下文/安装/批准，无真实镜像或数据库验收 |
 
 **不计算全仓唯一测试总数。**165 包含前端 88；124 是原 111 项演进后的测试集，而不是再新增 124 项。不能把这些不同时间、不同子集的数字相加。
 
@@ -51,7 +56,7 @@
 
 97 项新增回归覆盖策略与执行顺序，不是 PostgreSQL 集成结果；其中持久化 grant 消费测试只使用测试自行创建的临时目录，不涉及任何私人凭据目录。Compose 解析使用合成变量与空文件路径，未读取密码。`fixture` 目前是两个业务连接 + 一个 READ ONLY 事务观察连接的真实 pg 接缝，固定任务只诊断不同 backend PID，未执行并发下单/库存场景。
 
-下一步只可申请 **V2 镜像供应链审核准备**：审核固定 Node base、离线依赖缓存、构建产物清单、bundle 摘要及运行器镜像实际 ID/RepoDigest。之后还需独立授权新材料、创建、网络实际隔离和 bootstrap 只读验收；001—020 与业务集成测试仍需另外授权。当前没有任何 V2 实际运行成功证据。
+供应链准备已完成只读调查，**尚未具备直接构建条件**。下一步先另行授权启动/恢复Docker Desktop可达性（本轮不操作），只读确认containerd image store和内置docker driver，再分别授权固定Node基础层获取、仓库外上下文/精选缓存准备及受控离线构建。源bundle不是完整构建上下文摘要，仍须记录Dockerfile、精选缓存SRI、输入清单、构建参数及产物descriptor；详见历史第15节。之后新材料、V2创建、网络实际隔离、bootstrap、001—020及业务测试继续分别授权。当前没有任何V2实际运行成功证据。
 
 ## 当前可确认的源码事实
 
