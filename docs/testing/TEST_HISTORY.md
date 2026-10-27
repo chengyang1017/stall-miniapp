@@ -530,3 +530,84 @@ Compose断言验证r2项目、无发布端口、pull_policy=never、internal/iso
 仍不具备**直接执行**运行器构建的条件。下一轮应先单独授权恢复Desktop可达性（或由用户自行恢复），重新只读核对Engine/image store/builder/本地基础层及旧资源身份；随后分别授权精选cache与正式context、必要的固定base获取、受控构建/产物审核。只有后续实际兼容核验通过，才可申请包含构建写入的执行授权。不得自动开始这些步骤，旧B3仍失败，B4仍阻塞。
 
 本轮未创建/启停/修改Docker资源、拉取/构建/导入镜像、创建V2材料、读取旧实例密码/回执、连接数据库、执行迁移或启动API/worker。实际网络仅官方元数据及授权Git同步。拟提交仅三份档案及上述审计JSON；提交与普通Push结果以最终Git核验为准，不预填未来SHA，也不将本轮235项离线通过称为真实PostgreSQL集成通过。
+
+## 17. 第八轮 B3-V2：Engine恢复后的Docker只读验收
+
+日期：2026-10-27，时点以下为UTC（本地UTC+8）。用户已手动启动Docker Desktop；起始本地HEAD/远程main均为 `d63c80a553c2a852af485a1f289a146e86c018ed`，main，工作区干净。本轮只补足此前受Engine阻塞的元数据检查，不授权启动、切换或修改任何Docker资源/builder，不使用旧密码或连接数据库。
+
+### 17.1 Engine与builder（已确认）
+
+`2026-10-27T02:26:18.986Z`真实查询：context=desktop-linux，本机endpoint=`npipe:////./pipe/dockerDesktopLinuxEngine`，SkipTLSVerify=false；Engine29.6.2/Git3d80467、linux/amd64，Docker Desktop4.85.0(235549)，containerd v2.2.5、runc1.3.6、docker-init0.19.0。Storage Driver=overlayfs、DriverStatus中的driver-type=io.containerd.snapshotter.v1，**containerd image store前提已实测确认**。Engine ID在本次info快照中保持 `055d945d-b3f7-4a50-adaa-423c2cde2b60`。
+
+执行 `docker --context desktop-linux buildx ls` 和 `buildx inspect desktop-linux`，未加--bootstrap、未create/use或修改builder：
+
+- default与desktop-linux均为已有docker驱动builder；当前选中desktop-linux。
+- desktop-linux节点Endpoint=desktop-linux、running、BuildKit v0.31.2；Last Activity仍为 `2026-10-22 11:42:37 +0000 UTC`，没有发起构建。
+- 平台：linux/amd64、amd64/v2、v3、v4、arm64、riscv64、ppc64le、s390x、arm/v7、arm/v6。
+- worker.executor=containerd，worker.containerd.namespace=moby，snapshotter=overlayfs；worker.network=host。这个worker标签不能作为RUN或整个构建出口隔离证明，后续仍需--network none及基础层/依赖预备；不自动更改其网络。
+- 尾部再次不带--host查询context show仍为desktop-linux，端点不变。显式--host时context show可显示default，不误记为全局context切换。
+
+本机依赖的[BuildKit v0.31.2源码](https://github.com/moby/buildkit/blob/v0.31.2/exporter/containerimage/export.go)支持name-canonical/store/push选项；[Docker image exporter文档](https://docs.docker.com/build/exporters/image-registry/)和[内置driver说明](https://docs.docker.com/build/builders/drivers/docker/)与上述前提相容。**已确认支持机制和本机环境前提，不是canonical引用实际导出通过**。最终裸repo@digest解析、RepoDigest/Image ID/descriptor/bundle label仍须另行授权build后实测。源码还明确rewrite-timestamp与unpack同时为true会冲突；旧候选命令中的可选时间归一项需要结合实际driver设置校核，未宣称本轮证明所有参数一次构建成功。
+
+### 17.2 基础镜像（Node缺失，PG匹配）
+
+`02:28:01.498Z`在同一固定endpoint上只读image inspect：
+
+| 引用 | 实际结果 |
+| --- | --- |
+| `node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae` | No such image |
+| `node:24.22.1-bookworm-slim` | No such image |
+| `postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36` | 存在；Image ID和RepoDigest均与批准记录精确匹配；linux/amd64，PG_VERSION=16.15 |
+
+PostgreSQL Descriptor为OCI index、digest=f461…、size=10301，配置created为 `2026-10-21T22:57:10.664514874Z`。本地ID与index digest相同不是两份独立来源证明。Node候选没有可报告的本地Image ID/RepoDigest/平台，不能用官方配置digest预填。额外image ls未发现node仓库行或候选已知index/platform/config ID；不由此推断所有底层字节在其他镜像中都不存在，但**选定固定引用尚不可用，需单独授权获取**。没有pull、tag、build或导入；runner审核仍为approved=false。
+
+### 17.3 旧B0及其他资源快照
+
+首次info返回36镜像、11容器（1运行/10停止）；`02:30:31.266Z`逐项inspect及随后info为11个exited、0运行/11停止。`02:33:27.814Z`复核仍无运行容器、相同11个容器ID。以最新逐项状态报告，不把用户较早实测或初始info当成当前状态。仅凭这些快照不能判断统计切换的触发者/具体恢复机制，没有隐瞒差异或自动修复。
+
+| 容器 | 本次ID | 最新状态 |
+| --- | --- | --- |
+| stall-phase8-pg16 | `355ecc6045fa467319f906363d521a8c764ed1aabde737a3ca364847b89cfd06` | exited |
+| backend-postgres-1 | `45941853a7d833be35585f5f66d1da2065ac40500ade71f682db2cf63a0745d8` | exited |
+| clyven_backend_server-postgres-1 | `ab7b56b8db176a16cc1463a099792000a65b8770daca82419ad43547f6584835` | exited |
+| shangchenghouduan_server-postgres_test-1 | `a022681b2496bb7324f0676b01eef6426f4c1ae021284f059c87a46bab5f7cfc` | exited |
+| shangchenghouduan_server-postgres-1 | `5df8966045e96270b97f4211bf6a7fbdd0a613112856acf3b683d57d7c2ed9c3` | exited |
+| shangchenghouduan_server-redis-1 | `cbe24731b6636ec7d65c77e9d847a859080662b8aae2970518d2e405b1ed998a` | exited |
+| shangchenghouduan_server-redis_test-1 | `2b82da11fce4c43b9aed7d20a76b61bfdd24257e56be61240872722f8a9ae6d9` | exited |
+| glyphora_backend_server-postgres-1 | `d823d411bd945b184686455b1af8391b1f07342bf23c9864cd39d96b269dc651` | exited |
+| glyphora_backend_server-postgres_test-1 | `17535509e609d4281bd8baeb4ccf0ddfeffcaf64ea74b8948ba565d084faa06a` | exited |
+| glyphora_backend_server-redis_test-1 | `64256f7f7974e9588b9376880e62b8d7ac51444abfcd2ae30cc08c4aad42e46c` | exited |
+| glyphora_backend_server-redis-1 | `9294df5d594480c4bbf11d8e1252e4c1eedcbf8b2b50e84d8eaf97472ff1abb4` | exited |
+
+旧B0：原容器ID、镜像固定引用/Image ID、Compose project=stall-phase8-b0、service=phase8-postgres、scope=isolated-integration及实例UUID `43805bf5-1391-4d3f-b8ce-e3bfa9448d48`匹配历史。容器/卷/网络的nonce格式正确且三者一致，仅在内存比较，未打印；没有读取原回执内容做nonce比对。StartedAt仍为 `2026-10-26T12:03:45.995727695Z`，FinishedAt=`2026-10-27T02:16:22.509638868Z`、ExitCode255、RestartCount0、restart=no。结束时间早于本轮首次Engine检查。停止容器的Health字段是starting，**不能将其当作正在启动或健康**；停止原因和数据库内容未验证。
+
+旧B0仍唯一配置stall-phase8-network，数据挂载为stall-phase8-data到/var/lib/postgresql/data，7个bind均只读，无其他数据卷。HostConfig仍请求127.0.0.1:55433，停止态NetworkSettings.Ports={}；不把停止态空映射当作解决或重新复现了历史运行态端口故障。
+
+11个卷均可枚举：stall-phase8-data、backend_stall_dev_pgdata、clyven_backend_server_shipin_backend_data、Glyphora的glyphora_backend_data/glyphora_backend_test_data两个具名卷、商城的shangchenghouduan_data/shangchenghouduan_test_data两个具名卷，以及4个匿名卷（名称前缀a04cbb249303、b51b1b7c2c72、d0c612f98600、e45bf72b142f）。具名卷的完整名称带各自Compose项目前缀；均未挂给B0。旧Phase8卷创建时间仍为 `2026-10-26T12:03:35Z`，local。没有读取卷目录或数据库文件。
+
+| 网络 | ID | 属性 |
+| --- | --- | --- |
+| backend_default | `1dd13ad0a2fad48c9e3ae94191f0ecb2f42112511829eddb82dc159cf8fae72c` | bridge，非internal |
+| bridge | `5e14091728c748828481f460475823e716caf025569eda7855cb59b4de746426` | bridge，非internal |
+| clyven_backend_server_default | `9e94983b9531a895c548f706fb5870b05e86a4b514eecd5f56cd49c477f609e8` | bridge，非internal |
+| glyphora_backend_server_default | `469479ed8c2fc9d29dd9bf34aca633ad24febebc745aa76125408b4a2e985927` | bridge，非internal |
+| host | `e170620f17aedea2cce703fb4081ff731c3d7ec5d1e01409baf081110b663a21` | host |
+| none | `d7bc970371faad74a3e1ca3f789ec79dc3568bcdbc52ad69165898f965d1616f` | null |
+| shangchenghouduan_server_default | `63c925e0ef4f538162db0bf055bf37639d6293779ee336d6d1b2c4d4d47375bd` | bridge，非internal |
+| stall-phase8-network | `7918eeb7a1a787d8c4afb1871beecd1d36e61e16ba7d9fe52c0cc9a2227766af` | bridge，internal=true，IPv6=false |
+
+8网当前均无运行endpoint。旧专网ID/创建时间 `2026-10-26T12:03:38.798689136Z`与历史一致。默认bridge则不同于第10节历史ID，当前created=`2026-10-27T02:26:25.950012349Z`，位于本次Desktop恢复窗口；本轮未执行network create/rm，未调查完整Engine启动日志，不能仅由ID变化断言数据损坏或认定具体原因。对其他项目只核对元数据，没有做应用可用性验收。
+
+原私人回执只读取文件stat：普通文件、非symlink、531字节，birthtime=`2026-10-26T12:03:30.583Z`、mtime=`2026-10-26T12:03:50.272Z`；与已记录时间一致。末次复核大小/mtime不变，未读取JSON内容、未输出nonce、未写ACL或任何材料。不能把元数据一致扩大成文件字节摘要已重新验真；原failed记录继续作为失败证据，不改为成功。
+
+V2项目/容器/卷/网络命名范围未发现匹配，既有资源没有被V2复用。本轮首个全容器模板因无Health字段对象失败，移除该通用字段后只读重查成功；这是查询模板问题，不是业务/数据库故障，未修改源码或实际资源。
+
+### 17.4 构建条件、证据复用与下一步
+
+已确认环境满足首选方案的主要前提：本机Linux/amd64、containerd store、docker driver和目标平台。不需要为本轮结果切换全局存储后端、创建新builder或引入Registry服务。尚缺Node固定基镜像、正式输入目录及精选cache、实际OCI产物/canonical引用验收与最终审核。
+
+只读重算已提交输入清单自身evidence hash、34个源码以及锁文件/Dockerfile/准备器摘要，全部与封存记录一致。原[PHASE8_V2_BUILD_INPUT_AUDIT.json](PHASE8_V2_BUILD_INPUT_AUDIT.json)保持原样，仍是前轮时点的快照，本节补充最新环境结果，不回写其null字段来篡改历史。源码bundle仍为 `f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289`。**本轮没有读取npm缓存内容、重跑41包审计或235项回归测试**；那些通过结果保留为前轮证据，不声称本轮复测。
+
+下一轮可申请明确分阶段授权：①仅获取候选固定Node平台镜像，下载后核对本地身份及完整层；②生成仓库外全新正式上下文/精选缓存并封存物理输入，内容漂移时才重新SRI验证；③确认独占构建窗口和最终参数后执行一次受控build及image-store写入，不push Registry；④只读检查实际产物/固定引用/RepoDigest/Image ID/bundle后另行授权审核登记。任何阶段不含V2容器/卷/网络/密码/UUID/回执创建或旧B0重启。当前不能跳过①②直接执行离线build。
+
+本轮只提交TEST_STATUS、TEST_HISTORY、KNOWN_ISSUES三份档案；Git空白、秘密和变更范围检查作为提交门槛。没有Docker资源写操作、数据库连接/迁移、后端/worker启动或部署；旧B3仍失败，B4仍阻塞。提交及普通Push以最终Git核验为准，不预填未来提交SHA。

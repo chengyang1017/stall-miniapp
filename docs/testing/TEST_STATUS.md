@@ -1,15 +1,17 @@
 # 微信商城测试状态
 
 维护日期：2026-10-27，档案使用北京时间（Asia/Shanghai，UTC+8）；执行客户端为Asia/Kuala_Lumpur，同为UTC+8。
-本次Engine恢复核验与构建前审计基线：`80114f191668a8c9adb1da6b4de81a4a7ffadfef`，main，开始工作区干净，远程main也为该SHA。前轮供应链准备基线为 `dd83d09d51797c05aff8a5a0db8e3793d49c54cd`，B3-V2实现基线为 `083f67548d044c29ad4a9e0497d791e4348fd5f8`。首次创建失败记录为 `934a2039b9b5dd6e6971c2d1b71cbcaae84842a6`，此前历史保留。
+本次Engine恢复后Docker只读验收基线：`d63c80a553c2a852af485a1f289a146e86c018ed`，main，开始工作区干净，远程main也为该SHA。前轮构建前审计基线为 `80114f191668a8c9adb1da6b4de81a4a7ffadfef`，供应链准备基线为 `dd83d09d51797c05aff8a5a0db8e3793d49c54cd`。首次创建失败记录为 `934a2039b9b5dd6e6971c2d1b71cbcaae84842a6`，此前历史保留。
 
 ## 当前结论
 
-**B3 已按明确授权执行一次受控首次创建，但启动后验收失败：phase8_port_binding_rejected。历史创建/诊断时容器运行且 healthy，专用卷/网络及 bootstrap 已产生；回执为 failed，未达到 created_verified，更不是 ready。本轮Engine不可达，未重新确认旧资源当前运行状态。保留现场，禁止盲目重试或进入 B4 迁移。**
+**旧B3首次创建验收失败仍保留，未达到created_verified或ready。**本轮Engine恢复后的只读检查确认旧B0容器/卷/专网仍在、ID及标签关联匹配，但容器现在是exited（ExitCode255、Running=false），不是历史healthy。FinishedAt为 `2026-10-27T02:16:22.509638868Z`，早于本轮首次检查；没有重启或修复。原回执仅stat，mtime仍为 `2026-10-26T12:03:50.272Z`，内容未读未改。B4继续阻塞。
 
-**2026-10-27本轮审计：Engine仍不可达；41个npm包真实内容全部校验通过，构建尚未授权执行。**官方 `node:24.22.1-bookworm-slim` 的索引、amd64清单和配置摘要复核未变；没有批准基础镜像或运行器镜像。读取41个缓存tarball的真实字节，SHA512全部匹配lock，归档包名/版本、相关索引及依赖闭包一致；未解压到文件系统、未执行包代码、未运行npm ci。34文件源码及依赖/参数审计清单已保存，正式构建目录未创建。
+**2026-10-27本轮只读验收：Engine可达，containerd image store和现有builder已确认；Node候选固定镜像尚不在本机。**Engine29.6.2/Linux/amd64、Desktop4.85.0、containerd2.2.5，overlayfs + io.containerd.snapshotter.v1。desktop-linux builder为内置docker驱动，BuildKit0.31.2，支持linux/amd64。没有创建/切换/启动builder，没有构建或下载镜像。前轮41/41 npm真实SRI审计作为历史证据保留，本轮输入清单及34源码未变，未重读缓存内容。
 
-当前阻碍：Docker CLI 29.6.2、Compose 5.3.1、Buildx 0.35.0-desktop.2可用，desktop-linux指向允许的本机管道，但 `npipe:////./pipe/dockerDesktopLinuxEngine` 不存在/不可达。未列出Docker Desktop/backend等被查询的进程；不据此推断资源已删除。本地Node镜像、实际Engine版本、image store、builder能力和旧资源当前状态**未验证**，已停止依赖Engine的步骤。containerd image exporter + canonical name（不push）仍只是条件方案，不能用tag或构造RepoDigest绕过现有策略。前轮命令/方案见[历史第15节](TEST_HISTORY.md#15-第八轮-b3-v2运行器镜像供应链准备)，本轮结果见第16节。
+已满足：desktop-linux仍指向本机 `npipe:////./pipe/dockerDesktopLinuxEngine`，实际Engine及containerd worker可访问；已批准PostgreSQL固定镜像的ID/RepoDigest/linux-amd64一致；现有11容器/11卷/8网络可读，未发现r2资源。当前仍缺：Node候选固定引用及版本标签都返回No such image，须另行授权获取；正式上下文/精选cache、真实构建产物和最终runner审核尚未完成。canonical机制在BuildKit0.31.2源码与文档中存在，本机真实导出及裸repo@digest解析仍未实测，不用tag冒充通过。详见历史第17节；前轮命令方案仅为历史条件示例。
+
+统计差异已保留：02:26:18Z首次info为1运行/10停止；02:30:31Z逐项inspect与后续info均为0运行/11停止，02:33:27Z再次一致。不能把最初统计当成仍有运行中的容器，也不能仅凭元数据推断是谁/何种恢复机制触发变化。默认bridge也出现新的ID和创建时间，未执行任何network写入，原因未作扩大调查。
 
 输入审计文档：[PHASE8_V2_BUILD_INPUT_AUDIT.json](PHASE8_V2_BUILD_INPUT_AUDIT.json)。包含34项源码的LF/原始字节摘要、41项依赖的真实SRI/SHA256/版本证据、Dockerfile及计划参数/工具版本；用户明确允许保留5项已审计B0共享源码，旧实例运行材料完全排除。清单自身evidence SHA256为 `968c119f257124719806a2a661c68d08d5e707bde0addf330b04284c404ba0c9`；它不是正式context或镜像摘要，`contextSnapshotSha256=null`。
 
@@ -18,7 +20,7 @@
 只读诊断补充：Compose 的请求正确；当前 Engine 的 internal-only 网络没有实际建立所需的宿主 NAT 端口映射，是 B0 网络设计与宿主访问要求的冲突，不是只需放宽元数据断言。默认 bridge 的重建已找到首次创建命令之前的 Engine 启动/缓存同步证据；不能据此推断数据损坏，也未验证其他应用全链路无影响。详见下方诊断及历史第 10 节。
 批准镜像未变，001—020 商城业务迁移未执行；真实 PostgreSQL 业务并发、行锁、事务、死锁和故障恢复验收均未完成。bootstrap 完成来自容器日志标记，尚未独立执行 SQL 身份/状态核验。
 
-首次创建阶段有已授权的 bootstrap 写入，前轮诊断仅读现场。前轮 B3-V2 交付独立代码、合成 transport 回归、静态检查和 Compose config 纯解析；本轮供应链调查只读源码、缓存元数据、官方Registry及Docker镜像查询。两轮均没有Docker资源操作、数据库连接/SQL、迁移或私人凭据/回执访问，不把单元测试或镜像元数据当作环境恢复成功。
+首次创建阶段有已授权的bootstrap写入，历史诊断仅读现场。前轮V2源码/供应链/内容审计结果各按时点保留；本轮只补充Engine恢复后的Docker元数据与原回执stat，未读取其内容或密码，未重复npm内容审计。没有Docker资源写操作、数据库连接/SQL或迁移，不把只读镜像/容器状态当成数据库验收成功。
 
 ## 证据分类
 
@@ -49,7 +51,8 @@
 | B3-R 设计阶段 | 原138项重跑：138通过、0失败、0跳过；新增0项 | 既有两份Phase8离线安全测试，15个MJS语法检查 | 假Docker/PG transport，不验新架构；无源码修复，B3仍失败/B4仍阻塞 |
 | B3-V2 实现阶段 | 原138项 + 新97项：235通过、0失败、0跳过；本轮实际运行 | `phase8-v2.unit.test.mjs`，合成 Docker/PG transport；14个新增MJS语法检查、TypeScript静态检查、Compose纯解析通过 | 没有真实容器/DB；runner 镜像未批准，旧B3失败/B4阻塞保持 |
 | V2供应链准备（2026-10-27） | 12个MJS语法及只读manifest/lock/未批准拒绝断言通过；235项为前轮历史，本轮未重跑 | 官方Registry只读元数据、实际用户缓存索引/文件stat、源码白名单及SHA核对 | Engine不可达；未构建/下载/生成上下文/安装/批准，无真实镜像或数据库验收 |
-| Engine恢复核验与构建前审计（本轮） | 三份Phase8离线测试实际重跑235通过、0失败、0跳过；24个MJS语法、TypeScript和Compose纯解析通过；41份tarball真实SRI核验通过 | 当前基线80114f1、34/41项输入审计JSON、Registry摘要重算 | Engine仍不可达，镜像/store/builder/旧资源未复核；没有正式context、构建或真实DB测试 |
+| Engine恢复核验与构建前审计（前轮） | 当轮三份Phase8离线测试235通过、0失败、0跳过；24个MJS语法、TypeScript和Compose纯解析通过；41份tarball真实SRI核验通过 | 当轮基线80114f1、34/41项输入审计JSON、Registry摘要重算 | 当时Engine不可达；没有正式context、构建或真实DB测试 |
+| Engine恢复后Docker只读验收（最新本轮） | Engine/store/builder真实元数据读取成功；PG镜像匹配；Node候选缺失；B0原身份保留但已停止 | 当前基线d63c80a、现有builder无bootstrap查询、资源inspect及原回执stat | 未build/pull/tag/import或启停任何资源；未重跑235项或41包内容审计；canonical实际导出待验 |
 
 **不计算全仓唯一测试总数。**165 包含前端 88；124 是原 111 项演进后的测试集，而不是再新增 124 项。不能把这些不同时间、不同子集的数字相加。
 
@@ -59,7 +62,7 @@
 
 97 项新增回归覆盖策略与执行顺序，不是 PostgreSQL 集成结果；其中持久化 grant 消费测试只使用测试自行创建的临时目录，不涉及任何私人凭据目录。Compose 解析使用合成变量与空文件路径，未读取密码。`fixture` 目前是两个业务连接 + 一个 READ ONLY 事务观察连接的真实 pg 接缝，固定任务只诊断不同 backend PID，未执行并发下单/库存场景。
 
-**仍不具备直接执行构建的条件。**下一步先另行授权恢复Docker Desktop可达性并确认containerd/image exporter和本地完整Node基础层，再授权生成全新正式上下文及精选缓存，复核物理文件集合/权限/时间并封存context摘要，最后受控构建及审核。当前全局缓存7150个索引桶中仅41个获本轮核验，7109个未选中桶未读内容，禁止整目录复制。SRI通过不等于Linux npm ci、漏洞审计或逐字节重复构建通过。新材料、V2创建、网络/挂载、bootstrap、001—020和业务测试继续独立授权；B3仍失败/B4仍阻塞。
+**Engine与存储/builder前提已解除阻塞，可申请下一轮分阶段构建准备授权，但当前不能直接执行离线build。**下一轮需要明确授权：仅获取选定Node固定平台镜像、在仓库外生成全新正式上下文及精选缓存、输入封存与独占构建窗口，然后一次受控build及image-store写入/产物只读核验；不包含push到Registry或V2创建。前轮全局7150桶中仅41项已审计，不整库复制；实际精选时若内容漂移再验SRI。SRI不等于npm ci或重复构建通过。旧B0保持审计现场，不能自动start/restart；后续V2材料、创建、bootstrap和业务迁移/测试仍分别授权。
 
 ## 当前可确认的源码事实
 

@@ -1,6 +1,6 @@
 # 已知问题、修复记录与剩余风险
 
-更新日期：2026-10-27；本次Engine/构建前只读审计基线 `80114f191668a8c9adb1da6b4de81a4a7ffadfef`。前轮供应链基线为 `dd83d09d51797c05aff8a5a0db8e3793d49c54cd`；B3-R历史设计基线为 `70145de43af8d649f43883dd6254af639cba8cac`，既有记录仍以各历史提交为准。
+更新日期：2026-10-27；本次Engine恢复后只读验收基线 `d63c80a553c2a852af485a1f289a146e86c018ed`。前轮构建前审计基线为 `80114f191668a8c9adb1da6b4de81a4a7ffadfef`；历史记录仍以对应提交/时点为准，不用最新运行态覆盖历史失败。
 上述为B3-R历史设计时点。最新B3-V2基线 `083f67548d044c29ad4a9e0497d791e4348fd5f8`：已实现独立运行器源码，原138项加新97项共235项离线通过；未实际运行Docker资源或SQL、未恢复旧现场。已修复表示源码/指定离线范围成立，不表示真实业务环境已验收。
 
 ## 已修复并保留历史的问题
@@ -55,13 +55,15 @@
 | R-13 | 已记录 | 历史 backend 文档仍保留早期017/018迁移、未批准镜像或MSYS失败等时点描述；当前迁移清单为020、镜像已登记，不能机械照旧文启用。本任务不修改那些原文件 |
 | R-14 | 已定位设计冲突，未修复 | internal-only bridge + host loopback发布在当前 Engine未产生实际映射；请求保存在HostConfig、运行态Ports空、docker port空、Windows无监听，policy正确拒绝。匹配Engine GitCommit源码，非纯JSON差异；禁止放宽规则冒充通过 |
 | R-15 | bridge变化已有解释，影响证据有限 | 本机持久日志证明Engine在12:02:36—43重新初始化，旧bridge缓存随后注销、新ID登记，早于12:03:29首次创建命令。当前无默认bridge成员/配置依赖，未见数据损坏证据；原先停止/唤醒触发原因及历史应用全链路影响未验证 |
-| R-16 | 恢复入口缺失，受阻 | B0 first不可重跑；restart拒绝failed、要求停止容器及ready，不支持当前运行且仅bootstrap的实例。须另行设计绑定身份、保留原失败回执、独立追加审计和bootstrap只读验收的恢复流程；严禁改回执为成功、清空卷或删除容器探路 |
+| R-16 | 恢复入口缺失，受阻 | B0 first不可重跑；restart拒绝failed且要求ready验收。旧实例历史仅有bootstrap日志，当前即使已停止也未满足ready条件。须独立设计身份绑定、追加审计和只读核验流程；严禁改失败回执、清空卷或删除容器探路 |
 | R-17 | V2源码及97项离线回归完成，真实环境受阻 | A方案已实现独立internal-runner-v1控制器/运行器/授权协议；runner镜像未批准，无Docker socket/运行时安装；实际isolated/宿主/出口隔离与Windows挂载必须另行验收，不能凭标志通过 |
 | R-18 | 旧实例不可直接接管写测试 | 原HostConfig仍含发布请求，原网络不是新A的isolated规范；保留原ID/UUID/nonce/failed审计，无损只读识别有条件可设计。默认另建独立V2实例，不复用旧卷/材料，不静默豁免旧端口校验 |
-| R-19 | 本轮复核仍受阻：Engine未恢复可达 | 客户端29.6.2、Compose5.3.1、Buildx0.35.0可用；desktop-linux本机管道仍不存在/不可达。已停止依赖Engine的镜像/store/builder/旧资源查询，未启动Docker。不得把未知写成镜像缺失或containerd不可用 |
-| R-20 | 固定runner引用需真实产物验证 | 首选containerd image store + image exporter的canonical name，必须实际image inspect固定引用/RepoDigest/ID/平台/label；普通build或load不能无条件保证。私有registry带地址前缀不符合现有精确repo规则，禁止去前缀或伪造digest绕过 |
-| R-21 | 41项内容完整性已核验；专用cache/Linux安装仍未验证 | 本轮41/41真实SHA512、包名版本、索引校验与归档依赖字段匹配，未发现指定敏感形态/危险归档路径；这是内容一致性证据，不是恶意代码/漏洞全审计。全局7150桶仅选41，不读其余7109桶内容，禁止整库复制；仍须独立精选/封存及Linux npm ci验收 |
+| R-19 | Engine/store/builder可达性阻碍已解除 | 用户手动启动Desktop后本轮只读确认Engine29.6.2/Linux-amd64、Desktop4.85.0、containerd2.2.5、overlayfs/io.containerd.snapshotter.v1及内置docker builder/BuildKit0.31.2。不是构建或网络隔离验收成功 |
+| R-20 | store/driver前提已确认，固定引用仍待真实产物验证 | 本轮确认containerd store和内置docker driver/BuildKit0.31.2；源码支持canonical/store/push机制，但仍须实际image inspect裸固定引用/RepoDigest/ID/平台/label。时间归一与unpack等可选参数需校核；不通过普通tag、私有registry去前缀或伪造digest绕过 |
+| R-21 | 前轮41项内容已核验，本轮未重复；专用cache/Linux安装待验 | 基线d63c80a已保存41/41真实SHA512、包名版本、索引及归档依赖匹配，本轮输入/源码未变，未重读缓存内容。不是恶意代码/漏洞全审计；禁止整库复制，仍须独立精选/封存及Linux npm ci验收 |
 | R-22 | 已有完整候选输入审计；物理context/产物尚未生成 | 新增PHASE8_V2_BUILD_INPUT_AUDIT.json列34源码的LF及raw hash、41依赖真实SRI/SHA256、Dockerfile/base/计划参数和工具状态；源bundle、审计清单摘要、正式context、OCI和Image ID严格区分，后两类不能预填。未证明逐字节重复构建 |
+| R-23 | Node固定基础镜像缺失，需另行获取授权 | 固定平台引用和node:24.22.1-bookworm-slim标签均No such image，本地相关node镜像行/已知索引或配置ID也未匹配。PG固定镜像已匹配；不能把PG可用或Registry存在当成Node已在本地，未pull/tag/import |
+| R-24 | 旧B0状态变化及统计差异已记录，成因未判定 | 原ID/卷/专网仍在，但B0为exited/255，FinishedAt02:16:22Z早于本轮；info最初1运行，后续逐项和info为0运行/11停止。默认bridge出现新ID，未据此推断数据损坏或自动修复；原回执只stat、mtime未变，未读取内容或证实字节完全未变 |
 
 风险表中的“未验证”不是已证实业务缺陷；“已修复”也不是正式交付验收。发现新失败先保留原始断言及日志，确认夹具还是业务问题，未经授权不改生产规则。
 
