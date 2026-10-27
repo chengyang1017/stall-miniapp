@@ -18,15 +18,20 @@ export function setLocalDevToken(apiBase: string, token: string): void {
 }
 export function localDevAllowed(apiBase: string): boolean { return isLocalDevApi(apiBase) }
 
-export function loginWithWechat(apiBase: string): Promise<void> {
+let loginSerial = 0
+export function loginWithWechat(apiBase: string, isActive: () => boolean = () => true): Promise<void> {
+  const serial = ++loginSerial, identity = requestIdentity()
+  const current = () => serial === loginSerial && identity === requestIdentity() && isActive()
   return new Promise((resolve, reject) => {
     wx.login({ success: login => {
+      if (!current()) return reject(new Error('session_or_store_changed'))
       if (!login.code) return reject(new Error('wx_login_failed'))
       wx.request({
         url: `${apiBase.replace(/\/$/, '')}/v1/auth/wechat`,
-        method: 'POST', data: { code: login.code },
+        method: 'POST', timeout: 15000, data: { code: login.code },
         success: (res: any) => {
-          if (res.statusCode !== 200 || !res.data || typeof res.data.token !== 'string') return reject(new Error('server_login_failed'))
+          if (!current()) return reject(new Error('session_or_store_changed'))
+          if (res.statusCode !== 200 || !res.data || typeof res.data.token !== 'string' || !/^[A-Za-z0-9_-]{40,100}$/.test(res.data.token)) return reject(new Error('server_login_failed'))
           wx.setStorageSync(TOKEN_KEY, res.data.token)
           rememberSessionScope(res.data.token,res.data.cacheScope)
           resolve()

@@ -1,0 +1,2 @@
+✖ current WeChat login saves the verified response and cache scope (7.3799ms)
+INTERRUPTED: first negative fixture left the old exchange pending; see fe03-auth-repro.txt for the complete deterministic baseline.

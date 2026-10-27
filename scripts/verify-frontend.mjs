@@ -6,6 +6,7 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 // suites and infrastructure setup live alongside these frontend-only tests.
 const tests = [
   'apps/tests/navigation.test.cjs',
+  'apps/tests/auth-session.test.cjs',
   'backend/tests/build-role-contracts.test.mjs',
   'backend/tests/frontend-navigation.test.mjs',
   'backend/tests/frontend-navigation-flows.test.mjs',

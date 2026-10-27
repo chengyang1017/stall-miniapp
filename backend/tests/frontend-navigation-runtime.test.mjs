@@ -99,8 +99,8 @@ test('profile: session identity changes invalidate a pending authorization',asyn
 function makeLogin(authorizedGet){
   const calls=[], storage=new Map()
   const wx={setStorageSync:(k,v)=>storage.set(k,v),navigateTo:args=>calls.push(args.url)}
-  const p={data:{apiBase:'https://test.example',storeSlug:'demo',busy:false},setData(v){Object.assign(this.data,v)},config:()=>true}
-  p.verifyExisting=handler(login,'verifyExisting','async loginWechat()', {wx,authorizedGet})
+  const p={pageVisible:true,operationSerial:0,data:{apiBase:'https://test.example',storeSlug:'demo',busy:false},setData(v){Object.assign(this.data,v)},config:()=>true}
+  p.verifyExisting=handler(login,'verifyExisting','async loginWechat()', {wx,authorizedGet,requestIdentity:()=> 'same-test-identity'})
   return {p,calls,storage}
 }
 

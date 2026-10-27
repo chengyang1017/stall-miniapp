@@ -1,0 +1,67 @@
+✔ current WeChat login saves the verified response and cache scope (5.1521ms)
+✔ store switch during wx.login prevents sending the old code (2.5419ms)
+✔ backend switch during exchange cannot overwrite session or scope (2.4043ms)
+✔ logout during exchange cannot be undone by a late login response (24.8792ms)
+✔ replacement session cannot be overwritten by a late exchange (12.291ms)
+✔ newer login supersedes an earlier exchange even if the earlier one returns first (5.2554ms)
+✔ inactive requesting page cannot start a backend exchange (2.8976ms)
+✔ inactive requesting page cannot save an in-flight exchange (3.2582ms)
+✔ malformed server token is rejected without overwriting the session (8.4505ms)
+✔ HTTP and network failures preserve the previous session (4.9437ms)
+✖ combined merchant logout: old response cannot release a newer identity verification (9.5829ms)
+✔ combined merchant login: hidden page cannot authenticate or navigate after permission response (6.2903ms)
+✔ combined merchant login: current explicit verification opens workspace only after authorization (6.87ms)
+✔ combined merchant login: old finally cannot release a newer page verification (6.1989ms)
+✔ combined merchant login: busy inputs and repeat verification cannot switch the request context (7.056ms)
+✔ combined merchant login: leaving during code exchange prevents session resurrection (6.9695ms)
+✖ merchant merchant logout: old response cannot release a newer identity verification (8.4311ms)
+✔ merchant merchant login: hidden page cannot authenticate or navigate after permission response (6.0599ms)
+✔ merchant merchant login: current explicit verification opens workspace only after authorization (5.6792ms)
+✔ merchant merchant login: old finally cannot release a newer page verification (7.0679ms)
+✔ merchant merchant login: busy inputs and repeat verification cannot switch the request context (6.682ms)
+✔ merchant merchant login: leaving during code exchange prevents session resurrection (8.5554ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 20
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 274.512
+
+✖ failing tests:
+
+test at apps\tests\auth-session.test.cjs:101:3
+✖ combined merchant logout: old response cannot release a newer identity verification (9.5829ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:106:56)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:101:3
+✖ merchant merchant logout: old response cannot release a newer identity verification (8.4311ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:106:56)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+EXIT_CODE=1

@@ -33,3 +33,9 @@
 本地 RELEASE_GATE.md 与 docs/delivery/backend/HANDOFF.md 未存在；已只读查看 origin/backend/be-01-release-baseline@cd034562b71638b686cd7551660296873975cd30。其 RELEASE_GATE=BLOCKED，HANDOFF 同样说明 legacy 单AppID、unpaid、可信支付未实现、staging/私有R2待确认。未 merge / cherry-pick，不把其文件当作本分支已有。
 
 待后端提供：受控隔离 staging 地址、店铺/顾客/商家权限用例、稳定错误码及库存配送边界数据；支付仍需真实服务端创建/结果查询/通知验签协议。正式联调尚未运行，没有新增“已部署API差异”的结论。前端可先处理登录并发与迟到响应，若需要服务器改动另行交接。
+
+## 2026-10-27｜FE-03 纯前端身份修复交接
+
+没有新增后端接口需求。loginWithWechat仍POST /v1/auth/wechat，服务端token格式与现有Bearer约束一致；只在前端阻止旧上下文保存响应，新增15秒超时。服务端仍负责真实身份和商家membership。
+
+离线复现并修复旧登录覆盖新身份/退出、商家隐藏后跳转及旧logout finally覆盖新验证；22项新夹具最终通过，总前端回归143项。真实微信登录/会话撤销、staging和跨设备尚未验证，由负责人按PREVIEW_HANDOFF.md回传结果。负责人分支无需迁入本地，当前未改backend/src、SQL、Docker或其档案。

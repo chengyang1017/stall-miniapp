@@ -64,3 +64,15 @@ WECHAT-DEVTOOLS BLOCKED / NOT RUN；截图 NOT RUN；DEMO 人工交互 NOT RUN�
 verify:frontend实际依次执行边界、三目标TypeScript构建、全产物检查、三产物静态预览扫描、明确11文件离线测试白名单。Combined125模块36页258文件，Customer72模块13页136文件，Merchant84模块19页153文件。预览扫描每目标0错误/1个预编译JS下的插件警告；不是微信平台结果。未执行全backend/tests通配、live/staging/DB/Docker测试。
 
 本地RELEASE_GATE和backend/HANDOFF缺失；已git show读取远端backend/be-01-release-baseline固定cd034562b71638b686cd7551660296873975cd30文件，只读，无合并。PL-01/05按最新用户分工改为WAITING_FOR_OWNER_PREVIEW，微信工具与iOS/Android验收3类均未运行；staging/生产/真实支付未运行，不计入121离线测试。具体未运行用例未枚举完毕，不伪造“未运行总用例数”。
+
+## 2026-10-27｜FE-03｜登录竞态回归
+
+基线172aa7d254432f97de924ebcf8032361fc29cb22。先新增实际编译auth模块的离线wx回调夹具，初次尝试因旧代码没有拒绝旧请求而留下未完成promise，手动中断；保留fe03-auth-before.txt，不作为完整测试结果。补齐负例的旧回调，使失败能完整退出，执行 node --test --test-timeout=5000 apps/tests/auth-session.test.cjs：10项1通过/9失败/0跳过，fe03-auth-repro.txt；其中8项分别验证店铺变更、后端变更、退出、身份替换、并发登录、调用页失效两阶段、无效token，另1项明确请求timeout缺失。没有网络/微信/后端调用。
+
+修复后增加Combined/Merchant真实编译商家页生命周期回归，首次npm run verify:frontend：141/141通过，fe03-verify.txt。进一步新增旧logout响应覆盖新验证的2个负例，执行同一auth文件：22项20通过/2失败/0跳过，fe03-logout-before.txt；修复logout UI回写序号后再次运行 npm run verify:frontend：**143通过/0失败/0跳过/0取消/0待办**，fe03-verify-final.txt。
+
+最终白名单12文件，包含新增22个auth/商家页用例。验证：当前正常login、微信code阶段切店铺、exchange阶段切后端/退出/身份替换、后发login优先、页面失活两阶段、无效令牌、HTTP/网络失败；Combined与Merchant分别测权限成功/隐藏/旧finally/忙碌输入重复验证/离开时exchange/旧logout覆盖新身份。
+
+三目标重新构建：Combined125模块36页258产物，Customer72模块13页136产物，Merchant84模块19页153产物；边界与全产物检查PASS。预览静态扫描均0错误/1个预编译JS插件警告。上述143为最终覆盖总数，不能与重叠的121或141相加。代码/文档diff检查排除保持原样的原始证据输出中的空白行；业务与测试源码检查通过。
+
+微信平台、iOS、Android 3类验收WAITING_FOR_OWNER_PREVIEW，当前均无运行证据；CLOUD-STAGING/真实微信登录/真实支付/生产未运行，未运行用例总数未枚举，不能记成0。后端业务测试、数据库、Docker及旧B0未操作。
