@@ -41,3 +41,26 @@
 微信开发者工具版本/模式：N/A，未发现安装记录（检查常见 Program Files 目录及 HKCU/HKLM 卸载登记，只发现普通微信 3.9.12.17）。不代表已遍历所有自定义/便携安装位置。
 
 WECHAT-DEVTOOLS BLOCKED / NOT RUN；截图 NOT RUN；DEMO 人工交互 NOT RUN；CLOUD-STAGING NOT RUN；Android / iPhone REAL-DEVICE NOT RUN；PRODUCTION NOT RUN。没有调用微信登录、支付、后端或真实测试数据。
+
+## 2026-10-27｜FE-02｜zh｜恢复、同步、旧夹具修复
+
+现场：Git root=C:/project development/stall-miniapp，HEAD=4278c40802cdf7054a4a785bec00171743e5214f，开始工作区干净；Node24.11.1/npm11.6.2。git fetch origin 后 main=b308134，远端原无zh；git push -u origin zh 成功，git ls-remote --heads origin zh 返回4278c40802cdf7054a4a785bec00171743e5214f。未改main或后端协作分支。
+
+复现命令：node --test backend/tests/frontend-navigation-runtime.test.mjs backend/tests/merchant-entry-contract.test.mjs。修前16项：8通过/8失败/0跳过，详见 evidence/fe02-legacy-before.txt；修后16通过/0失败/0跳过，详见 evidence/fe02-legacy-after.txt。
+
+8项失败逐项归因（均与4278c40引入适配器的前端变更有关）：
+
+1. profile: a verified merchant explicitly enters workspace and saves preference：旧VM缺CAN_OPEN_MERCHANT/导航适配器。
+2. profile: rejected permission never navigates or stores merchant preference：同上。
+3. profile: simultaneous taps make only one authorization request：同上。
+4. profile: hiding while permission is pending prevents late navigation：同上。
+5. profile: session identity changes invalidate a pending authorization：同上。
+6. merchant workbench: customer switch navigates to home tab：旧VM缺CAN_OPEN_CUSTOMER/navigateCustomerShop。
+7. app opening cannot route to merchant without fresh authorized request：仍寻找旧直接wx.navigateTo字面量，现检查授权/响应/identity顺序、真实adapter本体与Customer构建别名。
+8. merchant can choose the customer shop without creating another AppID：仍寻找页面wx.switchTab，现检查guard、导入别名、真实adapter与Merchant别名。
+
+没有删除、跳过、降低这些安全行为要求，VM注入真实Combined adapter，直接运行实际wx mock动作。扩大前端白名单首次npm run verify:frontend：121项119通过/2失败/0跳过；另外2个frontend-navigation.test.mjs契约仍匹配旧跳转与旧guard字面量，失败日志evidence/fe02-verify.txt。修复为实际adapter和新角色guard后再次运行同一命令：**121通过/0失败/0跳过/0待办**，evidence/fe02-verify-fixed.txt。
+
+verify:frontend实际依次执行边界、三目标TypeScript构建、全产物检查、三产物静态预览扫描、明确11文件离线测试白名单。Combined125模块36页258文件，Customer72模块13页136文件，Merchant84模块19页153文件。预览扫描每目标0错误/1个预编译JS下的插件警告；不是微信平台结果。未执行全backend/tests通配、live/staging/DB/Docker测试。
+
+本地RELEASE_GATE和backend/HANDOFF缺失；已git show读取远端backend/be-01-release-baseline固定cd034562b71638b686cd7551660296873975cd30文件，只读，无合并。PL-01/05按最新用户分工改为WAITING_FOR_OWNER_PREVIEW，微信工具与iOS/Android验收3类均未运行；staging/生产/真实支付未运行，不计入121离线测试。具体未运行用例未枚举完毕，不伪造“未运行总用例数”。

@@ -1,5 +1,19 @@
 # 前端交付进度
 
+## 当前状态｜2026-10-27｜FE-02（覆盖下面历史状态）
+
+状态：DEVELOPMENT。用户已授权普通 Commit/Push 到 zh；微信工具/平台/真机由项目负责人在另一台电脑负责，本前端开发者不安装、不登录、不运行微信开发者工具。相关验收统一为 WAITING_FOR_OWNER_PREVIEW，不能代替通过。
+
+- 现场核验：Git 根目录正确，开始 zh 工作区干净，4278c40802cdf7054a4a785bec00171743e5214f 真实存在，origin=https://github.com/chengyang1017/stall-miniapp.git；远端 main=b308134，zh 原先不存在。已普通 push -u origin zh，远端核验为 4278c40802cdf7054a4a785bec00171743e5214f。
+- 已复现旧16项测试的8项失败并保存 fe02-legacy-before.txt。修复真实 Combined 适配器注入、导航适配器断言；原16项全通过，未删/跳测试，未修改后端业务。
+- 扩大离线前端检查时另发现2项旧字面量断言不兼容，保存 fe02-verify.txt；同步修复 frontend-navigation.test.mjs，不恢复有问题的跨端直跳。
+- 新增根 AGENTS.md、永久 TASKS.md、DECISIONS.md、PREVIEW_HANDOFF.md；新增 npm run verify:frontend（明确离线白名单，三目标重建、边界/产物/预览扫描后运行前端测试）。
+- 本地 docs/delivery/RELEASE_GATE.md / docs/delivery/backend/HANDOFF.md 尚不存在，但已只读查阅 origin/backend/be-01-release-baseline 的 cd034562b71638b686cd7551660296873975cd30 版本；没有合并/覆盖其文件。门禁仍 BLOCKED：真实支付、staging、微信平台、数据库/存储与客户签收等未验收。
+- 测试最终结果见 TEST_LOG.md。保留 FE-01 及本轮失败历史。PL-07 旧夹具问题已修复；其余真实集成依赖未解除。
+
+下一项可独立任务 FE-03（P0候选）：核验商家登录/权限验证在页面隐藏、编辑店铺/后端、并发登录与身份变化时的迟到响应；先用隔离夹具复现，确认缺陷后修复，不改服务端 API。项目负责人并行执行 PREVIEW_HANDOFF.md。当前未达到前端验收或客户交付条件。
+
+
 ## 2026-10-27｜FE-01｜zh
 
 执行：协作开发者 / Codex。基线 HEAD 与 fetch 后 origin/main 均为 b308134b2df02c207ce827658b409dffb9186a1e，开始工作区干净。沿用用户指定 zh，覆盖任务建议的 frontend/* 命名。

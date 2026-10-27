@@ -48,3 +48,7 @@ npm run build:merchant
 Combined 的跨端入口统一由 modules/integration/singleAppHost 提供；独立 Customer/Merchant 分别别名到所属 navigation。独立端不能跳不存在的异端页面；Combined 保留服务端验证后的商家恢复及显式返回顾客。
 
 三目标构建后，可运行 `node --test apps/tests/navigation.test.cjs` 检查实际编译页面的角色导航、拒绝、重复点击和失效响应。仅使用内存 wx，不连接后端。预览步骤与实际验收边界见 [前端预览说明](../docs/delivery/frontend/PREVIEW.md)。旧导航源码提取夹具需协调更新，详见该目录 HANDOFF.md。
+
+## FE-02 可重复离线验证
+
+在仓库根运行 `npm run verify:frontend`：先重建三个目标并检查角色边界/产物/预览静态兼容，再执行明确的离线前端测试白名单。不会安装依赖、连接API/DB或调用微信工具。首次使用按lockfile运行 `npm ci`。真实平台/真机由项目负责人另一台电脑验证，交接见 `docs/delivery/frontend/PREVIEW_HANDOFF.md`，状态 `WAITING_FOR_OWNER_PREVIEW`。

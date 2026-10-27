@@ -8,7 +8,8 @@
     "build:customer": "node scripts/build-miniapp.mjs customer",
     "build:merchant": "node scripts/build-miniapp.mjs merchant",
     "check:boundaries": "node scripts/check-boundaries.mjs",
-    "check:build-output": "node scripts/check-build-output.mjs"
+    "check:build-output": "node scripts/check-build-output.mjs",
+    "verify:frontend": "node scripts/verify-frontend.mjs"
   },
   "keywords": [],
   "author": "",

@@ -25,3 +25,11 @@
 - 私有送达凭证、客服、GPS/评价相关权限/迁移/审核状态由负责人确认；未连接或修改任何后端。
 
 尚无真实 staging 请求，因此没有真实 HTTP 错误码或业务差异结论。API 样例仅描述现有前端契约，后续使用脱敏测试数据留档。原负责人档案 [TEST_STATUS](../../testing/TEST_STATUS.md)、[RELEASE_CHECKLIST](../../testing/RELEASE_CHECKLIST.md) 未修改，请负责人在审核后整合。
+
+## 2026-10-27｜FE-02 纠正与后端协作分支阅读记录
+
+最新分工：微信平台编译/预览/真机由项目负责人完成，标记 WAITING_FOR_OWNER_PREVIEW，本前端开发者不安装、不登录、不运行微信工具。FE-01-T1 旧夹具现已获授权修复：6个VM依赖问题、2个导航字面量问题；另扩大白名单发现2个同类契约断言，已修复，失败证据保留。无后端业务/API/SQL修改。
+
+本地 RELEASE_GATE.md 与 docs/delivery/backend/HANDOFF.md 未存在；已只读查看 origin/backend/be-01-release-baseline@cd034562b71638b686cd7551660296873975cd30。其 RELEASE_GATE=BLOCKED，HANDOFF 同样说明 legacy 单AppID、unpaid、可信支付未实现、staging/私有R2待确认。未 merge / cherry-pick，不把其文件当作本分支已有。
+
+待后端提供：受控隔离 staging 地址、店铺/顾客/商家权限用例、稳定错误码及库存配送边界数据；支付仍需真实服务端创建/结果查询/通知验签协议。正式联调尚未运行，没有新增“已部署API差异”的结论。前端可先处理登录并发与迟到响应，若需要服务器改动另行交接。

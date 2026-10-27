@@ -1,16 +1,9 @@
-# 在本机浏览小程序效果
+# 远程预览说明
 
-当前路径：C:\project development\stall-miniapp。分支 zh。浏览器不能直接运行原生微信小程序。
+2026-10-27 起职责修正：本前端开发者不安装、不登录、不运行微信开发者工具。实际平台编译、界面预览及真机测试由项目负责人在另一台电脑完成，当前状态 WAITING_FOR_OWNER_PREVIEW。
 
-1. 安装官方微信开发者工具（普通微信不是开发者工具），用自己的微信登录。
-2. 选择“导入项目”，目录选 C:\project development\stall-miniapp\dist\combined。选这个目录，不是其 source 子目录，也不是 PocketCollector。
-3. 使用自己有权使用的 AppID / 测试号；无权限时尝试工具提供的游客模式，并记录实际限制。不需要朋友的微信账号或 AppSecret。
-4. 导入后执行工具里的“编译”，查看左侧模拟器。首页、购物车、订单、我的可从底部 Tab 切换。该步骤尚未在本机实测。
-5. 要看商家演示，可在工具中新增编译模式，启动页面选 pages/admin/admin；Combined 内“进入顾客端”可返回顾客首页。也可单独导入 dist/merchant（默认 touristappid，无顾客 Tab）。Customer 目录仅含顾客页面。
-6. 手机效果需开发者工具“预览”二维码，并满足实际账号/设备权限；当前未验证，不等于直接上线。
+负责人操作入口统一在 [PREVIEW_HANDOFF.md](PREVIEW_HANDOFF.md)：先核对 zh 的具体提交 SHA，npm ci 后运行 npm run verify:frontend，再将本机生成的 dist/combined 导入其已有微信开发者工具。需检查 Merchant/Customer 隔离时另导入 dist/merchant / dist/customer。
 
-目前 PUBLIC_API_BASE / DEFAULT_STORE_SLUG 为空。干净存储默认走本地 DEMO；不要填未经授权的共享后端。云端登录、真实支付、跨设备同步未验证。演示若出现营业/起送或配送限制，先在商家演示配置核对，不把限制当作云端错误。不在截图中使用真实手机号/地址。
+不要把源码仓库或 source 子目录当作编译后的项目目录。不要上传构建产物、测试会话或私密配置到 Git。云端配置当前为空，只能先检查本地 DEMO；跨设备同步、微信登录、真实支付与真机均不可从离线构建推断成功。
 
-修改源码后，在仓库根目录重新运行 npm run build:combined，再在工具内编译；顾客/商家独立目标分别运行 npm run build:customer / npm run build:merchant。不要只修改 dist，重建会覆盖。
-
-目前三个构建均成功；微信平台编译、游客模式能力、截图和真机预览均 NOT RUN。遇错保留报错和模式，追加 TEST_LOG.md。
+旧版“让本开发者安装工具”的分工已被替代；历史未运行记录留在 TEST_LOG.md，不删除原失败证据。修改源码后需重建对应 dist 目标，不直接修改 dist。

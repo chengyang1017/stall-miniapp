@@ -1,0 +1,25 @@
+✔ profile: a verified merchant explicitly enters workspace and saves preference (9.4306ms)
+✔ profile: rejected permission never navigates or stores merchant preference (4.7149ms)
+✔ profile: simultaneous taps make only one authorization request (4.0322ms)
+✔ profile: hiding while permission is pending prevents late navigation (5.4181ms)
+✔ profile: session identity changes invalidate a pending authorization (5.0439ms)
+✔ merchant login: passive session verification must not navigate (2.4782ms)
+✔ merchant login: explicit verified action can navigate (1.1713ms)
+✔ merchant login: invalid permission response never navigates (1.1297ms)
+✔ merchant workbench: customer switch navigates to home tab (4.9757ms)
+✔ one AppID contains merchant-login and admin plus customer landing page (1.1188ms)
+✔ shop homepage does not display a merchant administration entry (0.3639ms)
+✔ merchant preference is set only after server-backed permission check (0.2009ms)
+✔ app opening cannot route to merchant without fresh authorized request (0.3604ms)
+✔ merchant logout clears saved merchant-first preference (0.1685ms)
+✔ merchant can choose the customer shop without creating another AppID (2.6103ms)
+✔ customer profile shows merchant navigation only after a server check (1.791ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 166.5349
+EXIT_CODE=0

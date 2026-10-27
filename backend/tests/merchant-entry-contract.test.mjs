@@ -8,6 +8,8 @@ const index=read('miniprogram/pages/index/index.ts')
 const home=read('miniprogram/pages/index/index.wxml')
 const login=read('miniprogram/pages/merchant-login/merchant-login.ts')
 const auth=read('miniprogram/modules/shared/runtime/auth.ts')
+const host=read('miniprogram/modules/integration/singleAppHost.ts')
+const targets=JSON.parse(read('apps/build-targets.json')).targets
 const app=JSON.parse(read('miniprogram/app.json'))
 
 test('one AppID contains merchant-login and admin plus customer landing page',()=>{
@@ -30,7 +32,14 @@ test('app opening cannot route to merchant without fresh authorized request',()=
  const section=index.slice(index.indexOf('const merchantPreference='),index.indexOf("this.setData({entryLoading:false});refreshPagePresentation(this);"))
  assert.match(section,/await authorizedGet\(/)
  assert.match(section,/Array\.isArray\(result.items\)/)
- assert.ok(section.indexOf('await authorizedGet(')<section.indexOf("wx.navigateTo({url:'/pages/admin/admin'})"))
+ const authorize=section.indexOf('await authorizedGet(')
+ const navigate=section.indexOf('openMerchantWorkspace()')
+ assert.ok(authorize>=0 && navigate>authorize)
+ assert.match(section.slice(authorize,navigate),/Array\.isArray\(result.items\)/)
+ assert.match(section.slice(authorize,navigate),/stillMerchant&&merchantIdentity===supportIdentity\(\)/)
+ assert.match(index,/if\(CAN_OPEN_MERCHANT && merchantCfg/)
+ assert.match(host,/openMerchantWorkspace\(\)\{wx.navigateTo\(\{url:'\/pages\/admin\/admin'\}\)\}/)
+ assert.equal(targets.customer.aliases['miniprogram/modules/integration/singleAppHost.ts'],'miniprogram/modules/customer/navigation.ts')
  assert.match(auth,/Authorization: `Bearer \$\{token\}`/)
 })
 test('merchant logout clears saved merchant-first preference',()=>{
@@ -42,7 +51,11 @@ test('merchant can choose the customer shop without creating another AppID',()=>
  const layout=read('miniprogram/pages/admin/admin.wxml')
  assert.match(admin,/openCustomerShop\(/)
  assert.match(admin,/customer\|/)
- assert.match(admin,/wx.switchTab/)
+ assert.match(admin,/if\(!CAN_OPEN_CUSTOMER\)return/)
+ assert.match(admin,/navigateCustomerShop\(\)/)
+ assert.match(admin,/openCustomerShop as navigateCustomerShop/)
+ assert.match(host,/openCustomerShop\(\)\{wx.switchTab\(\{url:'\/pages\/index\/index'\}\)\}/)
+ assert.equal(targets.merchant.aliases['miniprogram/modules/integration/singleAppHost.ts'],'miniprogram/modules/merchant/navigation.ts')
  assert.match(layout,/bindtap="openCustomerShop"/)
 })
 test('customer profile shows merchant navigation only after a server check',()=>{
