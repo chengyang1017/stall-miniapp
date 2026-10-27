@@ -1,0 +1,21 @@
+# 前端交付进度
+
+## 2026-10-27｜FE-01｜zh
+
+执行：协作开发者 / Codex。基线 HEAD 与 fetch 后 origin/main 均为 b308134b2df02c207ce827658b409dffb9186a1e，开始工作区干净。沿用用户指定 zh，覆盖任务建议的 frontend/* 命名。
+
+状态：离线基线与前端修复已完成；平台验收 BLOCKED；整体交付未完成。PR / Push 未执行，仅本地提交；任务附件中的远程发布步骤等待用户明确授权。修复提交使用本文件所在提交（git log -1）。
+
+- 已读 apps/BUILDING.md、backend/APP_SEPARATION_READINESS.md、docs/testing/RELEASE_CHECKLIST.md 及实际前端入口。
+- Node v24.11.1，npm 11.6.2；Git 与 VS Code 已存在；npm ci 成功（3 包，审计 0 漏洞）。
+- 初测 Combined 成功，Customer/Merchant 因页面直接写入异端导航失败，保留原始失败日志。
+- FE-01-P1：首页恢复商家工作台、我的商家入口、工作台返回顾客入口统一经现有宿主导航适配器；Merchant 增加角色别名，禁止跳不存在的顾客 Tab；保持 Combined 服务端权限验证及显式切回顾客行为。
+- 三目标修复后构建、边界与产物检查全通过；页面 36 / 13 / 19，模块 125 / 72 / 84。
+- 新增 apps/tests/navigation.test.cjs，直接执行实际编译页面、mock wx，无网络/数据库；11 项通过；加选定既有测试共 33 项通过。
+- 另外运行旧导航测试：16 项中 8 通过、8 失败，原因为提取函数未注入适配器及匹配旧字面量。未改 backend/**；见 HANDOFF.md，不能宣称所有测试通过。
+- 三产物预览静态扫描 0 错误，各 1 个 TypeScript 插件警告；输出已是 JS，不代表微信平台编译通过。
+- 未发现微信开发者工具安装记录；微信模拟器 / 真机 NOT RUN。没有修改云端配置，没有启动后端、Docker、数据库、支付或生产服务。
+
+下一步 FE-02：安装并导入微信开发者工具，先用 Combined 完成 DEMO 页面截图和操作验收；与负责人协调旧夹具更新；获得明确 staging API / 测试身份后再开展跨设备业务联调。当前仍以 Combined 为首版候选，不自行切成双 AppID。
+
+相关：[测试](TEST_LOG.md)、[逐页验收](UI_CHECKLIST.md)、[阻塞](PLATFORM_BLOCKERS.md)、[交接](HANDOFF.md)、[如何预览](PREVIEW.md)。项目负责人原档案仅引用，不覆盖：[发布清单](../../testing/RELEASE_CHECKLIST.md)、[测试状态](../../testing/TEST_STATUS.md)。

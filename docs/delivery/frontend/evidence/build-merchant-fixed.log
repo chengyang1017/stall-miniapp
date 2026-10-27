@@ -1,0 +1,7 @@
+
+> miniprogram-ts-quickstart@1.0.0 build:merchant
+> node scripts/build-miniapp.mjs merchant
+
+merchant: emitted modules, page ownership and resource inventory checked
+merchant: compiled 84 source modules, 19 pages, 153 artifacts -> dist/merchant
+EXIT_CODE=0

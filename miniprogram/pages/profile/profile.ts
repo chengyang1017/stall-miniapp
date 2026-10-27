@@ -1,3 +1,4 @@
+import { CAN_OPEN_MERCHANT, openMerchantWorkspace } from '../../modules/integration/singleAppHost'
 import { getCloudContext } from '../../modules/shared/runtime/context'
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/customer/api/support'
@@ -9,14 +10,14 @@ Page({
   async checkMerchant(){
     const serial=++this.merchantSerial,cfg=getCloudContext(),identity=supportIdentity()
     this.setData({merchantAuthorized:false})
-    if(!cfg)return
+    if(!CAN_OPEN_MERCHANT||!cfg)return
     try{
       const result=await authorizedGet(cfg.apiBase,'/v1/merchant/stores/'+cfg.storeSlug+'/categories')
       if(serial===this.merchantSerial&&identity===supportIdentity()&&result&&Array.isArray(result.items))this.setData({merchantAuthorized:true})
     }catch(_){/* A failed check never exposes the merchant shortcut. */}
   },
   async openMerchant(){
-    if(!this.data.merchantAuthorized||this.merchantOpening)return
+    if(!CAN_OPEN_MERCHANT||!this.data.merchantAuthorized||this.merchantOpening)return
     const cfg=getCloudContext(),identity=supportIdentity(),serial=this.merchantSerial
     if(!cfg)return
     this.merchantOpening=true
@@ -25,7 +26,7 @@ Page({
       const result=await authorizedGet(cfg.apiBase,'/v1/merchant/stores/'+cfg.storeSlug+'/categories')
       if(serial!==this.merchantSerial||identity!==supportIdentity()||!result||!Array.isArray(result.items))return
       wx.setStorageSync('stall_merchant_home_preference_v1',cfg.apiBase+'|'+cfg.storeSlug)
-      wx.navigateTo({url:'/pages/admin/admin'})
+      openMerchantWorkspace()
     }catch(_){if(serial===this.merchantSerial)wx.showToast({title:'商家权限验证失败',icon:'none'})}
     finally{this.merchantOpening=false}
   },

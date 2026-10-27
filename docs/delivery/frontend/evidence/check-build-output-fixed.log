@@ -1,0 +1,8 @@
+
+> miniprogram-ts-quickstart@1.0.0 check:build-output
+> node scripts/check-build-output.mjs
+
+combined: emitted modules, page ownership and resource inventory checked
+customer: emitted modules, page ownership and resource inventory checked
+merchant: emitted modules, page ownership and resource inventory checked
+EXIT_CODE=0

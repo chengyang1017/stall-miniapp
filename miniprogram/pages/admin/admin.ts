@@ -1,3 +1,4 @@
+import { CAN_OPEN_CUSTOMER, openCustomerShop as navigateCustomerShop } from '../../modules/integration/singleAppHost'
 import { getMinimumOrder, saveMinimumOrder } from '../../modules/merchant/demo/settings'
 import { getCloudContext } from '../../modules/shared/runtime/context'
 import { merchantBusiness, patchMerchantBusiness, businessContextKey } from '../../modules/merchant/api/business'
@@ -6,12 +7,13 @@ import { loadWorkflowOrders } from '../../modules/merchant/demo/orders'
 import { merchantSupportGet,supportIdentity } from '../../modules/merchant/api/support'
 Page({
   openCustomerShop(){
+    if(!CAN_OPEN_CUSTOMER)return
     const cfg=getCloudContext()
     if(cfg)wx.setStorageSync('stall_merchant_home_preference_v1','customer|'+cfg.apiBase+'|'+cfg.storeSlug)
-    wx.switchTab({url:'/pages/index/index'})
+    navigateCustomerShop()
   },
  revision:null as string|null, serial:0,pendingSerial:0, loadedContext:'',supportSerial:0,supportTimer:0 as any,
- data:{supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',pendingNewOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
+ data:{canOpenCustomer:CAN_OPEN_CUSTOMER,supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',pendingNewOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
  onShow(){this.refreshNewOrderNotice();this.refreshMinimum();this.refreshSupport()},
  async refreshSupport(){clearTimeout(this.supportTimer);const serial=++this.supportSerial,identity=supportIdentity();this.setData({supportUnread:null,supportError:''});if(!getCloudContext())return;try{const r=await merchantSupportGet('unread');if(serial===this.supportSerial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){if(serial===this.supportSerial&&identity===supportIdentity())this.setData({supportError:'未读读取失败，进入客服重试'})}finally{if(serial===this.supportSerial)this.supportTimer=setTimeout(()=>this.refreshSupport(),30000)}},
  onHide(){this.supportSerial++;clearTimeout(this.supportTimer);this.setData({supportUnread:null,supportError:''})},

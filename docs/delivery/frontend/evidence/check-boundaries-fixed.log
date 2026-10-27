@@ -1,0 +1,8 @@
+
+> miniprogram-ts-quickstart@1.0.0 check:boundaries
+> node scripts/check-boundaries.mjs
+
+combined: 125 source files; dependency boundaries and cycles checked
+customer: 72 source files; dependency boundaries and cycles checked
+merchant: 84 source files; dependency boundaries and cycles checked
+EXIT_CODE=0

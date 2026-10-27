@@ -42,3 +42,9 @@ npm run build:merchant
 ## Phase32 商品评价增量
 
 当前页面数Combined36、Customer13、Merchant19。Customer评价展示/本人编辑及图片上传仅进入顾客目标；Merchant管理/回复仅进入商家目标；共享review-card不包含角色API。平台审核只在后端。Phase31 GPS隔离和默认前台声明保持不变。运行新接口需020及真实支付核验/私有图片/审核配置，详情见 ../backend/PRODUCT_REVIEWS.md。本阶段完成的仍是TypeScript编译及静态检查，未执行微信平台编译或业务测试。
+
+## FE-01 导航基线（2026-10-27）
+
+Combined 的跨端入口统一由 modules/integration/singleAppHost 提供；独立 Customer/Merchant 分别别名到所属 navigation。独立端不能跳不存在的异端页面；Combined 保留服务端验证后的商家恢复及显式返回顾客。
+
+三目标构建后，可运行 `node --test apps/tests/navigation.test.cjs` 检查实际编译页面的角色导航、拒绝、重复点击和失效响应。仅使用内存 wx，不连接后端。预览步骤与实际验收边界见 [前端预览说明](../docs/delivery/frontend/PREVIEW.md)。旧导航源码提取夹具需协调更新，详见该目录 HANDOFF.md。

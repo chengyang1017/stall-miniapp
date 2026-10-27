@@ -166,7 +166,7 @@
         "pages/merchant-reviews/merchant-reviews"
       ],
       "bootstrap": "apps/merchant/app.ts",
-      "aliases": {}
+      "aliases": {"miniprogram/modules/integration/singleAppHost.ts": "miniprogram/modules/merchant/navigation.ts"}
     }
   }
 }

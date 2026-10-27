@@ -1,0 +1,27 @@
+# 前后端交接与待协调事项
+
+## 2026-10-27｜FE-01｜zh
+
+### FE-01-P1 已修复：独立端构建回归
+
+复现（基线 b308134）：npm ci 后运行 npm run build:customer / build:merchant，分别在 index 的 /pages/admin/admin 与 admin 的 /pages/index/index 导航失败。profile 另有同样的商家直接导航，修复首次问题后也需隔离。
+
+修复：Customer 使用现有 singleAppHost → customer/navigation 别名；Merchant 新增 singleAppHost → merchant/navigation 别名。页面经适配器导航并按角色关闭无效跨端入口，Combined 保留新鲜服务端权限检查、商家偏好及显式返回顾客。无 API、数据库或支付协议变化。回退可 revert 本文所在提交，回退后将恢复原独立构建失败。
+
+### FE-01-T1：需协调旧导航测试（合并前处理）
+
+实际执行 backend/tests/frontend-navigation-runtime.test.mjs 与 merchant-entry-contract.test.mjs：8/16 失败。前者抽取 handler 的 VM 未注入新角色常量/导航适配器，报 ReferenceError: CAN_OPEN_MERCHANT is not defined / CAN_OPEN_CUSTOMER is not defined；后者两项绑定旧字面量。
+
+期望：负责人批准后，在其测试维护范围更新夹具依赖和断言；不要通过恢复跨端字面量或放宽构建边界让测试通过。可参考 apps/tests/navigation.test.cjs：直接加载三个真实构建的 CommonJS 页面，内存 wx 覆盖身份变化、拒绝、重复点击和隐藏。11 项通过，选定离线集共33项通过。旧失败日志保留，未修改 backend/**。
+
+### FE-02 需要的隔离 staging 契约
+
+- 确认首版 Combined、隔离 HTTPS API origin、可用店铺 slug / 店铺码（通过受控渠道提供测试会话，不提交仓库）。
+- /v1/store-entry/store/:slug 与 /v1/store-entry/scene/:scene：返回 storeSlug/storeName，需可用及失效入口数据。
+- /v1/auth/wechat 与已授权商家 /v1/merchant/stores/:slug/categories：提供顾客、owner/manager/只读、无权限/过期会话场景；权限以服务器为准。
+- 商品分页 products/categories/hasMore/nextCursor、库存/价格变化与配送规则：需空店铺、末页、售罄、缺货、暂停、不可配送的数据；不在前端伪造成功。
+- /v1/stores/:slug/orders：保留服务器定价、Idempotency-Key 与 unpaid 结果；前端当前提示“订单已创建（待支付）/尚未扣款”。需负责人提供幂等重放/冲突/迟到响应联调用例。
+- 支付路径与 wx.requestPayment 参数、取消/未知结果的可信查询协议尚未提供；不猜测 /pay 或 /refund。
+- 私有送达凭证、客服、GPS/评价相关权限/迁移/审核状态由负责人确认；未连接或修改任何后端。
+
+尚无真实 staging 请求，因此没有真实 HTTP 错误码或业务差异结论。API 样例仅描述现有前端契约，后续使用脱敏测试数据留档。原负责人档案 [TEST_STATUS](../../testing/TEST_STATUS.md)、[RELEASE_CHECKLIST](../../testing/RELEASE_CHECKLIST.md) 未修改，请负责人在审核后整合。
