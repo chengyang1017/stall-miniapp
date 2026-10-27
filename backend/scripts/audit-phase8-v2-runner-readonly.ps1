@@ -29,14 +29,14 @@ Write-Output "Recorded base digest: $ExpectedBase"
 Write-Output "Recorded bundle SHA256: $ExpectedBundle"
 Write-Output 'NOTE: Docker CLI might be pointed at an unexpected engine; do not change Docker contexts as part of this script.'
 
-$context = Invoke-DockerReadOnly @('context','show')
+$context = Invoke-DockerReadOnly -Arguments @('context','show')
 Write-Output "Docker current context: $context"
-$server = (Invoke-DockerReadOnly @('version','--format','{{.Server.Os}}/{{.Server.Arch}}')).Trim()
+$server = (Invoke-DockerReadOnly -Arguments @('version','--format','{{.Server.Os}}/{{.Server.Arch}}')).Trim()
 Write-Output "Docker server OS/Arch: $server"
 if ($server -ne 'linux/amd64') { throw "Wrong engine: $server (expected linux/amd64). No further inspection." }
 
 # Do not print Config.Env, mounts, labels beyond the bundle value, or file-system contents.
-$json = Invoke-DockerReadOnly @('image','inspect',$ExpectedRef,'--format','{{json .}}')
+$json = Invoke-DockerReadOnly -Arguments @('image','inspect',$ExpectedRef,'--format','{{json .}}')
 $items = @(ConvertFrom-Json -InputObject $json)
 if ($items.Count -ne 1) { throw 'Expected exactly one image object.' }
 $i = $items[0]
