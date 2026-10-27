@@ -54,7 +54,8 @@ function fixture({cloud=true,local=[]}={}){
     {filename:'customer/api/orders.ts',timeout:1000})
   vm.runInNewContext(pageJS,{...globals,...api,
     Page(value){definition=value},
-    loadWorkflowOrders(){localReads++;return clone(local)},chinaTime:value=>'北京时间:'+value
+    loadWorkflowOrders(){localReads++;return clone(local)},chinaTime:value=>'北京时间:'+value,
+    takeCreatedDemoOrder:()=>''
   },{filename:'pages/orders/orders.ts',timeout:1000})
   assert.ok(definition?.loadCloudPage,'actual orders Page was not registered')
   const p={...definition,data:clone(definition.data),setData(patch){writes.push(clone(patch));Object.assign(this.data,patch)}}

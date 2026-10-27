@@ -57,3 +57,7 @@
 ## 2026-10-27｜FE-02 当前平台验收责任
 
 上表是 FE-01 的历史 NOT RUN/BLOCKED 记录。现按远程协作修正：所有 WECHAT-DEVTOOLS / REAL-DEVICE 验收统一 WAITING_FOR_OWNER_PREVIEW，由项目负责人另一台电脑执行；本前端开发者继续构建和离线状态测试，不安装/登录/运行微信工具。尚无任何平台或设备回传证据。staging 和生产仍未运行。
+
+## 2026-10-27｜FE-04 当前补充
+
+checkout/orders在Combined/Customer新增26个实际编译DEMO回归（内存wx，不是模拟器截图），覆盖建单/unpaid/库存/购物车/Tab、一次性提示及确认竞态；最终全前端169项离线测试通过。上方页面UI人工验收依然WAITING_FOR_OWNER_PREVIEW，无平台截图或设备证据。完整18项现状见STATUS_AUDIT.md；商家经营/上传/客服等不能因本轮通过而改成已验收。

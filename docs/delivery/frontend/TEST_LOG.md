@@ -82,3 +82,19 @@ verify:frontend实际依次执行边界、三目标TypeScript构建、全产物�
 FE-02提交172aa7d254432f97de924ebcf8032361fc29cb22、FE-03产品提交91074bc20666693effe12f29594c7a3253ab6b4c，均普通push成功并各自用git ls-remote核验远端SHA；未推main。GitHub草稿PR#2已创建，未合并。最后的交接文档回执不改源码/测试/构建配置，不因文档变化重复业务测试。受测产品SHA固定91074bc20666693effe12f29594c7a3253ab6b4c，最终证据fe03-verify-final.txt。
 
 fetch后只读复核后端分支b6b66f9的交接与门禁，无接口增量。没有执行后端新脚本、数据库或Docker命令。完整测试用例未运行总数不详；只报告明确白名单143个全部通过，平台/真机/真实服务分别保持待验。
+
+## 2026-10-27｜FE-04｜进度核验与本地结算
+
+起点local/origin zh=524c6dc040d47dcb0e35243f2c345dc85c45b890。读取AGENTS、TASKS、全部前端永久档案及原任务书，fetch核验main/zh、只读复核后端协作分支b6b66f9的门禁/接口交接。未合并后端，未操作数据库/Docker或微信工具。全面判断见STATUS_AUDIT.md。
+
+1. npm run verify:frontend 基线重跑：143通过/0失败/0跳过，evidence/fe04-baseline.txt。
+2. 新增实际编译DEMO回归：node --test --test-timeout=5000 apps/tests/demo-checkout.test.cjs。修前26项6通过/20失败/0跳过，fe04-checkout-before.txt。模拟器中的路由mock依据仓库wx类型约束拒绝redirectTo打开Tab；不是实际微信平台报错。失败覆盖非法Tab跳转、重复弹窗、确认失败锁释放、隐藏/卸载、暂停营业、静默改价、导航失败反馈和一次性提示要求；不是20个互不重叠的产品缺陷。
+3. 修复产品代码后首次npm run verify:frontend：169项134通过/35失败/0跳过，fe04-verify-first.txt；新26项均已通过。34项订单夹具抽取import时未注入新增takeCreatedDemoOrder，另1项错误要求redirectTo跳Tab。保留失败并显式注入只返回空notice的默认stub；真实notice由新编译模块回归测试，未弱化订单身份/分页安全断言。源契约改查switchTab、身份隔离notice和无Tab参数。
+4. 定向命令 node --test --test-timeout=10000 apps/tests/demo-checkout.test.cjs backend/tests/frontend-navigation-flows.test.mjs backend/tests/frontend-navigation-orders-phase6.test.mjs：76通过/0失败/0跳过，fe04-checkout-fixed.txt。
+5. 最终npm run verify:frontend：**169通过/0失败/0跳过/0取消/0待办**，fe04-verify-final.txt。三目标Combined125模块36页258产物、Customer72模块13页136产物、Merchant84模块19页153产物；边界/产物PASS，预览静态扫描每目标0错误/1插件警告。169是最后覆盖总数，不与143或76相加。
+
+新26项各端13项：正确Tab与unpaid库存预留；一次确认；取消/失败保留购物车；隐藏/卸载失效；切云端不建本地单；营业/配送暂停重校验；价格变化重确认；导航失败保留已建订单不重建；立即购买仅清自身选择；缓存Tab重置筛选且提示不重放；跨身份/云模式notice失效。使用固定演示时钟、合成姓名/电话/地址、内存wx和真正编译模块；没有实际网络/微信/后端请求。
+
+读取补充源码时一条终端命令长时间未返回，已等待原会话结束并检查输出；不把等待当作测试成功。最终完整验证已经正常退出0。源码/文档diff检查排除保留原样的原始证据日志，避免改写历史输出中的空白。
+
+WECHAT-DEVTOOLS、iOS、Android三类验收均WAITING_FOR_OWNER_PREVIEW且无回传；真实staging/登录/支付/存储/多设备未运行，用例总数尚未枚举，不伪造0未运行。当前仍DEVELOPMENT。

@@ -1,0 +1,455 @@
+✖ combined DEMO checkout saves one unpaid order and opens the orders Tab (206.8879ms)
+✖ combined DEMO checkout allows only one pending confirmation (72.1972ms)
+✖ combined cancelled or failed confirmation preserves cart and allows retry (109.8934ms)
+✖ combined confirmation after onHide cannot create an order (59.3019ms)
+✖ combined confirmation after onUnload cannot create an order (61.1038ms)
+✔ combined switching to CLOUD while DEMO confirmation is pending does not create local data (67.3332ms)
+✖ combined business pause during confirmation is revalidated (53.4868ms)
+✔ combined delivery pause during confirmation is revalidated (51.2406ms)
+✖ combined changed price is shown again instead of silently accepting a new total (69.3261ms)
+✖ combined route failure is reported as saved unpaid order and does not resubmit (70.7963ms)
+✔ combined direct purchase only clears its own selection (46.8564ms)
+✖ combined existing orders Tab selects all once and does not replay creation notice (63.9054ms)
+✖ combined a DEMO order notice cannot cross an identity or cloud context (56.1603ms)
+✖ customer DEMO checkout saves one unpaid order and opens the orders Tab (107.4789ms)
+✖ customer DEMO checkout allows only one pending confirmation (59.7761ms)
+✖ customer cancelled or failed confirmation preserves cart and allows retry (67.8594ms)
+✖ customer confirmation after onHide cannot create an order (50.5639ms)
+✖ customer confirmation after onUnload cannot create an order (53.6384ms)
+✔ customer switching to CLOUD while DEMO confirmation is pending does not create local data (49.6016ms)
+✖ customer business pause during confirmation is revalidated (65.3229ms)
+✔ customer delivery pause during confirmation is revalidated (67.6749ms)
+✖ customer changed price is shown again instead of silently accepting a new total (94.156ms)
+✖ customer route failure is reported as saved unpaid order and does not resubmit (54.4491ms)
+✔ customer direct purchase only clears its own selection (98.2028ms)
+✖ customer existing orders Tab selects all once and does not replay creation notice (61.6481ms)
+✖ customer a DEMO order notice cannot cross an identity or cloud context (51.2605ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 6
+ℹ fail 20
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2206.9305
+
+✖ failing tests:
+
+test at apps\tests\demo-checkout.test.cjs:59:3
+✖ combined DEMO checkout saves one unpaid order and opens the orders Tab (206.8879ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      [
+  +     'redirectTo',
+  +     '/pages/orders/orders?created=DEMO-1793073600000-kktt6o'
+  -     'switchTab',
+  -     '/pages/orders/orders'
+      ]
+    ]
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:63:53)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.start (node:internal/test_runner/test:1003:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ [ 'redirectTo', '/pages/orders/orders?created=DEMO-1793073600000-kktt6o' ] ],
+    expected: [ [ 'switchTab', '/pages/orders/orders' ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:68:3
+✖ combined DEMO checkout allows only one pending confirmation (72.1972ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:69:74)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:73:3
+✖ combined cancelled or failed confirmation preserves cart and allows retry (109.8934ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - false
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:78:14)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:81:44
+✖ combined confirmation after onHide cannot create an order (59.3019ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:83:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:81:44
+✖ combined confirmation after onUnload cannot create an order (61.1038ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:83:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:91:47
+✖ combined business pause during confirmation is revalidated (53.4868ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:95:48)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:97:3
+✖ combined changed price is shown again instead of silently accepting a new total (69.3261ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:99:48)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:102:3
+✖ combined route failure is reported as saved unpaid order and does not resubmit (70.7963ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(f.modals.some(m=>m.title==='演示订单已保存'))
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:104:46)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:112:3
+✖ combined existing orders Tab selects all once and does not replay creation notice (63.9054ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'completed' !== 'all'
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:116:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'completed',
+    expected: 'all',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:119:3
+✖ combined a DEMO order notice cannot cross an identity or cloud context (56.1603ms)
+  TypeError: f.orderModule(...).takeCreatedDemoOrder is not a function
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:122:34)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at apps\tests\demo-checkout.test.cjs:59:3
+✖ customer DEMO checkout saves one unpaid order and opens the orders Tab (107.4789ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      [
+  +     'redirectTo',
+  +     '/pages/orders/orders?created=DEMO-1793073600000-1rgn63'
+  -     'switchTab',
+  -     '/pages/orders/orders'
+      ]
+    ]
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:63:53)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ [ 'redirectTo', '/pages/orders/orders?created=DEMO-1793073600000-1rgn63' ] ],
+    expected: [ [ 'switchTab', '/pages/orders/orders' ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:68:3
+✖ customer DEMO checkout allows only one pending confirmation (59.7761ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:69:74)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:73:3
+✖ customer cancelled or failed confirmation preserves cart and allows retry (67.8594ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - false
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:78:14)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:81:44
+✖ customer confirmation after onHide cannot create an order (50.5639ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:83:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:81:44
+✖ customer confirmation after onUnload cannot create an order (53.6384ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:83:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:91:47
+✖ customer business pause during confirmation is revalidated (65.3229ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:95:48)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:97:3
+✖ customer changed price is shown again instead of silently accepting a new total (94.156ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:99:48)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:102:3
+✖ customer route failure is reported as saved unpaid order and does not resubmit (54.4491ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(f.modals.some(m=>m.title==='演示订单已保存'))
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:104:46)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:112:3
+✖ customer existing orders Tab selects all once and does not replay creation notice (61.6481ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'completed' !== 'all'
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:116:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'completed',
+    expected: 'all',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:119:3
+✖ customer a DEMO order notice cannot cross an identity or cloud context (51.2605ms)
+  TypeError: f.orderModule(...).takeCreatedDemoOrder is not a function
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:122:34)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+EXIT_CODE=1

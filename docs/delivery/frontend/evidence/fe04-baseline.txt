@@ -1,0 +1,198 @@
+
+> miniprogram-ts-quickstart@1.0.0 verify:frontend
+> node scripts/verify-frontend.mjs
+
+
+> node scripts/check-boundaries.mjs
+combined: 125 source files; dependency boundaries and cycles checked
+customer: 72 source files; dependency boundaries and cycles checked
+merchant: 84 source files; dependency boundaries and cycles checked
+
+> node scripts/build-miniapp.mjs combined
+combined: emitted modules, page ownership and resource inventory checked
+combined: compiled 125 source modules, 36 pages, 258 artifacts -> dist/combined
+
+> node scripts/build-miniapp.mjs customer
+customer: emitted modules, page ownership and resource inventory checked
+customer: compiled 72 source modules, 13 pages, 136 artifacts -> dist/customer
+
+> node scripts/build-miniapp.mjs merchant
+merchant: emitted modules, page ownership and resource inventory checked
+merchant: compiled 84 source modules, 19 pages, 153 artifacts -> dist/merchant
+
+> node scripts/check-build-output.mjs
+combined: emitted modules, page ownership and resource inventory checked
+customer: emitted modules, page ownership and resource inventory checked
+merchant: emitted modules, page ownership and resource inventory checked
+
+> node scripts/miniapp-preview-audit.mjs dist/combined
+Preview preflight: scanned 125 JS and 41 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node scripts/miniapp-preview-audit.mjs dist/customer
+Preview preflight: scanned 72 JS and 18 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node scripts/miniapp-preview-audit.mjs dist/merchant
+Preview preflight: scanned 84 JS and 22 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node --test apps/tests/navigation.test.cjs apps/tests/auth-session.test.cjs backend/tests/build-role-contracts.test.mjs backend/tests/frontend-navigation.test.mjs backend/tests/frontend-navigation-flows.test.mjs backend/tests/frontend-navigation-guards.test.mjs backend/tests/frontend-navigation-lifecycle.test.mjs backend/tests/frontend-navigation-orders-phase6.test.mjs backend/tests/frontend-navigation-runtime.test.mjs backend/tests/merchant-entry-contract.test.mjs backend/tests/miniapp-preview-audit.test.mjs backend/tests/miniapp-preview-build-guard.test.mjs
+✔ current WeChat login saves the verified response and cache scope (8.2043ms)
+✔ store switch during wx.login prevents sending the old code (5.15ms)
+✔ backend switch during exchange cannot overwrite session or scope (3.4137ms)
+✔ logout during exchange cannot be undone by a late login response (3.5445ms)
+✔ replacement session cannot be overwritten by a late exchange (5.8797ms)
+✔ newer login supersedes an earlier exchange even if the earlier one returns first (5.0305ms)
+✔ inactive requesting page cannot start a backend exchange (3.3898ms)
+✔ inactive requesting page cannot save an in-flight exchange (3.5182ms)
+✔ malformed server token is rejected without overwriting the session (9.6807ms)
+✔ HTTP and network failures preserve the previous session (7.017ms)
+✔ combined merchant logout: old response cannot release a newer identity verification (13.0585ms)
+✔ combined merchant login: hidden page cannot authenticate or navigate after permission response (8.4896ms)
+✔ combined merchant login: current explicit verification opens workspace only after authorization (9.9867ms)
+✔ combined merchant login: old finally cannot release a newer page verification (10.0261ms)
+✔ combined merchant login: busy inputs and repeat verification cannot switch the request context (8.198ms)
+✔ combined merchant login: leaving during code exchange prevents session resurrection (8.2343ms)
+✔ merchant merchant logout: old response cannot release a newer identity verification (12.6665ms)
+✔ merchant merchant login: hidden page cannot authenticate or navigate after permission response (9.4216ms)
+✔ merchant merchant login: current explicit verification opens workspace only after authorization (7.3449ms)
+✔ merchant merchant login: old finally cannot release a newer page verification (7.3204ms)
+✔ merchant merchant login: busy inputs and repeat verification cannot switch the request context (7.0565ms)
+✔ merchant merchant login: leaving during code exchange prevents session resurrection (11.9267ms)
+✔ Combined homepage resumes a freshly authorized merchant workspace (64.2282ms)
+✔ Customer homepage ignores a saved Combined merchant preference (41.8488ms)
+✔ Customer profile never requests merchant permissions or opens workspace (17.0681ms)
+✔ Combined profile still authorizes before explicitly opening workspace (16.0087ms)
+✔ Combined profile does not navigate after a rejected permission request (17.5958ms)
+✔ Combined workbench can explicitly switch back to customer tab (43.2811ms)
+✔ Merchant workbench hides and rejects an unavailable customer tab (51.6004ms)
+✔ Combined profile suppresses repeated taps while permission is pending (15.0888ms)
+✔ Combined profile ignores permission response after hiding (30.8545ms)
+✔ Combined profile ignores permission response after identity replacement (15.5451ms)
+✔ Combined homepage does not resume workspace after denied permission (37.4857ms)
+✔ customer and merchant pages each have a declared owner (2.1739ms)
+✔ GPS and review pages remain role-specific (0.3101ms)
+✔ checkout and basket are customer-only, administration merchant-only (0.2744ms)
+✔ customer product and order destinations are registered (3.6648ms)
+✔ product-card tap encodes reserved characters in product IDs (22.3022ms)
+✔ empty product ID never opens an arbitrary detail (11.4449ms)
+✔ order-card tap encodes reserved characters in order IDs (9.37ms)
+✔ empty order ID is rejected before navigation (13.3942ms)
+✔ product detail decodes ID on load and checkout is the direct-purchase destination (1.042ms)
+✔ cart checkout navigation remains gated by cart/amount validation (17.469ms)
+✔ checkout address selector opens registered customer address page (15.8931ms)
+✔ successful local checkout includes encoded created order ID when opening orders (2.9263ms)
+✔ order details preserve the supplied order ID for subsequent data retrieval (1.8728ms)
+✔ role-specific customer tracking, proof and review destinations stay out of merchant build (0.3262ms)
+✔ cloud cart: minimum-order shortfall prevents checkout (15.2612ms)
+✔ cloud cart: catalog/delivery load error prevents checkout (2.9286ms)
+✔ cloud cart: empty cart prevents checkout (8.5674ms)
+✔ cloud cart: valid cart opens checkout exactly once (9.2123ms)
+✔ local cart: minimum-order shortfall blocks checkout (15.1792ms)
+✔ local cart: empty cart blocks checkout (19.1324ms)
+✔ local cart: valid cart opens checkout exactly once (14.9245ms)
+✔ local cart: a positive shortfall with an empty cart never navigates (14.5393ms)
+✔ order detail: pending response is ignored after page hide (54.0964ms)
+✔ order detail: pending response is ignored after unload (38.6279ms)
+✔ order detail: old request cannot overwrite newer onShow (38.695ms)
+✔ order detail: identity change discards pending order response (30.638ms)
+✔ order detail: obsolete fetch failure does not show toast (68.7781ms)
+✔ order detail: current fetch failure shows error, not fabricated order (37.518ms)
+✔ proof: concurrent refreshes make one request and show latest URL (25.8987ms)
+✔ proof: hiding page discards a late signed URL (15.1605ms)
+✔ proof: identity change discards a late signed URL (8.621ms)
+✔ proof: current URL failure is reported without image (11.8639ms)
+✔ proof: preview with no image does not open image viewer (11.766ms)
+(node:26336) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ phase6: initial load sends scoped authenticated parameters and normalizes real page state (24.9416ms)
+✔ phase6: empty successful response clears pagination without inventing orders (18.3865ms)
+✔ phase6: next page appends orders and forwards the opaque cursor unchanged (22.3233ms)
+✔ phase6: overlapping IDs across pages are not displayed twice (30.062ms)
+✔ phase6: duplicate IDs inside a single returned page are displayed once (26.9111ms)
+✔ phase6: repeated reach-bottom events share one in-flight pagination request (26.8541ms)
+✔ phase6: unknown filter leaves tab, rows and request count unchanged (27.757ms)
+✔ phase6: rapid filter requests completing in reverse order retain only the newest result (8.3203ms)
+✔ phase6: stale failure cannot clear the newer filter loading indicator or set its error (12.8019ms)
+✔ phase6: pull refresh clears cursor and rejects a late pre-refresh page (8.3418ms)
+✔ phase6: onHide invalidates late resolve without additional setData (8.0099ms)
+✔ phase6: onHide invalidates late reject without additional setData (12.4869ms)
+✔ phase6: onUnload invalidates late resolve without additional setData (9.2554ms)
+✔ phase6: onUnload invalidates late reject without additional setData (14.5219ms)
+✔ phase6: changed identity rejects a pending response before orders reach the page (8.5133ms)
+✔ phase6: identity change before pagination cannot retain or append the previous user orders (6.6872ms)
+✔ phase6: store change before pagination cannot reuse the previous store rows or cursor (8.3109ms)
+✔ phase6: onShow after identity change resets old rows and makes a fresh first-page request (6.3406ms)
+✔ phase6: malformed null page is rejected without exposing invalid rows (4.1082ms)
+✔ phase6: malformed non-array orders is rejected without exposing invalid rows (6.3682ms)
+✔ phase6: malformed non-boolean hasMore is rejected without exposing invalid rows (4.5894ms)
+✔ phase6: malformed non-string next cursor is rejected without exposing invalid rows (4.1086ms)
+✔ phase6: malformed empty next cursor is rejected without exposing invalid rows (4.169ms)
+✔ phase6: malformed order with no stable ID is rejected without exposing invalid rows (5.0317ms)
+✔ phase6: malformed order with non-numeric total is rejected without exposing invalid rows (5.7619ms)
+✔ phase6: first-page network failure never falls back to local demo orders (4.472ms)
+✔ phase6: failed next page retains loaded rows and cursor and can be retried successfully (7.6781ms)
+✔ phase6: exhausted pagination never makes another request on button or reach-bottom (9.0453ms)
+✔ phase6: local mode sorts, filters and counts local orders without any cloud requests (7.7239ms)
+✔ phase6: switching cloud to local invalidates an outstanding cloud result (8.8004ms)
+✔ phase6: switching local to cloud clears demo rows and stale errors before awaiting cloud (5.5362ms)
+✔ phase6: pull refresh always stops its spinner after a current request failure (6.6794ms)
+✔ phase6 API: no session token rejects without invoking wx.request (6.2189ms)
+✔ phase6 API: non-200 response rejects instead of returning its payload (3.6627ms)
+✔ phase6 API: invalid detail ID is rejected without network activity (5.2143ms)
+✔ phase6: identity switch keeps new loading and list isolated when old pagination resolve runs finally (4.2393ms)
+✔ phase6: identity switch keeps new loading and list isolated when old pagination reject runs finally (5.1607ms)
+✔ phase6: store switch keeps new loading and list isolated when old pagination resolve runs finally (5.087ms)
+✔ phase6: store switch keeps new loading and list isolated when old pagination reject runs finally (6.1221ms)
+✔ profile: a verified merchant explicitly enters workspace and saves preference (22.2449ms)
+✔ profile: rejected permission never navigates or stores merchant preference (6.6917ms)
+✔ profile: simultaneous taps make only one authorization request (14.8531ms)
+✔ profile: hiding while permission is pending prevents late navigation (46.6592ms)
+✔ profile: session identity changes invalidate a pending authorization (26.7896ms)
+✔ merchant login: passive session verification must not navigate (3.9499ms)
+✔ merchant login: explicit verified action can navigate (1.874ms)
+✔ merchant login: invalid permission response never navigates (1.8216ms)
+✔ merchant workbench: customer switch navigates to home tab (4.7803ms)
+✔ combined registration and three build target page sets agree (2.8819ms)
+✔ all tabBar targets are registered and present in customer build (0.3226ms)
+✔ every literal navigator URL on registered pages has a valid page target (134.8334ms)
+✔ customer profile static links stay in customer build (2.2267ms)
+✔ merchant workbench static links stay in merchant build (2.0094ms)
+✔ switching from merchant workspace to customer uses the home tab (3.181ms)
+✔ profile merchant shortcut is gated by verified authorization (3.3066ms)
+✔ passive merchant session check cannot automatically navigate (1.5614ms)
+✔ customer-only build disables merchant workspace navigation (2.0066ms)
+✔ role-specific chat, proof, reviews and tracking destinations are registered (5.0628ms)
+✔ one AppID contains merchant-login and admin plus customer landing page (1.3356ms)
+✔ shop homepage does not display a merchant administration entry (0.4032ms)
+✔ merchant preference is set only after server-backed permission check (0.3008ms)
+✔ app opening cannot route to merchant without fresh authorized request (0.4866ms)
+✔ merchant logout clears saved merchant-first preference (0.2324ms)
+✔ merchant can choose the customer shop without creating another AppID (2.2781ms)
+✔ customer profile shows merchant navigation only after a server check (1.9008ms)
+✔ preview scanner detects optional chaining in generated JS with exact location (4.6668ms)
+✔ preview scanner detects nullish coalescing and assignment (1.4431ms)
+✔ preview scanner does not flag simple strings and comments (0.7518ms)
+✔ preview scanner rejects known broken checkbox-group opening tag (0.6702ms)
+✔ preview scanner does not reject a valid checkbox-group (0.2365ms)
+✔ preview configuration warns about ES2020/es6=false mismatch without calling it a definite compiler failure (0.3891ms)
+✔ end-to-end audit of disposable fixture detects both real preview blockers (35.0579ms)
+✔ missing generated JS is reported as unverified, not as full preview success (4.861ms)
+✔ real TypeScript ES2019 emission removes optional chaining and nullish coalescing (280.2123ms)
+✔ mutation: emitted ES2020 optional chaining is rejected by build guard (241.0939ms)
+✔ mutation: injected nullish syntax is rejected by build guard (0.3225ms)
+✔ string literals mentioning optional chaining do not fail the build (0.2599ms)
+ℹ tests 143
+ℹ suites 0
+ℹ pass 143
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1302.6526
+Frontend offline verification passed. WeChat/device acceptance is WAITING_FOR_OWNER_PREVIEW.
+EXIT_CODE=0

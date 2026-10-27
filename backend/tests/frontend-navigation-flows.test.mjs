@@ -79,9 +79,15 @@ test('cart checkout navigation remains gated by cart/amount validation',()=>{
 test('checkout address selector opens registered customer address page',()=>{
   assert.deepEqual(runSimpleHandler(page('checkout/checkout'),'openAddresses'),[['navigateTo',routes.addresses]])
 })
-test('successful local checkout includes encoded created order ID when opening orders',()=>{
+test('successful local checkout uses the orders Tab and transfers its creation notice without URL parameters',()=>{
   const source=page('checkout/checkout')
-  assert.match(source,/wx\.redirectTo\(\{\s*url:\s*`\/pages\/orders\/orders\?created=\$\{encodeURIComponent\(order\.id\)\}`\s*\}\)/)
+  assert.match(source,/openCreatedDemoOrder\(order\.id\)/)
+  assert.doesNotMatch(source,/wx\.redirectTo\(\{\s*url:\s*`\/pages\/orders\/orders/)
+  const navigation=read('miniprogram/modules/customer/demo/orders.ts')
+  assert.match(navigation,/wx\.switchTab\(\{url:'\/pages\/orders\/orders'/)
+  assert.match(navigation,/createdNotice=\{id,context\}/)
+  assert.match(navigation,/notice\.context===cloudIdentity\(\)/)
+  assert.match(page('orders/orders'),/const createdId=takeCreatedDemoOrder\(\)/)
   assert.match(page('orders/orders'),/createdId:\s*options\.created\s*\|\|\s*''/)
   assertPage(routes.orders)
 })

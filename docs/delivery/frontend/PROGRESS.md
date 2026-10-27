@@ -1,5 +1,20 @@
 # 前端交付进度
 
+## 当前状态｜2026-10-27｜FE-04（最新）
+
+**DEVELOPMENT，尚未进入最终收尾。** 上一轮FE-02/03已完成并推送；本轮开始local/origin zh均524c6dc040d47dcb0e35243f2c345dc85c45b890，main=b308134，工作区干净。重跑既有verify:frontend：143通过/0失败/0跳过。
+
+完整判断见 [STATUS_AUDIT.md](STATUS_AUDIT.md)：任务书18项及原A—E阶段未全部完成，很多页面只有源码/部分离线证据，不能报告完成百分比。微信工具/iOS/Android仍WAITING_FOR_OWNER_PREVIEW，无实际回传；staging、真实登录/支付及完整多角色业务待联调。
+
+FE-04（P0本地演示结算）：已复现并修复redirectTo跳orders Tab、重复确认弹窗、页面离开后建单、暂停营业与价格变更未重新确认等问题。改为合法switchTab，缓存Tab也能接收一次性/身份隔离的新演示订单提示；确认前后统一检查营业、配送、库存、地址、起送与时段，价格/数量/配送快照变化需重新确认。保存成功但导航失败明确提示已保存/未支付，不当作建单失败要求重建。仅影响DEMO，不改后端/支付。
+
+新增26项实际编译checkout→存储/库存/购物车→orders页面回归，覆盖Combined/Customer两端。修前26项6通过/20失败（包括新增明确反馈要求）；首次完整回归35项失败来自旧夹具缺新增takeCreatedDemoOrder依赖和1个错误redirectTo契约，保留日志并修复夹具，未删/跳测试。最终npm run verify:frontend：169通过/0失败/0跳过；三目标构建/边界/产物通过，静态预览扫描各0错误/1历史插件警告。见TEST_LOG及fe04-verify-final.txt。
+
+本轮有界任务完成后按Git历史提交推送，产品提交以 `fix(frontend): make demo checkout confirmation and tab navigation safe` 定位，精确SHA在PREVIEW_HANDOFF同步回执追加。草稿PR#2仍待审核，不自动合并。
+
+下一项自主FE-05：用延迟mock验证云端checkout提交/结果弹窗的隐藏/卸载、切上下文、旧finally、结果弹窗回调；源码候选已定位，但未实测前不报“已确认缺陷”。商品详情异步加购/立即购买、地址切换及商家经营异常矩阵也未全量审完。继续离线工作，无需用户再找提示词；负责人并行处理预览交接。个人前端职责尚未全部验收，商城未正式交付。
+
+
 ## 当前状态｜2026-10-27｜FE-03（最新）
 
 状态 DEVELOPMENT，未达到前端平台验收/客户交付。FE-02已提交172aa7d254432f97de924ebcf8032361fc29cb22并推送，远端SHA核验一致。4278c40也已在zh远端。

@@ -2,10 +2,28 @@ import type { DemoOrder,OrderDraftLine } from '../../shared/domain/demo'
 import { loadStore,saveStore,loadDemoOrders } from '../../shared/demo/repository'
 import { inventoryMovement,productIsPublished } from '../../shared/domain/demoRules'
 import { stockAllows } from '../../shared/domain/catalog'
+import { cloudIdentity, getCloudContext } from '../../shared/runtime/context'
 export type { DemoOrder,DemoOrderItem,WorkflowOrder } from '../../shared/domain/demo'
 export { loadDemoOrders } from '../../shared/demo/repository'
 export { chinaTime } from '../../shared/domain/time'
 export const loadWorkflowOrders=loadDemoOrders
+
+// switchTab does not accept query parameters. Keep the DEMO creation notice
+// in memory and scope it to the initiating identity, including cached Tab pages.
+let createdNotice: {id:string;context:string}|null = null
+export function openCreatedDemoOrder(id:string):void {
+  if(!id||getCloudContext())return
+  const context=cloudIdentity()
+  createdNotice={id,context}
+  wx.switchTab({url:'/pages/orders/orders',fail:()=>{
+    if(context!==cloudIdentity()||getCloudContext())return
+    wx.showModal({title:'演示订单已保存',content:'待支付演示订单 '+id+' 已保存在本机，尚未扣款。请从底部“订单”查看，无需重复创建。',showCancel:false})
+  }})
+}
+export function takeCreatedDemoOrder():string {
+  const notice=createdNotice;createdNotice=null
+  return notice&&!getCloudContext()&&notice.context===cloudIdentity()?notice.id:''
+}
 type OrderInput=Omit<DemoOrder,'id'|'createdAt'|'paymentStatus'|'status'|'items'> & {items:OrderDraftLine[]}
 export function createDemoOrder(input: OrderInput): DemoOrder {
   const store=loadStore(),products = store.products

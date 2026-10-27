@@ -6,7 +6,7 @@ import { getPurchaseDetails, clearDirectPurchase, hasDirectPurchase } from '../.
 import { getSelectedAddress, SavedAddress } from '../../utils/addresses'
 import { availableAreas, availableSlots, loadDelivery } from '../../modules/customer/demo/settings'
 import { CartDisplayItem, saveCart } from '../../utils/cart'
-import { createDemoOrder } from '../../modules/customer/demo/orders'
+import { createDemoOrder, openCreatedDemoOrder } from '../../modules/customer/demo/orders'
 import { formatPublishTime } from '../../utils/productPublishing'
 import { minimumDisplay } from '../../modules/shared/api/business'
 import { deliveryStoreKey, resolveDeliveryArea, deliveryAddressReason } from '../../modules/customer/api/delivery'
@@ -40,6 +40,7 @@ Page({
     this.saveDraft()
   },
   data: {
+    demoConfirmBusy:false,
     orderSubmitting:false,
     cloudMode: false, cloudBusy: false, cloudError: '',deliveryError:'',selectionNotice:'',cloudAreaName:'', deliveryDate: '', deliveryDateMin: '', deliveryDateMax: '', cloudRules: null as any, cloudAreas: [] as Array<{id:string;name:string}>,
     items: [] as CartDisplayItem[],
@@ -61,6 +62,7 @@ Page({
     this.restoreDraft()
   },
   onShow() {
+    this.setData({demoConfirmBusy:false})
     if(this.checkoutContext!==supportIdentity())this.restoreDraft()
     if (cloudCartConfig()) { this.refreshCloudCheckout(); return }
     this.cloudSerial++
@@ -158,8 +160,8 @@ Page({
     }
     finally{this.setData({cloudBusy:false,orderSubmitting:false})}
   },
-  onHide(){this.saveDraft();this.cloudSerial++;if(cloudCartConfig())this.setData({selectedAddress:null,hasAddress:false,cloudRules:null,cloudBusy:false})},
-  onUnload() { this.cloudSerial++;this.saveDraft() },
+  onHide(){this.saveDraft();this.cloudSerial++;this.setData({demoConfirmBusy:false});if(cloudCartConfig())this.setData({selectedAddress:null,hasAddress:false,cloudRules:null,cloudBusy:false})},
+  onUnload() { this.cloudSerial++;this.setData({demoConfirmBusy:false});this.saveDraft() },
   openAddresses() { wx.navigateTo({ url: '/pages/addresses/addresses' }) },
   chooseSlot(e: any) {
     const index = Number(e.detail.value)
@@ -174,55 +176,56 @@ Page({
   },
   updateNote(e: WechatMiniprogram.Input) { this.setData({ note: e.detail.value }) },
   saveDraft() {if(this.checkoutContext!==supportIdentity())return;const key=this.draftStorageKey();if(key)wx.setStorageSync(key, { note: this.data.note }) },
-  confirmOrder() {
-    if (cloudCartConfig()) { this.submitCloudOrder(); return }
+  localCheckoutDraft() {
+    if(cloudCartConfig())return null
     const delivery=loadDelivery(),today=localDate()
-    if(delivery.deliveryPaused||(delivery.specialDates||[]).some(d=>d.date===today&&d.paused)){wx.showToast({title:delivery.deliveryPaused?'当前暂停全部配送':'今天暂停配送',icon:'none'});return}
+    if(delivery.deliveryPaused||(delivery.specialDates||[]).some(d=>d.date===today&&d.paused)){wx.showToast({title:delivery.deliveryPaused?'当前暂停全部配送':'今天暂停配送',icon:'none'});return null}
     // STALL_HOURS_V1: local demo guard. Server must recheck before payment.
-    if (!businessState().open) { wx.showToast({title:'当前暂停接单或不在营业时间',icon:'none'}); return }
+    if (!businessState().open) { wx.showToast({title:'当前暂停接单或不在营业时间',icon:'none'}); return null }
 
     const geoAddress = getSelectedAddress()
     if (geoAddress && !isPointDeliverable(geoAddress.area, geoAddress.latitude, geoAddress.longitude)) {
       wx.showToast({title:'地址不在配送范围内',icon:'none'})
-      return
+      return null
     }
     const cart = getPurchaseDetails()
-    if (!cart.totalCount) { wx.showToast({ title: '购物车为空', icon: 'none' }); return }
-    if(cart.items.some(item=>item.stockInsufficient)){wx.showToast({title:'库存不足，请返回购物车调整数量',icon:'none'});return}
+    if (!cart.totalCount) { wx.showToast({ title: '购物车为空', icon: 'none' }); return null }
+    if(cart.items.some(item=>item.stockInsufficient)){wx.showToast({title:'库存不足，请返回购物车调整数量',icon:'none'});return null}
     const missing = minimumOrderShortfall(cart.totalText)
-    if (missing > 0) { wx.showToast({ title: `还差¥${missing.toFixed(2)}达到起送金额`, icon: 'none' }); return }
+    if (missing > 0) { wx.showToast({ title: `还差¥${missing.toFixed(2)}达到起送金额`, icon: 'none' }); return null }
     const selected = getSelectedAddress()
-    if (!selected) { wx.showToast({ title: '请先选择收货地址', icon: 'none' }); return }
+    if (!selected) { wx.showToast({ title: '请先选择收货地址', icon: 'none' }); return null }
     if (!selected.receiverName.trim() || !/^1[3-9]\d{9}$/.test(selected.phone.trim()) || !selected.detail.trim()) {
-      { wx.showToast({ title: '收货地址信息不完整，请编辑地址', icon: 'none' }); return }
+      { wx.showToast({ title: '收货地址信息不完整，请编辑地址', icon: 'none' }); return null }
     }
     if (!availableAreas().some(a => a.name === selected.area)) {
-      { wx.showToast({ title: '该地址已不在配送范围内', icon: 'none' }); return }
+      { wx.showToast({ title: '该地址已不在配送范围内', icon: 'none' }); return null }
     }
     const slot = availableSlots(availableAreas().find(a=>a.name===getSelectedAddress()?.area)?.id).find(s => s.id === this.data.selectedSlotId)
-    if (!slot) { wx.showToast({ title: '请选择有效配送时段', icon: 'none' }); return }
+    if (!slot) { wx.showToast({ title: '请选择有效配送时段', icon: 'none' }); return null }
+    return {cart,selected,slot}
+  },
+  confirmOrder() {
+    if (cloudCartConfig()) { this.submitCloudOrder(); return }
+    if(this.data.demoConfirmBusy)return
+    const draft=this.localCheckoutDraft()
+    if(!draft)return
+    const {cart,selected,slot}=draft,serial=this.cloudSerial,context=supportIdentity()
+    const snapshot=JSON.stringify([cart.items.map(i=>[i.productId,i.quantity,i.price]),cart.totalText,selected,slot])
     this.saveDraft()
+    this.setData({demoConfirmBusy:true})
     wx.showModal({
       title: '创建待支付演示订单',
       content: `收货人：${selected.receiverName}\n地址：${selected.area} ${selected.detail}\n合计：¥${cart.totalText}\n\n仅保存本地演示订单，不会扣款。`,
       success: result => {
-        if (!result.confirm) return
-        const fresh = getPurchaseDetails()
-        const missing = minimumOrderShortfall(fresh.totalText)
-        if (missing > 0) {
-          wx.showToast({ title: `还差¥${missing.toFixed(2)}达到起送金额`, icon: 'none' })
-          this.onShow()
-          return
-        }
-        const address = getSelectedAddress()
-        const validSlot = availableSlots(availableAreas().find(a=>a.name===getSelectedAddress()?.area)?.id).find(s => s.id === this.data.selectedSlotId)
-        if (!fresh.totalCount || !address || !address.receiverName.trim() || !/^1[3-9]\d{9}$/.test(address.phone.trim()) || !address.detail.trim() ||
-          !availableAreas().some(a => a.name === address.area) || !validSlot) {
-          wx.showToast({ title: '商品或地址已变化，请重新确认', icon: 'none' })
-          this.onShow()
-          return
-        }
         try {
+          if(!result.confirm||serial!==this.cloudSerial||context!==supportIdentity()||cloudCartConfig())return
+          const current=this.localCheckoutDraft()
+          if(!current){this.onShow();return}
+          const {cart:fresh,selected:address,slot:validSlot}=current
+          if(snapshot!==JSON.stringify([fresh.items.map(i=>[i.productId,i.quantity,i.price]),fresh.totalText,address,validSlot])){
+            wx.showToast({title:'商品价格、数量或配送信息已变化，请重新确认',icon:'none'});this.onShow();return
+          }
           const order = createDemoOrder({
           items: fresh.items,
           totalText: fresh.totalText,
@@ -235,12 +238,15 @@ Page({
           slotText: `${validSlot.label} ${validSlot.start}–${validSlot.end}`
         })
         if (hasDirectPurchase()) clearDirectPurchase(); else saveCart([])
-          wx.redirectTo({ url: `/pages/orders/orders?created=${encodeURIComponent(order.id)}` })
+          openCreatedDemoOrder(order.id)
         } catch (_) {
           wx.showToast({title:'商品状态已变化，请刷新后重试',icon:'none'})
           this.onShow()
+        } finally {
+          if(serial===this.cloudSerial)this.setData({demoConfirmBusy:false})
         }
-      }
+      },
+      fail:()=>{if(serial===this.cloudSerial)this.setData({demoConfirmBusy:false})}
     })
   }
 })

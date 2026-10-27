@@ -1,5 +1,5 @@
 import { customerOrdersConfig, customerOrdersRequest } from '../../modules/customer/api/orders' // PHASE35_CUSTOMER_ORDERS
-import { loadWorkflowOrders, chinaTime } from '../../modules/customer/demo/orders'
+import { loadWorkflowOrders, chinaTime, takeCreatedDemoOrder } from '../../modules/customer/demo/orders'
 import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 
 type OrderTab = 'all' | 'unpaid' | 'active' | 'completed' | 'other'
@@ -74,8 +74,8 @@ Page({
   onLoad(options: Record<string, string | undefined>) {
     this.setData({ createdId: options.created || '' })
   },
-  onShow() {this.visible=true;this.refresh()},
-  onHide(){this.visible=false;this.serial++;if(this.data.cloudMode||customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
+  onShow() {this.visible=true;this.syncListContext();const createdId=takeCreatedDemoOrder();if(createdId)this.setData({createdId,activeTab:'all'});this.refresh()},
+  onHide(){this.visible=false;this.serial++;this.setData({createdId:''});if(this.data.cloudMode||customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
   onUnload(){this.visible=false;this.serial++;this.listContext=''},
   onPullDownRefresh(){this.refresh().finally(()=>wx.stopPullDownRefresh())},
   onReachBottom(){this.loadMore()},

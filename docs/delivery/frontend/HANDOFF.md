@@ -43,3 +43,11 @@
 ## 2026-10-27｜审核与预览入口
 
 前端产品SHA91074bc20666693effe12f29594c7a3253ab6b4c，已推送zh，草稿PR https://github.com/chengyang1017/stall-miniapp/pull/2 待负责人审核；未合并。PREVIEW_HANDOFF.md现提供明确SHA与逐步操作，请负责人回传平台/设备证据。后端分支推进到b6b66f9后HANDOFF与RELEASE_GATE读取结果未变化，未迁入其文件。
+
+## 2026-10-27｜FE-04 进度核查与预览依赖
+
+当前DEVELOPMENT，完整18项状态见STATUS_AUDIT.md。原先旧8项测试失败已解决；本轮新增本机DEMO结算修复最终169项离线验证通过，无后端API改动。实际平台、staging、多角色/多设备、图片/客服/支付等尚未全面验收。
+
+负责人需检查Combined/Customer的checkout→orders：合成资料演示建单、正确返回订单Tab、显示待支付；重复点击/取消/页面离开/营业暂停/价格变化重确认；导航失败后本机订单仍在。云端订单接口仍保持服务端定价和unpaid，不将该DEMO测试当作真实订单/支付验收。
+
+待联调依赖继续为明确隔离staging地址、店铺/顾客/owner/manager/只读用例、错误码与真实私有图片配置。微信工具和iOS/Android由负责人另一台电脑执行，WAITING_FOR_OWNER_PREVIEW，不要求本前端开发者安装或登录。
