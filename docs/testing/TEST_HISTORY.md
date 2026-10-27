@@ -797,3 +797,7 @@ V2容器/卷/网络/密码/UUID/回执未创建；旧B0私人凭据和failed回�
 **具备申请最终运行器镜像独立审核的证据条件，尚未获准运行。**下一轮可审查真实canonical digest/Image ID/base/bundle及供应链记录后另行决定是否登记批准；本轮不能自动将approved改true。运行时USER、只读根、capabilities、挂载ACL、真实V2 isolated/IPv6/出口、PostgreSQL bootstrap/001—020/业务并发事务与故障恢复全部仍待独立授权和验收。未部署、启动后端/worker或操作数据库。
 
 本轮仅提交上述三份永久档案及两份非秘密构建记录，不提交仓库外上下文或任何密码/私人材料；检查Diff/秘密/远程基线后普通提交推送，最终提交SHA以Git核验为准。
+
+## 20. B3-V2 runner GitHub 独立供应链证据审查（2026-10-27）
+
+基线 `cf89c59b189c63c9d515073f8a3d990b29d66e9b`。通过 GitHub 读取既有 RUNNER_BUILD_AUDIT、BUILD_INPUT_AUDIT、Dockerfile、V2 policy、README 和 runner 批准文件。既有审计报告一次 Buildx 构建成功、`npm ci --offline` 安装41包、固定 runner manifest/Image ID/RepoDigest 均为 `sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849`，Node 基础摘要 `sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae`，bundle `f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289`。构建日志同时含 Registry 授权/元数据查询，不称整体断网。上述均是**读取前一轮本机执行产生的审计证据**，不是本次重新执行 Docker inspect、镜像字节扫描或离线测试。本轮通过 GitHub 直接提交审查文档，无本地 Docker/工作区权限。批准保持 false，待本机实时核验及单独审批。详见 [独立供应链审查](PHASE8_V2_RUNNER_INDEPENDENT_REVIEW.md)。
