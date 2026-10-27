@@ -611,3 +611,59 @@ V2项目/容器/卷/网络命名范围未发现匹配，既有资源没有被V2�
 下一轮可申请明确分阶段授权：①仅获取候选固定Node平台镜像，下载后核对本地身份及完整层；②生成仓库外全新正式上下文/精选缓存并封存物理输入，内容漂移时才重新SRI验证；③确认独占构建窗口和最终参数后执行一次受控build及image-store写入，不push Registry；④只读检查实际产物/固定引用/RepoDigest/Image ID/bundle后另行授权审核登记。任何阶段不含V2容器/卷/网络/密码/UUID/回执创建或旧B0重启。当前不能跳过①②直接执行离线build。
 
 本轮只提交TEST_STATUS、TEST_HISTORY、KNOWN_ISSUES三份档案；Git空白、秘密和变更范围检查作为提交门槛。没有Docker资源写操作、数据库连接/迁移、后端/worker启动或部署；旧B3仍失败，B4仍阻塞。提交及普通Push以最终Git核验为准，不预填未来提交SHA。
+
+## 18. 第八轮 B3-V2：固定 Node 基础镜像受控获取（2026-10-27）
+
+### 18.1 预检与授权
+
+开始本地HEAD、远程main均为 `352f74849378acaaa33ecd99f14b9f86cbb2b758`，main工作区干净。desktop-linux端点为 `npipe:////./pipe/dockerDesktopLinuxEngine`，Engine29.6.2/Linux-amd64，Engine ID `055d945d-b3f7-4a50-adaa-423c2cde2b60`，overlayfs/io.containerd.snapshotter.v1。36镜像、11停止容器、11卷、8网络；目标Node固定引用缺失。原B0及其他项目只读取选定Docker元数据，私人回执仅stat，不读密码或回执内容。
+
+`2026-10-27T02:43:54.674Z`重新读取官方Registry元数据并核对已封存审计：多架构索引 `sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205`；linux/amd64平台清单 `sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae`；配置 `sha256:dc1f22974dab4be31a8b56d58cb1f8fc218e83de83ccd831d885b3d7ac1223fb`。来源annotation为 `https://github.com/nodejs/docker-node.git#80f02a542da739e6a662451d1db66456a0dea253:24/bookworm-slim`。渠道node:24.22.1-bookworm-slim；这些是不同层级摘要，不算多份独立来源。匿名Registry令牌只在内存使用，未记录。
+
+预检后明确询问是否允许该一次固定平台下载，用户回复“确认，允许本次固定摘要下载”。收到回复后重新核验Git、Engine及同一资源快照摘要，才执行获取。
+
+### 18.2 唯一一次实际获取及本地身份
+
+通过已核验的Docker绝对路径执行以下参数（无秘密）：
+
+```powershell
+docker --host npipe:////./pipe/dockerDesktopLinuxEngine pull --platform linux/amd64 node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae
+```
+
+退出码0，5层Pull complete，Docker报告同一digest。没有重试、其他镜像源、浮动标签回退或手工tag。该pull是本轮唯一Docker写操作。
+
+`2026-10-27T02:50:17.330Z`后验：短固定引用和 `docker.io/library/node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae` 均解析到同一镜像。
+
+| 字段 | 实际值 |
+| --- | --- |
+| Image ID | sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae |
+| RepoDigest | node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae |
+| Descriptor | OCI平台manifest，digest同上，size1929 |
+| OS/Architecture | linux/amd64 |
+| Created | 2026-10-21T11:35:50.393702483Z |
+| 版本元数据 | NODE_VERSION=24.22.1，YARN_VERSION=1.22.22；未运行容器验证 |
+
+containerd本地Image ID等于manifest摘要，不等于官方config摘要，也不构成额外来源证明。未构建最终runner，runner-image-approval.json仍approved=false。批准的PostgreSQL固定引用 `postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36` 的ID/RepoDigest/linux-amd64核验通过，没有更新它。
+
+### 18.3 资源比较异常：不隐瞒、不自动修复
+
+镜像数36→37，容器仍11个且全部停止，卷11、网络8。首次整体资源比较断言实际失败：`Error: Existing resource metadata changed`。保存前摘要 `25ef8681408108c15c3ec2b7549a4c5c96668f4ffe9c84d80db0f353b9b0060e`，后续快照摘要包括 `6cab354d78c69650b8b81e7009e0c5c5e0e52835fabbcb5058ce7900b94a1b02` 和 `8d50facb2d4059cb8ff891122fb7ced91ba0b3b04f09a177aea3e1abd1c9bef9`。这些是选定元数据序列化摘要，不是数据库内容摘要。
+
+确认默认bridge发生真实变化：
+
+| 字段 | 前 | 后 |
+| --- | --- | --- |
+| ID | 5e14091728c748828481f460475823e716caf025569eda7855cb59b4de746426 | 6ee5bbb1f0c0c790165339dc17c22038606b915ef3b0a1d3d2513f1bc1010c62 |
+| Created | 2026-10-27T02:26:25.950012349Z | 2026-10-27T02:48:04.336419132Z |
+
+两者均非internal的bridge、IPv6=false、无成员，Engine ID未变。未执行network创建/删除或Desktop启停命令；不能据此确定变化由pull或何种Desktop生命周期触发，不能推断数据损坏。
+
+后续仅进行只读诊断。B0的Mounts数组顺序在查询间变化；内存中用原bridge字段替换并重排、枚举B0挂载顺序，仍未复现原摘要。这不是自动化测试通过证据，也没有写回Docker。**前快照仅保存整体摘要，没有完整逐字段基线；因此无法完整解释其余差异，不将其全部归因于数组顺序。**保留原失败断言，不能宣称所有资源未变。
+
+与已记录关键字段相比：11容器ID及停止状态、各具名卷/专网身份未见变化。旧B0容器仍 `355ecc6045fa467319f906363d521a8c764ed1aabde737a3ca364847b89cfd06`、exited；StartedAt `2026-10-26T12:03:45.995727695Z`、FinishedAt `2026-10-27T02:16:22.509638868Z`。卷stall-phase8-data创建时间 `2026-10-26T12:03:35Z`；专网ID `7918eeb7a1a787d8c4afb1871beecd1d36e61e16ba7d9fe52c0cc9a2227766af`、internal=true、IPv6=false。原私人回执仍531字节、birthtime `2026-10-26T12:03:30.583Z`、mtime `2026-10-26T12:03:50.272Z`；未读内容或计算文件字节摘要，历史failed不改。上述是关键元数据比较，不是所有字段/数据库完整性或应用全链路验收。
+
+### 18.4 当前结论、边界及下一步
+
+Node固定基础镜像获取成功且本地身份匹配，R-23的缺失已解除；资源全量比较异常记为R-25，尚未完全查明。建议下一轮先进行单独只读差异调查，之后再申请仓库外精选缓存及正式上下文准备授权；不能自动构建、批准runner或创建V2。
+
+未重跑235项安全测试或41包SRI审计，均为历史证据；未修改34源码、输入审计JSON、镜像批准策略或任何商城功能。未创建上下文、V2密码/UUID/回执、容器/卷/网络，未连接数据库、运行迁移、后端或worker。旧B3失败与B4阻塞保持。本轮仅更新三份测试档案，核对diff/秘密/范围后按授权提交并普通Push，结果以最终Git核验为准，不预填未来SHA。

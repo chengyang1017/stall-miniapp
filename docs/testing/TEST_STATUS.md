@@ -1,13 +1,21 @@
 # 微信商城测试状态
 
 维护日期：2026-10-27，档案使用北京时间（Asia/Shanghai，UTC+8）；执行客户端为Asia/Kuala_Lumpur，同为UTC+8。
-本次Engine恢复后Docker只读验收基线：`d63c80a553c2a852af485a1f289a146e86c018ed`，main，开始工作区干净，远程main也为该SHA。前轮构建前审计基线为 `80114f191668a8c9adb1da6b4de81a4a7ffadfef`，供应链准备基线为 `dd83d09d51797c05aff8a5a0db8e3793d49c54cd`。首次创建失败记录为 `934a2039b9b5dd6e6971c2d1b71cbcaae84842a6`，此前历史保留。
+前轮Engine恢复后Docker只读验收基线：`d63c80a553c2a852af485a1f289a146e86c018ed`，main，开始工作区干净，远程main也为该SHA。前轮构建前审计基线为 `80114f191668a8c9adb1da6b4de81a4a7ffadfef`，供应链准备基线为 `dd83d09d51797c05aff8a5a0db8e3793d49c54cd`。首次创建失败记录为 `934a2039b9b5dd6e6971c2d1b71cbcaae84842a6`，此前历史保留。
 
 ## 当前结论
 
+**最新进度：2026-10-27固定Node基础镜像已获用户明确确认后获取成功；资源全量比较验收存在异常。**本轮开始HEAD及远程main均为 `352f74849378acaaa33ecd99f14b9f86cbb2b758`，工作区干净。唯一Docker写操作为一次 `pull --platform linux/amd64 node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae`，退出码0，无重试。短名及docker.io/library完整固定引用均可解析，Image ID和RepoDigest均为该平台清单摘要，linux/amd64；不是官方配置摘要或最终runner镜像审核。下方“Node缺失”等为前轮时点记录，本段与历史第18节为最新状态。
+
+拉取后镜像数量36→37；11容器均停止、11卷、8网络。PostgreSQL批准镜像身份匹配；旧B0容器/卷/专网关键身份、状态及原回执stat未见变化。**全量选定元数据摘要比较报错 `Existing resource metadata changed`，不能声称全部资源保持原状。**默认bridge由 `5e14091728c748828481f460475823e716caf025569eda7855cb59b4de746426` 变为 `6ee5bbb1f0c0c790165339dc17c22038606b915ef3b0a1d3d2513f1bc1010c62`，创建时间变为 `2026-10-27T02:48:04.336419132Z`；原因未确认。原快照仅保留整体摘要、未完整保存逐字段基线，附加只读诊断未完全解释差异，详见R-25。
+
+本轮没有构建、tag、导入、容器/网络/卷写操作或数据库连接；未创建正式上下文、精选缓存或V2材料，未修改runner审核。235项及41包审计为历史证据，本轮未重跑。Node获取前提已满足，但下一步建议先单独只读复核资源比较异常，再申请上下文/缓存准备授权；不自动进入构建或V2创建。旧B3仍失败，B4仍阻塞。
+
+### 前轮记录保留（以下按当时状态阅读，最新结果见上文及历史第18节）
+
 **旧B3首次创建验收失败仍保留，未达到created_verified或ready。**本轮Engine恢复后的只读检查确认旧B0容器/卷/专网仍在、ID及标签关联匹配，但容器现在是exited（ExitCode255、Running=false），不是历史healthy。FinishedAt为 `2026-10-27T02:16:22.509638868Z`，早于本轮首次检查；没有重启或修复。原回执仅stat，mtime仍为 `2026-10-26T12:03:50.272Z`，内容未读未改。B4继续阻塞。
 
-**2026-10-27本轮只读验收：Engine可达，containerd image store和现有builder已确认；Node候选固定镜像尚不在本机。**Engine29.6.2/Linux/amd64、Desktop4.85.0、containerd2.2.5，overlayfs + io.containerd.snapshotter.v1。desktop-linux builder为内置docker驱动，BuildKit0.31.2，支持linux/amd64。没有创建/切换/启动builder，没有构建或下载镜像。前轮41/41 npm真实SRI审计作为历史证据保留，本轮输入清单及34源码未变，未重读缓存内容。
+**前轮只读验收（历史时点）：Engine可达，containerd image store和现有builder已确认；当时Node候选固定镜像尚不在本机。**Engine29.6.2/Linux/amd64、Desktop4.85.0、containerd2.2.5，overlayfs + io.containerd.snapshotter.v1。desktop-linux builder为内置docker驱动，BuildKit0.31.2，支持linux/amd64。当轮没有创建/切换/启动builder，没有构建或下载镜像。41/41 npm真实SRI审计作为历史证据保留，输入清单及34源码未变，未重读缓存内容。
 
 已满足：desktop-linux仍指向本机 `npipe:////./pipe/dockerDesktopLinuxEngine`，实际Engine及containerd worker可访问；已批准PostgreSQL固定镜像的ID/RepoDigest/linux-amd64一致；现有11容器/11卷/8网络可读，未发现r2资源。当前仍缺：Node候选固定引用及版本标签都返回No such image，须另行授权获取；正式上下文/精选cache、真实构建产物和最终runner审核尚未完成。canonical机制在BuildKit0.31.2源码与文档中存在，本机真实导出及裸repo@digest解析仍未实测，不用tag冒充通过。详见历史第17节；前轮命令方案仅为历史条件示例。
 
@@ -62,7 +70,7 @@
 
 97 项新增回归覆盖策略与执行顺序，不是 PostgreSQL 集成结果；其中持久化 grant 消费测试只使用测试自行创建的临时目录，不涉及任何私人凭据目录。Compose 解析使用合成变量与空文件路径，未读取密码。`fixture` 目前是两个业务连接 + 一个 READ ONLY 事务观察连接的真实 pg 接缝，固定任务只诊断不同 backend PID，未执行并发下单/库存场景。
 
-**Engine与存储/builder前提已解除阻塞，可申请下一轮分阶段构建准备授权，但当前不能直接执行离线build。**下一轮需要明确授权：仅获取选定Node固定平台镜像、在仓库外生成全新正式上下文及精选缓存、输入封存与独占构建窗口，然后一次受控build及image-store写入/产物只读核验；不包含push到Registry或V2创建。前轮全局7150桶中仅41项已审计，不整库复制；实际精选时若内容漂移再验SRI。SRI不等于npm ci或重复构建通过。旧B0保持审计现场，不能自动start/restart；后续V2材料、创建、bootstrap和业务迁移/测试仍分别授权。
+**当前下一步：Node固定镜像已获取，但先保留并只读复核R-25资源差异，再申请精选cache/正式上下文准备；当前不能直接执行离线build。**以下为前轮分阶段计划，获取Node这一步已执行，其余未授权或执行。下一轮需要明确授权：仅获取选定Node固定平台镜像、在仓库外生成全新正式上下文及精选缓存、输入封存与独占构建窗口，然后一次受控build及image-store写入/产物只读核验；不包含push到Registry或V2创建。前轮全局7150桶中仅41项已审计，不整库复制；实际精选时若内容漂移再验SRI。SRI不等于npm ci或重复构建通过。旧B0保持审计现场，不能自动start/restart；后续V2材料、创建、bootstrap和业务迁移/测试仍分别授权。
 
 ## 当前可确认的源码事实
 
