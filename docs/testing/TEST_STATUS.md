@@ -1,3 +1,5 @@
+> 2026-10-28 更新：云端交互源码优化完成，新增48项前端动态测试及1项support handler回归，联合246通过、0失败、0跳过；三目标纯编译、TS、边界及产物检查通过。顾客首页不再消费旧商家偏好自动跳转；权限探测15秒内存复用、客服乐观行、分类乐观更新/确认缓存及拖动局部节流已实现。验证口径、测量、边界和真机步骤见 [INTERACTION_CLOUD_SYNC.md](INTERACTION_CLOUD_SYNC.md)。本轮没有部署或数据库操作；phone-preview重建仍因Windows EPERM受阻，真机/Staging新代码未验收，原数据库阶段阻断保持。
+
 # 微信商城测试状态
 
 维护日期：2026-10-27，档案使用北京时间（Asia/Shanghai，UTC+8）；执行客户端为Asia/Kuala_Lumpur，同为UTC+8。

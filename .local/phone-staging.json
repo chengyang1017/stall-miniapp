@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "environment": "staging",
+  "apiBase": "https://stall-miniapp.onrender.com",
+  "storeSlug": "stall-test",
+  "appId": "wxeb1890c397d038d8"
+}

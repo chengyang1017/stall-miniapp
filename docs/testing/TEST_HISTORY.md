@@ -974,3 +974,12 @@ TypeScript noEmit、check:boundaries（126/73/85模块）、4个测试MJS语法�
 ## 20. B3-V2 runner GitHub 独立供应链证据审查（2026-10-27）
 
 基线 `cf89c59b189c63c9d515073f8a3d990b29d66e9b`。通过 GitHub 读取既有 RUNNER_BUILD_AUDIT、BUILD_INPUT_AUDIT、Dockerfile、V2 policy、README 和 runner 批准文件。既有审计报告一次 Buildx 构建成功、`npm ci --offline` 安装41包、固定 runner manifest/Image ID/RepoDigest 均为 `sha256:b1b2cc386667fa68b5136c36f4c3ad8170035a203eb204f4be24edb4c82b0849`，Node 基础摘要 `sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae`，bundle `f5164c3cf47dba291978b5745424d018266facb98a78c09b41b603f5ef68c289`。构建日志同时含 Registry 授权/元数据查询，不称整体断网。上述均是**读取前一轮本机执行产生的审计证据**，不是本次重新执行 Docker inspect、镜像字节扫描或离线测试。本轮通过 GitHub 直接提交审查文档，无本地 Docker/工作区权限。批准保持 false，待本机实时核验及单独审批。详见 [独立供应链审查](PHASE8_V2_RUNNER_INDEPENDENT_REVIEW.md)。
+
+
+## 云端交互与状态同步优化（2026-10-28，未提交）
+
+基于当前所有本地修改继续：取消首页依历史商家偏好自动导航；复用会话/API/店铺内近期权限证明和进行中请求，显式管理操作仍服务器授权；客服使用发送中/失败临时行及同clientKey重试，后端增加clientKey返回以便轮询精确合并；分类保留已确认列表和输入，乐观CRUD/排序、409人工核对、请求代际保护、transform局部节流。另修复商品列表、客服收件箱及备注标签的同身份隐藏清空。
+
+新增48项interaction动态测试和1项support handler回归；原导航自动跳转测试按新需求改为禁止自动跳转，权限断言不放宽。实际完整结果、性能口径和手工步骤见INTERACTION_CLOUD_SYNC.md。三目标构建实际执行，无数据库/真实微信测试。本轮预览重建在固定输出目录遇EPERM后停止，没有强删或直接改产物；没有修改.local配置、Render/Neon、迁移、部署或Git提交推送，未解除原交付阻断。
+
+本节实际最终联合246/246通过，0失败/跳过；Combined/Customer/Merchant各自真实纯编译、TS、边界及产物检查、3个MJS语法和git diff --check通过。性能指标仅合成JS状态更新：本次发送0.485ms、新增0.194ms、改名0.102ms、删除0.099ms、恢复0.319ms；200合成触摸事件13个局部patch，不是手机FPS或服务器RTT。

@@ -8,7 +8,7 @@
   <view wx:if="{{loading}}" class="support-empty">正在同步消息…</view>
   <view wx:if="{{ready && messages.length === 0}}" class="support-empty">暂无消息，请输入咨询内容。</view>
   <view wx:for="{{messages}}" wx:key="id" id="msg-{{item.id}}" class="support-line {{item.mine ? 'mine' : 'other'}}">
-   <view class="support-meta">{{item.mine ? '我' : (merchantMode ? '顾客' : '商家')}} · {{item.time}} {{cloudMode && item.mine ? (item.read ? '已读' : '未读') : ''}}</view>
+   <view class="support-meta">{{item.mine ? '我' : (merchantMode ? '顾客' : '商家')}} · {{item.time}} {{item.delivery === 'sending' ? '发送中（未确认）' : item.delivery === 'failed' ? '发送失败 · 可重试' : (cloudMode && item.mine ? (item.read ? '已读' : '未读') : '')}}</view>
    <view class="support-bubble">{{item.content}}</view>
   </view>
  </scroll-view>

@@ -1,14 +1,14 @@
 import { loadStore, saveStore, newId, Category } from '../../modules/merchant/demo/store'
 import { getCloudContext } from '../../modules/shared/runtime/context'
-import { readCloudCategories,writeCloudCategories } from '../../utils/merchantCategoriesCloud'
+import { readCloudCategories,writeCloudCategories,cachedCloudCategories } from '../../utils/merchantCategoriesCloud'
 import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 
 type Row = Category & { y: number }
 
 Page({
-  revision:'',context:'',serial:0,
+  revision:'',context:'',serial:0,operationSerial:0,disposed:false,moveAt:0,lastMove:null as any,rowIndexes:{} as Record<string,number>,
   data: {
-    cloudMode:false,cloudBusy:false,cloudError:'',
+    cloudMode:false,cloudBusy:false,cloudRefreshing:false,cloudError:'',syncState:'confirmed',syncMessage:'',
     categories: [] as Category[], rows: [] as Row[],
     newName: '', editingId: '', editingName: '', draggingId: '',
     rowHeight: 86, areaHeight: 0
@@ -24,19 +24,42 @@ Page({
     const h = Math.round(system.windowWidth * 172 / 750)
     this.setData({ rowHeight: h })
   },
-  onShow() {this.reloadCategories()},
-  onHide(){this.serial++;if(getCloudContext())this.setData({categories:[],rows:[],cloudBusy:false,draggingId:''})},
-  onUnload(){this.serial++},
+  onShow() {this.disposed=false;if(this.context!==supportIdentity())this.setData({cloudBusy:false});if(!this.data.cloudBusy)this.reloadCategories()},
+  onHide(){this.serial++;if(this.data.draggingId)this.renderCategories(this.data.categories);this.setData({cloudRefreshing:false,draggingId:''})},
+  onUnload(){this.disposed=true;this.serial++;this.operationSerial++},
+  renderCategories(categories:Category[]){const h=this.data.rowHeight;this.setData({categories,rows:categories.map((c,i)=>({...c,y:i*h})),areaHeight:categories.length*h})},
   async cloudChange(method:'POST'|'PATCH'|'DELETE',id:string,body:Record<string,any>){
-    if(this.data.cloudBusy||this.data.cloudError||this.context!==supportIdentity())return
-    const context=this.context;this.setData({cloudBusy:true,cloudError:''})
-    try{await writeCloudCategories(method,id,{...body,expectedRevision:this.revision});if(context===supportIdentity()){this.setData({editingId:'',editingName:'',newName:''});this.setData({cloudBusy:false});await this.reloadCategories()}}
-    catch(e){if(context===supportIdentity())this.setData({rows:this.data.categories.map((c,i)=>({...c,y:i*this.data.rowHeight})),draggingId:'',cloudError:String(e).includes('409')?'分类已变化、名称重复或仍有商品，请刷新核对，未覆盖云端':'云端分类修改未确认，请刷新核对；不会写入本机分类'})}
-    finally{this.setData({cloudBusy:false})}
+    if(this.data.cloudBusy||this.data.cloudError||!this.revision||this.context!==supportIdentity())return
+    const operation=++this.operationSerial,context=this.context,before=this.data.categories.map(c=>({...c}));this.serial++
+    let optimistic=before
+    if(method==='POST')optimistic=before.concat({id:'pending-'+newId(),name:body.name} as Category)
+    else if(method==='DELETE')optimistic=before.filter(c=>c.id!==id)
+    else if(id==='order'){const lookup=new Map(before.map(c=>[c.id,c]));optimistic=body.ids.map((key:string)=>lookup.get(key)!)}
+    else optimistic=before.map(c=>c.id===id?{...c,name:body.name}:c)
+    this.renderCategories(optimistic)
+    this.setData({cloudBusy:true,cloudRefreshing:false,cloudError:'',syncState:'pending',syncMessage:'正在同步，尚未保存确认',draggingId:''})
+    try{
+      const r=await writeCloudCategories(method,id,{...body,expectedRevision:this.revision})
+      if(this.disposed||operation!==this.operationSerial||context!==supportIdentity())return
+      this.revision=r.revision;this.renderCategories(r.items)
+      this.setData({syncState:'confirmed',syncMessage:'已保存',...(method==='POST'&&this.data.newName.trim()===body.name?{newName:''}:{}),...(method==='PATCH'&&id!=='order'&&this.data.editingId===id&&this.data.editingName.trim()===body.name?{editingId:'',editingName:''}:{})})
+    }catch(e){if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity()){
+      this.renderCategories(/http_40[13]/.test(String(e))?[]:before)
+      this.setData({syncState:'failed',syncMessage:'修改未确认，输入已保留',cloudError:String(e).includes('409')?'分类版本冲突、名称重复或仍有商品。请重新读取后核对，再重试；未覆盖云端':'云端修改未确认，请重新读取核对后重试，避免重复新增'})
+    }}finally{if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity())this.setData({cloudBusy:false})}
   },
   async reloadCategories() {
-    const cfg=getCloudContext(),serial=++this.serial,context=supportIdentity();this.context=context;this.setData({cloudMode:!!cfg,cloudError:'',draggingId:''})
-    if(cfg){this.setData({cloudBusy:true,categories:[],rows:[]});try{const r=await readCloudCategories();if(serial!==this.serial||context!==supportIdentity())return;this.revision=r.revision;const categories=r.items,h=this.data.rowHeight;this.setData({categories,rows:categories.map((c:Category,i:number)=>({...c,y:i*h})),areaHeight:categories.length*h})}catch(_){if(serial===this.serial)this.setData({cloudError:'云端分类读取失败，请先登录或检查权限；未回退本机数据'})}finally{if(serial===this.serial)this.setData({cloudBusy:false})}return}
+    if(this.data.cloudBusy)return
+    const cfg=getCloudContext(),context=supportIdentity(),changed=context!==this.context,serial=++this.serial
+    if(changed){this.operationSerial++;this.revision='';this.setData({categories:[],rows:[],newName:'',editingId:'',editingName:'',areaHeight:0,syncState:'confirmed',syncMessage:''})}
+    this.context=context;this.setData({cloudMode:!!cfg,cloudError:'',draggingId:''})
+    if(cfg){
+      const cached=cachedCloudCategories();if(changed&&cached){this.revision=cached.revision;this.renderCategories(cached.items)}
+      this.setData({cloudRefreshing:true})
+      try{const r=await readCloudCategories();if(serial!==this.serial||this.disposed||context!==supportIdentity())return;this.revision=r.revision;this.renderCategories(r.items);this.setData({syncState:'confirmed',syncMessage:''})}
+      catch(e){if(serial===this.serial&&!this.disposed&&context===supportIdentity()){if(/http_40[13]/.test(String(e))){this.revision='';this.renderCategories([])}this.setData({cloudError:'云端分类读取失败，请检查网络及权限；已有内容未用本机数据替代'})}}
+      finally{if(serial===this.serial&&!this.disposed&&context===supportIdentity())this.setData({cloudRefreshing:false})}return
+    }
     const categories = loadStore().categories
     const h = this.data.rowHeight
     this.dragOrder = []
@@ -115,13 +138,21 @@ Page({
     const idx = this.data.categories.findIndex(c => c.id === id)
     const touch = e.touches && e.touches[0]
     if (idx < 0 || !touch || this.data.draggingId) return
+    this.serial++;this.setData({cloudRefreshing:false})
     this.dragOrder = this.data.categories.map(c => c.id)
     this.dragSlot = idx
     this.dragStartY = Number(touch.pageY)
     this.dragOriginY = idx * this.data.rowHeight
+    this.rowIndexes={};this.data.rows.forEach((row,i)=>{this.rowIndexes[row.id]=i})
+    this.moveAt=0;this.lastMove=null
     this.setData({ draggingId: id })
   },
   handleMove(e: any) {
+    this.lastMove=e
+    const now=Date.now();if(now-this.moveAt<16)return
+    this.moveAt=now;this.applyMove(e)
+  },
+  applyMove(e: any) {
     const id = String(e.currentTarget.dataset.id || '')
     const touch = e.touches && e.touches[0]
     if (id !== this.data.draggingId || !touch) return
@@ -136,18 +167,18 @@ Page({
       this.dragOrder.splice(old, 1)
       this.dragOrder.splice(target, 0, id)
       this.dragSlot = target
-      this.data.rows.forEach((row, idx) => {
-        if (row.id !== id) patch['rows[' + idx + '].y'] = this.dragOrder.indexOf(row.id) * h
-      })
+      for(let slot=Math.min(old,target);slot<=Math.max(old,target);slot++){const key=this.dragOrder[slot];if(key!==id)patch['rows['+this.rowIndexes[key]+'].y']=slot*h}
     }
-    const active = this.data.rows.findIndex(row => row.id === id)
+    const active = this.rowIndexes[id]
     if (active >= 0) patch['rows[' + active + '].y'] = nextY
     this.setData(patch)
   },
   handleEnd(e: any) {
     const id = String(e.currentTarget.dataset.id || '')
     if (id !== this.data.draggingId) return
-    if(getCloudContext()){const ids=this.dragOrder.slice();this.setData({draggingId:''});this.cloudChange('PATCH','order',{ids});return}
+    if(this.lastMove)this.applyMove(this.lastMove)
+    this.lastMove=null
+    if(getCloudContext()){const ids=this.dragOrder.slice();this.setData({draggingId:''});if(ids.some((key,i)=>key!==this.data.categories[i]?.id))this.cloudChange('PATCH','order',{ids});else this.renderCategories(this.data.categories);return}
     const store = loadStore()
     const oldIds = store.categories.map(c => c.id)
     const order = this.dragOrder.slice()

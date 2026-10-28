@@ -14,7 +14,7 @@ function catalogContextKey(): string {
 
 Page({
   imageSerial:0,imageVisible:false,imageContext:'',imageCursor:'',imageScanCursor:'',imagePlanRequest:{fingerprint:'',key:''},
-  onHide(){this.imageVisible=false;this.imageSerial++;this.requestSerial++;this.setData({imagePanel:false,imageBusy:false,imageRows:[],imageChecks:[],imageEligibleCount:0,imagePlans:[],imageError:'',...merchantCloudConfig()?{entries:[],products:[],drafts:[],cloudLoading:false,loadingMore:false}:{}})},
+  onHide(){this.imageVisible=false;this.imageSerial++;this.requestSerial++;this.setData({imagePanel:false,imageBusy:false,imageRows:[],imageChecks:[],imageEligibleCount:0,imagePlans:[],imageError:'',cloudLoading:false,loadingMore:false})},
   async toggleImagePanel(){
     if(this.data.batchMode||this.data.batchBusy||this.data.imageBusy)return
     if(this.data.imagePanel){this.setData({imagePanel:false});return}
@@ -249,7 +249,7 @@ Page({
     if(this.imageContext!==supportIdentity()){this.imageSerial++;this.imageContext=supportIdentity();this.setData({imagePanel:false,imageBusy:false,imageRows:[],imageChecks:[],imageEligibleCount:0,imagePlans:[],imageError:''})}
     if (this.data.batchBusy) return
     this.setData({ placeholderStyle: currentPresentation().placeholderStyle, customPlaceholderUrl: currentPresentation().customPlaceholderUrl })
- this.refresh() },
+ this.refresh(true) },
   uploadCustomPlaceholder() {
     wx.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], success: (result: any) => {
       const item = result.tempFiles && result.tempFiles[0]
@@ -279,26 +279,26 @@ Page({
     this.setData({ placeholderStyle: styles[n], placeholderStyleIndex: n })
     wx.showToast({ title: 'Style saved', icon: 'success' })
   },
-  async refresh(): Promise<boolean> {
+  async refresh(retain=false): Promise<boolean> {
     if(this.data.catalogContext && this.data.catalogContext!==catalogContextKey()) {
       this.query=defaultProductQuery()
       this.setData({searchText:'',batchMode:false,categories:[],categoryFilters:[{id:'',name:'全部分类'}],categoryFilterIndex:0,queryControls:queryChoices.map(c=>({...c,index:0}))})
     }
     if(this.data.queryDirty)this.setData({batchMode:false})
     this.query.q=this.data.searchText.trim()
-    return this.fetchCatalogPage(true)
+    return this.fetchCatalogPage(true,retain&&!this.data.queryDirty&&this.data.catalogContext===catalogContextKey())
   },
   async loadMore() {
     if(this.data.batchBusy || this.data.queryDirty || this.data.refreshRequired || this.data.cloudLoading || this.data.loadingMore || !this.data.hasMore)return
     await this.fetchCatalogPage(false)
   },
-  async fetchCatalogPage(reset:boolean):Promise<boolean> {
+  async fetchCatalogPage(reset:boolean,keepRows=false):Promise<boolean> {
     const context=catalogContextKey(), serial=++this.requestSerial, query={...this.query}
     const cfg=merchantCloudConfig()
     if(reset) {
       this.setBatchSelection([])
-      this.catalogItems=[]; this.localItems=[]; this.nextCursor=''; this.localOffset=0
-      this.setData({entries:[],products:[],drafts:[],cloudLoading:true,loadingMore:false,cloudError:'',moreError:'',
+      if(!keepRows)this.catalogItems=[]; this.localItems=[]; this.nextCursor=''; this.localOffset=0
+      this.setData({...keepRows?{}:{entries:[],products:[],drafts:[]},cloudLoading:true,loadingMore:false,cloudError:'',moreError:'',
         hasMore:false,refreshRequired:false,queryDirty:false,catalogContext:context,batchCategoryId:'',batchCategoryName:''})
     } else this.setData({loadingMore:true,moreError:''})
     const current=()=>serial===this.requestSerial && context===catalogContextKey()
@@ -323,6 +323,7 @@ Page({
         if(serial===this.requestSerial)this.setData({entries:[],products:[],drafts:[],cloudLoading:false,loadingMore:false,queryDirty:true,cloudError:'店铺环境已变化，请重新搜索'})
         return false
       }
+      if(reset)this.catalogItems=[]
       const seen:Record<string,boolean>={}
       this.catalogItems.forEach(e=>{seen[e.kind+':'+(e.kind==='product'?e.product.id:e.draft.id)]=true})
       items.forEach(e=>{const key=e.kind+':'+(e.kind==='product'?e.product.id:e.draft.id);if(!seen[key]){seen[key]=true;this.catalogItems.push(e)}})
@@ -339,6 +340,7 @@ Page({
         this.setData({entries:[],products:[],drafts:[],cloudLoading:false,loadingMore:false,queryDirty:true,cloudError:'店铺环境已变化，请重新搜索'})
         return false
       }
+      if(current()&&/http_40[13]/.test(String(error))){this.catalogItems=[];this.setData({entries:[],products:[],drafts:[]})}
       const refreshRequired=String(error).indexOf('catalog_changed_or_cursor_expired_refresh')>=0 || String(error).indexOf('invalid_or_expired_cursor_refresh')>=0
       if(current() && refreshRequired) {
         this.setBatchSelection([])

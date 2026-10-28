@@ -11,7 +11,7 @@ page { background: #f3f6f4; }
 .category-page button::after { border: none; }
 .add-btn { flex-shrink: 0; margin: 0; height: 88rpx; min-width: 112rpx; line-height: 88rpx; box-sizing: border-box; padding: 0 23rpx; font-size: 27rpx; font-weight: 650; border-radius: 14rpx; background: #10865d; color: #fff; }
 .sort-area { width: 100%; position: relative; overflow: hidden; }
-.sort-row { box-sizing: border-box; position: absolute; left: 0; right: 0; width: 100%; transition: top .18s ease; }
+.sort-row { box-sizing: border-box; position: absolute; left: 0; right: 0; width: 100%; top: 0; transition: transform .18s ease; }
 .cat-row { box-sizing: border-box; width: 100%; height: calc(100% - 14rpx); margin: 7rpx 0; display: flex; align-items: center; gap: 10rpx; padding: 0 14rpx 0 24rpx; border: 2rpx solid #edf1ee; border-radius: 18rpx; background: #fff; transition: background .17s, border-color .17s, box-shadow .17s; }
 .cat-row.is-editing { background: #f4faf6; border-color: #a9d9bd; }
 .cat-info { flex: 1; min-width: 0; display: flex; align-items: center; overflow: hidden; }

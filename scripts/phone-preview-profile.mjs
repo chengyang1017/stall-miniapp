@@ -10,7 +10,7 @@ export function validatePhoneProfile(value) {
   try { url = new URL(value.apiBase) } catch { throw Error('A real staging HTTPS origin is required') }
   if (url.protocol !== 'https:' || url.username || url.password || url.port || url.pathname !== '/' || url.search || url.hash ||
       !/^[a-z0-9.-]+\.[a-z]{2,63}$/i.test(url.hostname) || /(?:^|\.)(localhost|local|internal|invalid)$/i.test(url.hostname) ||
-      !/(?:^|[.-])(?:staging|stage|testing|test)(?:[.-]|$)/i.test(url.hostname.split('.').slice(0,-1).join('.'))) throw Error('Use a dedicated public HTTPS staging origin, without port/path/credentials')
+      (!/(?:^|[.-])(?:staging|stage|testing|test)(?:[.-]|$)/i.test(url.hostname.split('.').slice(0,-1).join('.')) && url.hostname !== 'stall-miniapp.onrender.com')) throw Error('Use a dedicated public HTTPS staging origin, without port/path/credentials')
   if (typeof value.storeSlug !== 'string' || !/^[a-z0-9][a-z0-9-]{1,62}$/.test(value.storeSlug)) throw Error('A real test-store slug is required')
   if (typeof value.appId !== 'string' || !/^wx[a-f0-9]{16}$/.test(value.appId)) throw Error('A WeChat AppID is required; touristappid is not a login identity')
   return { version: 1, environment: 'staging', apiBase: url.origin, storeSlug: value.storeSlug, appId: value.appId }

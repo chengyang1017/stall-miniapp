@@ -8,7 +8,6 @@ import { getRemoteProductPage } from '../../utils/remoteApi'
 import { publicBusiness } from '../../modules/shared/api/business'
 import { loadCloudDelivery } from '../../utils/cloudCheckout'
 import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
-import { authorizedGet } from '../../modules/shared/runtime/auth'
 
 import {
   loadStore,
@@ -35,7 +34,7 @@ interface ProductView {
 }
 
 Page({
-  cloudSerial:0,cloudContext:'',pageVisible:false,merchantRouteSerial:0,
+  cloudSerial:0,cloudContext:'',pageVisible:false,
 
   data: {
     canOpenMerchant:CAN_OPEN_MERCHANT,
@@ -69,33 +68,7 @@ Page({
     this.setData({entryLoading:true,entryError:'',cloudConnectionError:false})
     try{await resolveStoreEntry()}catch(e){if(serial===this.cloudSerial)this.setData({entryError:'暂时无法连接商店，请检查网络连接后重试。',entryLoading:false,storeName:'店铺入口未确认',cartCount:0,cartTotal:'0.00',businessInfo:{open:false,label:'尚未确认当前店铺',notice:''},hasMore:false,dealsHasMore:false,products:[],discountedProducts:[],remoteRows:[],dealRows:[],categories:[],cloudMode:true,cloudBusy:false,cloudConnectionError:true,deliverySummary:''});return}
     if(!this.pageVisible||serial!==this.cloudSerial)return
-    // Resume merchant workspace only after server authorization, never from a cached role alone.
-    const merchantCfg=cloudCartConfig()
-    const merchantPreference=wx.getStorageSync('stall_merchant_home_preference_v1')
-    const merchantIdentity=supportIdentity()
-    if(CAN_OPEN_MERCHANT && merchantCfg && merchantPreference===merchantCfg.apiBase+'|'+merchantCfg.storeSlug){
-      const merchantSerial=++this.merchantRouteSerial
-      try{
-        const result=await authorizedGet(merchantCfg.apiBase,'/v1/merchant/stores/'+merchantCfg.storeSlug+'/categories')
-        if(!this.pageVisible||serial!==this.cloudSerial||merchantSerial!==this.merchantRouteSerial)return
-        // An in-flight authorization must not override a switch to customer mode,
-        // a logout, a session replacement, or a store change.
-        const currentCfg=cloudCartConfig()
-        const stillMerchant=wx.getStorageSync('stall_merchant_home_preference_v1')===merchantPreference
-        if(result&&Array.isArray(result.items)&&stillMerchant&&merchantIdentity===supportIdentity()&&currentCfg&&
-           currentCfg.apiBase===merchantCfg.apiBase&&currentCfg.storeSlug===merchantCfg.storeSlug){
-          this.setData({entryLoading:false})
-          openMerchantWorkspace()
-          return
-        }
-      }catch(e){
-        // Clear only the SAME stale preference; do not overwrite a later mode change.
-        if(/http_40[13]|not_logged_in/.test(String(e))&&
-           wx.getStorageSync('stall_merchant_home_preference_v1')===merchantPreference&&
-           merchantIdentity===supportIdentity())wx.removeStorageSync('stall_merchant_home_preference_v1')
-      }
-    }
-    if(!this.pageVisible||serial!==this.cloudSerial)return
+    // The customer landing page never infers navigation intent from a stored role preference.
     this.setData({entryLoading:false});refreshPagePresentation(this);
     const cfg = cloudCartConfig()
     const shareReady=!!cfg&&/^https:\/\//.test(PUBLIC_API_BASE)&&PUBLIC_API_BASE.replace(/\/+$/,'')===cfg.apiBase

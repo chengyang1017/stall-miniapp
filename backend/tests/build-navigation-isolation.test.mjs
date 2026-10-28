@@ -30,7 +30,7 @@ function fixture(target){
   '../../utils/storePresentation':{refreshPagePresentation(){}},
   '../../utils/cloudCart':{cloudCartConfig:()=>cfg},
   '../../modules/shared/runtime/context':{getCloudContext:()=>cfg,cloudIdentity:()=>identity},
-  '../../modules/shared/runtime/auth':{authorizedGet:(base,url)=>{requests.push({base,url});return authorize()},loginWithWechat:async()=>{}},
+  '../../modules/shared/runtime/auth':{hasRecentMerchantPermission:()=>false,authorizedGet:(base,url)=>{requests.push({base,url});return authorize()},loginWithWechat:async()=>{}},
   '../../modules/customer/api/support':{supportIdentity:()=>identity},
   '../../modules/merchant/api/support':{supportIdentity:()=>identity}
  }
@@ -84,25 +84,11 @@ test('Customer profile neither queries merchant permissions nor opens merchant p
  p.data.merchantAuthorized=true;await p.openMerchant()
  assert.deepEqual(f.requests,[]);assert.deepEqual(f.navigation,[]);assert.equal(f.storage.size,0)
 })
-test('Combined homepage resumes a merchant preference only after a fresh protected response',async()=>{
- const f=fixture('combined'),gate=deferred();f.setAuthorize(()=>gate.promise)
- f.storage.set('stall_merchant_home_preference_v1',f.cfg.apiBase+'|'+f.cfg.storeSlug)
- const p=f.page(home),pending=p.onShow();await tick()
- assert.equal(f.requests.length,1);assert.equal(f.requests[0].url,'/v1/merchant/stores/authorized-store/categories')
- assert.deepEqual(f.navigation,[]);gate.resolve({items:[]});await pending
- assert.deepEqual(f.navigation,[['navigateTo','/pages/admin/admin']]);assert.deepEqual(f.loads,[])
-})
-for(const scenario of ['denied','malformed','identity','store','hidden','preference'])test(`Combined homepage cannot resume merchant on ${scenario}`,async()=>{
- const f=fixture('combined'),gate=deferred();f.setAuthorize(()=>gate.promise)
- f.storage.set('stall_merchant_home_preference_v1',f.cfg.apiBase+'|'+f.cfg.storeSlug)
- const p=f.page(home),pending=p.onShow();await tick();assert.equal(f.requests.length,1)
- if(scenario==='identity')f.setIdentity('identity-B')
- if(scenario==='store')f.setConfig({...f.cfg,storeSlug:'other-store'})
- if(scenario==='hidden')p.onHide()
- if(scenario==='preference')f.storage.set('stall_merchant_home_preference_v1','customer')
- if(scenario==='denied')gate.reject(Error('http_403'));else gate.resolve(scenario==='malformed'?{}:{items:[]})
- await pending;assert.deepEqual(f.navigation,[])
- if(scenario==='denied')assert.equal(f.storage.has('stall_merchant_home_preference_v1'),false)
+// Updated product contract: a saved merchant preference is never an implicit navigation action.
+for(const preference of ['merchant','customer','empty','other-store','old-identity','malformed','expired'])test(`Combined homepage stays customer with ${preference} history`,async()=>{
+ const f=fixture('combined');f.storage.set('stall_merchant_home_preference_v1',preference==='merchant'?f.cfg.apiBase+'|'+f.cfg.storeSlug:preference)
+ const p=f.page(home);await p.onShow()
+ assert.equal(f.requests.length,0);assert.deepEqual(f.navigation,[]);assert.deepEqual(f.loads,['catalog'])
 })
 test('Combined profile checks permission and rechecks on explicit entry before recording preference',async()=>{
  const f=fixture('combined'),p=f.page(profile);await p.checkMerchant()
@@ -138,4 +124,11 @@ for(const target of ['combined','customer','merchant'])test(`${target} compiles 
  }
  const {files}=graph(target)
  for(const file of files.keys())for(const m of readFileSync(file,'utf8').matchAll(/\/pages\/[a-z0-9-]+\/[a-z0-9-]+/g))assert(manifest.pages.includes(m[0].slice(1)),`${target}: ${file}: ${m[0]}`)
+})
+
+test('Combined homepage never auto-resumes merchant, including initial display and ten redisplays',async()=>{
+ const f=fixture('combined');f.storage.set('stall_merchant_home_preference_v1',f.cfg.apiBase+'|'+f.cfg.storeSlug)
+ const p=f.page(home);await p.onShow();assert.equal(f.navigation.length,0)
+ for(let i=0;i<10;i++){p.onHide();await p.onShow()}
+ assert.equal(f.navigation.length,0);assert.equal(f.requests.length,0)
 })

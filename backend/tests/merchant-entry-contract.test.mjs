@@ -26,14 +26,13 @@ test('merchant preference is set only after server-backed permission check',()=>
  assert.ok(validate>=0 && check>validate && save>check)
  assert.match(login,/url:'\/pages\/admin\/admin'/)
 })
-test('app opening cannot route to merchant without fresh authorized request',()=>{
- const section=index.slice(index.indexOf('const merchantPreference='),index.indexOf("this.setData({entryLoading:false});refreshPagePresentation(this);"))
- assert.match(section,/await authorizedGet\(/)
- assert.match(section,/Array\.isArray\(result.items\)/)
- assert.ok(section.indexOf('await authorizedGet(')<section.indexOf('openMerchantWorkspace()'))
+test('customer onShow never routes from a saved merchant preference',()=>{
+ const section=index.slice(index.indexOf('async onShow()'),index.indexOf('  onHide()'))
+ assert.doesNotMatch(section,/openMerchantWorkspace|stall_merchant_home_preference_v1|await authorizedGet/)
  assert.match(read('miniprogram/modules/integration/singleAppHost.ts'),/wx.navigateTo\(\{url:'\/pages\/admin\/admin'\}\)/)
  assert.match(auth,/Authorization: `Bearer \$\{token\}`/)
 })
+
 test('merchant logout clears saved merchant-first preference',()=>{
  assert.match(login,/wx.removeStorageSync\('stall_merchant_home_preference_v1'\)/)
 })

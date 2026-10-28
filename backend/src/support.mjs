@@ -7,7 +7,7 @@ async function body(req) {
   for await (const chunk of req) {size+=chunk.length;if(size>4096)fail(413,'body_too_large');chunks.push(chunk)}
   try { const b=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(!b||Array.isArray(b)||typeof b!=='object')fail(400,'invalid_body');return b } catch(e) {if(e.status)throw e;fail(400,'invalid_json')}
 }
-const projection = `id,seq::text AS seq,sender_role AS sender,content,created_at AS "createdAt"`
+const projection = `id,seq::text AS seq,sender_role AS sender,client_key AS "clientKey",content,created_at AS "createdAt"`
 export async function supportRoute(req,res,url,pool) {
   const match=/^\/v1\/(merchant\/)?stores\/([a-z0-9][a-z0-9-]{1,62})\/support(?:\/(.*))?$/.exec(url.pathname)
   if(!match)return false
