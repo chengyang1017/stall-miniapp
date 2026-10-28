@@ -23,6 +23,7 @@ function requestProductPage(apiBaseUrl:string,storeSlug:string,ids?:string[],que
       method: 'GET',
       timeout: 10000,
       success: response => {
+        if(response.statusCode!==200){reject(new Error('http_'+response.statusCode+'_products_unavailable'));return}
         const body = response.data as RemoteProductPage
         if (response.statusCode !== 200 || !body || !Array.isArray(body.products) || !Array.isArray(body.categories) || typeof body.hasMore!=='boolean' || (body.hasMore && typeof body.nextCursor!=='string')) {
           reject(new Error('Failed to load products'))

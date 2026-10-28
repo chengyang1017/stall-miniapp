@@ -65,7 +65,7 @@ export async function cloudCartDetails(cfg: { apiBase: string; storeSlug: string
     if (!p || p.active === false || p.soldOut) continue
     const cents = Number(p.effectivePriceCents !== undefined && p.effectivePriceCents !== null ? p.effectivePriceCents : (p.currentPriceCents !== undefined && p.currentPriceCents !== null ? p.currentPriceCents : p.priceCents))
     if (!Number.isSafeInteger(cents) || cents < 0) throw new Error('invalid_remote_price')
-    items.push({ productId: row.productId, quantity: row.quantity, name: String(p.name || ''), imageUrl: String(p.imageUrl || ''), price: cents / 100, subtotal: cents * row.quantity / 100, priceText: (cents / 100).toFixed(2), subtotalText: (cents * row.quantity / 100).toFixed(2),stockInsufficient:!stockAllows(p,row.quantity),inventoryText:p.stockMode==='finite'?`可销售库存 ${p.stockQuantity} 件${!stockAllows(p,row.quantity)?'，库存不足，请减少数量':''}`:'不限库存' })
+    items.push({ productId: row.productId, quantity: row.quantity, name: String(p.name || ''), imageUrl: String(p.imageUrl || ''), price: cents / 100, subtotal: cents * row.quantity / 100, priceText: (cents / 100).toFixed(2), subtotalText: (cents * row.quantity / 100).toFixed(2),stockLimit:p.stockMode==='finite'?Number(p.stockQuantity):null,stockInsufficient:!stockAllows(p,row.quantity),inventoryText:p.stockMode==='finite'?`可销售库存 ${p.stockQuantity} 件${!stockAllows(p,row.quantity)?'，库存不足，请减少数量':''}`:'不限库存' })
   }
   // Keep unavailable items in storage until a later user decision; never silently delete purchases.
   const totalCents = items.reduce((sum, row) => sum + Math.round(row.subtotal * 100), 0)

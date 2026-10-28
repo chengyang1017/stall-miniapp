@@ -1,5 +1,5 @@
 import { currentPresentation,refreshPagePresentation } from '../../utils/storePresentation'
-import { cloudCartConfig, cloudCartDetails, changeCloudCart, writeCloudCart, syncCloudBadge } from '../../utils/cloudCart' // PHASE33_CLOUD_CART
+import { cloudCartConfig, readCloudCart, cloudCartDetails, changeCloudCart, writeCloudCart, syncCloudBadge } from '../../utils/cloudCart' // PHASE33_CLOUD_CART
 import { loadStore } from '../../modules/customer/demo/catalog'
 import { getMinimumOrder, minimumOrderShortfall } from '../../modules/customer/demo/settings'
 import { clearDirectPurchase } from '../../utils/directPurchase'
@@ -21,9 +21,10 @@ function cloudCartViewKey(): string {
 }
 
 Page({
-  cloudSerial:0,
+  cloudSerial:0,catalogSerial:0,mutationEpoch:0,quantityVersion:0,cartMutating:false,disposed:false,desiredQuantities:{} as Record<string,number>,cloudRules:null as CloudDeliveryRules|null,
   cloudContext: '',
   data: {
+    quantityPending:false,quantityError:'',amountState:'confirmed',
     cloudMode: false,
     cloudError: '',
     cloudLoading: false,
@@ -42,31 +43,28 @@ Page({
     minimumReached: true
   },
 
-  onShow() { refreshPagePresentation(this);
+  onShow() { this.disposed=false;refreshPagePresentation(this);
     this.setData({ placeholderStyle: currentPresentation().placeholderStyle, customPlaceholderUrl: currentPresentation().customPlaceholderUrl })
 
     this.refresh()
   },
 
-  onHide() { this.cloudSerial++; this.cloudContext = '' },
-  onUnload() { this.cloudSerial++; this.cloudContext = '' },
+  onHide() { this.cloudSerial++ },
+  onUnload() { this.cloudSerial++;this.disposed=true;this.mutationEpoch++ },
 
   async refreshCloud() {
     const cfg = cloudCartConfig()
     if (!cfg) return
     const serial = ++this.cloudSerial, key = cloudCartViewKey()
+    const changed=this.cloudContext!==key,version=this.quantityVersion,catalog=++this.catalogSerial
+    if(changed){this.mutationEpoch++;this.cartMutating=false;this.desiredQuantities={};this.cloudRules=null;this.setData({items:[],totalText:'--',totalCount:0,quantityPending:false,quantityError:'',amountState:'checking',deliveryInfo:'',minimumOrderText:'',minimumRemainingText:''})}
     this.cloudContext = key
-    const current = () => serial === this.cloudSerial && key === cloudCartViewKey()
-    // Clear only the view, never the persisted cart. Unknown prices are not zero prices.
-    this.setData({ items: [], totalText: '--', totalCount: 0, cloudMode: true,
-      cloudError: '', cloudLoading: true, deliveryLoading: true, deliveryError: '',
-      cloudDeliveryReady: false, deliveryInfo: '', minimumReached: false,
-      minimumOrderText: '', minimumRemainingText: '' })
-    let totalText: string | null = null
+    const current = () => !this.disposed&&serial === this.cloudSerial && key === cloudCartViewKey()
+    this.setData({cloudMode:true,cloudError:'',cloudLoading:true,deliveryLoading:true,deliveryError:'',cloudDeliveryReady:false,minimumReached:false})
     let delivery: CloudDeliveryRules | null = null
     const updateMinimum = () => {
-      if (current() && totalText !== null && delivery) {
-        this.setData(minimumDisplay(delivery.business.minimumOrderCents, totalText))
+      if (current() && !this.data.quantityPending && this.data.amountState==='confirmed' && delivery) {
+        this.setData(minimumDisplay(delivery.business.minimumOrderCents, this.data.totalText))
       }
     }
     // Each branch owns its errors: delivery configuration must not hide priced items.
@@ -74,15 +72,15 @@ Page({
       (async () => {
         try {
           const result = await cloudCartDetails(cfg)
-          if (!current()) return
-          totalText = result.totalText
+          if (!current()||catalog!==this.catalogSerial||version!==this.quantityVersion||this.cartMutating) return
           this.setData({ items: result.items, totalText: result.totalText,
-            totalCount: result.totalCount, cloudLoading: false })
+            totalCount: result.totalCount, cloudLoading: false,amountState:'confirmed',quantityError:'' })
           updateMinimum()
           syncCloudBadge(cfg.storeSlug)
-        } catch (_) {
-          if (current()) this.setData({ cloudLoading: false, minimumReached: false,
-            cloudError: '云端商品读取失败，请稍后重试；购物车已保留' })
+        } catch (error) {
+          if(current()&&catalog===this.catalogSerial&&version===this.quantityVersion&&!this.cartMutating&&/http_40[13]/.test(String(error)))this.setData({items:[],totalCount:0,totalText:'--'})
+          if (current()&&catalog===this.catalogSerial&&version===this.quantityVersion&&!this.cartMutating) this.setData({ cloudLoading: false, minimumReached: false,
+            amountState:'stale',cloudError: '云端商品读取失败，请稍后重试；已有内容可能过期，购物车已保留' })
         }
       })(),
       (async () => {
@@ -97,7 +95,7 @@ Page({
           const issue = address ? deliveryAddressReason(address, rules.areas, storeKey) : '请在结算时选择配送地址'
           const todaySlots = area ? availableCloudSlots(rules, localDate(0, rules), area.id) : []
           const reason = cloudDeliveryReason(rules)
-          delivery = rules
+          delivery = rules;this.cloudRules=rules
           this.setData({ deliveryLoading: false, deliveryError: reason, cloudDeliveryReady: !reason,
             deliveryInfo: issue || ('配送区域：' + area!.name + '；' + (todaySlots.length ? '今日可用：' + todaySlots.map(s => s.label + ' ' + s.start + '–' + s.end).join('、') : '今日无有效时段，可在结算页选择其他日期')) })
           updateMinimum()
@@ -112,8 +110,8 @@ Page({
 
   refresh() {
     if (cloudCartConfig()) { this.refreshCloud(); return }
-    this.cloudContext = ''
-    this.setData({ cloudMode: false, cloudError: '', deliveryInfo: '', cloudLoading: false,
+    this.cloudContext = '';this.mutationEpoch++;this.cartMutating=false;this.desiredQuantities={};this.cloudRules=null
+    this.setData({quantityPending:false,quantityError:'',amountState:'confirmed', cloudMode: false, cloudError: '', deliveryInfo: '', cloudLoading: false,
       deliveryLoading: false, deliveryError: '', cloudDeliveryReady: false })
     this.cloudSerial++
     const cart = getCartDetails()
@@ -137,7 +135,7 @@ Page({
   async increase(e: WechatMiniprogram.TouchEvent) {
     const id = String(e.currentTarget.dataset.id)
     const cfg = cloudCartConfig()
-    if (cfg) { await changeCloudCart(cfg.storeSlug, id, 1); this.refresh(); return }
+    if (cfg) { await this.queueCloudQuantity(id,1); return }
     changeQuantity(id, 1)
     this.refresh()
   },
@@ -145,20 +143,65 @@ Page({
   async decrease(e: WechatMiniprogram.TouchEvent) {
     const id = String(e.currentTarget.dataset.id)
     const cfg = cloudCartConfig()
-    if (cfg) { await changeCloudCart(cfg.storeSlug, id, -1); this.refresh(); return }
+    if (cfg) { await this.queueCloudQuantity(id,-1); return }
     changeQuantity(id, -1)
     this.refresh()
   },
 
+  async queueCloudQuantity(id:string,delta:number){
+    const cfg=cloudCartConfig(),key=cloudCartViewKey()
+    if(!cfg||this.cloudContext!==key){this.refresh();return}
+    const index=this.data.items.findIndex(item=>item.productId===id),item=this.data.items[index] as any
+    if(index<0)return
+    const next=Math.max(0,Math.min(99,item.quantity+delta))
+    if(next===item.quantity)return
+    if(delta>0&&item.stockLimit!==null&&item.stockLimit!==undefined&&next>item.stockLimit){this.setData({quantityError:'库存不足，请减少数量'});return}
+    this.desiredQuantities[id]=next;this.quantityVersion++
+    const count=this.data.items.reduce((n,row,i)=>n+(i===index?next:row.quantity),0)
+    this.setData({['items['+index+'].quantity']:next,['items['+index+'].subtotalText']:'--',totalCount:count,totalText:'--',amountState:'checking',quantityPending:true,quantityError:'',minimumReached:false})
+    if(this.cartMutating)return
+    this.cartMutating=true;const epoch=this.mutationEpoch
+    const current=()=>!this.disposed&&epoch===this.mutationEpoch&&key===cloudCartViewKey()
+    let error=''
+    try{
+      while(current()){
+        for(const productId of Object.keys(this.desiredQuantities)){
+          if(!current())return
+          const wanted=this.desiredQuantities[productId],actual=readCloudCart(cfg.storeSlug).find(row=>row.productId===productId)?.quantity||0
+          if(wanted!==actual){
+            const ok=await changeCloudCart(cfg.storeSlug,productId,wanted-actual)
+            if(!current())return
+            if(!ok){this.desiredQuantities[productId]=readCloudCart(cfg.storeSlug).find(row=>row.productId===productId)?.quantity||0;error='数量未通过库存或网络校验，已恢复实际购物车数量'}
+          }
+        }
+        if(!current())return
+        if(Object.keys(this.desiredQuantities).some(productId=>this.desiredQuantities[productId]!== (readCloudCart(cfg.storeSlug).find(row=>row.productId===productId)?.quantity||0)))continue
+        const version=this.quantityVersion,result=await cloudCartDetails(cfg)
+        if(!current())return
+        if(version!==this.quantityVersion)continue
+        this.desiredQuantities={};this.catalogSerial++
+        this.setData({items:result.items,totalCount:result.totalCount,totalText:result.totalText,amountState:'confirmed',cloudError:'',cloudLoading:false,quantityPending:false,quantityError:error,...this.cloudRules?minimumDisplay(this.cloudRules.business.minimumOrderCents,result.totalText):{minimumReached:false}})
+        return
+      }
+    }catch(error){if(current()){
+      this.catalogSerial++
+      const denied=/http_40[13]/.test(String(error))
+      const actual=readCloudCart(cfg.storeSlug),items=this.data.items.map(item=>({...item,quantity:actual.find(row=>row.productId===item.productId)?.quantity||0,subtotalText:'--'}))
+      this.setData({items:denied?[]:items,totalCount:denied?0:items.reduce((n,row)=>n+row.quantity,0),quantityPending:false,totalText:'--',amountState:'stale',cloudLoading:false,minimumReached:false,cloudError:'商品价格或数量未能确认，请刷新重试；购物车内容已保留'})
+    }}finally{if(current())this.cartMutating=false}
+  },
+
   // CART_CLEAR_V1
   clearCartConfirmed() {
-    if (!this.data.totalCount) return
+    if (!this.data.totalCount||this.data.quantityPending) return
+    const context=cloudCartViewKey()
     wx.showModal({
       title: '\u6e05\u7a7a\u8d2d\u7269\u8f66',
       content: '\u786e\u5b9a\u79fb\u9664\u8d2d\u7269\u8f66\u4e2d\u7684\u5168\u90e8\u5546\u54c1\u5417\uff1f',
       confirmColor: '#d84b47',
       success: (result) => {
         if (!result.confirm) return
+        if(context!==cloudCartViewKey()){this.refresh();return}
         const cfg = cloudCartConfig()
         if (cfg) writeCloudCart(cfg.storeSlug, [])
         else wx.removeStorageSync('stall_cart_v1')
@@ -170,6 +213,7 @@ Page({
   },
   checkout() {
     if (cloudCartConfig()) {
+      if(this.data.quantityPending||this.data.items.some((item:any)=>item.stockInsufficient)){wx.showToast({title:'请等待数量确认或减少缺货商品',icon:'none'});return}
       if (this.cloudContext !== cloudCartViewKey()) {
         this.refresh(); wx.showToast({title:'账号或店铺已变化，请重新确认购物车',icon:'none'}); return
       }

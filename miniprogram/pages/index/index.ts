@@ -1,6 +1,6 @@
 import { openMerchantWorkspace,CAN_OPEN_MERCHANT } from '../../modules/integration/singleAppHost'
 import { PUBLIC_API_BASE } from '../../config/cloud'
-import { captureStoreEntry,resolveStoreEntry,shopShare } from '../../utils/storeEntry'
+import { captureStoreEntry,resolveStoreEntry,shopShare,hasPendingStoreEntry } from '../../utils/storeEntry'
 import { currentPresentation,refreshPagePresentation } from '../../utils/storePresentation'
 import { cloudCartConfig, changeCloudCart, cloudCartDetails, syncCloudBadge } from '../../utils/cloudCart' // PHASE33_CLOUD_CART
 import { businessState } from '../../modules/customer/demo/settings' // STALL_HOURS_V1
@@ -34,7 +34,7 @@ interface ProductView {
 }
 
 Page({
-  cloudSerial:0,cloudContext:'',pageVisible:false,
+  cloudSerial:0,cloudContext:'',homeConfirmed:'',pageVisible:false,
 
   data: {
     canOpenMerchant:CAN_OPEN_MERCHANT,
@@ -65,8 +65,13 @@ Page({
   async onShow() {
     this.pageVisible=true
     const serial=++this.cloudSerial
-    this.setData({entryLoading:true,entryError:'',cloudConnectionError:false})
-    try{await resolveStoreEntry()}catch(e){if(serial===this.cloudSerial)this.setData({entryError:'暂时无法连接商店，请检查网络连接后重试。',entryLoading:false,storeName:'店铺入口未确认',cartCount:0,cartTotal:'0.00',businessInfo:{open:false,label:'尚未确认当前店铺',notice:''},hasMore:false,dealsHasMore:false,products:[],discountedProducts:[],remoteRows:[],dealRows:[],categories:[],cloudMode:true,cloudBusy:false,cloudConnectionError:true,deliverySummary:''});return}
+    const retained=this.cloudContext===supportIdentity()&&this.homeConfirmed===supportIdentity()&&!hasPendingStoreEntry()
+    if(!retained){this.homeConfirmed='';this.setData({products:[],discountedProducts:[],remoteRows:[],dealRows:[],categories:[],cartCount:0,cartTotal:'0.00',deliverySummary:''})}
+    this.setData({entryLoading:!retained,entryError:'',cloudConnectionError:false})
+    try{await resolveStoreEntry()}catch(e){
+      if(serial===this.cloudSerial&&this.pageVisible){if(retained&&this.cloudContext===supportIdentity())this.setData({entryLoading:false,cloudBusy:false,cloudStatus:'暂时无法同步店铺入口，已保留上次内容，请重试'})
+      else this.setData({entryError:'暂时无法连接商店，请检查网络连接后重试。',entryLoading:false,storeName:'店铺入口未确认',hasMore:false,dealsHasMore:false,products:[],discountedProducts:[],remoteRows:[],dealRows:[],categories:[],cloudMode:true,cloudBusy:false,cloudConnectionError:true,deliverySummary:''})}return
+    }
     if(!this.pageVisible||serial!==this.cloudSerial)return
     // The customer landing page never infers navigation intent from a stored role preference.
     this.setData({entryLoading:false});refreshPagePresentation(this);
@@ -165,19 +170,22 @@ Page({
     const cfg = cloudCartConfig()
     if (this.data.entryError || !cfg || !cfg.apiBase || !cfg.storeSlug) return
     const serial=++this.cloudSerial,key=supportIdentity()
-    this.setData({ cloudMode: true, cloudBusy: true, cloudConnectionError:false, cloudStatus: '正在加载云端商品',deliverySummary:'',
-      businessInfo: {open:false,label:'正在读取云端营业状态',notice:''}, products: [], discountedProducts: [], categories: [],
-      dealRows:[],dealCursor:'',dealsHasMore:false,dealBusy:false,dealError:'',remoteRows:[],nextCursor:'',hasMore:false,cartCount: 0, cartTotal: '0.00' })
+    const retained=this.homeConfirmed===key
+    if(!retained)this.setData({products:[],discountedProducts:[],categories:[],remoteRows:[],dealRows:[]})
+    this.setData({cloudMode:true,cloudBusy:true,cloudConnectionError:false,cloudStatus:retained?'正在后台同步':'正在加载云端商品',dealBusy:false,dealError:''})
     try {
       const requestCfg={apiBase:String(cfg.apiBase).trim(),storeSlug:String(cfg.storeSlug).trim()}
       const [page,business,rules,deals] = await Promise.all([getRemoteProductPage(requestCfg.apiBase,requestCfg.storeSlug,{...this.data.searchQuery?{q:this.data.searchQuery}:{},...this.data.selectedCategory!=='all'?{category:this.data.selectedCategory}:{}}),publicBusiness(requestCfg),loadCloudDelivery(requestCfg).catch(()=>null),getRemoteProductPage(requestCfg.apiBase,requestCfg.storeSlug,{discount:'1'})])
       const current=cloudCartConfig();if(serial!==this.cloudSerial||!current||supportIdentity()!==key)return
+      this.homeConfirmed=key
       const areas=rules?rules.areas.filter(a=>a.enabled):[]
       this.setData({ storeName:business.storeName||'店铺',dealRows:deals.products,dealCursor:deals.nextCursor||'',dealsHasMore:deals.hasMore,remoteRows: page.products,categories:page.categories,hasMore:page.hasMore,nextCursor:page.nextCursor||'', businessInfo:business,cloudStatus: '', cloudBusy: false, cloudConnectionError:false,
         deliverySummary:rules?('启用配送区域 '+areas.length+' 个：'+areas.slice(0,3).map(a=>a.name).join('、')+(areas.length>3?' 等':'')+'；时段在结算时按区域、星期和日期核对'):'配送规则未配置或暂不可读取，当前不能确认配送，请进入结算重新核对' })
       this.renderCloudProducts()
-    } catch (_) {
+    } catch (error) {
       if(serial!==this.cloudSerial||key!==supportIdentity())return
+      if(retained&&!/http_40[13]/.test(String(error))){this.setData({cloudBusy:false,cloudStatus:'同步失败，已保留上次商品与价格，请稍后重试',cloudConnectionError:false});return}
+      this.homeConfirmed=''
       this.setData({ remoteRows: [],dealRows:[], products: [], categories: [], discountedProducts: [],
         businessInfo:{open:false,label:'',notice:''},cloudBusy: false, cloudStatus: '', cloudConnectionError:true,deliverySummary:'',hasMore:false,dealsHasMore:false })
     }
@@ -192,7 +200,7 @@ Page({
       if(context!==supportIdentity())return
       this.setData({ cartCount: summary.totalCount, cartTotal: summary.totalText })
       syncCloudBadge(cfg.storeSlug)
-    } catch (_) { if(context===supportIdentity())this.setData({ cartCount: 0, cartTotal: '0.00' }) }
+    } catch (_) { if(context===supportIdentity())this.setData({cloudStatus:'购物车金额同步失败，请进入购物车重新核对'}) }
   },
 
   renderCloudProducts() {

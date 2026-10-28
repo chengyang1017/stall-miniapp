@@ -5,6 +5,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import vm from 'node:vm'
+import {stripTypeScriptTypes} from 'node:module'
 
 const source=readFileSync(new URL('../../miniprogram/pages/cart/cart.ts',import.meta.url),'utf8')
 
@@ -50,9 +51,9 @@ function execute({cloud=false,minimumReached=true,cloudError='',totalCount=2,sho
     getCartDetails:()=>cart,
     minimumOrderShortfall:()=>shortfall
   }
-  const fn=vm.runInNewContext(`(function(){${body}})`,context,{timeout:250})
+  const fn=vm.runInNewContext(stripTypeScriptTypes(`(function(){${body}})`,{mode:'strip'}),context,{timeout:250})
   fn.call({cloudContext:'synthetic-current-context',data:{minimumReached,cloudError,totalCount,
-    cloudMode:cloud,deliveryError:'',cloudLoading:false,deliveryLoading:false,cloudDeliveryReady:true}})
+    items:[],quantityPending:false,cloudMode:cloud,deliveryError:'',cloudLoading:false,deliveryLoading:false,cloudDeliveryReady:true}})
   return {navigation,toasts,directClear}
 }
 

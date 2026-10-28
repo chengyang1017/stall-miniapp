@@ -20,6 +20,6 @@ export async function saveMerchantDelivery(cfg:CloudContext,revision:string|null
     slots:config.slots.map(s=>({id:s.id,label:s.label.trim(),start:s.start,end:s.end,enabled:s.enabled,weekdays:s.weekdays||[0,1,2,3,4,5,6],...s.areaIds?{areaIds:s.areaIds}:{}}))}
   const r:any=await new Promise((resolve,reject)=>wx.request({url:cfg.apiBase+`/v1/merchant/stores/${cfg.storeSlug}/delivery-rules`,method:'PUT',timeout:15000,data,
     header:{Authorization:'Bearer '+token,'content-type':'application/json'},success:(r:any)=>r.statusCode===200?resolve(r.data):reject(Error('http_'+r.statusCode+'_'+String(r.data?.error||''))),fail:reject}))
-  if(!r||r.ok!==true||typeof r.revision!=='string')throw Error('unconfirmed_delivery_save')
+  if(!r||r.ok!==true||(typeof r.revision!=='string'||!/^[a-f0-9]{32}$/.test(r.revision)))throw Error('unconfirmed_delivery_save')
   return r.revision
 }

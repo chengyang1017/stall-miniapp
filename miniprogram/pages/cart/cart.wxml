@@ -8,7 +8,9 @@
   </view>
 
   <view wx:if="{{cloudMode && cloudLoading}}" class="empty">正在读取云端商品…</view>
+  <view wx:if="{{quantityPending || quantityError || (cloudMode && amountState !== 'confirmed')}}" class="empty">{{quantityError || (quantityPending ? '数量校验中，金额待确认' : '当前价格未确认，请刷新核对')}}</view>
   <view wx:if="{{cloudMode && cloudError}}" class="empty">{{cloudError}}</view>
+  <button wx:if="{{cloudMode && (cloudError || quantityError)}}" size="mini" bindtap="refresh" disabled="{{quantityPending || cloudLoading}}">重新核对商品</button>
   <view wx:if="{{cloudMode && deliveryError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{deliveryError}}</view>
   <view wx:if="{{cloudMode && deliveryLoading}}" style="padding:16rpx;color:#777;font-size:24rpx">正在核对配送规则，暂不能结算…</view>
   <view wx:if="{{items.length === 0 && !cloudLoading && !cloudError}}" class="empty">购物车还是空的</view>
@@ -81,7 +83,7 @@
     <view wx:if="{{item.inventoryText}}" style="font-size:22rpx;color:{{item.stockInsufficient ? '#b33' : '#777'}}">{{item.inventoryText}}</view>
     <view class="item-bottom">
       <view>
-        <view class="price">¥{{item.priceText}}</view>
+        <view class="price">{{cloudMode && (quantityPending || cloudLoading || amountState !== 'confirmed') ? '上次单价 ' : ''}}¥{{item.priceText}}</view>
         <view class="subtotal">小计：¥{{item.subtotalText}}</view>
       </view>
       <view class="quantity">
@@ -95,11 +97,12 @@
 
   <view class="footer cart-footer-compact">
     <view wx:if="{{cloudMode && deliveryInfo}}" style="font-size:23rpx;color:#66776b;margin-bottom:12rpx;">{{deliveryInfo}}<navigator url="/pages/addresses/addresses">选择或编辑收货地址 ›</navigator></view>
+    <view wx:if="{{cloudMode}}" style="font-size:23rpx;color:#777">商品合计{{quantityPending || amountState !== 'confirmed' ? '待确认' : cloudLoading ? '（上次读取，正在刷新）' : '（以结算及下单校验为准）'}}</view>
     <view class="cart-footer-summary">
       <view class="cart-footer-count">共 {{totalCount}} 件商品</view>
       <view class="total">¥{{totalText}}</view>
     </view>
     <view wx:if="{{minimumOrderText && minimumOrderText !== '0.00'}}" style="font-size:24rpx;color:#666;margin-bottom:12rpx;">起送 ¥{{minimumOrderText}} <text wx:if="{{!minimumReached}}">· 还差 ¥{{minimumRemainingText}}</text><text wx:else> · 已达起送金额</text></view>
-    <button type="primary" disabled="{{totalCount === 0 || !minimumReached || (cloudMode && (cloudLoading || deliveryLoading || cloudError || deliveryError || !cloudDeliveryReady))}}" bindtap="checkout">去结算</button>
+    <button type="primary" disabled="{{totalCount === 0 || !minimumReached || (cloudMode && (quantityPending || cloudLoading || deliveryLoading || cloudError || deliveryError || !cloudDeliveryReady))}}" bindtap="checkout">去结算</button>
   </view>
 </view>

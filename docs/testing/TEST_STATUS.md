@@ -1,3 +1,5 @@
+> 2026-10-28：购物车/首页保留内容、配送时段picker及串行自动保存、地址确认即反馈/后台单次列表读取已完成源码。新增41项，联合296通过、0失败/跳过；TS、边界、三目标纯编译与产物检查通过。修正两个旧测试工具/夹具，未削弱断言。真机预览仍因dist/phone-preview的EPERM未重建成功，无部署/迁移/真实Staging地址写入，延迟分层未实测。详见 [CART_HOME_DELIVERY_ADDRESS_UX.md](CART_HOME_DELIVERY_ADDRESS_UX.md)。
+
 > 2026-10-28 更新：云端交互源码优化完成，新增48项前端动态测试及1项support handler回归，联合246通过、0失败、0跳过；三目标纯编译、TS、边界及产物检查通过。顾客首页不再消费旧商家偏好自动跳转；权限探测15秒内存复用、客服乐观行、分类乐观更新/确认缓存及拖动局部节流已实现。验证口径、测量、边界和真机步骤见 [INTERACTION_CLOUD_SYNC.md](INTERACTION_CLOUD_SYNC.md)。本轮没有部署或数据库操作；phone-preview重建仍因Windows EPERM受阻，真机/Staging新代码未验收，原数据库阶段阻断保持。
 
 # 微信商城测试状态
