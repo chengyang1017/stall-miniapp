@@ -112,9 +112,9 @@ const server = http.createServer(async (req, res) => {
       const subject=await authenticate(pool,req)
       if(!subject)return reply(res,401,{error:'unauthorized'})
       if(req.method==='GET'){
-        const result=await pool.query("SELECT a.id,a.nickname FROM customer_accounts a JOIN customer_login_identities i ON i.account_id=a.id WHERE i.provider='wechat' AND i.provider_subject=$1",[subject])
+        const result=await pool.query("SELECT a.id,a.nickname,a.avatar_style FROM customer_accounts a JOIN customer_login_identities i ON i.account_id=a.id WHERE i.provider='wechat' AND i.provider_subject=$1",[subject])
         if(!result.rows.length)return reply(res,404,{error:'profile_not_found'})
-        return reply(res,200,{accountId:result.rows[0].id,nickname:result.rows[0].nickname})
+        return reply(res,200,{accountId:result.rows[0].id,nickname:result.rows[0].nickname,avatarStyle:result.rows[0].avatar_style})
       }
       if(Number(req.headers['content-length']||0)>1024)return reply(res,413,{error:'too_large'})
       let raw=''
@@ -127,6 +127,20 @@ const server = http.createServer(async (req, res) => {
       const result=await pool.query("UPDATE customer_accounts a SET nickname=$1,updated_at=now() FROM customer_login_identities i WHERE i.account_id=a.id AND i.provider='wechat' AND i.provider_subject=$2 RETURNING a.id,a.nickname",[nickname,subject])
       if(!result.rows.length)return reply(res,404,{error:'profile_not_found'})
       return reply(res,200,{accountId:result.rows[0].id,nickname:result.rows[0].nickname})
+    }
+    if(url.pathname==='/v1/customer/avatar-style' && req.method==='PUT'){
+      if(process.env.PAYMENT_DB_ENV!=='isolated-test'||process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED!=='true')return reply(res,404,{error:'not_found'})
+      const subject=await authenticate(pool,req)
+      if(!subject)return reply(res,401,{error:'unauthorized'})
+      if(Number(req.headers['content-length']||0)>512)return reply(res,413,{error:'too_large'})
+      let raw=''
+      for await(const chunk of req){raw+=chunk.toString('utf8');if(Buffer.byteLength(raw)>512)return reply(res,413,{error:'too_large'})}
+      let payload
+      try{payload=JSON.parse(raw)}catch{return reply(res,400,{error:'invalid_json'})}
+      if(!payload||typeof payload.avatarStyle!=='string'||!['violet','blue','green','peach'].includes(payload.avatarStyle))return reply(res,400,{error:'invalid_avatar_style'})
+      const changed=await pool.query("UPDATE customer_accounts a SET avatar_style=$1,updated_at=now() FROM customer_login_identities i WHERE i.account_id=a.id AND i.provider='wechat' AND i.provider_subject=$2 RETURNING a.avatar_style",[payload.avatarStyle,subject])
+      if(!changed.rows.length)return reply(res,404,{error:'profile_not_found'})
+      return reply(res,200,{avatarStyle:changed.rows[0].avatar_style})
     }
     if (url.pathname === '/v1/auth/logout' && req.method === 'POST') {
       if (!await authenticate(pool, req)) return reply(res, 401, { error: 'unauthorized' })
