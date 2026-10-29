@@ -35,13 +35,17 @@ export function loginWithWechat(apiBase: string): Promise<void> {
         method: 'POST', data: { code: login.code }, timeout: 15000,
         success: (res: any) => {
           if (identity !== requestIdentity()) return reject(new Error('session_or_store_changed'))
-          if (res.statusCode !== 200 || !res.data || typeof res.data.token !== 'string') return reject(new Error('server_login_failed'))
+          if (res.statusCode !== 200 || !res.data || typeof res.data.token !== 'string') {
+            const code = typeof res.data?.error === 'string' ? res.data.error : 'unknown'
+            const allowed = ['auth_not_configured','wechat_auth_failed','invalid_code','service_unavailable','too_large','invalid_json','unknown']
+            return reject(new Error('login_http_'+String(res.statusCode)+'_'+(allowed.includes(code)?code:'unknown')))
+          }
           wx.setStorageSync(TOKEN_KEY, res.data.token)
           rememberSessionScope(res.data.token,res.data.cacheScope)
           resolve()
-        }, fail: reject
+        }, fail: (err:any) => reject(new Error('login_network_'+(String(err?.errMsg||'').includes('domain')?'domain':'unavailable')))
       })
-    }, fail: reject })
+    }, fail: (_err:any) => reject(new Error('wx_login_api_failed')) })
   })
 }
 

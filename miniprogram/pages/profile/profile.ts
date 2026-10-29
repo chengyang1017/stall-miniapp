@@ -25,6 +25,21 @@ Page({
     }
     this.setData({loginStatus:'短信验证码服务尚未接入，暂不能使用手机号登录。请先选择微信快捷登录。'})
   },
+  loginErrorMessage(error:any):string{
+    const code=String(error?.message||error||'')
+    if(code==='login_http_503_auth_not_configured')return '服务器未配置微信登录 AppID 或密钥，请管理员检查 Render 环境变量。'
+    if(code==='login_http_401_wechat_auth_failed')return '微信凭证验证失败。可能是小程序 AppID 与服务器配置不匹配。'
+    if(code==='login_http_400_invalid_code')return '微信临时登录凭证无效，请重新尝试。'
+    if(code==='login_http_503_service_unavailable')return '服务器数据库或内部服务暂不可用（503）。'
+    if(code==='login_network_domain')return '请求域名未通过微信校验，请检查小程序合法 request 域名。'
+    if(code==='login_network_unavailable')return '无法连接测试服务器，请检查网络或服务器状态。'
+    if(code==='wx_login_api_failed'||code==='wx_login_failed')return '微信未能生成小程序登录凭证，请确认正在使用真实 AppID。'
+    if(code==='untrusted_preview_endpoint')return '当前测试服务器地址未获允许。'
+    if(code==='session_or_store_changed')return '登录期间账号或店铺发生变化，请重新登录。'
+    if(code==='server_login_failed')return '服务器登录响应不完整。'
+    if(code.startsWith('login_http_'))return '登录接口返回错误：'+code.slice(11).replace(/_/g,' / ').slice(0,60)
+    return '微信登录失败，原因暂未识别；请联系管理员检查登录配置。'
+  },
   async loginWechat(){
     const cfg=getCloudContext()
     if(!cfg||this.data.loginBusy)return
@@ -36,7 +51,7 @@ Page({
       if(serial!==this.loginSerial||!current||current.apiBase!==cfg.apiBase||current.storeSlug!==cfg.storeSlug)return
       this.setData({loginPanel:false,loginStatus:'微信身份已确认；商家入口需服务器另行授权',accountName:'微信用户',accountSubtitle:'微信身份已连接'})
       await this.checkMerchant()
-    }catch(_){if(serial===this.loginSerial)this.setData({loginStatus:'微信登录失败；请核对当前AppID、后端配置及合法域名，不使用本地Token'})}
+    }catch(error){if(serial===this.loginSerial)this.setData({loginStatus:this.loginErrorMessage(error)})}
     finally{if(serial===this.loginSerial)this.setData({loginBusy:false})}
   },
   async checkMerchant(){
