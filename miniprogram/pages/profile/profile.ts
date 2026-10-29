@@ -12,7 +12,7 @@ Page({
   merchantSerial:0,merchantContext:'',
   merchantOpening:false,
   keepLoginOpen(){},
-  showLogin(){if(getSessionToken()){wx.navigateTo({url:'/pages/customer-settings/customer-settings'});return}this.setData({loginPanel:true,loginStatus:''})},
+  showLogin(){if(getSessionToken()){wx.navigateTo({url:'/pages/customer-account/customer-account'});return}this.setData({loginPanel:true,loginStatus:''})},
   closeLogin(){if(!this.data.loginBusy)this.setData({loginPanel:false,loginStatus:''})},
   selectLoginMethod(e:any){
     const method=String(e?.currentTarget?.dataset?.method||'wechat')

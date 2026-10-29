@@ -29,6 +29,7 @@
     "pages/delivery-proof/delivery-proof",
     "pages/order-detail/order-detail",
     "pages/profile/profile",
+    "pages/customer-account/customer-account",
     "pages/customer-settings/customer-settings",
     "pages/admin-note-tags/admin-note-tags",
     "pages/support-chat/support-chat",

@@ -121,7 +121,7 @@ const server = http.createServer(async (req, res) => {
       for await(const chunk of req){raw+=chunk.toString('utf8');if(Buffer.byteLength(raw)>1024)return reply(res,413,{error:'too_large'})}
       let payload
       try{payload=JSON.parse(raw)}catch{return reply(res,400,{error:'invalid_json'})}
-      if(!payload||typeof payload.nickname!=='string'||payload.nickname.length>30||/[\u005cu0000-\u005cu001F\u005cu007F]/u.test(payload.nickname))
+      if(!payload||typeof payload.nickname!=='string'||payload.nickname.length>30||/[\u0000-\u001F\u007F]/u.test(payload.nickname))
         return reply(res,400,{error:'invalid_nickname'})
       const nickname=payload.nickname.trim()
       const result=await pool.query("UPDATE customer_accounts a SET nickname=$1,updated_at=now() FROM customer_login_identities i WHERE i.account_id=a.id AND i.provider='wechat' AND i.provider_subject=$2 RETURNING a.id,a.nickname",[nickname,subject])

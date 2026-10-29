@@ -1,23 +1,4 @@
 <view class="settings-page">
-  <view class="settings-heading">账号与个人资料</view>
-  <view class="settings-card profile-card">
-    <view class="account-identity">
-      <view class="account-icon">我</view>
-      <view class="account-info">
-        <view class="account-name">{{loggedIn ? (nickname || '微信用户') : '未登录'}}</view>
-        <view class="account-caption">{{loggedIn ? '微信账号已连接 · 资料云端同步' : '登录后可管理个人资料'}}</view>
-      </view>
-      <view class="account-state">{{loggedIn ? '已登录' : '访客'}}</view>
-    </view>
-    <view wx:if="{{loggedIn}}" class="edit-section">
-      <view class="field-label">显示昵称</view>
-      <input class="nickname-input" maxlength="30" placeholder="请输入昵称（最多30字）" value="{{nickname}}" bindinput="onNicknameInput" />
-      <view class="field-caption">仅修改小程序内的昵称，不影响微信资料</view>
-      <button class="save-button" loading="{{profileBusy}}" disabled="{{profileBusy}}" bindtap="saveNickname">保存昵称</button>
-      <view wx:if="{{profileStatus}}" class="save-status">{{profileStatus}}</view>
-    </view>
-  </view>
-
   <view class="settings-heading">通知</view>
   <view class="settings-card">
     <view class="settings-row">

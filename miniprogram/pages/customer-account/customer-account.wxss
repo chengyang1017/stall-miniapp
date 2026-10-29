@@ -1,0 +1,14 @@
+page{background:#f7f6fa}
+.account-page{padding:32rpx 28rpx 72rpx}
+.account-card,.editor-card{background:#fff;border-radius:26rpx;padding:36rpx 32rpx}
+.account-card{display:flex;flex-direction:column;align-items:center}
+.avatar-circle{width:126rpx;height:126rpx;border-radius:50%;display:flex;justify-content:center;align-items:center;background:#ece5fc;color:#623bc1;font-size:50rpx;font-weight:700}
+.account-title{margin-top:20rpx;color:#302643;font-size:36rpx;font-weight:700}
+.account-hint{margin-top:8rpx;font-size:23rpx;color:#9890a6}
+.editor-card{margin-top:24rpx}.editor-title{font-size:31rpx;font-weight:700;color:#332a42;margin-bottom:32rpx}
+.field-title{font-size:27rpx;font-weight:600;color:#42374f}
+.nickname-editor{border:1rpx solid #e6e0ef;border-radius:16rpx;background:#faf9fc;padding:0 22rpx;height:90rpx;font-size:30rpx;margin-top:16rpx}
+.editor-help{color:#9991a7;font-size:22rpx;line-height:1.6;margin-top:12rpx}
+.primary-btn{margin-top:32rpx;background:#663bc5;color:white;border-radius:18rpx;font-size:29rpx}
+.profile-message{margin-top:18rpx;font-size:24rpx;color:#715d92;overflow-wrap:anywhere}
+.footnote{color:#aaa2b2;font-size:23rpx;line-height:1.6;text-align:center;margin-top:30rpx}
