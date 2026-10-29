@@ -3,7 +3,7 @@ import { authorizedGet,logoutCurrentSession } from '../../modules/shared/runtime
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
 const PREF_KEY = 'stall_customer_order_notice_pref_v1'
 Page({
-  data: { orderNoticeEnabled: true,loggedIn:false,nickname:'',logoutBusy:false,profileBusy:false,profileStatus:'' },,
+  data: { orderNoticeEnabled: true,loggedIn:false,nickname:'',logoutBusy:false,profileBusy:false,profileStatus:'' },
   async onShow() {
     const v = wx.getStorageSync(PREF_KEY)
     this.setData({ orderNoticeEnabled: v !== false, loggedIn:!!getSessionToken(),nickname:'',profileStatus:'' })
