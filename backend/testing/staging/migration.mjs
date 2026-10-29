@@ -39,7 +39,18 @@ export async function loadPlan(){
  }
  return {files,manifestSha256:hash(JSON.stringify(manifest))}
 }
-export async function run021(client,plan,p){
+// DBA mode is deliberately opt-in for isolated branches only. It does NOT
+// authorize a deployment or bypass the existing identity/catalog/ledger gates.
+export async function run021(client,plan,p,options={}){
+ const ownerMode=options.ownerMode===true
+ if(ownerMode){
+  requireThat(options.expectedOwner==='neondb_owner'&&
+   p.branchId==='br-nameless-block-b57fm06l'&&
+   p.migratorRole==='stall_payment_migrator_limited'&&
+   p.applicationRole==='stall_payment_app_limited'&&
+   p.authorizationRole==='stall_payment_authorizer_limited',
+   'staging_dba_owner_mode_target_rejected')
+ }
  let open=false,broken=false,phase='preflight'
  try{
   await client.query('BEGIN');open=true
@@ -48,7 +59,13 @@ export async function run021(client,plan,p){
   for(const [key,value]of [['lock_timeout','3000ms'],['statement_timeout','30000ms'],['idle_in_transaction_session_timeout','30000ms'],['search_path','public, pg_catalog']])await client.query('SELECT set_config($1,$2,true)',[key,value])
   await assertDatabaseIdentity(client,p)
   const who=(await client.query('SELECT current_user AS role,current_database() AS database')).rows[0]
-  requireThat(who?.role===p.migratorRole&&who.database===p.database,'staging_migration_role_rejected')
+  requireThat(who?.role===(ownerMode?options.expectedOwner:p.migratorRole)&&who.database===p.database,'staging_migration_role_rejected')
+  if(ownerMode){
+   const ownership=(await client.query(`SELECT c.relname,pg_get_userbyid(c.relowner) AS owner
+    FROM pg_class c WHERE c.relnamespace='public'::regnamespace
+    AND c.relname IN ('orders','stall_schema_migrations')`)).rows
+   requireThat(ownership.length===2&&ownership.every(r=>r.owner===options.expectedOwner),'staging_dba_owner_mismatch')
+  }
   await inspectDedicatedRoles(client,p)
   const lock=(await client.query('SELECT pg_try_advisory_xact_lock(hashtextextended($1,0)) AS acquired',['stall:staging:public-schema'])).rows[0]
   requireThat(lock?.acquired===true,'staging_concurrent_migration_rejected')
