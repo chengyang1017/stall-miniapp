@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {createPaymentGateway,paymentRequest} from '../../src/paymentGateway.mjs'
+import {createPaymentGateway,paymentRequest} from '../src/paymentGateway.mjs'
 
 const req={orderId:'order-1',amountCents:1299,currency:'CNY',requestKey:'request-1'}
 const confirmed={verifiedByProvider:true,provider:'provider-x',mode:'sandbox',orderId:'order-1',amountCents:1299,currency:'CNY',transactionId:'sandbox-123',status:'succeeded'}
