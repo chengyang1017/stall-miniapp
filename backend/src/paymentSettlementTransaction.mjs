@@ -13,9 +13,9 @@ export async function settleVerifiedOrderPayment(pool,{event,expectedProvider,ex
  try{
   await db.query('BEGIN');active=true
   await db.query("SET LOCAL statement_timeout='5000ms'")
-  const result=await db.query(`SELECT *, (created_at+interval '15 minutes'>clock_timestamp()
+  const result=await db.query(`SELECT *, (created_at+interval '1 minute' * $2 >clock_timestamp()
    AND (inventory_expires_at IS NULL OR inventory_expires_at>clock_timestamp())) AS payment_window_open
-   FROM orders WHERE id=$1 FOR UPDATE`,[event.orderId])
+   FROM orders WHERE id=$1 FOR UPDATE`,[event.orderId,event.provider==='stripe'&&event.mode==='sandbox'?60:15])
   const order=result.rows[0]
   if(!order)throw fail('payment_order_not_found')
   const provider=providerKey(event)

@@ -36,6 +36,7 @@ export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,
     'line_items[0][quantity]':'1',
     client_reference_id:request.orderId,
     'metadata[orderId]':request.orderId,
+    expires_at:String(Math.floor(Date.now()/1000)+1800),
     success_url:successUrl,cancel_url:cancelUrl
    })
    const response=await fetchImpl('https://api.stripe.com/v1/checkout/sessions',{

@@ -21,6 +21,8 @@ test('creates real Stripe Checkout request with server amount and idempotency',a
  assert.equal(data.get('line_items[0][price_data][unit_amount]'),'1999')
  assert.equal(data.get('line_items[0][price_data][currency]'),'myr')
  assert.equal(data.get('client_reference_id'),orderId)
+ assert.ok(Number(data.get('expires_at'))>Math.floor(Date.now()/1000)+1700)
+ assert.ok(Number(data.get('expires_at'))<=Math.floor(Date.now()/1000)+1805)
  assert.match(args.options.headers['Idempotency-Key'],/request-001/)
 })
 test('valid signed Stripe test webhook is normalized',async()=>{

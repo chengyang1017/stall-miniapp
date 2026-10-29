@@ -24,3 +24,7 @@ The optional isolated-branch migration `sql/022_stripe_test_refund_jobs.sql` cre
 ## Submitted refund polling
 
 `getRefundStatus(refundId)` makes a read-only call to Stripe `/v1/refunds/:id`. `reconcileOneSubmittedStripeTestRefund()` leases one submitted row, verifies refund ID and amount, and records `succeeded`, `submitted` (pending), or `review` (failed/canceled). Failed lookups remain `submitted` for later retries. No automatic timer or route is registered; the worker still requires explicit safe activation. Payment remains disabled.
+
+## Test-only timing alignment
+
+On `PAYMENT_DB_ENV=isolated-test`, newly created finite-inventory orders hold stock for **60 minutes**; production still holds for 15 minutes. Stripe Checkout requests set `expires_at` to approximately **30 minutes** after creation. Checkout initiation remains restricted to the first **15 minutes** after creating the order. Stripe sandbox settlement checks a 60-minute creation window and the inventory expiry. This leaves about 15 minutes after the latest possible session expiry for event delivery; events arriving later enter the audited refund-required path. No refund worker is auto-enabled. Create a fresh isolated test order after configuring the environment. This does not provide an absolute guarantee against delayed network/webhook delivery.

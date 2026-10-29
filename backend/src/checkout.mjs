@@ -82,7 +82,7 @@ export async function checkoutRoute(req,res,url,pool){
     let inventoryExpiresAt=null
     const finiteLines=lines.filter(line=>byId.get(line.productId).stock_mode==='finite')
     if (finiteLines.length) {
-      const expiry=await client.query(`UPDATE orders SET inventory_state='held',inventory_expires_at=clock_timestamp()+interval '1 minute' * $2 WHERE id=$1 RETURNING inventory_expires_at`,[orderId,HOLD_MINUTES])
+      const expiry=await client.query(`UPDATE orders SET inventory_state='held',inventory_expires_at=clock_timestamp()+interval '1 minute' * $2 WHERE id=$1 RETURNING inventory_expires_at`,[orderId,process.env.PAYMENT_DB_ENV==='isolated-test'?60:HOLD_MINUTES])
       inventoryExpiresAt=expiry.rows[0].inventory_expires_at
       for (const line of finiteLines) {
         const product=byId.get(line.productId)
