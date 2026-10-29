@@ -26,9 +26,9 @@
 <view class="category-layout" hidden="{{entryBlocking || cloudConnectionError || !!entryError}}">
 <scroll-view scroll-y class="category-sidebar">
 <view class="side-category {{selectedCategory==='all'?'active':''}}" data-id="all" bindtap="chooseCategory">
-<text class="category-icon">{{allCategoryIcon.iconGlyph}}</text>全部商品</view>
+<image class="category-icon" src="{{selectedCategory === 'all' ? allCategoryIcon.iconActivePath : allCategoryIcon.iconPath}}" mode="aspectFit"/>全部商品</view>
 <view wx:for="{{categories}}" wx:key="id" class="side-category {{selectedCategory===item.id?'active':''}}" data-id="{{item.id}}" bindtap="chooseCategory">
-<text class="category-icon">{{item.iconGlyph}}</text>{{item.name}}</view>
+<image class="category-icon" src="{{selectedCategory === item.id ? item.iconActivePath : item.iconPath}}" mode="aspectFit"/>{{item.name}}</view>
 </scroll-view>
 <view class="category-content">
 <view class="category-banner">
