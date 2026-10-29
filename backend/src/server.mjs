@@ -143,7 +143,7 @@ const server = http.createServer(async (req, res) => {
       if(!result.rows.length)return reply(res,404,{error:'profile_not_found'})
       const value=result.rows[0].phone_e164
       const masked=typeof value==='string'&&value.length>4?value.slice(0,3)+'*'.repeat(Math.min(value.length-5,9))+value.slice(-2):null
-      return reply(res,200,{bound:!!value,maskedPhone:masked,verifiedAt:result.rows[0].verified_at||null,verificationAvailable:false})
+      return reply(res,200,{bound:!!value,maskedPhone:masked,verifiedAt:result.rows[0].verified_at||null,verificationAvailable:process.env.WECHAT_PHONE_BIND_ENABLED==='true'})
     }
     if(url.pathname==='/v1/customer/avatar-style' && req.method==='PUT'){
       if(process.env.PAYMENT_DB_ENV!=='isolated-test'||process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED!=='true')return reply(res,404,{error:'not_found'})
