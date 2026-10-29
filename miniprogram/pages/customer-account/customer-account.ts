@@ -1,3 +1,4 @@
+import { cachedCustomerNickname,cacheCustomerNickname } from '../../modules/shared/runtime/customerNicknameCache'
 import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/context'
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
@@ -9,14 +10,14 @@ Page({
     const token=getSessionToken(), loggedIn=!!token
     const serial=++this.profileReadSerial
     const editAtStart=this.editSerial
-    this.setData({loggedIn,profileStatus:loggedIn?'正在读取云端昵称…':'',...(loggedIn?{}:{nickname:''})})
+    this.setData({loggedIn,profileStatus:'',nickname:loggedIn?cachedCustomerNickname():''})
     if(!token)return
     try {
       const cfg=getCloudContext()
       if(!cfg)throw Error('missing_api')
       const profile=await authorizedGet(cfg.apiBase,'/v1/customer/profile')
       if(serial!==this.profileReadSerial||getSessionToken()!==token||this.editSerial!==editAtStart)return
-      this.setData({nickname:String(profile.nickname||''),profileStatus:''})
+      cacheCustomerNickname(String(profile.nickname||''));this.setData({nickname:String(profile.nickname||''),profileStatus:''})
     } catch(error:any) {
       if(serial===this.profileReadSerial&&getSessionToken()===token)
         this.setData({profileStatus:'读取云端昵称失败：'+String(error?.message||error).slice(0,80)})
@@ -44,7 +45,7 @@ Page({
       if(getSessionToken()!==token)return
       if(confirmed?.nickname!==nickname)throw Error('云端重新读取的昵称不一致')
       wx.removeStorageSync(NICKNAME_KEY)
-      this.setData({nickname,profileStatus:'云端保存成功，重新进入仍会保留'})
+      cacheCustomerNickname(nickname);this.setData({nickname,profileStatus:'云端保存成功，重新进入仍会保留'})
       wx.showToast({title:'云端保存成功',icon:'success'})
     } catch(error:any) {
       if(getSessionToken()===token)this.setData({profileStatus:'保存未确认：'+String(error?.message||error).slice(0,100)})
