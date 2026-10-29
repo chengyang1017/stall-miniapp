@@ -42,3 +42,5 @@
 .login-sheet .login-dialog{margin:0;padding:8rpx 0;border:0;border-radius:0}
 
 .profile-avatar.avatar-violet{background:linear-gradient(150deg,#e5c5fa,#8e64d7,#5131b9)}.profile-avatar.avatar-blue{background:linear-gradient(150deg,#d8eaff,#77b5f3,#2873ba)}.profile-avatar.avatar-green{background:linear-gradient(150deg,#d7f5e1,#78c999,#288153)}.profile-avatar.avatar-peach{background:linear-gradient(150deg,#ffe4d8,#f2a18b,#c86659)}
+
+.profile-avatar{overflow:hidden}.profile-avatar-photo{width:100%;height:100%;display:block;border-radius:50%}

@@ -6,8 +6,8 @@ import { CLOUD_ONLY,PUBLIC_API_BASE } from '../../config/cloud'
 import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/customer/api/support'
 import { CAN_OPEN_MERCHANT,openMerchantWorkspace } from '../../modules/integration/singleAppHost'
 Page({
-  data:{accountName:'未登录',avatarStyle:'violet',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
-    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,avatarStyle:'violet',loginPanel:false,loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
+  data:{accountName:'未登录',avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
+    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,avatarStyle:'violet',avatarPhotoPath:'',loginPanel:false,loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
   loginSerial:0,
   serial:0,
   merchantSerial:0,merchantContext:'',
@@ -103,7 +103,20 @@ Page({
     }
     finally{this.merchantOpening=false}
   },
-  async onShow(){const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
+  loadAvatarForHeader(token:string,apiBase:string,serial:number){
+    wx.request({url:apiBase.replace(/\/$/,'')+'/v1/customer/avatar-photo',method:'GET',timeout:15000,
+      header:{Authorization:'Bearer '+token},
+      success:(response:any)=>{
+        if(serial!==this.serial||getSessionToken()!==token||response.statusCode!==200)return
+        if(!response.data||typeof response.data.dataBase64!=='string'||!['image/jpeg','image/png'].includes(response.data.mimeType))return
+        const extension=response.data.mimeType==='image/png'?'png':'jpg'
+        const file=wx.env.USER_DATA_PATH+'/customer-profile-header-'+Date.now()+'.'+extension
+        wx.getFileSystemManager().writeFile({filePath:file,data:response.data.dataBase64,encoding:'base64',
+          success:()=>{if(serial===this.serial&&getSessionToken()===token)this.setData({avatarPhotoPath:file})}})
+      }
+    })
+  },
+  async onShow(){const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){const token=getSessionToken();if(token)this.loadAvatarForHeader(token,cfg.apiBase,serial);authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
   onHide(){this.serial++;this.merchantSerial++;this.loginSerial++;this.setData({loginBusy:false})},
   onUnload(){this.serial++;this.merchantSerial++;this.loginSerial++},
   openOrders(e:any) {
