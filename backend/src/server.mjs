@@ -105,6 +105,29 @@ const server = http.createServer(async (req, res) => {
       const stores = await merchantStores(pool, subject)
       return reply(res, 200, { stores })
     }
+    // Cloud profile is available only in isolated staging after verified WeChat login.
+    if(url.pathname==='/v1/customer/profile' && (req.method==='GET'||req.method==='PUT')){
+      if(process.env.PAYMENT_DB_ENV!=='isolated-test'||process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED!=='true')
+        return reply(res,404,{error:'not_found'})
+      const subject=await authenticate(pool,req)
+      if(!subject)return reply(res,401,{error:'unauthorized'})
+      if(req.method==='GET'){
+        const result=await pool.query("SELECT a.id,a.nickname FROM customer_accounts a JOIN customer_login_identities i ON i.account_id=a.id WHERE i.provider='wechat' AND i.provider_subject=$1",[subject])
+        if(!result.rows.length)return reply(res,404,{error:'profile_not_found'})
+        return reply(res,200,{accountId:result.rows[0].id,nickname:result.rows[0].nickname})
+      }
+      if(Number(req.headers['content-length']||0)>1024)return reply(res,413,{error:'too_large'})
+      let raw=''
+      for await(const chunk of req){raw+=chunk.toString('utf8');if(Buffer.byteLength(raw)>1024)return reply(res,413,{error:'too_large'})}
+      let payload
+      try{payload=JSON.parse(raw)}catch{return reply(res,400,{error:'invalid_json'})}
+      if(!payload||typeof payload.nickname!=='string'||payload.nickname.length>30||/[\\u0000-\\u001F\\u007F]/u.test(payload.nickname))
+        return reply(res,400,{error:'invalid_nickname'})
+      const nickname=payload.nickname.trim()
+      const result=await pool.query("UPDATE customer_accounts a SET nickname=$1,updated_at=now() FROM customer_login_identities i WHERE i.account_id=a.id AND i.provider='wechat' AND i.provider_subject=$2 RETURNING a.id,a.nickname",[nickname,subject])
+      if(!result.rows.length)return reply(res,404,{error:'profile_not_found'})
+      return reply(res,200,{accountId:result.rows[0].id,nickname:result.rows[0].nickname})
+    }
     if (url.pathname === '/v1/auth/logout' && req.method === 'POST') {
       if (!await authenticate(pool, req)) return reply(res, 401, { error: 'unauthorized' })
       await revokeSession(pool, req)
