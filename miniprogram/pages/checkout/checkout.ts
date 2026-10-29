@@ -235,7 +235,8 @@ Page({
           slotText: `${validSlot.label} ${validSlot.start}–${validSlot.end}`
         })
         if (hasDirectPurchase()) clearDirectPurchase(); else {const purchased=new Set(fresh.items.map(x=>x.productId));saveCart(loadCart().filter(x=>!purchased.has(x.productId)))}
-          wx.redirectTo({ url: `/pages/orders/orders?created=${encodeURIComponent(order.id)}` })
+          wx.setStorageSync('stall_order_tab_entry_v1',{tab:'all',created:String(order.id)})
+          wx.switchTab({url:'/pages/orders/orders'})
         } catch (_) {
           wx.showToast({title:'商品状态已变化，请刷新后重试',icon:'none'})
           this.onShow()

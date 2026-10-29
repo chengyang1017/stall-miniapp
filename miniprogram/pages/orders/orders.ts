@@ -76,7 +76,17 @@ Page({
     this.setData({ createdId: options.created || '',activeTab:TABS.some(t=>t.key===options.tab)?options.tab as OrderTab:'all',entryFulfillment:['pending','delivering','refund'].includes(options.fulfillment||'')?options.fulfillment||'':'' })
   },
   entryMatches(o:any){const filter=this.data.entryFulfillment;if(!filter)return true;const status=fulfillment(o);return filter==='pending'?payment(o)==='paid'&&['new','accepted','preparing'].includes(status):filter==='delivering'?status==='delivering':payment(o).includes('refund')||status==='refunded'},
-  onShow() {this.visible=true;this.refresh()},
+  onShow() {
+    this.visible=true
+    const entry=wx.getStorageSync('stall_order_tab_entry_v1') as any
+    if(entry&&typeof entry==='object'){
+      wx.removeStorageSync('stall_order_tab_entry_v1')
+      const tab=TABS.some(t=>t.key===entry.tab)?entry.tab as OrderTab:'all'
+      const fulfillment=['pending','delivering','refund'].includes(entry.fulfillment)?entry.fulfillment:''
+      this.setData({activeTab:tab,entryFulfillment:fulfillment,createdId:typeof entry.created==='string'?entry.created:''})
+    }
+    this.refresh()
+  },
   onHide(){this.visible=false;this.serial++;if(this.data.cloudMode||customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
   onUnload(){this.visible=false;this.serial++;this.listContext=''},
   onPullDownRefresh(){this.refresh().finally(()=>wx.stopPullDownRefresh())},

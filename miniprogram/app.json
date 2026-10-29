@@ -75,6 +75,10 @@
         "selectedIconPath": "assets/tabbar/cart_active.png"
       },
       {
+        "pagePath": "pages/orders/orders",
+        "text": "订单"
+      },
+      {
         "pagePath": "pages/profile/profile",
         "text": "我的",
         "iconPath": "assets/tabbar/mine.png",

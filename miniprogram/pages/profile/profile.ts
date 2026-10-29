@@ -64,7 +64,8 @@ Page({
   onUnload(){this.serial++;this.merchantSerial++;this.loginSerial++},
   openOrders(e:any) {
     const tab=String(e?.currentTarget?.dataset?.tab||'all'),fulfillment=String(e?.currentTarget?.dataset?.fulfillment||'')
-    wx.navigateTo({url:'/pages/orders/orders?tab='+encodeURIComponent(tab)+'&fulfillment='+encodeURIComponent(fulfillment)})
+    wx.setStorageSync('stall_order_tab_entry_v1',{tab,fulfillment})
+    wx.switchTab({url:'/pages/orders/orders'})
   },
   unavailable(){wx.showToast({title:'该服务暂未开通',icon:'none'})},
   serviceInfo(e:any){const kind=String(e.currentTarget.dataset.kind);const content:Record<string,string>={faq:'在商品页或分类页加入购物车，选择商品后进入结算。配送区域、费用、库存和营业时间以店铺实时规则为准。订单进度可在「我的订单」中查看。',about:'本小程序提供店铺商品浏览、购物车、订单与配送服务。订单及配送信息由当前店铺管理。'};wx.showModal({title:kind==='faq'?'常见问题':'关于我们',content:content[kind]||'',showCancel:false})}
