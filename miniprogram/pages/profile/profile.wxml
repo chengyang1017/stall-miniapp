@@ -3,7 +3,7 @@
 <view class="hero-title">我的</view>
 <view class="hero-subtitle">管理账户 · 查看订单 · 享受服务</view>
 <view class="profile-identity" bindtap="showLogin">
-<view class="profile-avatar">♙</view>
+<view class="profile-avatar avatar-{{avatarStyle}}">♙</view>
 <view class="profile-account">
 <view class="profile-name">{{accountName}}</view>
 <view class="profile-subtitle">{{accountSubtitle}}</view>
