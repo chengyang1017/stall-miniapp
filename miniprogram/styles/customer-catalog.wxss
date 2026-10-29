@@ -62,6 +62,3 @@
 
 
 .category .category-icon{display:block;width:38rpx;height:38rpx;margin:0 auto 10rpx}.side-category .category-icon{width:36rpx;height:36rpx;flex:0 0 36rpx}
-
-/* Glyphs work in WeChat where local SVG image assets do not. */
-.category .category-icon,.side-category .category-icon{display:block;line-height:38rpx;font-size:30rpx;text-align:center;white-space:nowrap}
