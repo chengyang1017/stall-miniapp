@@ -16,3 +16,7 @@ A signed test-mode Stripe payment arriving after the order expires/cancels is sa
 ## Test-only refund client (not activated)
 
 `src/stripeTestRefund.mjs` implements Stripe's official session lookup and Refunds API for a trusted `refund_required` payment-event record. It confirms test-mode, paid status, order ID, PaymentIntent, and amount before requesting a full refund using a deterministic idempotency key. A pending refund is not reported as completed. This module is NOT exposed as HTTP, automatically called from webhooks, or scheduled: execution must await a reviewed reconciliation worker, persisted refund status and permissioning. Stripe test-only payments remain disabled.
+
+## Refund persistence (not running automatically)
+
+The optional isolated-branch migration `sql/022_stripe_test_refund_jobs.sql` creates a durable refund queue. `stripeTestRefundJobs.mjs` can enqueue, lease, finish, and retry jobs; submitted refunds require subsequent Stripe status reconciliation, and failures eventually require manual review. A lease plus Stripe idempotency key protects against duplicate requests. **Do not automatically start the worker or enable payments** until migration, least-privilege grants, isolated-DB verification, and reconciliation of submitted refunds have been reviewed. No migration is automatically executed.
