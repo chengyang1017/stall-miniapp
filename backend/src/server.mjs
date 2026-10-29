@@ -38,6 +38,9 @@ if(process.env.PAYMENT_DB_ENV==='isolated-test'){
   const configured=!!process.env.WX_APPID&&!!process.env.WX_APPSECRET
   const appIdMatches=process.env.WX_APPID==='wxeb1890c397d038d8'
   console.log('Staging WeChat auth readiness',configured?'credentials_present':'credentials_missing',appIdMatches?'app_id_matches':'app_id_mismatch_or_missing')
+  const avatarBucketPresent=!!process.env.S3_AVATAR_BUCKET
+  const avatarCredentialsPresent=!!process.env.S3_ENDPOINT&&!!process.env.S3_ACCESS_KEY_ID&&!!process.env.S3_SECRET_ACCESS_KEY
+  console.log('Staging avatar storage readiness',avatarBucketPresent?'private_bucket_named':'private_bucket_missing',avatarCredentialsPresent?'s3_credentials_present':'s3_credentials_missing')
 }
 const pool = new Pool({
   ...(approvedStaging?parsedDatabase(connectionString,approvedStaging):{connectionString,
