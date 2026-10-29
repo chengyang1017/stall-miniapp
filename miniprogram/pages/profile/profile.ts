@@ -1,18 +1,18 @@
 import { getSessionToken } from '../../modules/shared/runtime/context'
 import { getCloudContext } from '../../modules/shared/runtime/context'
-import { authorizedGet,loginWithWechat,hasRecentMerchantPermission } from '../../modules/shared/runtime/auth'
+import { authorizedGet,loginWithWechat,logoutCurrentSession,hasRecentMerchantPermission } from '../../modules/shared/runtime/auth'
 import { CLOUD_ONLY,PUBLIC_API_BASE } from '../../config/cloud'
 import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/customer/api/support'
 import { CAN_OPEN_MERCHANT,openMerchantWorkspace } from '../../modules/integration/singleAppHost'
 Page({
   data:{accountName:'未登录',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
-    loginBusy:false,loginStatus:'',loginPanel:false,loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
+    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
   loginSerial:0,
   serial:0,
   merchantSerial:0,merchantContext:'',
   merchantOpening:false,
   keepLoginOpen(){},
-  showLogin(){this.setData({loginPanel:true,loginStatus:''})},
+  showLogin(){if(getSessionToken()){wx.navigateTo({url:'/pages/customer-settings/customer-settings'});return}this.setData({loginPanel:true,loginStatus:''})},
   closeLogin(){if(!this.data.loginBusy)this.setData({loginPanel:false,loginStatus:''})},
   selectLoginMethod(e:any){
     const method=String(e?.currentTarget?.dataset?.method||'wechat')
@@ -49,10 +49,24 @@ Page({
       await loginWithWechat(cfg.apiBase)
       const current=getCloudContext()
       if(serial!==this.loginSerial||!current||current.apiBase!==cfg.apiBase||current.storeSlug!==cfg.storeSlug)return
-      this.setData({loginPanel:false,loginStatus:'微信身份已确认；商家入口需服务器另行授权',accountName:'微信用户',accountSubtitle:'微信身份已连接'})
+      this.setData({loginPanel:false,loginStatus:'微信身份已确认；商家入口需服务器另行授权',accountName:'微信用户',accountSubtitle:'微信身份已连接',loggedIn:true})
       await this.checkMerchant()
     }catch(error){if(serial===this.loginSerial)this.setData({loginStatus:this.loginErrorMessage(error)})}
     finally{if(serial===this.loginSerial)this.setData({loginBusy:false})}
+  },
+  logout(){
+    if(this.data.logoutBusy)return
+    wx.showModal({title:'退出登录',content:'退出当前账号？本机登录状态将立即清除。',confirmText:'退出登录',success:async r=>{
+      if(!r.confirm)return
+      const cfg=getCloudContext()
+      ++this.loginSerial;++this.serial;++this.merchantSerial
+      this.setData({logoutBusy:true,loggedIn:false,loginPanel:false,loginBusy:false,merchantAuthorized:false,accountName:'未登录',accountSubtitle:'登录后管理订单与配送',supportUnread:null})
+      try{if(cfg)await logoutCurrentSession(cfg.apiBase)}
+      finally{
+        this.setData({logoutBusy:false})
+        wx.showToast({title:'已退出当前设备',icon:'success'})
+      }
+    }})
   },
   async checkMerchant(){
     const serial=++this.merchantSerial,cfg=getCloudContext(),identity=supportIdentity()
@@ -88,7 +102,7 @@ Page({
     }
     finally{this.merchantOpening=false}
   },
-  async onShow(){this.setData({accountName:getSessionToken()?'微信用户':'未登录',accountSubtitle:getSessionToken()?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
+  async onShow(){const loggedIn=!!getSessionToken();const nickname=String(wx.getStorageSync('stall_customer_nickname_v1')||'').trim();this.setData({loggedIn,accountName:loggedIn?(nickname||'微信用户'):'未登录',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
   onHide(){this.serial++;this.merchantSerial++;this.loginSerial++;this.setData({loginBusy:false})},
   onUnload(){this.serial++;this.merchantSerial++;this.loginSerial++},
   openOrders(e:any) {

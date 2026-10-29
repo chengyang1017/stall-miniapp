@@ -1,4 +1,14 @@
 <view class="settings-page">
+  <view class="settings-section-title">个人资料</view>
+  <view class="settings-card">
+    <view class="settings-row"><view class="settings-main"><view class="settings-name">登录状态</view><view class="settings-desc">{{loggedIn ? '已连接微信账号' : '未登录'}}</view></view></view>
+    <view wx:if="{{loggedIn}}" class="settings-row">
+      <view class="settings-main"><view class="settings-name">显示昵称</view><view class="settings-desc">仅存储在当前设备，不会改变微信资料或云端账号</view>
+      <input maxlength="30" placeholder="填写个人昵称" value="{{nickname}}" bindinput="onNicknameInput" /></view>
+      <button size="mini" bindtap="saveNickname">保存</button>
+    </view>
+    <button wx:if="{{loggedIn}}" type="warn" loading="{{logoutBusy}}" disabled="{{logoutBusy}}" bindtap="logout">退出登录</button>
+  </view>
   <view class="settings-section-title">通知偏好</view>
   <view class="settings-card">
     <view class="settings-row">

@@ -1,7 +1,7 @@
 // Shared session and authorized GET transport; no role grant or page navigation.
 // Never embed WX_APPSECRET here or trust a client-supplied merchant role.
 const TOKEN_KEY = 'stall_server_session_v1'
-import { registerSessionCacheReset } from './sessionLifecycle'
+import { registerSessionCacheReset,clearSessionCaches } from './sessionLifecycle'
 import { rememberSessionScope } from './sessionScope'
 import { CLOUD_ONLY } from '../../../config/cloud'
 import { assertPreviewWechatApp,previewApiAllowed } from './phonePreview'
@@ -89,4 +89,19 @@ export function authorizedGet(apiBase: string, path: string, query?: Record<stri
   },error=>{permissionProofs.delete(proofKey);throw error}).finally(()=>{if(permissionRequests.get(proofKey)===tracked)permissionRequests.delete(proofKey)})
   permissionRequests.set(proofKey,tracked)
   return tracked
+}
+
+export function logoutCurrentSession(apiBase:string):Promise<void>{
+  const token=wx.getStorageSync(TOKEN_KEY)
+  // Immediately invalidate all in-app caches, even if the network is offline.
+  wx.removeStorageSync(TOKEN_KEY)
+  wx.removeStorageSync('stall_server_cache_scope_v1')
+  wx.removeStorageSync('stall_merchant_home_preference_v1')
+  clearSessionCaches()
+  if(typeof token!=='string'||!token||!previewApiAllowed(apiBase))return Promise.resolve()
+  return new Promise(resolve=>{
+    wx.request({url:apiBase.replace(/\/$/,'')+'/v1/auth/logout',method:'POST',
+      header:{Authorization:'Bearer '+token},timeout:8000,
+      success:()=>resolve(),fail:()=>resolve()})
+  })
 }
