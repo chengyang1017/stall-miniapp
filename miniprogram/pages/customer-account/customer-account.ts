@@ -3,7 +3,7 @@ import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/co
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
 Page({
-  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'' },
+  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',photoBusy:false,photoStatus:'' },
   profileReadSerial:0,
   editSerial:0,
   async onShow() {
@@ -17,11 +17,45 @@ Page({
       if(!cfg)throw Error('missing_api')
       const profile=await authorizedGet(cfg.apiBase,'/v1/customer/profile')
       if(serial!==this.profileReadSerial||getSessionToken()!==token||this.editSerial!==editAtStart)return
-      cacheCustomerNickname(String(profile.nickname||''));this.setData({nickname:String(profile.nickname||''),profileStatus:'',avatarStyle:String(profile.avatarStyle||'violet')})
+      cacheCustomerNickname(String(profile.nickname||''));this.setData({nickname:String(profile.nickname||''),profileStatus:'',avatarStyle:String(profile.avatarStyle||'violet')});this.loadAvatarPhoto(token)
     } catch(error:any) {
       if(serial===this.profileReadSerial&&getSessionToken()===token)
         this.setData({profileStatus:'读取云端昵称失败：'+String(error?.message||error).slice(0,80)})
     }
+  },
+  async loadAvatarPhoto(token:string){
+    const cfg=getCloudContext();if(!cfg)return
+    wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/avatar-photo',
+      method:'GET',header:{Authorization:'Bearer '+token},timeout:15000,
+      success:(r:any)=>{
+        if(getSessionToken()!==token||r.statusCode!==200||!r.data?.dataBase64)return
+        const mime=r.data.mimeType==='image/png'?'png':'jpg'
+        const filename=wx.env.USER_DATA_PATH+'/customer-avatar-'+Date.now()+'.'+mime
+        wx.getFileSystemManager().writeFile({filePath:filename,data:r.data.dataBase64,encoding:'base64',success:()=>{if(getSessionToken()===token)this.setData({avatarPhotoPath:filename})}})
+      }
+    })
+  },
+  chooseAvatarPhoto(){
+    const token=getSessionToken(),cfg=getCloudContext()
+    if(!token||!cfg||this.data.photoBusy)return
+    wx.chooseMedia({count:1,mediaType:['image'],sourceType:['album','camera'],sizeType:['compressed'],success:(selection:any)=>{
+      const file=selection.tempFiles?.[0]
+      if(!file)return
+      if(file.size>512*1024){this.setData({photoStatus:'图片超过512KB，请选择更小的照片'});return}
+      this.setData({photoBusy:true,photoStatus:'正在上传头像…'})
+      wx.getFileSystemManager().readFile({filePath:file.tempFilePath,encoding:'base64',success:(content:any)=>{
+        wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/avatar-photo',
+          method:'PUT',header:{Authorization:'Bearer '+token,'content-type':'application/json'},
+          data:{dataBase64:content.data},timeout:20000,
+          success:(res:any)=>{
+            if(getSessionToken()!==token)return
+            if(res.statusCode===200){this.setData({avatarPhotoPath:file.tempFilePath,photoStatus:'照片头像已保存到云端'})}
+            else this.setData({photoStatus:'上传失败：'+String(res.data?.error||res.statusCode)})
+          },fail:()=>this.setData({photoStatus:'网络异常，上传失败'}),
+          complete:()=>this.setData({photoBusy:false})
+        })
+      },fail:()=>this.setData({photoBusy:false,photoStatus:'无法读取所选图片'})})
+    }})
   },
   async chooseAvatarStyle(e:any){
     if(!getSessionToken()||this.data.avatarBusy)return

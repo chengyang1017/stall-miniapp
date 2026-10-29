@@ -1,3 +1,4 @@
+import {customerAvatarPhotoRoute} from './customerAvatarPhoto.mjs'
 import { storeEntryRoute } from './storeEntry.mjs'
 import { stripeTestPaymentRoute } from './stripeTestPaymentRoute.mjs'
 import { stagingPaymentRoute } from './stagingPayments.mjs'
@@ -59,6 +60,7 @@ const server = http.createServer(async (req, res) => {
     if (await stagingPaymentRoute(req,res,url,pool)) return
     if (await productReviewRoute(req,res,url,pool)) return
     if (await deliveryTrackingRoute(req,res,url,pool)) return
+    if (await customerAvatarPhotoRoute(req,res,url,pool)) return
     if (await storeEntryRoute(req,res,url,pool)) return
     if (await supportRoute(req,res,url,pool)) return
     if (await merchantArchivesRoute(req,res,url,pool)) return
