@@ -12,3 +12,7 @@ Limitation: payment arriving after the 15-minute hold expires is rejected, and m
 ## Late paid notification audit
 
 A signed test-mode Stripe payment arriving after the order expires/cancels is saved as a `payment_events.event_type='refund_required'` entry, with the Stripe Checkout Session ID as `provider_event_id` and `provider='stripe:sandbox'`. Duplicate notifications return the existing marker. No order is marked paid and no inventory is recommitted. **This is an audit marker only, not an actual refund**. Manual refund/reconciliation remains mandatory. Do not enable Stripe Checkout until the 15-minute reservation versus Stripe session expiry is resolved and refund execution is implemented/tested.
+
+## Test-only refund client (not activated)
+
+`src/stripeTestRefund.mjs` implements Stripe's official session lookup and Refunds API for a trusted `refund_required` payment-event record. It confirms test-mode, paid status, order ID, PaymentIntent, and amount before requesting a full refund using a deterministic idempotency key. A pending refund is not reported as completed. This module is NOT exposed as HTTP, automatically called from webhooks, or scheduled: execution must await a reviewed reconciliation worker, persisted refund status and permissioning. Stripe test-only payments remain disabled.
