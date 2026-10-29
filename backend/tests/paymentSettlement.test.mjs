@@ -13,7 +13,7 @@ async function verified(overrides={}){
 const check=(o,event,mode='sandbox')=>decide({order:o,event,expectedMode:mode,expectedProvider:'gateway'})
 test('verified provider result is eligible for future settlement',async()=>assert.equal(check(order,await verified()).action,'settle'))
 test('plain fabricated event cannot settle',()=>assert.throws(()=>check(order,raw),/unverified_payment_notification/))
-test('spreading a verified event loses internal verification',async()=>assert.throws(()=>check(order,{...await verified()}),/unverified_payment_notification/))
+test('spreading a verified event loses internal verification',async()=>{const event=await verified();assert.throws(()=>check(order,{...event}),/unverified_payment_notification/)})
 test('live cannot accept sandbox result',async()=>assert.throws(()=>check(order,await verified(),'live'),/untrusted_payment_result/))
 test('wrong amount rejected',async()=>assert.throws(()=>check(order,await verified({amountCents:1})),/payment_reconciliation_mismatch/))
 test('wrong currency rejected',async()=>assert.throws(()=>check(order,await verified({currency:'USD'})),/payment_reconciliation_mismatch/))
