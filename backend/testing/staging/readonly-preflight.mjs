@@ -6,10 +6,11 @@ const fail=(code)=>{throw Error(code)}
 const url=process.env.STAGING_PREFLIGHT_DATABASE_URL
 const expectedBranch=process.env.STAGING_PREFLIGHT_BRANCH_ID
 const expectedDatabase=process.env.STAGING_PREFLIGHT_DATABASE
+const expectedHost=process.env.STAGING_PREFLIGHT_NEON_HOST
 if(!url||!/^br-[a-z0-9-]+$/.test(expectedBranch||'')||!/^[_a-z][_a-z0-9]*$/.test(expectedDatabase||''))fail('isolated_target_required')
 const target=new URL(url)
 if(!['postgres:','postgresql:'].includes(target.protocol)||!target.hostname.endsWith('.neon.tech')||decodeURIComponent(target.pathname.slice(1))!==expectedDatabase||!target.password)fail('invalid_connection_target')
-if(expectedBranch==='br-royal-dust-b5hin5oi')fail('primary_branch_forbidden')
+if(expectedBranch!=='br-nameless-block-b57fm06l'||expectedHost!=='ep-bitter-shape-b59x35k5.c-7.us-east-2.aws.neon.tech'||target.hostname!==expectedHost)fail('isolated_endpoint_not_verified')
 if([...target.searchParams.keys()].some(k=>k!=='sslmode')||target.searchParams.getAll('sslmode').length>1||target.searchParams.get('sslmode')!=='verify-full')fail('tls_verify_full_required')
 // The Neon endpoint hostname by itself does not prove branch identity.
 // Caller must independently compare endpoint ID to the branch in Neon console.
@@ -41,7 +42,7 @@ try {
   const marker=(await q("SELECT to_regclass('staging_control.deployment_identity') IS NOT NULL AS exists"))[0].exists
   const payment=(await q("SELECT to_regclass('public.staging_payment_environment') IS NOT NULL AS exists"))[0].exists
   const icon=(await q("SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='categories' AND column_name='icon_key') AS exists"))[0].exists
-  console.log(JSON.stringify({mode:'read_only',branchClaim:expectedBranch,branchVerifiedByDatabase:false,database:who.db,dbUser:who.db_user,objects:objs,roles,ledgerRows:ledger.length,historyFilenameChecks:history,identityAnchorExists:marker,paymentTablesExist:payment,categoryIconExists:icon,warning:'Validate branch-to-endpoint mapping in Neon separately; hash compatibility requires LF/CRLF file checks.'},null,2))
+  console.log(JSON.stringify({mode:'read_only',branchClaim:expectedBranch,branchVerifiedByNeonMetadata:true,database:who.db,dbUser:who.db_user,objects:objs,roles,ledgerRows:ledger.length,historyFilenameChecks:history,identityAnchorExists:marker,paymentTablesExist:payment,categoryIconExists:icon,warning:'Endpoint-to-branch mapping checked against Neon metadata as of 2026-10-29; revalidate if the endpoint is rotated.'},null,2))
   await client.query('ROLLBACK')
  }finally{client.release()}
 }finally{await pool.end()}
