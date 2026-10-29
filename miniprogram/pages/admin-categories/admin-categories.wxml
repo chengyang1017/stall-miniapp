@@ -9,7 +9,7 @@
       <input class="name-input" placeholder="输入分类名称" maxlength="40" value="{{newName}}" bindinput="onNewName" />
       <button class="add-btn" size="mini" bindtap="addCategory">添加</button>
     </view>
-    <view class="category-icon-field" bindtap="openNewIconPicker"><text class="icon-glyph">{{newIconGlyph}}</text><text>分类图标 · {{newIconKey ? newIconLabel : '默认图标'}}</text><text class="icon-field-arrow">选择 ›</text></view>
+    <view class="category-icon-field" bindtap="openNewIconPicker"><image src="{{newIconPath}}" mode="aspectFit"/><text>分类图标 · {{newIconKey ? newIconLabel : '默认图标'}}</text><text class="icon-field-arrow">选择 ›</text></view>
     <view wx:if="{{cloudMode && !categoryIconsSupported}}" class="icon-capability-note">当前服务尚未启用图标保存；旧分类使用默认图标，名称和排序仍可正常管理。</view>
   </view>
   <view class="panel">
@@ -19,7 +19,7 @@
     <view wx:else class="sort-area" style="height:{{areaHeight}}px;">
       <view wx:for="{{rows}}" wx:key="id" class="sort-row {{draggingId === item.id ? 'is-dragging' : ''}}" style="height:{{rowHeight}}px;transform:translateY({{item.y}}px);">
         <view class="cat-row {{editingId === item.id ? 'is-editing' : ''}}">
-          <view class="category-row-icon" data-id="{{item.id}}" catchtap="openEditIconPicker" aria-label="选择分类图标"><text class="icon-glyph">{{editingId === item.id ? editingIconGlyph : item.iconGlyph}}</text></view>
+          <view class="category-row-icon" data-id="{{item.id}}" catchtap="openEditIconPicker" aria-label="选择分类图标"><image src="{{editingId === item.id ? editingIconPath : item.iconPath}}" mode="aspectFit"/></view>
           <view class="cat-info">
             <input wx:if="{{editingId === item.id}}" class="inline-cat-input" value="{{editingName}}" maxlength="40" bindinput="onEditingName" bindconfirm="saveRename" confirm-type="done" />
             <text wx:else class="cat-name">{{item.name}}</text>
@@ -41,9 +41,9 @@
   <view wx:if="{{pickerTarget}}" class="category-icon-overlay" catchtap="closeIconPicker">
     <view class="category-icon-sheet" catchtap="stopPickerTap">
       <view class="icon-sheet-heading"><text>选择分类图标</text><button size="mini" bindtap="closeIconPicker">完成</button></view>
-      <view class="icon-preview-line"><text class="icon-glyph">{{pickerTarget === 'new' ? newIconGlyph : editingIconGlyph}}</text><text>{{pickerTarget === 'new' ? newName || '新分类' : editingName}}</text><text class="icon-draft-label">保存分类后生效</text></view>
-      <view class="icon-auto-choice {{(pickerTarget === 'new' ? newIconKey : editingIconKey) === '' ? 'selected' : ''}}" data-key="" bindtap="selectIcon">默认图标 · 未选择时显示通用图案</view>
-      <scroll-view scroll-y class="icon-options-scroll"><view class="icon-options-grid"><view wx:for="{{iconOptions}}" wx:key="key" class="icon-option {{(pickerTarget === 'new' ? newIconKey : editingIconKey) === item.key ? 'selected' : ''}}" data-key="{{item.key}}" bindtap="selectIcon"><text class="icon-glyph">{{item.glyph}}</text><text>{{item.label}}</text><text wx:if="{{(pickerTarget === 'new' ? newIconKey : editingIconKey) === item.key}}" class="icon-option-check">✓</text></view></view></scroll-view>
+      <view class="icon-preview-line"><image src="{{pickerTarget === 'new' ? newIconPath : editingIconPath}}" mode="aspectFit"/><text>{{pickerTarget === 'new' ? newName || '新分类' : editingName}}</text><text class="icon-draft-label">保存分类后生效</text></view>
+      <view class="icon-auto-choice {{(pickerTarget === 'new' ? newIconKey : editingIconKey) === '' ? 'selected' : ''}}" data-key="" bindtap="selectIcon">默认图标 · 未选择时使用通用分类图标</view>
+      <scroll-view scroll-y class="icon-options-scroll"><view class="icon-options-grid"><view wx:for="{{iconOptions}}" wx:key="key" class="icon-option {{(pickerTarget === 'new' ? newIconKey : editingIconKey) === item.key ? 'selected' : ''}}" data-key="{{item.key}}" bindtap="selectIcon"><image src="{{item.path}}" mode="aspectFit"/><text>{{item.label}}</text><text wx:if="{{(pickerTarget === 'new' ? newIconKey : editingIconKey) === item.key}}" class="icon-option-check">✓</text></view></view></scroll-view>
     </view>
   </view>
 </view>
