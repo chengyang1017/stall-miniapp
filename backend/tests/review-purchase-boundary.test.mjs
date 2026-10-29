@@ -6,6 +6,10 @@ const STORE = '11111111-1111-4111-8111-111111111111'
 const SUBJECT = 'wx:app:customer-a'
 const ITEM = '22222222-2222-4222-8222-222222222222'
 const ORDER = '33333333-3333-4333-8333-333333333333'
+test('Staging simulated payment never qualifies as verified real purchase',async()=>{
+ const result=await reviewPurchase(db(record({payment_status:'paid',payment_source:'staging_simulated',fulfillment_status:'delivered'})),STORE,SUBJECT,ITEM)
+ assert.equal(result.eligible,false);assert.match(result.reason,/模拟支付不能作为真实已购评价凭证/)
+})
 function record(overrides = {}) {
   return { id: ORDER, store_id: STORE, customer_subject: SUBJECT,
     currency: 'CNY', payment_status: 'unpaid', fulfillment_status: 'new',

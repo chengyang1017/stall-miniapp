@@ -1,8 +1,10 @@
-.page{min-height:100vh;background:#f5f7f6;padding:30rpx;box-sizing:border-box}
-.heading{font-size:38rpx;font-weight:700;margin:22rpx 0 30rpx;color:#1f332b}
+.page{min-height:100vh;background:var(--brand-background);padding:30rpx;box-sizing:border-box}
+.heading{font-size:38rpx;font-weight:700;margin:22rpx 0 30rpx;color:var(--brand-text)}
 .card{background:#fff;border-radius:20rpx;padding:28rpx;margin-bottom:24rpx;line-height:1.7}
 .subheading{font-size:30rpx;font-weight:600;margin-bottom:18rpx}
-.hint{font-size:24rpx;color:#6d7b73;line-height:1.6;margin:18rpx 0}
+.hint{font-size:24rpx;color:var(--brand-muted);line-height:1.6;margin:18rpx 0}
 .preview{white-space:pre-wrap;font-size:25rpx;margin:18rpx 0;color:#334}
 button{margin-top:24rpx}
-.archive-row{padding:22rpx 0;border-bottom:1rpx solid #e5ebe7;overflow-wrap:anywhere}picker{padding:20rpx;margin-top:12rpx;background:#f3f7f4;border-radius:12rpx}navigator{margin-top:24rpx;color:#16865d}
+.archive-row{padding:22rpx 0;border-bottom:1rpx solid var(--brand-background);overflow-wrap:anywhere}picker{padding:20rpx;margin-top:12rpx;background:var(--brand-background);border-radius:12rpx}navigator{margin-top:24rpx;color:var(--brand-primary)}
+
+@import "../../styles/merchant-theme.wxss";

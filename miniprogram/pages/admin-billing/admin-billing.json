@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "账单与营业统计",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#5935cf",
+  "navigationBarTextStyle": "white"
 }

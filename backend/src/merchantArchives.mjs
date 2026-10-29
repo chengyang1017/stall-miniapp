@@ -32,7 +32,7 @@ async function dataSnapshot(db,store,kind,range){
    data['settings.json']=r.rows.length?{configured:true,...r.rows[0]}:{configured:false,configuration:null,revision:null}
   }
   if(['orders-json','archive-json'].includes(kind)){
-   data['orders.json']=await rows(`SELECT id,currency,subtotal_cents,delivery_fee_cents,total_cents,payment_status,fulfillment_status,created_at,updated_at,delivered_at,estimated_arrival,inventory_state,inventory_expires_at FROM orders WHERE store_id=$1 AND created_at>=($2::date::timestamp AT TIME ZONE 'Asia/Shanghai') AND created_at<(($3::date+1)::timestamp AT TIME ZONE 'Asia/Shanghai') ORDER BY created_at,id LIMIT 5001`,[store.id,range.from,range.to],5000)
+   data['orders.json']=await rows(`SELECT id,currency,subtotal_cents,delivery_fee_cents,total_cents,payment_status,payment_source,paid_at,fulfillment_status,created_at,updated_at,delivered_at,estimated_arrival,inventory_state,inventory_expires_at FROM orders WHERE store_id=$1 AND created_at>=($2::date::timestamp AT TIME ZONE 'Asia/Shanghai') AND created_at<(($3::date+1)::timestamp AT TIME ZONE 'Asia/Shanghai') ORDER BY created_at,id LIMIT 5001`,[store.id,range.from,range.to],5000)
    const ids=data['orders.json'].map(o=>o.id)
    data['order-items.json']=ids.length?await rows('SELECT i.id,i.order_id,i.product_id,i.product_name,i.unit_price_cents,i.quantity,i.line_total_cents,i.category_id_snapshot,i.category_name_snapshot,i.image_object_key_snapshot FROM order_items i JOIN orders o ON o.id=i.order_id WHERE o.store_id=$1 AND o.id=ANY($2::uuid[]) ORDER BY i.order_id,i.id LIMIT 20001',[store.id,ids],20000):[]
    data['order-summary.json']=orderSummary(data['orders.json'])

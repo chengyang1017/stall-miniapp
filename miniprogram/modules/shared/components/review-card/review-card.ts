@@ -1,1 +1,1 @@
-Component({properties:{row:{type:Object,value:{}},photos:{type:Array,value:[]}},methods:{images(){this.triggerEvent('images',{id:this.data.row.id})}}})
+Component({properties:{customerSummary:{type:Boolean,value:false},row:{type:Object,value:{}},photos:{type:Array,value:[]}},methods:{images(){this.triggerEvent('images',{id:this.data.row.id})}}})

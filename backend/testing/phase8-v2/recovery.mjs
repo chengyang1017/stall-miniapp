@@ -5,6 +5,26 @@ import {check,V2,HEX,UUID,topology} from './policy.mjs'
 import {hash} from './artifact.mjs'
 export const containerSpec=db=>({Id:db.Id,Created:db.Created,Image:db.Image,Config:db.Config,HostConfig:db.HostConfig,Mounts:db.Mounts})
 export const volumeSpec=v=>({Name:v.Name,Driver:v.Driver,Scope:v.Scope,CreatedAt:v.CreatedAt,Options:v.Options,Labels:v.Labels})
+// Future independent registration format ONLY. Never reinterpret a v1 digest.
+// Docker maps have no key order semantics; only Mounts is a set. Env/Cmd/etc
+// remain ordered. Reject lossy JSON values and duplicate mount destinations.
+export function canonicalResource(value){
+ if(value===null||typeof value==='string'||typeof value==='boolean')return value
+ if(typeof value==='number'){check(Number.isFinite(value),'fingerprint_value_rejected');return value}
+ if(Array.isArray(value)){
+  check(Object.keys(value).length===value.length,'fingerprint_value_rejected')
+  return value.map(canonicalResource)
+ }
+ check(value&&Object.getPrototypeOf(value)===Object.prototype,'fingerprint_value_rejected')
+ return Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonicalResource(value[k])]))
+}
+export function resourceFingerprintV2(db,volume){
+ check(Array.isArray(db?.Mounts)&&db.Mounts.every(m=>typeof m.Destination==='string'&&m.Destination.startsWith('/'))&&
+  new Set(db.Mounts.map(m=>m.Destination)).size===db.Mounts.length,'fingerprint_mounts_rejected')
+ const spec={...containerSpec(db),Mounts:[...db.Mounts].sort((a,b)=>a.Destination<b.Destination?-1:a.Destination>b.Destination?1:0)}
+ const snapshot=canonicalResource({version:2,encoding:'docker-resource-json-v2',container:spec,volume:volumeSpec(volume)})
+ return {snapshot,sha256:hash(JSON.stringify(snapshot))}
+}
 export function recoveryReceipt(c,a,e,[db,v,n],sources,engine){
  check(a?.version===1&&a.protocol==='recover-created-v1'&&a.profile===V2.profile&&a.project===V2.project&&UUID.test(a.instance||'')&&
    a.instance===c.instance&&a.volumeName===V2.volume&&HEX.test(a.dbId||'')&&HEX.test(a.networkId||'')&&

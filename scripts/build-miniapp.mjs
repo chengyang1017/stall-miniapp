@@ -2,17 +2,20 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { ROOT,SOURCE,relative,walk,graph,checkInventory } from './miniapp-graph.mjs'
-import { checkOutput } from './miniapp-output.mjs'
+import { checkOutput,phonePreviewFolder } from './miniapp-output.mjs'
 import { readPhoneProfile,cloudSource } from './phone-preview-profile.mjs'
 
 const target=process.argv[2]||'combined'
 const phone=process.env.STALL_PHONE_PREVIEW_PROFILE?readPhoneProfile(process.env.STALL_PHONE_PREVIEW_PROFILE):null
 if(phone&&target!=='combined')throw Error('Phone preview uses the existing Combined application and one AppID')
+if(!phone&&process.env.STALL_PHONE_PREVIEW_OUTPUT)throw Error('Phone output override requires a staging profile')
+const outputFolder=phone?phonePreviewFolder(process.env.STALL_PHONE_PREVIEW_OUTPUT||'phone-preview'):target
 checkInventory()
 const {plan,files}=graph(target)
-const output=path.join(ROOT,'dist',phone?'phone-preview':target),stage=path.join(output,'source'),miniapp=path.join(output,'miniprogram')
+const output=path.join(ROOT,'dist',outputFolder),stage=path.join(output,'source'),miniapp=path.join(output,'miniprogram')
 // Destructive operation is restricted to one fixed generated target, never source.
 if(!['combined','customer','merchant'].includes(target)||path.dirname(output)!==path.join(ROOT,'dist'))throw Error('Unsafe output directory')
+if(phone&&outputFolder!=='phone-preview'&&fs.existsSync(output))throw Error('Named phone preview output must be new; refusing to overwrite')
 if(fs.existsSync(output)&&(!fs.existsSync(path.join(output,'.stall-build-output'))||fs.lstatSync(output).isSymbolicLink()))throw Error('Refusing to replace unowned/symlink output')
 if(fs.existsSync(path.join(ROOT,'dist'))&&fs.lstatSync(path.join(ROOT,'dist')).isSymbolicLink())throw Error('Refusing symlink dist')
 if(fs.existsSync(output))fs.rmSync(output,{recursive:true})
@@ -81,7 +84,7 @@ for(const f of artifacts){
  if(target!=='combined'&&(f.startsWith('modules/'+(target==='customer'?'merchant':'customer')+'/')||f.startsWith('modules/integration/')))throw Error('Cross-role artifact '+f)
 }
 fs.writeFileSync(path.join(output,'build-manifest.json'),JSON.stringify({target,compile:'TypeScript to CommonJS JavaScript',wechatPlatformCompilation:'not performed',appid:project.appid,pages:app.pages,sources:[...files.keys()].map(relative),artifacts},null,2)+'\n')
-checkOutput(target,phone?'phone-preview':target)
+checkOutput(target,outputFolder)
 if(phone) {
   const emitted=fs.readFileSync(path.join(miniapp,'config/cloud.js'),'utf8')
   if(!emitted.includes(phone.apiBase)||!emitted.includes('CLOUD_ONLY = true'))throw Error('Missing cloud-only preview configuration')

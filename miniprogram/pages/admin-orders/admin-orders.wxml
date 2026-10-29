@@ -46,7 +46,7 @@
   <view wx:for="{{dateResults}}" wx:key="id" class="card {{batchMode && selectedMap[item.id] ? 'order-selected' : ''}}">
     <view wx:if="{{batchMode}}" class="order-selection" bindtap="toggleOrder" data-id="{{item.id}}"><checkbox checked="{{selectedMap[item.id] || false}}" disabled="{{operationBusy || !item.batchEligible}}" color="#16865d"/><text>{{item.batchEligible ? '勾选此订单' : '该状态不可批量操作'}}</text></view>
     <view class="row"><text class="id">{{item.id}}</text><text class="state">{{item.statusText}}</text></view>
-    <view class="muted">{{item.createdText}} · {{item.paymentLabel}}</view>
+    <view class="muted">{{item.createdText}} · {{item.paymentLabel}}</view><view wx:if="{{item.paymentBlocked}}" class="muted">尚未确认支付，不能接单或推进履约。</view>
     <view wx:for="{{item.items}}" wx:for-item="product" wx:key="lineKey" class="row item"><text>{{product.name}} × {{product.quantity}}</text><text>¥{{product.subtotal}}</text></view>
         <!-- stallCancelExceptionV1 -->
     <view wx:if="{{item.issueReason}}" class="muted" style="color:#bf512d;">原因：{{item.issueReason}}</view>
@@ -76,7 +76,7 @@
       <button disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !canManage}}" size="mini" data-id="{{item.id}}" bindtap="saveEta">保存预计时间</button>
     </view>
     <view wx:if="{{item.etaValue}}" class="muted">当前预计：{{item.etaValue}}</view>
-    <button disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !canManage}}" wx:if="{{item.nextStatus && !batchMode}}" class="next" type="primary" data-id="{{item.id}}" data-status="{{item.nextStatus}}" bindtap="next">{{item.nextLabel}}</button>
+    <button disabled="{{item.paymentBlocked || operationBusy || cloudBusy || loadingMore || queryDirty || !canManage}}" wx:if="{{item.nextStatus && !batchMode}}" class="next" type="primary" data-id="{{item.id}}" data-status="{{item.nextStatus}}" bindtap="next">{{item.nextLabel}}</button>
   </view>
   <view class="order-page-footer"><text>已加载 {{dateResults.length}} / {{matchingCount}} 单。刷新可获取新订单。</text><text wx:if="{{moreError}}">{{moreError}}</text><button wx:if="{{refreshRequired}}" bindtap="searchOrders" disabled="{{operationBusy || cloudBusy}}">数据已变化，刷新列表</button><button wx:elif="{{hasMore}}" bindtap="loadMore" disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty}}">{{loadingMore ? '加载中…' : (moreError ? '重试加载更多' : '加载更多')}}</button><text wx:if="{{!hasMore && !cloudBusy && !cloudError && !queryDirty && dateResults.length}}">本次匹配订单已全部加载</text></view>
 </view>

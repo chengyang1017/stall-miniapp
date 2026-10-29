@@ -1,4 +1,8 @@
 {
   "navigationBarTitleText": "小摊商店",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "render-probe": "../../modules/shared/components/render-probe/render-probe"
+  },
+  "navigationStyle": "custom"
 }

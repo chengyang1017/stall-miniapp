@@ -1,0 +1,54 @@
+<import src="../../templates/customer-product.wxml"/>
+<view class="customer-hero">
+<view class="hero-title">商品分类</view>
+<view class="hero-subtitle">按分类快速查找商品</view>
+<view class="customer-search">
+<text class="search-symbol">⌕</text>
+<input maxlength="100" value="{{searchInput}}" bindinput="inputSearch" bindconfirm="searchProducts" confirm-type="search" placeholder="搜索商品名称"/>
+<button bindtap="searchProducts">搜索</button>
+<button wx:if="{{searchInput}}" bindtap="clearSearch">×</button>
+</view>
+</view>
+<view class="category-page">
+<view class="home-sync-status" aria-live="polite">{{entryLoading ? '正在确认店铺…' : cloudBusy ? '正在同步商品' : cloudStatus}}</view>
+<view wx:if="{{entryError || cloudConnectionError}}" class="surface stall-connect-card">
+<view>暂时无法连接商店</view>
+<view class="notice">{{entryError || '请检查网络后重试'}}</view>
+<button size="mini" bindtap="retryStoreEntry">重新连接</button>
+</view>
+<view wx:if="{{cloudStatus && !cloudBusy}}" class="notice" bindtap="loadCloudHome">{{cloudStatus}} · 点击重试</view>
+<view wx:if="{{entryBlocking && !entryError && !cloudConnectionError}}">
+<view class="skeleton">
+</view>
+<view class="skeleton">
+</view>
+</view>
+<view class="category-layout" hidden="{{entryBlocking || cloudConnectionError || !!entryError}}">
+<scroll-view scroll-y class="category-sidebar">
+<view class="side-category {{selectedCategory==='all'?'active':''}}" data-id="all" bindtap="chooseCategory">
+<image class="category-icon" src="{{selectedCategory === 'all' ? allCategoryIcon.iconActivePath : allCategoryIcon.iconPath}}" mode="aspectFit"/>全部商品</view>
+<view wx:for="{{categories}}" wx:key="id" class="side-category {{selectedCategory===item.id?'active':''}}" data-id="{{item.id}}" bindtap="chooseCategory">
+<image class="category-icon" src="{{selectedCategory === item.id ? item.iconActivePath : item.iconPath}}" mode="aspectFit"/>{{item.name}}</view>
+</scroll-view>
+<view class="category-content">
+<view class="category-banner">
+<text class="feature-label">{{storeName}}</text>
+<view class="feature-title">{{categoryTitle}}</view>
+<view>发现你需要的好物</view>
+</view>
+<view class="category-toolbar">
+<text>{{categoryTitle}} · 已加载 {{products.length}} 件</text>
+<view bindtap="sortProducts">{{sortMode==='asc'?'价格↑':sortMode==='desc'?'价格↓':'综合排序'}}⌄</view>
+</view>
+<view class="filter-line" bindtap="filterProducts">☷ 筛选{{onlyAvailable?' · 有货':''}}{{onlyDeals?' · 优惠':''}}</view>
+<view class="product-grid">
+<view wx:for="{{products}}" wx:key="id" class="product" data-trace-list="products" data-trace-key="{{item.id}}">
+<render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="home" list-name="products" row-key="{{item.id}}"/>
+<template is="productCard" data="{{item,placeholderStyle,customPlaceholderUrl}}"/>
+</view>
+</view>
+<view wx:if="{{!products.length && !cloudBusy}}" class="empty">暂无符合条件的商品</view>
+<button wx:if="{{hasMore}}" class="load-more" loading="{{cloudBusy}}" disabled="{{cloudBusy}}" bindtap="loadMoreProducts">加载更多商品</button>
+</view>
+</view>
+</view>

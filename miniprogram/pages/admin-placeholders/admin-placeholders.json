@@ -1,3 +1,5 @@
 {
-  "navigationBarTitleText": "商品缺图样式"
+  "navigationBarTitleText": "商品缺图样式",
+  "navigationBarBackgroundColor": "#5935cf",
+  "navigationBarTextStyle": "white"
 }

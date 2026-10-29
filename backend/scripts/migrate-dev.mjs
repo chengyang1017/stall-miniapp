@@ -14,7 +14,7 @@ if (!['127.0.0.1', 'localhost', '::1'].includes(url.hostname) || url.pathname !=
 if (process.env.CONFIRM_DEV_MIGRATIONS !== 'YES') throw new Error('Set CONFIRM_DEV_MIGRATIONS=YES explicitly')
 const base = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'sql')
 const files = (await readdir(base)).filter(n => /^\d{3}_[a-z0-9_]+\.sql$/.test(n)).sort()
-if (files.length !== 20 || files.some((n,i) => Number(n.slice(0,3)) !== i+1)) throw new Error('Expected migrations 001 through 020 in order')
+if (files.length !== 21 || files.some((n,i) => Number(n.slice(0,3)) !== i+1)) throw new Error('Expected migrations 001 through 021 in order')
 const client = new Client({ connectionString: raw, connectionTimeoutMillis: 5000 })
 try {
   await client.connect()

@@ -14,6 +14,7 @@
   <view wx:if="{{dirty}}" class="state">输入后点击搜索，旧报表已隐藏。</view>
   <view wx:if="{{error}}" class="error">{{error}}</view>
   <block wx:if="{{hasReport}}">
+    <view wx:if="{{simulatedCount}}" class="notice">含 {{simulatedCount}} 笔Staging模拟支付测试订单：可用于操作流程统计，模拟金额不计真实到账。</view>
     <view class="notice">{{notice}}<text>金额口径：{{amountScope}}。</text><text>客单价＝未取消订单金额÷未取消订单数；所有指标均按下单日期归属。</text></view>
     <view wx:if="{{unverifiedCount}}" class="error">另有 {{unverifiedCount}} 笔非未支付、但缺乏可信核验的支付状态，未计入确认收款，也未当作待支付。</view>
     <view class="metrics"><view wx:for="{{cards}}" wx:key="label" class="metric"><text>{{item.label}}</text><text class="metric-value">{{item.value}}</text></view></view>

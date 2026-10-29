@@ -125,7 +125,7 @@ test('B0 scanner rejects malformed input and does not infer transaction wrapping
   rejects(() => migrationBody('BEGIN; CREATE TABLE a(id int); COMMIT;', 'bare'),'phase8_unapproved_top_level_sql')
 })
 test('B0 offline review: actual 001-020 checksums and transaction boundaries match manifest', async () => {
-  const { files, manifestHash } = await loadMigrations()
+  const { files, manifestHash } = await loadMigrations({sourceProfile:'workspace021-baseline020'})
   assert.equal(files.length, 20); assert.match(manifestHash, /^[a-f0-9]{64}$/)
   assert.equal(files.filter(f => f.transaction === 'wrapped').length, 19)
   assert.equal(files.find(f => f.transaction === 'bare').filename, '007_order_estimated_arrival.sql')

@@ -79,7 +79,7 @@ function fixture() {
   mock('miniprogram/modules/shared/runtime/auth.ts', { localDevAllowed: () => false })
   mock('miniprogram/utils/storePresentation.ts', {
     currentPresentation: () => ({ placeholderStyle: 'premium', customPlaceholderUrl: '' }),
-    refreshPagePresentation() {}
+    refreshPagePresentation() {},invalidatePagePresentation() {}
   })
   mock('miniprogram/utils/addresses.ts', { getSelectedAddress: () => undefined })
   mock('miniprogram/utils/directPurchase.ts', { clearDirectPurchase() {} })
@@ -106,7 +106,7 @@ function fixture() {
   storageWrites.length = 0
   load(path.join(root, 'miniprogram/pages/cart/cart.ts'))
   assert.equal(typeof definition.refreshCloud, 'function')
-  const p = { ...definition, data: clone(definition.data), setData(patch) { writes.push(clone(patch)); Object.assign(this.data, patch) } }
+  const p = { ...definition, data: clone(definition.data), setData(patch) { writes.push(clone(patch)); Object.entries(patch).forEach(([key,value])=>{const parts=key.match(/[^.[\]]+/g);let parent=this.data;parts.slice(0,-1).forEach((part,i)=>{if(parent[part]===undefined)parent[part]=/^\d+$/.test(parts[i+1])?[]:{};parent=parent[part]});parent[parts.at(-1)]=value}) } }
   return { p, api, checkout, products, requests, storage, writes, storageWrites, navigations, toasts,
     setConfig(value) { storage.set('stall_cloud_catalog_config_v1', value) },
     identity(value) { storage.set('stall_server_session_v1', value) },

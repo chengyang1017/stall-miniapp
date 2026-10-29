@@ -41,7 +41,7 @@ function makeProfile(authorizedGet) {
   const p = {data:{merchantAuthorized:true,supportUnread:0},merchantSerial:0,merchantOpening:false,serial:0,
     setData(v){Object.assign(this.data,v)}}
   p.openMerchant = handler(profile,'openMerchant','async onShow()',globals)
-  p.onHide = handler(profile,'onHide','openOrders()',globals)
+  p.onHide = handler(profile,'onHide','  onUnload',globals)
   return {p,calls,storage,setIdentity:x=>{identity=x}}
 }
 

@@ -1,4 +1,7 @@
-
 {
-  "navigationBarTitleText": "购物车"
+  "navigationBarTitleText": "购物车",
+  "usingComponents": {
+    "render-probe": "../../modules/shared/components/render-probe/render-probe"
+  },
+  "navigationStyle": "custom"
 }

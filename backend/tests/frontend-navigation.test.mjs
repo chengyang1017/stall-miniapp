@@ -57,8 +57,8 @@ test('customer profile static links stay in customer build', () => {
     assert.ok(customer.has(target(match[1])), match[1])
   }
   assert.match(wxml, /bindtap="openOrders"/)
-  assert.match(ts, /wx\.switchTab\(\{\s*url:\s*'\/pages\/orders\/orders'/)
-  assert.ok(tabs.has('pages/orders/orders'))
+  assert.match(ts, /wx\.navigateTo\(\{\s*url:\s*'\/pages\/orders\/orders\?tab='/)
+  assert.equal(tabs.has('pages/orders/orders'),false);assert.ok(tabs.has('pages/category/category'))
 })
 
 test('merchant workbench static links stay in merchant build', () => {

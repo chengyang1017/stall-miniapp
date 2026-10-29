@@ -1,3 +1,4 @@
+import { categoryIconsSupported } from './categoryIcons.mjs'
 import { categoryRevision,categoryWrite } from './categoryManagement.mjs'
 import { randomUUID } from 'node:crypto'
 import { authenticate, permittedStore } from './auth.mjs'
@@ -63,12 +64,12 @@ export async function catalogRoute(req,res,url,pool) {
   }
   if (req.method === 'GET' && kind !== 'image-uploads' && (!id || kind === 'products')) {
     const table = kind==='categories' ? 'categories' : 'products'
-    const columns = kind==='categories' ? 'id,name,sort_order AS "sortOrder"' : 'id,category_id AS "categoryId",name,price_cents AS "priceCents",active,sold_out AS "soldOut",image_object_key AS "imageObjectKey",description,discount_price_cents AS "discountPriceCents",discount_start AS "discountStart",discount_end AS "discountEnd",CASE WHEN discount_price_cents IS NOT NULL AND (discount_start IS NULL OR discount_start <= now()) AND (discount_end IS NULL OR discount_end > now()) THEN discount_price_cents ELSE price_cents END AS "effectivePriceCents"'
+    const columns = kind==='categories' ? `id,name,sort_order AS "sortOrder",to_jsonb(categories)->>'icon_key' AS "iconKey"` : 'id,category_id AS "categoryId",name,price_cents AS "priceCents",active,sold_out AS "soldOut",image_object_key AS "imageObjectKey",description,discount_price_cents AS "discountPriceCents",discount_start AS "discountStart",discount_end AS "discountEnd",CASE WHEN discount_price_cents IS NOT NULL AND (discount_start IS NULL OR discount_start <= now()) AND (discount_end IS NULL OR discount_end > now()) THEN discount_price_cents ELSE price_cents END AS "effectivePriceCents"'
     const extra = kind === 'products' ? `,${inventoryColumns('products')},publish_at AS "publishAt",version,${publishedSql('products')} AS "effectiveActive"` : ''
     const {rows}=await pool.query(`SELECT ${columns}${extra} FROM ${table} WHERE store_id=$1 ${id?'AND id=$2':''} ORDER BY ${kind==='categories'?'sort_order,name,id':'created_at DESC'} ${kind==='products'?'LIMIT 500':'LIMIT 1001'}`,id?[store.id,id]:[store.id])
     if(id) { send(res,rows.length?200:404,rows.length?{product:{...rows[0],imageUrl:imageUrl(rows[0].imageObjectKey)}}:{error:'not_found'});return true }
     if(kind==='categories'&&rows.length>1000){send(res,413,{error:'category_limit'});return true}
-    send(res,200,{timeZone,...kind==='categories'?{revision:categoryRevision(rows)}:{},items:kind==='products' ? rows.map(p=>({...p,imageUrl:imageUrl(p.imageObjectKey)})) : rows});return true
+    send(res,200,{timeZone,...kind==='categories'?{revision:categoryRevision(rows),categoryIconsSupported:await categoryIconsSupported(pool)}:{},items:kind==='products' ? rows.map(p=>({...p,imageUrl:imageUrl(p.imageObjectKey)})) : rows});return true
   }
   if (!['POST','PATCH','DELETE'].includes(req.method)) { send(res,405,{error:'method_not_allowed'});return true }
   if (kind==='image-uploads') {

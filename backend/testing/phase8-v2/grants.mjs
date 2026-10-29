@@ -1,16 +1,20 @@
 import { isIP } from 'node:net'
-import { check,V2,UUID,HEX,DIGEST,PURPOSES } from './policy.mjs'
+import { check,V2,UUID,HEX,DIGEST,PURPOSES,PURPOSES021,purposeSpec } from './policy.mjs'
 export function grant(g,now=Date.now()) {
   const allowed=['version','profile','instance','runId','nonce','dbId','runnerId','networkId','bundleSha256','manifestSha256','receiptSha256','pgReference','pgImageId',
-    'runnerReference','runnerImageId','purpose','role','scope','database','port','host','issuedAt','expiresAt','deadlineAt']
+    'runnerReference','runnerImageId','purpose','role','scope','database','port','host','issuedAt','expiresAt','deadlineAt',
+    ...g?.version===2?['schemaVersion','baselineManifestSha256','planSha256','prerequisiteSha256']:[]]
   // Even unused command/URL properties are forbidden, including false/empty values.
   check(g&&Object.keys(g).every(k=>allowed.includes(k)||['url','command','args','connectionString'].includes(k)),'grant_rejected')
-  check(g?.version===1&&g.profile===V2.profile&&UUID.test(g.instance||'')&&g.instance!=='43805bf5-1391-4d3f-b8ce-e3bfa9448d48'&&
+  const staged=g?.version===2
+  check((g?.version===1||staged)&&g.profile===V2.profile&&UUID.test(g.instance||'')&&g.instance!=='43805bf5-1391-4d3f-b8ce-e3bfa9448d48'&&
     UUID.test(g.runId||'')&&HEX.test(g.nonce||'')&&HEX.test(g.dbId||'')&&HEX.test(g.runnerId||'')&&HEX.test(g.networkId||'')&&
     HEX.test(g.bundleSha256||'')&&HEX.test(g.manifestSha256||'')&&HEX.test(g.receiptSha256||'')&&
     /^postgres@sha256:[a-f0-9]{64}$/.test(g.pgReference||'')&&DIGEST.test(g.pgImageId||'')&&
     /^stall-phase8-r2-runner@sha256:[a-f0-9]{64}$/.test(g.runnerReference||'')&&DIGEST.test(g.runnerImageId||''),'grant_rejected')
-  check(Object.hasOwn(PURPOSES,g.purpose||'')&&g.role===PURPOSES[g.purpose].role&&g.scope===PURPOSES[g.purpose].scope,'grant_purpose_rejected')
+  const spec=purposeSpec(g.purpose)
+  check(spec&&Object.hasOwn(staged?PURPOSES021:PURPOSES,g.purpose||'')&&g.role===spec.role&&g.scope===spec.scope,'grant_purpose_rejected')
+  if(staged)check(g.schemaVersion===21&&[g.baselineManifestSha256,g.planSha256,g.prerequisiteSha256].every(x=>HEX.test(x||''))&&g.manifestSha256===g.planSha256,'grant_schema021_rejected')
   check(g.database===V2.database&&g.port===5432&&isIP(g.host)===4&&/^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(g.host)&&
     !['url','command','args','connectionString'].some(k=>Object.hasOwn(g,k)),'grant_target_rejected')
   check(Number.isSafeInteger(g.issuedAt)&&Number.isSafeInteger(g.expiresAt)&&Number.isSafeInteger(g.deadlineAt)&&

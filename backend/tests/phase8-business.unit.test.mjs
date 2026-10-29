@@ -34,9 +34,11 @@ test('business suite has unique stable case names and no skipped placeholder cas
  assert(BUSINESS_CASES.every(x=>typeof x.run==='function'&&Object.isFrozen(x)))
 })
 test('business artifact pins actual business dependency closure without importing service entrypoint',async()=>{
- const manifest=await sourceManifest(fileURLToPath(new URL('../../',import.meta.url))),names=manifest.files.map(x=>x.path)
+ const manifest=await sourceManifest(fileURLToPath(new URL('../../',import.meta.url)),{schemaProfile:'staging021'}),names=manifest.files.map(x=>x.path)
  for(const path of ['backend/src/checkout.mjs','backend/src/orderWorkflow.mjs','backend/src/inventory.mjs','backend/testing/phase8-v2/business.mjs'])assert(names.includes(path))
- assert.equal(names.length,45);assert(!names.some(x=>/server\.mjs|\.env|secret|receipt/.test(x)))
+ assert.equal(names.length,54);assert(!names.some(x=>/server\.mjs|\.env|secret|receipt/.test(x)))
+ for(const name of ['stagingPayments','stagingDeployment','stagingPermissions'])assert(names.includes('backend/src/'+name+'.mjs'))
+ assert(names.includes('backend/config/staging-deployments.json'))
 })
 test('active connection transport error destroys its lease once and prevents reuse',async()=>{
  const raw=new EventEmitter(),releases=[];raw.query=async()=>({rows:[]});raw.release=e=>releases.push(e)

@@ -1,5 +1,21 @@
 # 微信商城测试历史记录（补录）
 
+## 2026-10-28：Staging 模拟支付三个P1整改（本轮实际运行，未提交）
+
+保留HEAD503a930与已有未提交修改。NODE_ENV=production继续作为Node模式；新增空的源码审核档案、Render service/Neon endpoint与角色约束、独立staging_control锚点核验，并保留真实微信会话/限时店铺测试授权。APP_ENV伪装、错部署/DB/角色、TLS参数覆盖、特权角色和授权表越权均默认拒绝。管理员可整体篡改配置/数据仍是部署级信任边界，不宣称绝对隔离。
+
+021新增常量lock_key列供FOR SHARE最小UPDATE权限、迁移审计表；没有执行。新增仅默认离线的migrate-staging：校验固定001—021内容、剥除唯一外层事务包装、核验既有账本及实际约束/索引/触发器/catalog摘要、独占锁和超时；在同一事务中执行021+ACL+账本+前后摘要审计。回滚/未知COMMIT和权限不足可诊断，不采用本地migrate-dev连接Neon。终审修正public/pg_catalog搜索顺序，避免未限定DDL目标落入系统目录。
+
+旧10项测试失败由过时SQL/角色夹具、generic delivered接口预期和未触及的事件故障路径引起。三文件实际27/27通过（原23项加4条未付款履约拒绝）；事件写入故障真正执行，断言ROLLBACK/无COMMIT/状态未推进；无合法凭证不能通过普通status接口完成送达。未改变正常业务规则。
+
+最终联合命令覆盖frontend-render-stability、frontend-interaction-state、frontend-navigation*、build-navigation-isolation、phone-preview-safety、merchant-entry-contract、merchant-resume-lifecycle、interaction-cloud-sync、merchant-customer-support-handoff、delivery-rules、staging-payments-ui、staging-payments、business-consistency-phase7、review-purchase-boundary、staging-deployment-safety、order-security、order-state-transitions、order-status-safety及staging-postgres.integration：**531项，520通过、0失败、11跳过、0取消**。其中新部署/迁移离线安全40项、模拟支付39项、旧订单27项；不把它们再次累加到联合总数。
+
+11项真实pg用例仅源码注册，默认跳过：Docker Engine命名管道不可达，也没有可验证隔离DB目标，未启动Desktop、未连接数据库。用例预留真实001—021/约束、三角色权限、不同PID并发/锁等待、确认幂等、取消/到期竞争、回滚和连接中断；传输模拟与真实PG执行明确分开。测试复用V2 seed/连接工具，历史资源不复用、不清理。现有runner封存须未来重新配对。
+
+额外复跑 `node --test backend/tests/phase8-safety.unit.test.mjs backend/tests/phase8-remediation.unit.test.mjs backend/tests/phase8-v2.unit.test.mjs`：**235项，233通过、2失败、0跳过**。失败为B0 actual001—020 manifest校验及V2 artifact allowlist校验；均因未执行的新021存在于源码目录，原严格封存拒绝扩展。没有删除失败测试、修改其断言或把旧实例升级为021；这是尚未解决的历史测试设施版本兼容阻断，不是SQL已执行失败。不能汇报“所有回归全绿”。
+
+TypeScript noEmit、依赖边界、三目标实际纯编译（build-navigation回归执行）、产物检查通过；44个MJS `node --check` 和 `git diff --check` 通过（仅既有CRLF转换提示）。没有重新生成phone-preview或创建新微信项目。未改Render/Neon配置、未迁移、部署、支付调用、R2或Git写入。真实Neon角色/owner/账本/catalog、独立PG与Staging端到端/真机仍待授权核验。完整文件清单和严格启用顺序见 [P1部署准备](../../backend/STAGING_DEPLOYMENT_PREPARATION.md)。
+
 > 最新补充：第24节记录真实PG测试准备与新r2容器启动前验收失败；没有执行迁移或数据库测试。第23节三端构建通过结果保持。
 
 > 最新补充：2026-10-27三目标导航修复与199项离线回归，详见第23节；早期独立构建失败为历史结果，不代表当前状态。
@@ -994,3 +1010,87 @@ TypeScript noEmit、check:boundaries（126/73/85模块）、4个测试MJS语法�
 新增frontend-interaction-state41项通过，联合既有前端/导航/预览/客服/配送验证共296通过、0失败/跳过；三目标实际纯编译、TS、依赖边界、产物、3份测试MJS语法及空白检查通过。测试工具初次失败：checkout提取器未去TS类型，已增加真实TypeScript去类型并补完整状态；旧delivery-rules模拟DB没返回clock_timestamp导致4项失败，已用固定DB时钟及严格SQL匹配修正，原断言保留；新增用例的初版多行import处理及数量合并请求期望错误也仅修正夹具/请求协调，未削弱业务断言。
 
 本轮无后端Node/SQL/API路径变化，不需要迁移。未改Render/Neon、AppID、.local预览配置，无部署、数据库连接或真实地址写入、Git提交推送。正常phone-preview构建仍在固定产物目录替换时报EPERM；没有强删、绕过或手改产物。真实手机、冷启动延迟、后端/DB分层耗时仍待授权环境验收。详细文件、命令与手工验收见CART_HOME_DELIVERY_ADDRESS_UX.md。
+
+## 购物车/首页实际渲染路径与过期预览包排查（2026-10-28，未提交）
+
+实际HEAD503a930465bd94f0ae276bc57e8ac3519d8eee7b，起始工作区干净。读取实际源文件及现有预览JS，发现dist/phone-preview/cart.js仍在每次refreshCloud清空items、数量操作后再refresh；index.js仍在loadCloudHome清空商品。这是明确的旧产物调用路径，但未读取开发者工具当前打开的项目，不把它直接等同于用户当时的运行现场。
+
+用git show提取基线真实页面函数纯内存复现另两条路径：同身份且有待解析scene时products由1变0；单次加号确认提交完整items。修复retained/context判定、按行字段差异提交、复用一份quote验证数量及价格、稳定同步提示高度、缺图设置失败保留已确认样式。新增默认关闭且仅devtools允许的生命周期/setData/请求追踪和真实原生组件attached/detached探针；日志仅别名，不记录token、URL、商品名/ID或正文。首页普通返回不自动导航，真实会话/API/店铺变化和401/403仍清除旧数据。
+
+新增25项queued setData/视图模型动态回归及3项命名输出安全测试；联合实际执行324项，324通过、0失败/跳过/取消。保留原296项对应业务、安全、导航断言；夹具更新支持真实嵌套setData和单quote协议。TypeScript、边界、三目标纯编译/产物检查、8个MJS语法及git diff --check通过。模拟节点身份与组件回调不是微信渲染器或真实手机验收，不宣称闪烁已在微信中实证消除。
+
+默认预览输出替换仍EPERM。保留旧目录，给同一构建器增加安全命名输出（限制dist下新phone-preview-*目录、拒绝覆盖/穿越、默认入口不变），实际成功执行 `npm run preview:phone -- --prepare ".local\phone-staging.json" --output phone-preview-trace`。新包Combined130模块/36页/266产物，CLOUD_ONLY及同一真实Staging配置；没有编辑旧编译文件、改变AppID或开发演示环境。新目录产物验证通过，用户须在开发者工具导入正确目录重新编译，采集节点探针/矩形/WXML树证据。
+
+完整路径、剩余风险及采集步骤：[CART_HOME_RENDER_TRACE.md](CART_HOME_RENDER_TRACE.md)。本轮无外部API调用、数据库连接/迁移、Docker、部署、Git提交/推送；源码和档案保持未提交供审查，原数据库测试阻断不变。
+
+## Staging模拟支付及订单流程源码准备（2026-10-28，未提交）
+
+以503a930及现有购物车/首页/底栏未提交改动为基础，确认订单unpaid→后端payment_not_confirmed是正确门槛，不能放开所有未支付订单。新增021迁移草案和默认关闭的staging-payment GET/POST：服务端环境、实际数据库marker/UUID、真实微信会话、限时店铺测试授权、本人订单和有效预留联合校验；使用事务、订单锁、原库存提交及requestKey幂等。模拟paid标记独立来源/实例/审计，不构造网关交易号；付后取消仍不退款、不自动恢复committed库存。
+
+顾客详情提供经后端授权的独立测试入口及确认/失败/重试；商家未付接单及批选禁用，独立待支付tab，new/工作台数量仅new+paid。普通刷新保留卡片、按字段更新；统计及导出显式标记模拟来源，真实收款保持0，模拟订单不能取得真实已购评价资格。没有新建演示订单或线上造数，原购物车修复未动。
+
+新增38项真实后端路由+旧内存事务模型测试、12项真实页面/API动态测试及1项评价边界。联合实际452通过、0失败/跳过/取消（含345项前端/构建/配送、63项Phase7、38项新后端、6项评价，不与历史结果重复累加）。另查三份历史后端文件23项为13通过10失败，用git show HEAD原始checkout/orderWorkflow经只读加载钩子重跑，同样10失败，未改断言迁就；旧SQL/角色/凭证端点预期需要后续独立整理。若合并两组为475项465通过10失败，不能称全部后端回归通过。
+
+TS、依赖边界、三目标纯编译/产物和16个相关MJS语法通过。按用户要求仅尝试默认phone-preview准备命令，在dist/phone-preview替换处EPERM，未强删或创建替代目录，尚不能预览本轮新代码。未连接Neon/PostgreSQL、未执行021、未部署Render、未设置环境变量或tester授权、未访问R2/真实网关、未Git提交推送。真实PG行锁/并发/故障恢复、角色权限、送达照片和手机完整流程未验证；现有Phase8仍封存001—020，后续需另行授权021及隔离验收。详见[STAGING_SIMULATED_PAYMENTS.md](../../backend/STAGING_SIMULATED_PAYMENTS.md)。
+
+## 2026-10-28 Phase8 V2只读复核补充（未提交）
+
+本轮保留起始54个已跟踪修改和27个未跟踪文件；无Docker/DB写入、镜像重建、凭据创建或Git提交推送。Engine只读查询可达，V2精确ID和创建时间匹配，仍created/从未启动；原attempt/failure/launch三项字节摘要及卷规格均匹配，未出现recovery attempt。Config/HostConfig/挂载集合与10月27日诊断摘要一致，但容器整体摘要不匹配原锚点，缺少原始完整规格，无法证明仅是顺序差异。恢复仍在claim/start之前阻断，不重置锚点或重试create-db。
+
+本轮8文件离线联合回归：389项，375通过、3失败、11跳过、0取消；Node v24.16.0，日志`.local/phase8-readonly/offline.tap`。失败为B0清单、V2 artifact、business artifact封存检查，均由源码目录新增021触发；不与历史计数累加。001—020、bootstrap/ready/ACL、26项真实订单、021及11项真实支付PG均未运行。当前业务依赖021列及新增staging模块，旧runner不能执行当前工作区；现有11项loopback测试不能直接接无宿主端口V2。没有声称已经具备真实测试执行条件。
+
+完整当前证据、最小恢复替代方案、同一V2的020→021分阶段计划、覆盖缺口及Neon/Render前置条件见[恢复说明](PHASE8_V2_RECOVERY.md)。下一步先解决原始身份基线缺失；如无法找回，须单独批准同一资源的追加身份核验/登记方案，不能直接批准启动。旧B0/B3失败现场、锚点、回执及历史20项manifest均未改。
+
+## 2026-10-28 V2最小补缺实际修复（后续轮，未提交）
+
+追溯到原始Node指纹生成命令（2026-10-27T14:56:07.085Z）：固定顶层字段后直接JSON.stringify，未排序嵌套键/Mounts，未保存完整容器原spec。规范已确认，历史资源等价仍未证明。新增独立v2规范化/回归，未接入旧恢复入口，原锚点、回执和Docker资源不改；仍需人工批准同一精确资源的追加身份核验/登记，不能启动恢复。
+
+三个021测试冲突已通过显式版本机制解决：默认执行严格020；离线workspace021-baseline020核验全部21个摘要后只返回历史20；staging021离线包version2补齐staging三模块/配置/计划，51文件。旧version1的45文件/20迁移及拒绝未知/篡改断言仍有覆盖。021打包及离线核验完成，但host/grant/runner/SQL阶段执行适配未完成，实际运行器明确拒绝v2包；不能称11项支付PG已可执行。
+
+9文件最终离线联合407项：396通过、0失败、11跳过、0取消，Node v24.16.0。日志`.local/phase8-readonly/repair-final.tap`；新增phase8-version-boundary18项，数量不与历史/中间验证相加。真实恢复、bootstrap、001—021迁移、ready、26业务和11支付PG均未运行。本轮无Docker、数据库、Neon、Render或Git命令，无镜像构建，全部既有未提交修改保留。证据生成命令来源、源码变更、021最小执行扩展与下一步授权见[恢复说明](PHASE8_V2_RECOVERY.md)本轮新增节。
+
+## 2026-10-28 21:15 UTC+8：V2独立身份重新核验，登记因证据缺失停止
+
+本轮实际只读inspect：原V2容器04d174ff…（2026-10-27T14:43:54.913235797Z）、网络e269447b…（14:43:50.847655525Z）、卷stall-phase8-r2-data（14:43:47Z）身份匹配，容器仍created/从未启动。PG/runner/Node实际固定ID、RepoDigest、平台和旧bundle标签核对通过；8项挂载、单网卡无端口、internal/isolated/IPv6关闭、单子网无gateway和空成员均通过。与历史诊断的Config/HostConfig/挂载集合及网络16字段相同，原容器整体摘要仍不同。
+
+19项当前静态检查在PowerShell7只读ACL补充后全部通过（12对象ACL通过；原PowerShell5模块加载失败日志保留），不是业务测试数量。依据用户本轮第7条“证据缺失，停止登记”，没有生成新登记/锚点/created/recovery回执：原完整container spec仍不可得；已检查历史audit缺少bind bootstrap内容原始摘要，路径一致不证明历史内容一致。未发现可确认的实质篡改，也未证明原资源完全等价。
+
+新观测摘要只记录未批准；原锚点文件SHA256仍6acc14a560334d28e84db95627b0d1fd9a9bf9cfa21c77a95ce4b477c4329b27，原attempt/failure/launch字节摘要匹配且保留。最终日志`.local/phase8-readonly/identity-decision-1793193311755.json`（SHA256 76b025472cb9520ba4c1dfd936aa8f9f299dbea01bfa64fa36bf55609e9b509c），结果blocked_evidence_incomplete，下一次恢复前置条件未满足。完整资源ID/创建时间、逐项依据及ACL补充日志见[恢复说明](PHASE8_V2_RECOVERY.md)本轮新增节。
+
+021仍只有打包/离线封存适配；执行用途、角色、账本、21就绪阶段和固定真实PG用例接缝待实现。本轮无源码改动或测试重跑，前轮407项结果保持历史，不重复累加。没有Docker资源写入、启动/停止、bootstrap/SQL、Neon/Render或Git commit/push/reset；全部既有未提交修改保留。下一步需补原始证据，或由用户明确审查并接受历史不可证明项后改变登记条件，不能自动启动恢复。
+
+## 2026-10-28 21:35 UTC+8：021固定运行器源码适配完成（真实PG未执行）
+
+新增version2 grant与upgrade021/ready021/business021/payments021四个固定用途，显式授权、schema/计划/20基线/前置回执绑定；旧version1默认入口保持严格020。staging021源码封存54文件，需新镜像审核配对，原批准未改。原V2摘要本轮不再调查。
+
+新增schema021原子升级、独立stage021账本/catalog基线和只读ready/schema/ACL验收；原20账本/marker/基线保留。未来独立DBA登记脚本为新authorizer角色和test_only锚点做准备，本轮未执行。固定无参授权函数在升级事务内处理必要schema USAGE，避免提前改变旧020 ACL；权限严格限定并核验函数来源。payments021仅该用途挂载app/migrator/authorizer三凭据，其他用途仍单角色。11支付场景提取成共享PAYMENT_CASES，原独立PG入口与runner复用同一断言；business021复用既有26项，无新测试框架。
+
+最终10文件联合离线446项：435通过、0失败、11跳过、0取消；新增phase8-021.unit39项。Node v24.16.0，15个MJS语法通过；日志`.local/phase8-readonly/021-final.tap`，SHA256 50cca1db87e6ddfa42fcde813eff934ba5df101bca1f986f3f9cbbea7020bf79。不与历史407或中间验证累加。真实Docker恢复/创建/挂载、bootstrap、001—021迁移、ready、26+11 PG、Neon/Render均未运行，旧证据/回执和全部未提交修改保留；无Git操作。
+
+A需明确接受历史缺口、追加登记并实现恢复协议，证据较弱且时间不确定。优先推荐B：保留旧现场，复用全部现有控制器/审核成果/26+11用例，仅补一个固定新资源配置及完整身份登记机制，再另行授权新实例创建和测试。当前名称固定、不能重名，B也尚未创建；这不是从零重建基础设施。完整源码范围、grant/权限/原子性、日志、中间失败、未运行清单和A/B比较见[恢复说明](PHASE8_V2_RECOVERY.md)本轮新增节。
+
+
+## 2026-10-29 商品详情、商家主题与紧凑购物车（本轮 UI 验证）
+
+本轮相关前端联合回归 **297 项，297 通过、0 失败、0 跳过**，不与前轮 140 或 Phase 8 的历史结果累加。执行集合为 frontend-*、customer-ui-redesign、detail-merchant-theme、review-purchase-boundary、staging-payments-ui、interaction-cloud-sync、build-navigation-isolation；命令及日志见 [改版交付](../CUSTOMER_UI_REDESIGN.md) 本轮追加节与 `.local/detail-ui-full-regression.log`。
+
+新增详情/主题 19 项；保留并实际重跑购物车快速数量/慢请求/UI trace 节点身份、评价可信购买、未支付禁接单、模拟支付来源标识及商家权限隔离。修正旧测试夹具对上轮 catalog 工厂、普通订单路由和已选状态的假设；底栏 CSS 契约更新至 104rpx，原金额保护断言保留。初次针对性执行 158 项有 1 个旧高度契约失败；扩大集合后旧导航夹具产生 18 个适配失败；修正夹具后最终 297 项全通过，不能将中间执行次数累计为覆盖数量。
+
+TypeScript、三目标依赖边界、Combined/Customer/Merchant 实际构建及输出清单通过。最新原 phone-preview：44 WXML、49 WXSS 经微信原生编译器通过。预检 0 错误、1 条生成 JS 项目无 TS 插件的提示。本轮改动范围 Git 空白检查通过；全量工作区仍有前轮 profile.wxss 末尾空行，未改动该文件。
+
+19 个实际商家页面仅改 WXSS/导航配色；本轮开始时的 19 份 TS 与 19 份 WXML SHA-256 均匹配，全部页面原布局属性保留。商品详情无 SKU/标签 API，不显示虚假选项；收藏未开通；公共评价匿名显示，可信购买/审核/举报权限沿用既有 API。购物车底栏由 264rpx+安全区缩为固定 104rpx，价格确认和结算校验保留。
+
+原预览目录常规重建遇到 EPERM，未删除/强杀/另建目录；校验后就地刷新生成文件并用原 phone-preview tsconfig 重编译，保留 cloud-only staging 配置、AppID 与域名校验，更新后产物/模板检查通过。没有上传、部署、数据库迁移或 Phase 8 V2 资源操作。真实微信/真机渲染、真实商品/配送/商家写入联调未验收；具体待验项见交付文档。本条仅更新 UI 状态，不改变其他 Phase 8 测试资源或数据库状态结论。
+## 2026-10-29 分类图标选择器中断后续做（本次结果）
+
+先核对 Git status、分类实现差异和可读账户额度，保留所有未提交修改，复用中断前已保存的选择器、40 个 SVG 资源、前后端 iconKey 映射与迁移提案；没有从头重做。
+
+本次只运行分类相关测试：`node --test --test-name-pattern 'categor|icon' backend/tests/category-icons.test.mjs backend/tests/interaction-cloud-sync.test.mjs`，**41 项全部通过，0 失败、0 跳过**。日志 `.local/category-icons-resume-tests.log`。其中分类图标测试 18 项，含新增的保存确认精确匹配、确认缓存和新增后删除其他分类不丢图标。中断前 312 项日志仅为历史，不与本次结果累加。
+
+TypeScript、三目标依赖边界、相关后端语法、Combined/Customer/Merchant 构建和输出清单通过。三目标源模块 135/81/90，页面 37/14/19，产物 319/195/201。仅就地更新原 `dist/phone-preview`，保留原 cloud-only 配置/AppID/域名校验；44 WXML、49 WXSS 原生编译通过，40 个图标资源齐全。
+
+功能代码已完成：商家新增/编辑图标网格与即时预览；顾客首页、分类导航逐类显示，白色选中态；旧分类按真实名称与稳定规则回退。原分类增删改、拖动排序、版本冲突及身份隔离测试继续通过。
+
+云端持久化尚未上线：迁移只准备在 `backend/migrations/proposals/category-icons.sql`，未执行、未注册自动入口；兼容后端也未部署。旧服务明确提示未启用图标保存，仍可管理名称、删除和排序；不能把图标草稿标记为保存成功。本地演示可保存并在重新进入时恢复。真实数据库、跨设备与微信真机验收未执行。
+
+文件清单、20 个 key、字段兼容及后续授权事项见 [交付文档](../CUSTOMER_UI_REDESIGN.md) 最新分类图标节。未操作 Neon/Render/正式数据库，未部署、提交、推送或清理其他未提交修改。

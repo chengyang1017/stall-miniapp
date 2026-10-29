@@ -1,0 +1,238 @@
+TAP version 13
+# Subtest: 021 purpose explicitly authorized and exact scoped grant upgrade021
+ok 1 - 021 purpose explicitly authorized and exact scoped grant upgrade021
+  ---
+  duration_ms: 1.7903
+  type: 'test'
+  ...
+# Subtest: 021 purpose explicitly authorized and exact scoped grant ready021
+ok 2 - 021 purpose explicitly authorized and exact scoped grant ready021
+  ---
+  duration_ms: 0.2584
+  type: 'test'
+  ...
+# Subtest: 021 purpose explicitly authorized and exact scoped grant business021
+ok 3 - 021 purpose explicitly authorized and exact scoped grant business021
+  ---
+  duration_ms: 0.14
+  type: 'test'
+  ...
+# Subtest: 021 purpose explicitly authorized and exact scoped grant payments021
+ok 4 - 021 purpose explicitly authorized and exact scoped grant payments021
+  ---
+  duration_ms: 0.1258
+  type: 'test'
+  ...
+# Subtest: 021 grant rejects v1 purpose borrowing
+ok 5 - 021 grant rejects v1 purpose borrowing
+  ---
+  duration_ms: 0.174
+  type: 'test'
+  ...
+# Subtest: 021 grant rejects wrong role
+ok 6 - 021 grant rejects wrong role
+  ---
+  duration_ms: 0.1147
+  type: 'test'
+  ...
+# Subtest: 021 grant rejects wrong scope
+ok 7 - 021 grant rejects wrong scope
+  ---
+  duration_ms: 0.0873
+  type: 'test'
+  ...
+# Subtest: 021 grant rejects wrong schema
+ok 8 - 021 grant rejects wrong schema
+  ---
+  duration_ms: 0.0715
+  type: 'test'
+  ...
+# Subtest: 021 grant rejects wrong plan
+ok 9 - 021 grant rejects wrong plan
+  ---
+  duration_ms: 0.1367
+  type: 'test'
+  ...
+# Subtest: 021 grant rejects missing prerequisite
+ok 10 - 021 grant rejects missing prerequisite
+  ---
+  duration_ms: 0.1498
+  type: 'test'
+  ...
+# Subtest: 021 grant rejects unknown field
+ok 11 - 021 grant rejects unknown field
+  ---
+  duration_ms: 0.0964
+  type: 'test'
+  ...
+# Subtest: 021 grant rejects command
+ok 12 - 021 grant rejects command
+  ---
+  duration_ms: 0.0813
+  type: 'test'
+  ...
+# Subtest: v2 grant cannot run legacy purpose and v1 cannot opt into 021
+ok 13 - v2 grant cannot run legacy purpose and v1 cannot opt into 021
+  ---
+  duration_ms: 0.2445
+  type: 'test'
+  ...
+# Subtest: 021 source plan retains exact 20 baseline and pinned SQL
+ok 14 - 021 source plan retains exact 20 baseline and pinned SQL
+  ---
+  duration_ms: 0.855
+  type: 'test'
+  ...
+# Subtest: eleven payment cases and existing 26 orders are shared fixed functions
+ok 15 - eleven payment cases and existing 26 orders are shared fixed functions
+  ---
+  duration_ms: 5.0884
+  type: 'test'
+  ...
+# Subtest: enrollment rejects instance_id
+ok 16 - enrollment rejects instance_id
+  ---
+  duration_ms: 0.4145
+  type: 'test'
+  ...
+# Subtest: enrollment rejects test_only
+ok 17 - enrollment rejects test_only
+  ---
+  duration_ms: 0.096
+  type: 'test'
+  ...
+# Subtest: enrollment rejects owner
+ok 18 - enrollment rejects owner
+  ---
+  duration_ms: 0.1552
+  type: 'test'
+  ...
+# Subtest: enrollment rejects database_name
+ok 19 - enrollment rejects database_name
+  ---
+  duration_ms: 0.1055
+  type: 'test'
+  ...
+# Subtest: enrollment rejects dangerous role and control rights
+ok 20 - enrollment rejects dangerous role and control rights
+  ---
+  duration_ms: 0.5289
+  type: 'test'
+  ...
+# Subtest: SQL verifier rejects wrong instance/illegal old state before stage queries
+ok 21 - SQL verifier rejects wrong instance/illegal old state before stage queries
+  ---
+  duration_ms: 0.5199
+  type: 'test'
+  ...
+# Subtest: v2 wrong manifest is refused by runner before claim or pool creation
+ok 22 - v2 wrong manifest is refused by runner before claim or pool creation
+  ---
+  duration_ms: 0.4625
+  type: 'test'
+  ...
+# Subtest: extra credential pool forbidden for every purpose except payment tests
+ok 23 - extra credential pool forbidden for every purpose except payment tests
+  ---
+  duration_ms: 0.23
+  type: 'test'
+  ...
+# Subtest: payment-only runner mounts are exact and read-only; other purposes reject them
+ok 24 - payment-only runner mounts are exact and read-only; other purposes reject them
+  ---
+  duration_ms: 0.7814
+  type: 'test'
+  ...
+# Subtest: controller refuses stale 020 ready for payment task before Docker creation
+ok 25 - controller refuses stale 020 ready for payment task before Docker creation
+  ---
+  duration_ms: 0.5657
+  type: 'test'
+  ...
+# Subtest: controller refuses wrong 021 plan prerequisite before Docker creation
+ok 26 - controller refuses wrong 021 plan prerequisite before Docker creation
+  ---
+  duration_ms: 0.1974
+  type: 'test'
+  ...
+# Subtest: 021 ddl failure rolls back entire transaction without touching old ledger/baseline
+ok 27 - 021 ddl failure rolls back entire transaction without touching old ledger/baseline
+  ---
+  duration_ms: 1.5224
+  type: 'test'
+  ...
+# Subtest: 021 ledger failure rolls back entire transaction without touching old ledger/baseline
+ok 28 - 021 ledger failure rolls back entire transaction without touching old ledger/baseline
+  ---
+  duration_ms: 0.7573
+  type: 'test'
+  ...
+# Subtest: 021 upgrade rejects role borrowing before connecting
+ok 29 - 021 upgrade rejects role borrowing before connecting
+  ---
+  duration_ms: 0.1078
+  type: 'test'
+  ...
+# Subtest: 021 readiness refuses wrong instance stage and preserves frozen old baseline
+ok 30 - 021 readiness refuses wrong instance stage and preserves frozen old baseline
+  ---
+  duration_ms: 0.3923
+  type: 'test'
+  ...
+# Subtest: DBA enrollment helper has exact fixed body and no alteration of old baseline
+ok 31 - DBA enrollment helper has exact fixed body and no alteration of old baseline
+  ---
+  duration_ms: 4.3841
+  type: 'test'
+  ...
+# Subtest: controller issues v2 grant for exact eleven case report and preserves failed results
+ok 32 - controller issues v2 grant for exact eleven case report and preserves failed results
+  ---
+  duration_ms: 2.9378
+  type: 'test'
+  ...
+# Subtest: independent 021 readiness checks catalog, ACL, audit and both ledgers with read-only queries
+ok 33 - independent 021 readiness checks catalog, ACL, audit and both ledgers with read-only queries
+  ---
+  duration_ms: 1.2295
+  type: 'test'
+  ...
+# Subtest: 021 ready refuses actual catalog or ACL drift {"drift":true}
+ok 34 - 021 ready refuses actual catalog or ACL drift {"drift":true}
+  ---
+  duration_ms: 0.3277
+  type: 'test'
+  ...
+# Subtest: 021 ready refuses actual catalog or ACL drift {"unsafe":true}
+ok 35 - 021 ready refuses actual catalog or ACL drift {"unsafe":true}
+  ---
+  duration_ms: 0.4217
+  type: 'test'
+  ...
+# Subtest: real runner dispatches ready021 through read-only transaction and destroys its pool
+ok 36 - real runner dispatches ready021 through read-only transaction and destroys its pool
+  ---
+  duration_ms: 2.2286
+  type: 'test'
+  ...
+# Subtest: 021 upgrade transaction commits ledger, audit and independent baseline together
+ok 37 - 021 upgrade transaction commits ledger, audit and independent baseline together
+  ---
+  duration_ms: 1.0079
+  type: 'test'
+  ...
+# Subtest: 021 upgrade transaction treats COMMIT acknowledgement as unknown
+ok 38 - 021 upgrade transaction treats COMMIT acknowledgement as unknown
+  ---
+  duration_ms: 0.9654
+  type: 'test'
+  ...
+1..38
+# tests 38
+# suites 0
+# pass 38
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 283.3817

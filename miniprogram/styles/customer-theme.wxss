@@ -1,0 +1,32 @@
+@import "./brand-tokens.wxss";
+page{background:#f6f3ff;color:#211936;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button::after{border:0}
+button{font-weight:600}
+.customer-hero{position:relative;overflow:hidden;box-sizing:border-box;min-height:290rpx;padding:calc(100rpx + env(safe-area-inset-top)) 32rpx 42rpx;color:white;background:radial-gradient(ellipse at 72% 65%,#b18af0 0,transparent 48%),linear-gradient(135deg,#4524cc,#7951e0 65%,#a38ae9)}
+.customer-hero::before{content:"";position:absolute;width:520rpx;height:210rpx;right:-40rpx;bottom:-130rpx;background:#6a40c4;border-radius:45%;transform:rotate(-15deg);box-shadow:-190rpx -22rpx 0 20rpx #9065d6;opacity:.6}
+.customer-hero::after{content:"";position:absolute;right:120rpx;top:160rpx;width:64rpx;height:64rpx;border-radius:50%;background:linear-gradient(#fff3df,#efbfd3);box-shadow:0 0 45rpx #f5bfe1;opacity:.8}
+.hero-title{position:relative;z-index:1;font-size:42rpx;font-weight:750;letter-spacing:1rpx;max-width:75%}
+.hero-subtitle{position:relative;z-index:1;font-size:25rpx;color:#eee5ff;margin-top:12rpx;max-width:85%}
+.surface{background:rgba(255,255,255,.96);border-radius:28rpx;box-shadow:0 8rpx 24rpx rgba(75,43,150,.065);padding:26rpx;margin-bottom:20rpx}
+.section-heading{display:flex;align-items:center;justify-content:space-between;margin:30rpx 0 20rpx;font-size:30rpx;font-weight:700}
+.section-heading .more{font-size:23rpx;font-weight:400;color:#817195}
+.violet{color:#713bde}
+.muted{color:#8c829c;font-size:23rpx}
+.customer-search{display:flex;align-items:center;gap:14rpx;position:relative;z-index:2;margin-top:26rpx;background:#ffffffee;color:#74658d;border-radius:50rpx;padding:16rpx 24rpx;box-shadow:0 8rpx 22rpx #34207822}
+.customer-search input{flex:1;min-width:0;font-size:26rpx;height:44rpx}
+.search-symbol{font-size:38rpx}
+.customer-search button{margin:0;padding:0 12rpx;background:transparent;color:#6c3bc5;font-size:25rpx;line-height:44rpx}
+.empty{padding:65rpx 20rpx;text-align:center;color:#9487a8;font-size:26rpx}
+.skeleton{height:150rpx;border-radius:26rpx;margin:20rpx 0;background:linear-gradient(110deg,#ede7f7,#fff,#ede7f7)}
+.price{color:#6831cf;font-weight:750;font-size:30rpx;font-variant-numeric:tabular-nums}
+.old{color:#958a9f;font-size:21rpx;text-decoration:line-through;font-weight:400;margin-left:8rpx}
+.round-add{width:52rpx;height:52rpx;border-radius:50%;background:linear-gradient(135deg,#aa73ff,#5026ca);color:#fff;line-height:52rpx;text-align:center;margin:0;padding:0;font-size:33rpx;flex-shrink:0}
+.round-add[disabled]{background:#ded7eb;color:#a59ab7}
+.notice{font-size:23rpx;color:#897a9d;padding:16rpx 4rpx;line-height:1.6}
+.service-row{display:flex;align-items:center;gap:16rpx;min-height:72rpx;border-bottom:1rpx solid #f1edf7;font-size:27rpx}
+.service-row:last-child{border-bottom:0}
+.service-row .value{margin-left:auto;color:#857a95;font-size:23rpx}
+.service-row input{flex:1;min-width:0;text-align:right;font-size:24rpx}
+.service-icon{color:#7b45d4;font-size:36rpx;width:42rpx;text-align:center}
+
+.hero-title{max-width:calc(100% - 175rpx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

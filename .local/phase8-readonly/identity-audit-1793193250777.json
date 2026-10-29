@@ -1,0 +1,348 @@
+{
+  "version": 1,
+  "kind": "readonly-independent-identity-audit-not-registration",
+  "checkedAtUTC": "2026-10-28T13:14:10.714Z",
+  "checkedAtLocal": "2026-10-28 21:14:10 UTC+8",
+  "instance": "b986df49-4ffc-4b26-bfe4-13e97e1e30ef",
+  "dbId": "04d174ff32ab69b3eae39ee5b067d309a26132f87185baabcfada5247d0b593f",
+  "dbCreated": "2026-10-27T14:43:54.913235797Z",
+  "networkId": "e269447bc2094406480763cbfde870c32c2ccc298d756910daad21c13cce81d4",
+  "networkCreated": "2026-10-27T14:43:50.847655525Z",
+  "volume": "stall-phase8-r2-data",
+  "volumeCreated": "2026-10-27T14:43:47Z",
+  "engine": {
+    "id": "055d945d-b3f7-4a50-adaa-423c2cde2b60",
+    "version": "29.6.2"
+  },
+  "originalAnchorSha256": "6acc14a560334d28e84db95627b0d1fd9a9bf9cfa21c77a95ce4b477c4329b27",
+  "failure": {
+    "version": 1,
+    "profile": "internal-runner-v1",
+    "stage": "container",
+    "code": "phase8_v2_network_rejected"
+  },
+  "checks": [
+    {
+      "name": "local_context",
+      "status": "passed"
+    },
+    {
+      "name": "engine_identity",
+      "status": "passed"
+    },
+    {
+      "name": "exact_ids_and_creation_times",
+      "status": "passed"
+    },
+    {
+      "name": "original_evidence_bytes",
+      "status": "passed"
+    },
+    {
+      "name": "original_failure_and_launch_semantics",
+      "status": "passed"
+    },
+    {
+      "name": "never_started_state",
+      "status": "passed"
+    },
+    {
+      "name": "independent_full_topology",
+      "status": "passed"
+    },
+    {
+      "name": "network_ipam_scope",
+      "status": "passed"
+    },
+    {
+      "name": "volume_scope_and_legacy_digest",
+      "status": "passed"
+    },
+    {
+      "name": "exact_three_resource_inventory",
+      "status": "passed"
+    },
+    {
+      "name": "image_database",
+      "status": "passed"
+    },
+    {
+      "name": "image_runner",
+      "status": "passed"
+    },
+    {
+      "name": "image_node",
+      "status": "passed"
+    },
+    {
+      "name": "bind_source_file_types_and_sizes",
+      "status": "passed"
+    },
+    {
+      "name": "private_material_acl",
+      "status": "failed",
+      "code": "Command failed: C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference='Stop';$me=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value;$root='C:/Users/USER/StallPhase8-R2-b986df49-4ffc-4b26-bfe4-13e97e1e30ef';$paths=@($root,(Join-Path $root 'secrets'),(Join-Path $root 'records'),(Join-Path $root 'runs'))+@(Get-ChildItem -LiteralPath $root -Recurse -Force|ForEach-Object FullName);$bad=@();foreach($p in ($paths|Select-Object -Unique)){$a=Get-Acl -LiteralPath $p;$rs=@($a.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]));$ids=@($me,'S-1-5-18','S-1-5-32-544');if($a.GetOwner([Security.Principal.SecurityIdentifier]).Value -ne $me -or $rs.Count -ne 3 -or @($rs.IdentityReference.Value|Sort-Object -Unique).Count -ne 3){$bad+=$p;continue};foreach($r in $rs){if($r.IdentityReference.Value -notin $ids -or $r.AccessControlType -ne 'Allow' -or $r.FileSystemRights -ne [Security.AccessControl.FileSystemRights]::FullControl){$bad+=$p}};if($p -eq $root -and (-not $a.AreAccessRulesProtected -or @($rs|Where-Object IsInherited).Count -gt 0)){$bad+=$p}};@{checked=@($paths|Select-Object -Unique).Count;failed=@($bad|Select-Object -Unique).Count}|ConvertTo-Json -Compress\nGet-Acl : The 'Get-Acl' command was found in the module 'Microsoft.PowerShell.Security', but the module could not be \r\nloaded. For more information, run 'Import-Module Microsoft.PowerShell.Security'.\r\nAt line:1 char:402\r\n+ ... =@();foreach($p in ($paths|Select-Object -Unique)){$a=Get-Acl -Litera ...\r\n+                                                           ~~~~~~~\r\n    + CategoryInfo          : ObjectNotFound: (Get-Acl:String) [], ParentContainsErrorRecordException\r\n    + FullyQualifiedErrorId : CouldNotAutoloadMatchingModule\r\n \r\n"
+    },
+    {
+      "name": "no_created_or_recovery_receipts",
+      "status": "passed"
+    },
+    {
+      "name": "diagnostic_history_components",
+      "status": "passed"
+    },
+    {
+      "name": "stable_canonical_observation",
+      "status": "passed"
+    },
+    {
+      "name": "original_anchor_and_evidence_unchanged_after_inspection",
+      "status": "passed"
+    }
+  ],
+  "hashes": {
+    "rawContainer": "52630d7d79fd3c7df44ce2b90e4b7249a69dfd83d4f1af1d83e93250b3438c1d",
+    "originalContainer": "62953d3799d6e410eca4a36edce41c864ec14760030b33bec8aed5fe8e0f9c45",
+    "config": "502033d92cfb49d49c6839788cba6a593ff217acd2bad5b8fd21e0e71d5ad09a",
+    "hostConfig": "9e542aa673c79a051c2c7250370d94740810adfe507480795f2ac5c44e32362d",
+    "mountSet": "34f0e3b83eef133a5492a092fff344d2a135efded3f575e0e589a66e2e2e8ee0",
+    "volume": "7ca1ebffb8d9f1944506bdf0b8ffe7bdba31d2d16453cfde3688326f61928ca0",
+    "canonicalV2": "46ada2e50dc6083df6bd95a570eb27a578335e4be4546fbb5df1cb97cf17b05f"
+  },
+  "comparisons": {
+    "configSameAsHistoricalDiagnosis": true,
+    "hostConfigSameAsHistoricalDiagnosis": true,
+    "mountSetSameAsHistoricalDiagnosis": true,
+    "originalContainerDigestMatches": false,
+    "networkFields": [
+      {
+        "field": "Name",
+        "equal": true
+      },
+      {
+        "field": "Id",
+        "equal": true
+      },
+      {
+        "field": "Created",
+        "equal": true
+      },
+      {
+        "field": "Scope",
+        "equal": true
+      },
+      {
+        "field": "Driver",
+        "equal": true
+      },
+      {
+        "field": "EnableIPv4",
+        "equal": true
+      },
+      {
+        "field": "EnableIPv6",
+        "equal": true
+      },
+      {
+        "field": "IPAM",
+        "equal": true
+      },
+      {
+        "field": "Internal",
+        "equal": true
+      },
+      {
+        "field": "Attachable",
+        "equal": true
+      },
+      {
+        "field": "Ingress",
+        "equal": true
+      },
+      {
+        "field": "ConfigFrom",
+        "equal": true
+      },
+      {
+        "field": "ConfigOnly",
+        "equal": true
+      },
+      {
+        "field": "Options",
+        "equal": true
+      },
+      {
+        "field": "Labels",
+        "equal": true
+      },
+      {
+        "field": "Containers",
+        "equal": true
+      }
+    ]
+  },
+  "images": [
+    {
+      "kind": "database",
+      "id": "sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+      "created": "2026-10-21T22:57:10.664514874Z",
+      "reference": "postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+      "repoDigests": [
+        "postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36"
+      ],
+      "platform": "linux/amd64"
+    },
+    {
+      "kind": "runner",
+      "id": "sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303",
+      "created": "2026-10-27T15:12:01.874173967Z",
+      "reference": "stall-phase8-r2-runner@sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303",
+      "repoDigests": [
+        "stall-phase8-r2-runner@sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303",
+        "stall-phase8-r2-runner:bootstrap-20261027-151135@sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303"
+      ],
+      "platform": "linux/amd64",
+      "bundle": "6a040792d3c8f8a205dd578cb04cf5c4dc5ada98af00573b62b2ec59a4cc2a29"
+    },
+    {
+      "kind": "node",
+      "id": "sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae",
+      "created": "2026-10-21T11:35:50.393702483Z",
+      "reference": "node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae",
+      "repoDigests": [
+        "node@sha256:2dd9a4f758e173b65fee15388f7706af6fb01ef50cf7a2c0538711d67a6981ae"
+      ],
+      "platform": "linux/amd64"
+    }
+  ],
+  "acl": null,
+  "bindings": [
+    {
+      "destination": "/docker-entrypoint-initdb.d/10-phase8-bootstrap.sh",
+      "regular": true,
+      "size": 4771,
+      "sha256": "4ff0995fa5538b4828b3cdba84b4207ca493fbd31d04900f119bf0f11a0534dc"
+    },
+    {
+      "destination": "/phase8/bootstrap-entrypoint.sh",
+      "regular": true,
+      "size": 2891,
+      "sha256": "ed6f0a4a0553674307ba21e718c18f6e4751d14bbda0da4c1a36e88e87bbc02b"
+    },
+    {
+      "destination": "/run/phase8-launch",
+      "regular": true,
+      "size": 226,
+      "sha256": "7a23b5d825b6ed519146e10e087147bfa63412d311b59031492a27e1ef8f5593"
+    },
+    {
+      "destination": "/run/secrets/phase8_admin_password",
+      "regular": true,
+      "size": 64,
+      "credentialContentRead": false
+    },
+    {
+      "destination": "/run/secrets/phase8_migrator_password",
+      "regular": true,
+      "size": 64,
+      "credentialContentRead": false
+    },
+    {
+      "destination": "/run/secrets/phase8_app_password",
+      "regular": true,
+      "size": 64,
+      "credentialContentRead": false
+    },
+    {
+      "destination": "/run/secrets/phase8_observer_password",
+      "regular": true,
+      "size": 64,
+      "credentialContentRead": false
+    }
+  ],
+  "mounts": [
+    {
+      "Type": "bind",
+      "Destination": "/phase8/bootstrap-entrypoint.sh",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Destination": "/run/phase8-launch",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Destination": "/run/secrets/phase8_admin_password",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Destination": "/run/secrets/phase8_app_password",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Destination": "/run/secrets/phase8_migrator_password",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Destination": "/run/secrets/phase8_observer_password",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "volume",
+      "Name": "stall-phase8-r2-data",
+      "Destination": "/var/lib/postgresql/data",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "bind",
+      "Destination": "/docker-entrypoint-initdb.d/10-phase8-bootstrap.sh",
+      "RW": false,
+      "Propagation": "rprivate"
+    }
+  ],
+  "network": {
+    "internal": true,
+    "ipv4": true,
+    "ipv6": false,
+    "ipam": {
+      "Driver": "default",
+      "Options": {},
+      "Config": [
+        {
+          "Subnet": "172.23.0.0/16"
+        }
+      ]
+    },
+    "options": {
+      "com.docker.network.bridge.gateway_mode_ipv4": "isolated",
+      "com.docker.network.enable_ipv4": "true"
+    },
+    "members": []
+  },
+  "recordFiles": [
+    "db.attempt.json",
+    "db.failed.json",
+    "db.launch",
+    "runner-build-metadata.json"
+  ],
+  "registrationCreated": false,
+  "limitations": [
+    "No complete original container spec to prove equivalence to original anchor",
+    "No stopped-volume content inspection or proof of never externally written volume",
+    "No runtime egress test or bootstrap/SQL verification",
+    "No current source to approved runner bundle equivalence"
+  ],
+  "dockerMutations": false,
+  "databaseConnections": false
+}

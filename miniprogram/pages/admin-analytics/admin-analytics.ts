@@ -22,7 +22,7 @@ Page({
     categories:[{id:'',name:'全部历史分类'},{id:'unknown',name:'未记录历史分类／无分类'}],
     rankIndex:0,rankLabels,topIndex:0,tops:[10,20,50],trendIndex:0,trendLabels,
     loading:false,loadingMore:false,exporting:false,dirty:false,needsRefresh:false,error:'',moreError:'',
-    sourceLabel:'',notice:'',amountScope:'',cards:[] as any[],dailyBars:[] as any[],hourBars:[] as any[],ranking:[] as any[],products:[] as any[],
+    simulatedCount:0,sourceLabel:'',notice:'',amountScope:'',cards:[] as any[],dailyBars:[] as any[],hourBars:[] as any[],ranking:[] as any[],products:[] as any[],
     totalProducts:0,hasMore:false,page:1,hasReport:false,hasOrders:false,unverifiedCount:0},
   onShow(){this.refresh()},
   onUnload(){this.serial++},
@@ -56,7 +56,7 @@ Page({
       const s=report.summary
       const cards=[['订单总数（含取消）',s.orderCount],['已确认支付订单数',s.paidCount],['未支付订单数（未取消）',s.unpaidCount],['取消订单数',s.cancelCount],['订单总金额（未取消）',money(s.orderCents)],['已确认支付金额',money(s.paidCents)],['未支付订单金额',money(s.unpaidCents)],['客单价（未取消订单）',money(s.averageCents)],['销量（下单件数，含未支付）',s.quantity]].map(([label,value])=>({label,value}))
       this.setData({categories,categoryIndex:Math.max(0,categories.findIndex(c=>c.id===query.categoryId)),cards,notice:report.notice,amountScope:report.amountScope,
-        hasReport:true,hasOrders:s.orderCount>0,unverifiedCount:s.unverifiedCount,ranking:report.ranking.map(productView),
+        hasReport:true,hasOrders:s.orderCount>0,simulatedCount:s.simulatedCount||0,unverifiedCount:s.unverifiedCount,ranking:report.ranking.map(productView),
         products:report.products.slice(0,30).map(productView),totalProducts:report.totalProducts,page:1,hasMore:cloud?report.hasMore:report.products.length>30})
       this.renderCharts(report)
     } catch(error){if(id===this.serial&&context===analyticsContext())this.setData({error:errorText(error)})}

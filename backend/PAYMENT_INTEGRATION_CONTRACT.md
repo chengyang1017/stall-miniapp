@@ -1,5 +1,11 @@
 # 客户支付模块对接契约草案
 
+> 2026-10-28 P1整改：NODE_ENV=production可保留，业务Staging由独立审核档案、平台服务ID、DB目标/角色、部署锚点、功能开关和限时真实微信授权联合判定。APP_ENV=production明确禁止模拟确认。当前没有已批准真实部署档案，也未执行021或部署。旧10项测试债已修复；最新权限、迁移与验收边界见 [STAGING_DEPLOYMENT_PREPARATION.md](STAGING_DEPLOYMENT_PREPARATION.md)。这不改变客户负责的真实支付、退款和对账契约。
+
+> 2026-10-28补充：本地新增**默认关闭、仅获授权Staging使用的模拟确认**，见[STAGING_SIMULATED_PAYMENTS.md](STAGING_SIMULATED_PAYMENTS.md)。这不是客户真实支付接入，尚未部署/迁移/真实联调。021新增来源及测试审计，真实收款仍为0；下文“没有模拟”“new含未付”等描述保留为Phase28/第七轮当时的契约历史，当前源码差异以本补充和新文档为准。
+
+当前队列：new/待接单和工作台pendingCount仅包含new+paid；另设new+unpaid待支付筛选/计数。原履约门槛仍要求paid，模拟来源还必须匹配业务Staging的获准实例及实际数据库锚点（不是以NODE_ENV判断）。支付状态paid只表明履约门槛，不自动证明收款，真实provider仍需客户完成可信核验。模拟付后取消不调用退款，也不自动释放committed库存；不能声称已退款。
+
 状态：Phase28源码核对后的待确认契约，**不是已经实现的支付API或双方已确认协议**。支付、退款、支付通知和对账由客户负责；本阶段没有接入、模拟或调用支付，没有改写支付状态。
 
 ## 已有订单契约

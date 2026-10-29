@@ -52,7 +52,7 @@ class Locks {
 
 export function fixture({ stock = 10, secondStock = 10, mode = 'finite' } = {}) {
   const stores = new Map([['alpha', { id: STORE_A, slug: 'alpha', name: '甲店' }], ['beta', { id: STORE_B, slug: 'beta', name: '乙店' }]])
-  const tables = Object.fromEntries(['products', 'orders', 'items', 'reservations', 'movements', 'events'].map(t => [t, new Map()]))
+  const tables = Object.fromEntries(['products', 'orders', 'items', 'reservations', 'movements', 'events', 'simulations', 'payments'].map(t => [t, new Map()]))
   const product = (id, store, quantity) => ({ id, store_id: store, name: '商品' + id.slice(-2), price_cents: 1200,
     discount_price_cents: null, discount_start: null, discount_end: null, active: true, sold_out: false,
     stock_mode: mode, stock_quantity: quantity, inventory_version: 1 })
@@ -67,7 +67,7 @@ export function fixture({ stock = 10, secondStock = 10, mode = 'finite' } = {}) 
   const rules = { accepting: true, days: Array.from({ length: 7 }, () => ({ enabled: true, start: '00:00', end: '23:59' })),
     areas: [{ id: 'zone', name: '配送区', enabled: true, latitude: null, longitude: null, radiusMeters: null }],
     slots: [{ id: 'slot', label: '白天', enabled: true, start: '10:00', end: '20:00' }], specialDates: [], minimumOrderCents: 0 }
-  const db = { tables, stores, members, sessions, rules, now: new Date(NOW), betaProduct, locks: new Locks(), clients: [], trace: [], hooks: [], failures: [], counter: 0,
+  const db = { simulationEnabled:true,databaseMatches:true,simulationInstance:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',testGrants:new Set(), tables, stores, members, sessions, rules, now: new Date(NOW), betaProduct, locks: new Locks(), clients: [], trace: [], hooks: [], failures: [], counter: 0,
     // Sweep selection is deliberately explicit. The adapter does not pretend to
     // execute the worker's PostgreSQL WHERE expression/payment-events subquery.
     sweepCandidates: new Set(),
@@ -108,6 +108,41 @@ export function fixture({ stock = 10, secondStock = 10, mode = 'finite' } = {}) 
       if (c.active && s === 'COMMIT') for (const [table, rows] of Object.entries(c.writes)) for (const [key, row] of Object.entries(rows)) tables[table].set(key, copy(row))
       c.writes = {}; c.active = false; db.locks.release(c); return result([])
     }
+    if(s.startsWith('SELECT deployment_id,instance_id,branch_id'))return result(db.databaseMatches&&args[1]===db.simulationInstance?[{deployment_id:args[0],instance_id:args[1],branch_id:args[2]}]:[])
+    if(s.startsWith('SELECT count(*)::int AS count,bool_or'))return result([{count:3,unsafe:false}])
+    if(s.startsWith('SELECT r.rolsuper'))return result([{rolsuper:false,rolcreatedb:false,rolcreaterole:false,rolbypassrls:false,migrator_member:false,authorization_member:false,schema_create:false,owns_tables:false}])
+    if(s.startsWith('SELECT has_any_column_privilege'))return result([{unsafe:false}])
+    if(s.startsWith('SELECT has_table_privilege'))return result([{ok:!db.privilegeDenied&&['SELECT','INSERT'].includes(args[1])}])
+    if(s.startsWith('SELECT a.attname,has_column_privilege'))return result([{attname:'lock_key',writable:true},{attname:'expires_at',writable:false}])
+    if(s==='SELECT current_user AS role')return result([{role:'unit_app'}])
+    // Staging-payment transport extension: effects only, NOT PostgreSQL locks/constraints.
+    if (s.startsWith("SET LOCAL statement_timeout="))return result([])
+    if(s.startsWith('SELECT external_subject FROM auth_sessions')&&s.endsWith('FOR SHARE')){
+      assert.match(s,/revoked_at IS NULL AND expires_at>clock_timestamp\(\) FOR SHARE$/)
+      return result(sessions.get(args[0])===args[1]?[{external_subject:args[1]}]:[])
+    }
+    if(s.startsWith('SELECT e.instance_id FROM staging_payment_environment')){
+      assert.match(s,/e.database_name=current_database\(\)/);assert.match(s,/FOR SHARE OF e,t,s$/)
+      return result(db.simulationEnabled&&db.databaseMatches&&args[0]===db.simulationInstance&&db.testGrants.has(args[1]+':'+args[2])?[{instance_id:args[0]}]:[])
+    }
+    if(s.startsWith('SELECT o.store_id FROM orders o JOIN stores s')){
+      const row=get(c,'orders',args[1]);return result(stores.get(args[0])?.id===row?.store_id&&row.customer_subject===args[2]?[{store_id:row.store_id}]:[])
+    }
+    if(s.startsWith('SELECT *, (inventory_expires_at')){
+      assert.match(s,/customer_subject=\$3 FOR UPDATE$/);await db.locks.acquire('order:'+args[1],c)
+      const o=get(c,'orders',args[1]);return result(scoped(o,args[0])&&o.customer_subject===args[2]?[{...o,payment_expired:+o.created_at+900000<=+db.now||o.inventory_expires_at&&+o.inventory_expires_at<=+db.now}]:[])
+    }
+    if(s.startsWith('SELECT order_id')&&s.includes('FROM staging_payment_confirmations'))return result([...all(c,'simulations').values()].filter(r=>s.includes('request_key=$3')?r.store_id===args[0]&&r.actor_subject===args[1]&&r.request_key===args[2]:r.order_id===args[0]&&r.instance_id===args[1]))
+    if(s.startsWith('SELECT i.product_id,i.quantity,r.quantity AS reserved_quantity')){
+      assert.match(s,/ORDER BY p.id FOR UPDATE OF p$/);const rows=[]
+      for(const i of all(c,'items').values())if(i.order_id===args[1]&&get(c,'products',i.product_id)?.stock_mode==='finite'){
+        await db.locks.acquire('product:'+i.product_id,c);const r=get(c,'reservations',args[1]+':'+i.product_id);rows.push({...i,reserved_quantity:r?.quantity,state:r?.state})
+      }return result(rows)
+    }
+    if(s.startsWith('SELECT (created_at+interval')){const o=get(c,'orders',args[1]);return result([{valid:scoped(o,args[0])&&+o.created_at+900000>+db.now&&(!o.inventory_expires_at||+o.inventory_expires_at>+db.now)}])}
+    if(s.startsWith('INSERT INTO staging_payment_confirmations')){assert.ok(!all(c,'simulations').has(args[0]));put(c,'simulations',args[0],{order_id:args[0],store_id:args[1],instance_id:args[2],actor_subject:args[3],request_key:args[4],amount_cents:args[5]});return result([])}
+    if(s.startsWith('INSERT INTO payment_events')){assert.match(s,/'staging_simulated'/);put(c,'payments',args[0],{order_id:args[0],provider:'staging_simulated',provider_event_id:args[1],amount_cents:args[2]});return result([])}
+    if(s.startsWith("UPDATE orders SET payment_status='paid',payment_source='staging_simulated'")){const o=get(c,'orders',args[1]);assert.equal(o.store_id,args[0]);put(c,'orders',o.id,{...o,payment_status:'paid',payment_source:'staging_simulated',simulation_instance_id:args[2]});return result([])}
     if (s.startsWith('SELECT external_subject FROM auth_sessions')) {
       assert.match(s, /WHERE token_hash = \$1 AND revoked_at IS NULL AND expires_at > now\(\)$/)
       return result(sessions.has(args[0]) ? [{ external_subject: sessions.get(args[0]) }] : [])
@@ -134,7 +169,7 @@ export function fixture({ stock = 10, secondStock = 10, mode = 'finite' } = {}) 
       assert.ok(![...all(c, 'orders').values()].some(o => o.store_id === args[0] && o.customer_subject === args[1] && o.checkout_key === args[3]), 'duplicate scoped checkout key')
       const key = id(); put(c, 'orders', key, { id: key, store_id: args[0], customer_subject: args[1], subtotal_cents: args[2], total_cents: args[2],
         checkout_key: args[3], checkout_fingerprint: args[4], contact_snapshot: JSON.parse(args[5]), delivery_slot_snapshot: JSON.parse(args[6]),
-        payment_status: 'unpaid', fulfillment_status: 'new', inventory_state: 'none', inventory_expires_at: null })
+        currency:'CNY',created_at:new Date(db.now),payment_status: 'unpaid', fulfillment_status: 'new', inventory_state: 'none', inventory_expires_at: null })
       return result([{ id: key }])
     }
     if (s.startsWith('INSERT INTO order_items(')) {

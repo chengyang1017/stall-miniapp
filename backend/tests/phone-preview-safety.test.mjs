@@ -10,6 +10,29 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import vm from 'node:vm'
 import { validatePhoneProfile,cloudSource,readPhoneProfile } from '../../scripts/phone-preview-profile.mjs'
+import { phonePreviewFolder } from '../../scripts/miniapp-output.mjs'
+
+test('named phone preview output is a constrained dist sibling; paths and target collisions are refused',()=>{
+ assert.equal(phonePreviewFolder(),'phone-preview')
+ assert.equal(phonePreviewFolder('phone-preview-trace'),'phone-preview-trace')
+ for(const name of ['../phone-preview','phone-preview/trace','phone-preview\\trace','C:\\preview','combined','customer','merchant','phone-preview-','phone-preview-../source','phone-preview-TRACE',null]){
+  assert.throws(()=>phonePreviewFolder(name),/Unsafe phone preview output name/)
+ }
+})
+
+test('phone preview CLI rejects unsafe output before reading profile or starting compiler',()=>{
+ const result=spawnSync(process.execPath,['scripts/phone-preview.mjs','--prepare','does-not-exist.json','--output','../source'],{cwd:fileURLToPath(new URL('../../',import.meta.url)),encoding:'utf8'})
+ assert.equal(result.status,1)
+ assert.match(result.stderr,/Unsafe phone preview output name/)
+ assert.doesNotMatch(result.stdout,/compiled|Public staging profile/)
+})
+
+test('non-preview build refuses a phone output override before replacing any output',()=>{
+ const result=spawnSync(process.execPath,['scripts/build-miniapp.mjs','combined'],{cwd:fileURLToPath(new URL('../../',import.meta.url)),encoding:'utf8',env:{...process.env,STALL_PHONE_PREVIEW_PROFILE:'',STALL_PHONE_PREVIEW_OUTPUT:'phone-preview-trace'}})
+ assert.notEqual(result.status,0)
+ assert.match(result.stderr,/Phone output override requires a staging profile/)
+ assert.doesNotMatch(result.stdout,/compiled/)
+})
 
 const root=fileURLToPath(new URL('../../',import.meta.url))
 const profile={version:1,environment:'staging',apiBase:'https://api.staging.unit.test',storeSlug:'real-store',appId:'wx0123456789abcdef'}

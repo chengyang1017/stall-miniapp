@@ -31,13 +31,13 @@ export async function billingRoute(req,res,url,pool){
  try{
   await client.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');open=true
   await client.query("SET LOCAL statement_timeout='5000ms'")
-  const summaryResult=await client.query(`SELECT COUNT(*)::int AS "orderCount",COUNT(*) FILTER(WHERE fulfillment_status='cancelled')::int AS "cancelCount",COUNT(*) FILTER(WHERE fulfillment_status='delivered')::int AS "deliveredCount",COUNT(*) FILTER(WHERE fulfillment_status='new')::int AS "pendingCount",COALESCE(SUM(total_cents) FILTER(WHERE fulfillment_status<>'cancelled'),0)::text AS "orderCents",0 AS "paidCents",COALESCE(SUM(total_cents) FILTER(WHERE fulfillment_status<>'cancelled' AND payment_status='unpaid'),0)::text AS "unpaidCents" FROM orders o WHERE `+where.join(' AND '),params)
+  const summaryResult=await client.query(`SELECT COUNT(*)::int AS "orderCount",COUNT(*) FILTER(WHERE fulfillment_status='cancelled')::int AS "cancelCount",COUNT(*) FILTER(WHERE fulfillment_status='delivered')::int AS "deliveredCount",COUNT(*) FILTER(WHERE fulfillment_status='new' AND payment_status='paid')::int AS "pendingCount",COALESCE(SUM(total_cents) FILTER(WHERE fulfillment_status<>'cancelled'),0)::text AS "orderCents",0 AS "paidCents",COALESCE(SUM(total_cents) FILTER(WHERE fulfillment_status<>'cancelled' AND payment_status='unpaid'),0)::text AS "unpaidCents" FROM orders o WHERE `+where.join(' AND '),params)
   const summary=summaryResult.rows[0]
   if(Object.values(summary).some(v=>!Number.isSafeInteger(Number(v))||Number(v)<0)){response(res,413,{error:'billing_amount_too_large'});return true}
   const pageParams=params.slice(),pageWhere=where.slice()
   if(cursor&&!m[2]){pageParams.push(cursor.at,cursor.id);pageWhere.push('(o.created_at,o.id)<($'+(pageParams.length-1)+'::timestamptz,$'+pageParams.length+'::uuid)')}
   pageParams.push(m[2]?10001:limit+1)
-  const {rows}=await client.query(`SELECT o.id,o.created_at AS "createdAt",o.payment_status AS "paymentStatus",o.fulfillment_status AS "fulfillmentStatus",o.currency,o.total_cents AS "totalCents",to_char(o.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "cursorAt" FROM orders o WHERE `+pageWhere.join(' AND ')+' ORDER BY o.created_at DESC,o.id DESC LIMIT $'+pageParams.length,pageParams)
+  const {rows}=await client.query(`SELECT o.id,o.created_at AS "createdAt",o.payment_status AS "paymentStatus",o.payment_source AS "paymentSource",o.fulfillment_status AS "fulfillmentStatus",o.currency,o.total_cents AS "totalCents",to_char(o.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "cursorAt" FROM orders o WHERE `+pageWhere.join(' AND ')+' ORDER BY o.created_at DESC,o.id DESC LIMIT $'+pageParams.length,pageParams)
   if(m[2]&&rows.length>10000){response(res,413,{error:'export_too_large_narrow_date_range'});return true}
   const hasMore=!m[2]&&rows.length>limit,items=m[2]?rows:rows.slice(0,limit),ids=items.map(o=>o.id)
   const details=ids.length?await client.query('SELECT i.order_id,i.product_name,i.quantity,i.unit_price_cents,i.line_total_cents FROM order_items i JOIN orders o ON o.id=i.order_id WHERE o.store_id=$1 AND o.id=ANY($2::uuid[]) ORDER BY i.id LIMIT 50001',[store.id,ids]):{rows:[]}
@@ -47,7 +47,7 @@ export async function billingRoute(req,res,url,pool){
   const result=items.map(o=>({...o,itemsText:(byId.get(o.id)||[]).join('；')}))
   const range=all?'all':from+'-'+to
   if(m[2]){
-   const lines=[['订单编号','创建时间（北京时间）','支付状态（未核验）','配送状态','币种','订单金额（不含取消）','取消订单金额','已确认收款','商品成交快照明细'],...result.map(o=>[o.id,new Date(o.createdAt.getTime()+8*3600000).toISOString().replace('T',' ').slice(0,19),o.paymentStatus,o.fulfillmentStatus,o.currency,o.fulfillmentStatus==='cancelled'?'0.00':(Number(o.totalCents)/100).toFixed(2),o.fulfillmentStatus==='cancelled'?(Number(o.totalCents)/100).toFixed(2):'0.00','0.00',(snapshotById.get(o.id)||[]).join('；')])]
+   const lines=[['订单编号','创建时间（北京时间）','支付状态（未核验）','配送状态','币种','订单金额（不含取消）','取消订单金额','已确认收款','商品成交快照明细'],...result.map(o=>[o.id,new Date(o.createdAt.getTime()+8*3600000).toISOString().replace('T',' ').slice(0,19),o.paymentSource==='staging_simulated'?'测试订单·模拟支付（非真实收款）':o.paymentStatus,o.fulfillmentStatus,o.currency,o.fulfillmentStatus==='cancelled'?'0.00':(Number(o.totalCents)/100).toFixed(2),o.fulfillmentStatus==='cancelled'?(Number(o.totalCents)/100).toFixed(2):'0.00','0.00',(snapshotById.get(o.id)||[]).join('；')])]
    const csv='\uFEFF'+[['统计说明',notice],...lines].map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n',filename='billing-'+range+'.csv'
    if(Buffer.byteLength(csv)>5*1024*1024){response(res,413,{error:'export_too_large_narrow_date_range'});return true}
    if(q.get('format')==='json')response(res,200,{csv,filename})

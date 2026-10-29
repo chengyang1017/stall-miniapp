@@ -16,11 +16,12 @@ function javascript(file,expectedImports){
   assert.equal(imports,expectedImports,`${file}: import layout changed; update the harness explicitly`)
   return body
 }
-const pageJS=javascript('miniprogram/pages/orders/orders.ts',3)
+const paymentJS=stripTypeScriptTypes(readFileSync(new URL('miniprogram/modules/shared/domain/payment.ts',root),'utf8'),{mode:'strip'}).replace(/^export /gm,'')
+const pageJS=javascript('miniprogram/pages/orders/orders.ts',4)
 let exports=0
 const apiJS=javascript('miniprogram/modules/customer/api/orders.ts',2)
   .replace(/^export (?=(?:const|function)\b)/gm,()=>{exports++;return ''})
-assert.equal(exports,2,'API export layout changed; update the harness explicitly')
+assert.equal(exports,3,'API export layout changed; update the harness explicitly')
 const clone=v=>JSON.parse(JSON.stringify(v))
 const ids=p=>Array.from(p.data.visibleOrders,o=>o.id)
 const tab=name=>({currentTarget:{dataset:{tab:name}}})
@@ -52,7 +53,7 @@ function fixture({cloud=true,local=[]}={}){
     fetch(){assert.fail('real network must never be called')}}
   const api=vm.runInNewContext(`${apiJS}\n;({customerOrdersConfig,customerOrdersRequest})`,globals,
     {filename:'customer/api/orders.ts',timeout:1000})
-  vm.runInNewContext(pageJS,{...globals,...api,
+  vm.runInNewContext(paymentJS+'\n'+pageJS,{...globals,...api,
     Page(value){definition=value},
     loadWorkflowOrders(){localReads++;return clone(local)},chinaTime:value=>'北京时间:'+value
   },{filename:'pages/orders/orders.ts',timeout:1000})

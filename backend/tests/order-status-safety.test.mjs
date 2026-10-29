@@ -43,7 +43,7 @@ test('cancellation reason must not exceed 200 characters',async()=>{
  const {db,res}=await perform({status:'cancelled',reason:'x'.repeat(201)});assert.equal(res.statusCode,400);assert.equal(mutated(db),false)
 })
 test('delivered transition requires proof key',async()=>{
- const {db,res}=await perform({status:'delivered'});assert.equal(res.statusCode,400);assert.equal(mutated(db),false)
+ const {db,res}=await perform({status:'delivered'});assert.equal(res.statusCode,409);assert.equal(res.body.error,'use_verified_proof_completion_endpoint');assert.equal(mutated(db),false)
 })
 test('cannot skip from new directly to preparing',async()=>{
  const {db,res}=await perform({status:'preparing'},{status:'new'});assert.equal(res.statusCode,409);assert.equal(mutated(db),false);assert.ok(db.statements.some(x=>x.sql==='ROLLBACK'))
@@ -52,5 +52,5 @@ test('cannot cancel a delivered order',async()=>{
  const {db,res}=await perform({status:'cancelled',reason:'Customer request'},{status:'delivered',payment:'paid'});assert.equal(res.statusCode,409);assert.equal(mutated(db),false)
 })
 test('unpaid order remains undelivered even with plausible proof key',async()=>{
- const {db,res}=await perform({status:'delivered',proofKey:'delivery-proofs/verifiedphoto123'},{status:'delivering',payment:'unpaid'});assert.equal(res.statusCode,409);assert.equal(res.body.error,'payment_not_confirmed');assert.equal(mutated(db),false)
+ const {db,res}=await perform({status:'delivered',proofKey:'delivery-proofs/verifiedphoto123'},{status:'delivering',payment:'unpaid'});assert.equal(res.statusCode,409);assert.equal(res.body.error,'use_verified_proof_completion_endpoint');assert.equal(mutated(db),false)
 })

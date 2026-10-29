@@ -6,6 +6,7 @@
   "entry": "pages/index/index",
   "ownedPages": [
     "pages/index/index",
+    "pages/category/category",
     "pages/product-detail/product-detail",
     "pages/cart/cart",
     "pages/checkout/checkout",
@@ -21,8 +22,8 @@
   ],
   "currentTabBar": [
     "pages/index/index",
+    "pages/category/category",
     "pages/cart/cart",
-    "pages/orders/orders",
     "pages/profile/profile"
   ],
   "apiNamespace": "/v1/stores/:slug/...",

@@ -1,0 +1,1 @@
+const fs=require('fs'),p='backend/tests/category-icons.test.mjs';let s=fs.readFileSync(p,'utf8').replace('assert.deepEqual(icons.CATEGORY_ICONS.map(x=>x.key),CATEGORY_ICON_KEYS)','assert.deepEqual(clone(icons.CATEGORY_ICONS.map(x=>x.key)),CATEGORY_ICON_KEYS)');fs.writeFileSync(p,s);

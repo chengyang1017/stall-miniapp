@@ -26,8 +26,9 @@ function fixture(target){
  const context=vm.createContext({wx,Page:d=>{definition=d},clearTimeout(){},setTimeout(){assert.fail('Unexpected polling')},fetch(){assert.fail('Network forbidden')}})
  const modules={
   '../../config/cloud':{PUBLIC_API_BASE:cfg.apiBase,CLOUD_ONLY:true},
-  '../../utils/storeEntry':{resolveStoreEntry:async()=>{},captureStoreEntry(){},shopShare(){}},
-  '../../utils/storePresentation':{refreshPagePresentation(){}},
+  '../../utils/storeEntry':{hasPendingStoreEntry:()=>false,resolveStoreEntry:async()=>{},captureStoreEntry(){},shopShare(){}},
+  '../../utils/storePresentation':{currentPresentation:()=>({}),applyPagePresentation(){},refreshPagePresentation(){}},
+  '../../modules/shared/runtime/uiTrace':{prepareUiTrace(){},hideUiTrace(){},traceUi(){}},
   '../../utils/cloudCart':{cloudCartConfig:()=>cfg},
   '../../modules/shared/runtime/context':{getCloudContext:()=>cfg,cloudIdentity:()=>identity},
   '../../modules/shared/runtime/auth':{hasRecentMerchantPermission:()=>false,authorizedGet:(base,url)=>{requests.push({base,url});return authorize()},loginWithWechat:async()=>{}},
@@ -45,7 +46,15 @@ function fixture(target){
  const selected=config.targets[target].aliases[host]||host
  const adapter=evaluate(selected,()=>assert.fail('Adapter must not import another role'))
  function page(file){
-  evaluate(file,spec=>spec==='../../modules/integration/singleAppHost'?adapter:modules[spec]||{})
+  evaluate(file,spec=>{
+   if(spec==='../../modules/customer/controllers/catalog')return evaluate('miniprogram/modules/customer/controllers/catalog.ts',child=>{
+    const resolved=path.posix.normalize(path.posix.join('miniprogram/modules/customer/controllers',child))
+    const legacy=path.posix.relative('miniprogram/pages/index',resolved)
+    if(legacy==='../../modules/shared/domain/categoryIcons')return evaluate('miniprogram/modules/shared/domain/categoryIcons.ts',()=>assert.fail('Pure icons have no imports'))
+    return modules[legacy]||{}
+   })
+   return spec==='../../modules/integration/singleAppHost'?adapter:modules[spec]||{}
+  })
   const p={...definition,data:JSON.parse(JSON.stringify(definition.data)),setData(v){Object.assign(this.data,v)}}
   p.loadCloudHome=()=>loads.push('catalog')
   p.refresh=()=>assert.fail('No local fallback')
@@ -76,8 +85,8 @@ test('Combined workbench still switches to the customer tab and records the expl
 })
 test('Customer homepage ignores a retained Combined merchant preference and loads its catalog',async()=>{
  const f=fixture('customer');f.storage.set('stall_merchant_home_preference_v1',f.cfg.apiBase+'|'+f.cfg.storeSlug)
- const p=f.page(home);await p.onShow();p.goAdmin()
- assert.equal(p.data.canOpenMerchant,false);assert.deepEqual(f.requests,[]);assert.deepEqual(f.navigation,[]);assert.deepEqual(f.loads,['catalog'])
+ const p=f.page(home);await p.onShow();assert.equal(typeof p.goAdmin,'undefined')
+ assert.deepEqual(f.requests,[]);assert.deepEqual(f.navigation,[]);assert.deepEqual(f.loads,['catalog'])
 })
 test('Customer profile neither queries merchant permissions nor opens merchant pages even with forged UI authorization',async()=>{
  const f=fixture('customer'),p=f.page(profile);await p.checkMerchant();assert.equal(p.data.merchantAuthorized,false)

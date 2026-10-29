@@ -37,7 +37,17 @@ export function bootstrapRows(row,roles) {
 export async function verifySQL(client,g,migrations,state) {
   const config={instance:g.instance,role:g.role,purpose:g.role==='observer'?'inspect':g.role==='app'?'test':'initialize',pg:{user:'stall_test_'+g.role}}
   assertIdentity((await client.query(IDENTITY)).rows[0],config)
+  if(g.version===2&&g.role==='authorizer')return (await import('./schema021.mjs')).verifyAuthorizer021(client,g)
   const rows=(await client.query(MARKER)).rows
+  if(g.version===2){
+    check(g.baselineManifestSha256===migrations.baseline.manifestHash&&g.planSha256===migrations.plan.manifestSha256,'schema021_manifest_rejected')
+    assertMarker(rows,config,'ready',migrations.baseline.manifestHash)
+    if(g.purpose!=='upgrade021')return (await import('./schema021.mjs')).verifyStage021(client,g,migrations)
+    assertLedger((await client.query('SELECT filename,sha256 FROM phase8_control.migrations ORDER BY filename')).rows,migrations.baseline.files)
+    const stored=(await client.query('SELECT catalog FROM phase8_control.schema_baseline WHERE singleton=true')).rows
+    check(stored.length===1,'schema_rejected');assertBaseline(await inspectCatalog(client),stored[0].catalog,rows[0].schema_sha256)
+    return
+  }
   assertMarker(rows,config,state,migrations.manifestHash)
   if(state==='bootstrap') {
     check(rows[0].schema_sha256===null,'bootstrap_marker_rejected')
@@ -48,12 +58,13 @@ export async function verifySQL(client,g,migrations,state) {
     check(stored.length===1,'schema_rejected');assertBaseline(actual,stored[0].catalog,rows[0].schema_sha256)
   }
 }
-export async function openSQL(g,password,migrations,{makePool,now=Date.now,onPool=()=>{}}={}) {
+export async function openSQL(g,password,migrations,{makePool,now=Date.now,onPool=()=>{},role=g.role}={}) {
   grant(g,now())
-  const opts=pgOptions(g,password)
+  check(role===g.role||g.version===2&&g.purpose==='payments021'&&['migrator','authorizer'].includes(role),'pool_role_rejected')
+  const identityGrant={...g,role},opts=pgOptions(identityGrant,password)
   const factory=makePool||((await import('pg')).Pool)
   const raw=new factory(opts);raw.on?.('error',()=>{})
-  const pool=guardedPool(raw,async c=>{check(now()<=g.deadlineAt,'runtime_expired');await verifySQL(c,g,migrations,g.purpose==='bootstrap'||g.purpose==='initialize'?'bootstrap':'ready')})
+  const pool=guardedPool(raw,async c=>{check(now()<=g.deadlineAt,'runtime_expired');await verifySQL(c,identityGrant,migrations,g.purpose==='bootstrap'||g.purpose==='initialize'?'bootstrap':'ready')})
   onPool(pool)
   try{const c=await pool.connect();c.release()}catch(e){await pool.end();throw e}
   return pool

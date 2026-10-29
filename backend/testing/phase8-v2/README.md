@@ -95,3 +95,18 @@ PG 继续精确使用 B0 已审核的 `postgres:16-alpine` 渠道及其 canonica
 `node --test backend/tests/phase8-safety.unit.test.mjs backend/tests/phase8-remediation.unit.test.mjs backend/tests/phase8-v2.unit.test.mjs`
 
 三份文件均不连接真实 Docker/数据库。V2 使用实际策略、宿主控制器、编译 Docker transport、固定 runner 和 SQL 接缝，外部响应是合成元数据，不是内存数据库验收。
+
+
+## 2026-10-28 当前状态
+
+只读确认原V2仍created，失败证据/卷摘要匹配，容器整体锚点仍不匹配；未重试恢复。当前源码依赖021，历史runner与11项loopback支付测试尚不能直接复用执行。389项离线结果为375通过、3失败、11跳过。完整差异与同一V2分阶段计划见[恢复说明](../../../docs/testing/PHASE8_V2_RECOVERY.md)，该说明最新节优先于本README旧时点描述。
+
+
+## 2026-10-28 版本边界补缺
+
+新增staging021离线包/封存核验，补齐staging三模块与配置/计划；51文件，version2。默认baseline020执行仍严格拒绝21迁移，运行器也明确拒绝version2包。021执行用途/角色/账本与ready阶段适配尚未完成。原指纹生成命令已追溯但资源等价未证明，新规范化函数未接入旧恢复。最终407项离线：396通过、0失败、11跳过。详细记录及下一步独立身份登记授权见[恢复说明](../../../docs/testing/PHASE8_V2_RECOVERY.md)最新节。
+
+
+## 2026-10-28 21:35：021执行源码适配
+
+新增独立version2 grant和upgrade021/ready021/business021/payments021用途，配对staging021审核镜像与54文件bundle。原version1及020默认入口不变；新DBA登记/授权管理角色材料仍须另行授权准备。021原子账本/独立ready/schema/ACL、原26订单与共享11支付场景已接通并完成离线回归。最终446项：435通过、0失败、11跳过；无Docker或数据库执行。详情及A/B比较见[恢复说明](../../../docs/testing/PHASE8_V2_RECOVERY.md)最新节。

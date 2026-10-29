@@ -1,3 +1,4 @@
+import { selectedCartRows } from '../modules/customer/domain/cartSelection'
 import { getRemoteProducts } from './remoteApi'
 import { stockAllows } from '../modules/customer/demo/catalog'
 import { getCloudContext } from '../modules/shared/runtime/context'
@@ -24,8 +25,8 @@ export function writeCloudCart(slug: string, rows: CloudCartRow[]): void {
 }
 export function syncCloudBadge(slug: string): void {
   const count = readCloudCart(slug).reduce((n, r) => n + r.quantity, 0)
-  if (count) wx.setTabBarBadge({ index: 1, text: count > 99 ? '99+' : String(count), fail: () => {} })
-  else wx.removeTabBarBadge({ index: 1, fail: () => {} })
+  if (count) wx.setTabBarBadge({ index: 2, text: count > 99 ? '99+' : String(count), fail: () => {} })
+  else wx.removeTabBarBadge({ index: 2, fail: () => {} })
 }
 export async function changeCloudCart(slug: string, productId: string, delta: number): Promise<boolean> {
   const context=supportIdentity();if(getCloudContext()?.storeSlug!==slug)return false
@@ -52,13 +53,16 @@ export async function changeCloudCart(slug: string, productId: string, delta: nu
   writeCloudCart(slug, rows.filter(r => r.quantity > 0))
   return true
 }
-export async function cloudCartDetails(cfg: { apiBase: string; storeSlug: string }): Promise<any> {
+export async function cloudCartDetails(cfg: { apiBase: string; storeSlug: string }, selectedOnly=false): Promise<any> {
   const context=supportIdentity()
   // The remote catalog is the price authority for the display, never local demo data.
   const selected=readCloudCart(cfg.storeSlug)
   const catalog = selected.length?await getRemoteProducts(cfg.apiBase, cfg.storeSlug,selected.map(r=>r.productId)) as any[]:[]
   if(context!==supportIdentity()||getCloudContext()?.apiBase!==cfg.apiBase||getCloudContext()?.storeSlug!==cfg.storeSlug)throw Error('store_or_identity_changed')
   const cart = readCloudCart(cfg.storeSlug)
+  return cartDetailsFromQuote(selectedOnly?selectedCartRows(cart):cart,catalog)
+}
+function cartDetailsFromQuote(cart:CloudCartRow[],catalog:any[]):any {
   const items: any[] = []
   for (const row of cart) {
     const p = catalog.find(r => String(r.id) === row.productId)
@@ -70,4 +74,27 @@ export async function cloudCartDetails(cfg: { apiBase: string; storeSlug: string
   // Keep unavailable items in storage until a later user decision; never silently delete purchases.
   const totalCents = items.reduce((sum, row) => sum + Math.round(row.subtotal * 100), 0)
   return { items, totalCount: items.reduce((sum, row) => sum + row.quantity, 0), totalText: (totalCents / 100).toFixed(2) }
+}
+
+// One fresh catalog response validates the latest queued intent AND prices it.
+// Device cart only; the order server still independently validates availability/price/stock.
+export async function confirmCloudCartQuantities(cfg:{apiBase:string;storeSlug:string},desired:()=>{quantities:Record<string,number>;version:number}|null):Promise<any>{
+ const identity=supportIdentity(),selected=readCloudCart(cfg.storeSlug),first=desired()
+ if(!first)throw Error('cart_update_cancelled')
+ const ids=Array.from(new Set(selected.map(row=>row.productId).concat(Object.keys(first.quantities))))
+ const catalog:any[]=ids.length?await getRemoteProducts(cfg.apiBase,cfg.storeSlug,ids):[]
+ const live=getCloudContext(),intent=desired()
+ if(!intent||identity!==supportIdentity()||live?.apiBase!==cfg.apiBase||live?.storeSlug!==cfg.storeSlug)throw Error('cart_context_changed')
+ const rows=readCloudCart(cfg.storeSlug).map(row=>({...row})),rejected:string[]=[]
+ if(rows.some(row=>!ids.includes(row.productId)))throw Error('cart_changed_refresh')
+ for(const [id,quantity] of Object.entries(intent.quantities)){
+  let row=rows.find(r=>r.productId===id);const product=catalog.find(p=>p.id===id)
+  if(!Number.isSafeInteger(quantity)||quantity<0||quantity>99)throw Error('invalid_cart_quantity')
+  if(!row){if(!quantity)continue;if(rows.length>=40)throw Error('cart_limit');row={productId:id,quantity:0};rows.push(row)}
+  if(quantity>row.quantity&&(!product||product.active===false||product.soldOut||!stockAllows(product,quantity))){rejected.push(id);continue}
+  row.quantity=quantity
+ }
+ const persisted=rows.filter(row=>row.quantity>0),result=cartDetailsFromQuote(persisted,catalog)
+ writeCloudCart(cfg.storeSlug,persisted)
+ return {result,version:intent.version,rejected}
 }

@@ -1,1 +1,8 @@
-{"navigationBarTitleText": "送达凭证", "usingComponents": {"proof-image": "/modules/shared/components/proof-image/proof-image"}}
+{
+  "navigationBarTitleText": "送达凭证",
+  "usingComponents": {
+    "proof-image": "/modules/shared/components/proof-image/proof-image"
+  },
+  "navigationBarBackgroundColor": "#5935cf",
+  "navigationBarTextStyle": "white"
+}

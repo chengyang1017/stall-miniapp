@@ -23,8 +23,8 @@ async function call(route,pool,path,token,body={},method='POST',key){
 // Hooks coordinate real locks or inject a real SQL error / lost transport result.
 // Every original query is forwarded unchanged, never answered with synthetic rows.
 function intercepted(pool,after){return {query:(s,a)=>pool.query(s,a),async connect(){const c=await pool.connect();return {query:async(s,a)=>{const r=await c.query(s,a);await after(String(s),a,c,r);return r},release:e=>c.release(e)}}}}
-async function seed(pool,{quantity=3,mode='finite'}={}){
- const id=randomUUID(),other=randomUUID(),merchant=randomUUID(),owner='p8owner:'+randomUUID(),customer='p8customer:'+randomUUID()
+export async function seed(pool,{quantity=3,mode='finite',customer='p8customer:'+randomUUID()}={}){
+ const id=randomUUID(),other=randomUUID(),merchant=randomUUID(),owner='p8owner:'+randomUUID()
  const slug='p8-'+id,otherSlug='p8-'+other,products=[randomUUID(),randomUUID()].sort(),tokens={}
  const c=await pool.connect()
  try{
@@ -50,7 +50,7 @@ async function seed(pool,{quantity=3,mode='finite'}={}){
    reservations:(await pool.query('SELECT * FROM inventory_reservations WHERE store_id=$1',[id])).rows,
    movements:(await pool.query('SELECT * FROM inventory_movements WHERE store_id=$1 ORDER BY created_at,id',[id])).rows,
    events:(await pool.query('SELECT * FROM order_status_events WHERE store_id=$1',[id])).rows})
-  return {id,other,slug,otherSlug,products,tokens,body,place,status,state}
+  return {id,other,slug,otherSlug,products,tokens,body,place,status,state,customer}
  }catch(e){await c.query('ROLLBACK').catch(()=>{});throw e}finally{c.release()}
 }
 const ok=(r,status=201)=>{assert.equal(r.status,status,JSON.stringify(r.body));return r.body.orderId}

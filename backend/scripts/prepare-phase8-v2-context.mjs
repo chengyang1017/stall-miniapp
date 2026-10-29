@@ -8,7 +8,9 @@ export async function prepare(env) {
   check(env.PHASE8_V2_BUILD_CONTEXT_AUTHORIZE==='PREPARE_NEW_CONTEXT_ONLY','context_not_authorized')
   const root=fileURLToPath(new URL('../../',import.meta.url)),target=env.PHASE8_V2_BUILD_CONTEXT
   check(typeof target==='string'&&isAbsolute(target)&&!resolve(target).toLowerCase().startsWith(resolve(root).toLowerCase())&&!target.toLowerCase().includes('stallphase8-test-'),'context_path_rejected')
-  const manifest=await sourceManifest(root)
+  const schemaProfile=env.PHASE8_V2_BUILD_SCHEMA||'baseline020'
+  check(['baseline020','staging021'].includes(schemaProfile),'context_schema_rejected')
+  const manifest=await sourceManifest(root,{schemaProfile})
   await mkdir(target) // exclusive: existing directory is never reused or cleared
   for(const f of manifest.files){const src=join(root,f.path);const s=await lstat(src);check(s.isFile()&&!s.isSymbolicLink(),'context_source_rejected');const dest=join(target,'payload',f.path);await mkdir(resolve(dest,'..'),{recursive:true});await writeFile(dest,normalized(await readFile(src)),{flag:'wx'})}
   const raw=Buffer.from(JSON.stringify(manifest));await writeFile(join(target,'payload','bundle.json'),raw,{flag:'wx'})

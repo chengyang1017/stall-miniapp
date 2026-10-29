@@ -1,0 +1,1 @@
+const fs=require('fs'),m=JSON.parse(fs.readFileSync('apps/build-targets.json'));for(const p of m.targets.merchant.pages){const s=fs.readFileSync('miniprogram/'+p+'.wxml','utf8');for(const x of s.matchAll(/style="[^"]*#[0-9a-f]{3,8}[^"]*"/gi))console.log(p,x[0])}

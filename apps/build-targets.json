@@ -37,7 +37,8 @@
     "pages/customer-tracking/customer-tracking": "customer",
     "pages/merchant-tracking/merchant-tracking": "merchant",
     "pages/customer-reviews/customer-reviews": "customer",
-    "pages/merchant-reviews/merchant-reviews": "merchant"
+    "pages/merchant-reviews/merchant-reviews": "merchant",
+    "pages/category/category": "customer"
   },
   "utils": {
     "addresses": "customer",
@@ -83,6 +84,7 @@
     "combined": {
       "pages": [
         "pages/index/index",
+        "pages/category/category",
         "pages/cloud-shop/cloud-shop",
         "pages/cloud-catalog/cloud-catalog",
         "pages/admin-backup/admin-backup",
@@ -125,6 +127,7 @@
     "customer": {
       "pages": [
         "pages/index/index",
+        "pages/category/category",
         "pages/product-detail/product-detail",
         "pages/cart/cart",
         "pages/checkout/checkout",

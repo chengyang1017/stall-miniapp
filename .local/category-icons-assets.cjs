@@ -1,0 +1,28 @@
+const fs=require('fs'),path=require('path');const entries=[
+['grid','全部','<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>'],
+['drink','饮料','<path d="M6 8h12l-2 12H8L6 8ZM5 5h14M13 8l2-6"/>'],
+['bowl','食物','<ellipse cx="12" cy="9" rx="9" ry="3"/><path d="M3 9c1 7 4 10 9 10s8-3 9-10M8 21h8"/>'],
+['snack','零食','<path d="M20 13a8 8 0 1 1-9-9c0 3 2 4 4 4 0 3 2 5 5 5Z"/><circle cx="7" cy="12" r=".7"/><circle cx="11" cy="17" r=".7"/><circle cx="15" cy="14" r=".7"/><circle cx="8" cy="7" r=".7"/>'],
+['bottle','日用品','<path d="M9 3h6v4l3 4v10H6V11l3-4V3ZM9 6h6M6 13h12M9 2h6"/>'],
+['apple','生鲜水果','<path d="M12 8c-8-6-12 6-6 12 2 2 4 0 6 0s4 2 6 0c6-6 2-18-6-12ZM12 8V4c0-2 2-3 4-3M12 6c-3 0-5-2-5-4 3 0 5 1 5 4Z"/>'],
+['snowflake','冷冻食品','<path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9 4l3 3 3-3M9 20l3-3 3 3M4 10l4-1-1-4M20 14l-4 1 1 4M4 14l4 1-1 4M20 10l-4-1 1-4"/>'],
+['cloche','熟食','<path d="M3 18h18M2 21h20M4 17a8 8 0 0 1 16 0M12 9V6M10 5h4"/>'],
+['cake','甜品','<path d="M4 11h16v10H4V11ZM4 15c3-3 5 3 8 0s5 3 8 0M12 11V7M10 5c0-2 2-4 2-4s2 2 2 4a2 2 0 0 1-4 0Z"/>'],
+['noodle','面食','<path d="M3 13h18c-1 5-4 8-9 8s-8-3-9-8ZM7 13V7c0-3 3-3 3 0v6M13 13V8c0-3 3-3 3 0v5M14 2l8 5M13 5l8 5"/>'],
+['rice','米饭主食','<path d="M3 13h18c-1 5-4 8-9 8s-8-3-9-8ZM5 13a4 4 0 0 1 2-6 4 4 0 0 1 7-2 4 4 0 0 1 5 5l1 3M8 10l1 1M12 7l1 1M15 11l1-1"/>'],
+['lunchbox','便当','<rect x="3" y="6" width="18" height="15" rx="3"/><path d="M8 6V3h8v3M13 6v15M3 13h10M16 10h2M16 15h2"/>'],
+['fries','小吃','<path d="M5 11h14l-2 11H7L5 11ZM7 11 6 3h3l1 8M12 11V2h3v9M17 11l1-7h3l-2 7M10 16h4"/>'],
+['sunrise','早餐','<path d="M2 17h20M4 21h16M6 17a6 6 0 0 1 12 0M12 2v4M3 7l3 3M21 7l-3 3M1 12l3 1M23 12l-3 1"/>'],
+['coffee','咖啡','<path d="M4 9h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9ZM17 10h2a3 3 0 0 1 0 6h-2M8 6c-3-2 3-3 0-5M13 6c-3-2 3-3 0-5"/>'],
+['bubble-tea','奶茶','<path d="M5 8h14l-2 14H7L5 8ZM4 5h16M12 8l4-7"/><circle cx="10" cy="16" r="1"/><circle cx="14" cy="18" r="1"/><circle cx="14" cy="13" r="1"/>'],
+['bread','烘焙','<path d="M6 10a4 4 0 0 1-2-7c3-2 13-2 16 0a4 4 0 0 1-2 7v11H6V10ZM9 6v3M13 5v3M6 17h12"/>'],
+['seasoning','调味品','<path d="M8 3h8v5l3 4v9H5v-9l3-4V3ZM8 7h8M5 14h14M10 3V1M14 3V1M10 17h4"/>'],
+['wine','酒水','<path d="M7 2h10l1 7a6 6 0 0 1-12 0l1-7ZM6 9h12M12 15v7M8 22h8"/>'],
+['more','其他','<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>']];
+fs.mkdirSync('miniprogram/assets/category-icons',{recursive:true});
+for(const [key,,body]of entries)for(const [suffix,color]of [['','#8b5ad8'],['-white','#ffffff']])fs.writeFileSync('miniprogram/assets/category-icons/'+key+suffix+'.svg',`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${body}</svg>\n`);
+let source=`// Built-in vector assets only. Never accept arbitrary image URLs as icon keys.\nexport const CATEGORY_ICONS = [\n`+entries.map(([key,label])=>`  {key:'${key}',label:'${label}',path:'/assets/category-icons/${key}.svg',activePath:'/assets/category-icons/${key}-white.svg'}`).join(',\n')+`\n] as const\nexport type CategoryIconKey = typeof CATEGORY_ICONS[number]['key']\nexport function validCategoryIconKey(value:unknown):value is CategoryIconKey {return typeof value==='string'&&CATEGORY_ICONS.some(icon=>icon.key===value)}\n`;
+source+=`const NAME_ICONS:Array<[RegExp,CategoryIconKey]>=[[/奶茶|珍珠|bubble.?tea|boba/i,'bubble-tea'],[/咖啡|coffee/i,'coffee'],[/冷冻|冰冻|frozen|ice.?cream/i,'snowflake'],[/水果|生鲜|果蔬|fruit|fresh/i,'apple'],[/甜品|蛋糕|dessert|cake/i,'cake'],[/早餐|早饭|breakfast/i,'sunrise'],[/面食|面条|粉面|noodle|pasta/i,'noodle'],[/便当|饭盒|lunch.?box|bento/i,'lunchbox'],[/米饭|主食|米食|rice/i,'rice'],[/烘焙|面包|糕点|bread|bakery/i,'bread'],[/调味|酱料|seasoning|sauce/i,'seasoning'],[/酒水|啤酒|葡萄酒|wine|beer|alcohol/i,'wine'],[/饮料|饮品|果汁|drink|beverage|juice/i,'drink'],[/零食|饼干|snack|cookie/i,'snack'],[/日用|清洁|生活|household|daily/i,'bottle'],[/熟食|热食|cooked|deli/i,'cloche'],[/小吃|炸物|fries|street.?food/i,'fries'],[/食物|食品|餐食|food|meal/i,'bowl'],[/^全部|^all$/i,'grid'],[/其他|其它|other|misc/i,'more']]\nexport function resolveCategoryIcon(category:{id?:string;name?:string;iconKey?:unknown}):CategoryIconKey {\n  if(validCategoryIconKey(category.iconKey))return category.iconKey\n  const match=NAME_ICONS.find(([pattern])=>pattern.test(category.name||''));if(match)return match[1]\n  const seed=category.id||category.name||'category';let hash=0;for(let i=0;i<seed.length;i++)hash=(hash*31+seed.charCodeAt(i))>>>0\n  return CATEGORY_ICONS[1+hash%(CATEGORY_ICONS.length-1)].key\n}\nexport function categoryIconView(category:{id?:string;name?:string;iconKey?:unknown}) {\n  const resolvedIconKey=resolveCategoryIcon(category),icon=CATEGORY_ICONS.find(item=>item.key===resolvedIconKey)!\n  return {resolvedIconKey,iconPath:icon.path,iconActivePath:icon.activePath,iconLabel:icon.label}\n}\n`;
+fs.writeFileSync('miniprogram/modules/shared/domain/categoryIcons.ts',source);
+const p='miniprogram/modules/shared/domain/catalog.ts';let s=fs.readFileSync(p,'utf8');s="import type { CategoryIconKey } from './categoryIcons'\n"+s.replace('id:string;name:string }','id:string;name:string;iconKey?:CategoryIconKey|null }');fs.writeFileSync(p,s);
+const c='miniprogram/modules/shared/api/catalog.ts';s=fs.readFileSync(c,'utf8').replace("// Public catalog", "import type { Category } from '../domain/catalog'\n// Public catalog").replace('categories:Array<{id:string;name:string}>','categories:Category[]');fs.writeFileSync(c,s);

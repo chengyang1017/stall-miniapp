@@ -1,0 +1,4 @@
+const fs=require('fs'),raw=fs.readFileSync('.local/append-detail-delivery.cjs','utf8'),tick=String.fromCharCode(96),slash=String.fromCharCode(92);
+function extract(name,end){const marker='const '+name+'='+tick,start=raw.indexOf(marker)+marker.length,stop=raw.indexOf(end,start);if(start<marker.length||stop<start)throw Error('Document section not found');return raw.slice(start,stop).split(slash+tick).join(tick).split(slash+slash).join(slash)}
+const detail=extract('detail','\n'+tick+';\nfs.appendFileSync'),record=extract('record','\n'+tick+';\nfs.appendFileSync');
+fs.appendFileSync('docs/CUSTOMER_UI_REDESIGN.md',detail);fs.appendFileSync('docs/testing/TEST_HISTORY.md',record);fs.appendFileSync('docs/testing/TEST_STATUS.md',record);console.log('Appended current delivery/test evidence to three existing documents.');

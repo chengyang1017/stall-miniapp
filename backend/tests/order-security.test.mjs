@@ -47,10 +47,11 @@ test('unauthenticated checkout is rejected before touching DB', async () => {
   assert.equal(db.calls.length, 0)
 })
 
-test('checkout does not support GET', async () => {
+test('checkout delegates GET to authenticated customer order read route', async () => {
   const db = pool(), response = res()
-  await checkoutRoute(req('GET'), response, url(`/v1/stores/${STORE}/orders`), db)
-  assert.equal(response.statusCode, 405)
+  assert.equal(await checkoutRoute(req('GET'), response, url(`/v1/stores/${STORE}/orders`), db),false)
+  await orderWorkflowRoute(req('GET'),response,url(`/v1/stores/${STORE}/orders`),db)
+  assert.equal(response.statusCode,401)
   assert.equal(db.calls.length, 0)
 })
 
@@ -111,12 +112,12 @@ test('unpaid delivering order cannot be marked delivered', async () => {
     },
     release() {}
   }
-  const db = pool([merchantAuth, {pattern:/FROM merchant_members/,rows:[{id:'store-1',slug:STORE}]}])
+  const db = pool([merchantAuth, {pattern:/FROM merchant_members/,rows:[{id:'store-1',slug:STORE,role:'owner'}]}])
   db.connect = async () => client
   const response = res()
   await orderWorkflowRoute(req('POST', true, {status:'delivered',proofKey:'delivery-proofs/validproofkey123'}), response, url(`/v1/merchant/stores/${STORE}/orders/${ID}/status`), db)
   assert.equal(response.statusCode, 409)
-  assert.equal(response.body.error, 'payment_not_confirmed')
+  assert.equal(response.body.error, 'use_verified_proof_completion_endpoint')
   assert.equal(calls.some(s => /^UPDATE orders/.test(s)), false)
-  assert.ok(calls.includes('ROLLBACK'))
+  assert.equal(calls.length,0,'generic delivered must reject before opening a write transaction')
 })

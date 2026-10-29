@@ -1,23 +1,23 @@
-<view class="page"><view wx:if="{{presentationError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{presentationError}}</view>
+<view class="customer-hero"><view class="hero-title">购物车 ({{totalCount}})</view><view class="hero-subtitle">已选 {{selectedCount}} 件商品</view></view><view class="page"><view wx:if="{{presentationError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{presentationError}}</view>
   <!-- CART_CLEAR_V1 -->
   <view class="cart-clear-bar" wx:if="{{totalCount > 0}}">
-    <text class="cart-clear-hint">已选购 {{totalCount}} 件商品</text>
+    <view class="cart-select-all" bindtap="toggleAll"><text class="selection-check {{allSelected ? 'checked' : ''}}">{{allSelected ? '✓' : ''}}</text>全选</view><text class="cart-clear-hint">清空购物车</text>
     <view class="cart-clear-action" bindtap="clearCartConfirmed" aria-label="清空购物车">
       <image class="cart-clear-trash-img" src="/assets/cart-trash-red.png" mode="aspectFit" />
     </view>
   </view>
 
-  <view wx:if="{{cloudMode && cloudLoading}}" class="empty">正在读取云端商品…</view>
-  <view wx:if="{{quantityPending || quantityError || (cloudMode && amountState !== 'confirmed')}}" class="empty">{{quantityError || (quantityPending ? '数量校验中，金额待确认' : '当前价格未确认，请刷新核对')}}</view>
-  <view wx:if="{{cloudMode && cloudError}}" class="empty">{{cloudError}}</view>
+  <view class="cart-sync-status" aria-live="polite"><text>{{quantityPending ? '数量校验中，金额待确认' : cloudLoading ? '正在同步商品，已有内容保留' : deliveryLoading ? '正在核对配送规则' : (cloudMode && amountState !== 'confirmed') ? '价格待确认，请刷新核对' : ''}}</text></view>
+  <view wx:if="{{cloudMode && quantityError}}" class="cart-sync-error">{{quantityError}}</view>
+  <view wx:if="{{cloudMode && cloudError}}" class="cart-sync-error">{{cloudError}}</view>
+  <view wx:if="{{cloudMode && deliveryError}}" class="cart-sync-error">{{deliveryError}}</view>
   <button wx:if="{{cloudMode && (cloudError || quantityError)}}" size="mini" bindtap="refresh" disabled="{{quantityPending || cloudLoading}}">重新核对商品</button>
-  <view wx:if="{{cloudMode && deliveryError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{deliveryError}}</view>
-  <view wx:if="{{cloudMode && deliveryLoading}}" style="padding:16rpx;color:#777;font-size:24rpx">正在核对配送规则，暂不能结算…</view>
   <view wx:if="{{items.length === 0 && !cloudLoading && !cloudError}}" class="empty">购物车还是空的</view>
 
-  <view wx:for="{{items}}" wx:key="productId" class="cart-item">
+  <view wx:for="{{items}}" wx:key="productId" class="cart-item" data-trace-list="items" data-trace-key="{{item.productId}}">
+    <render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="cart" list-name="items" row-key="{{item.productId}}" />
     <!-- CART_THUMB_AND_FOOTER_V1 -->
-    <view class="cart-image-slot">
+    <view class="selection-check {{selectionMap[item.productId] !== false ? 'checked' : ''}}" data-id="{{item.productId}}" bindtap="toggleSelection">{{selectionMap[item.productId] !== false ? '✓' : ''}}</view><view class="cart-image-slot">
       <image wx:if="{{item.imageUrl}}" class="cart-product-image" src="{{item.imageUrl}}" mode="aspectFill" />
       <!-- UNIFIED_PLACEHOLDER_THUMB_V1 -->
 <view wx:else class="stall-placeholder-choice-shell">
@@ -79,11 +79,11 @@
 </view>
     </view>
     <view class="cart-item-content">
-    <view class="product-name">{{item.name}}</view>
+    <view class="cart-title-line"><view class="product-name">{{item.name}}</view><view class="remove-item" data-id="{{item.productId}}" bindtap="removeItem" aria-label="移除商品">×</view></view>
     <view wx:if="{{item.inventoryText}}" style="font-size:22rpx;color:{{item.stockInsufficient ? '#b33' : '#777'}}">{{item.inventoryText}}</view>
     <view class="item-bottom">
       <view>
-        <view class="price">{{cloudMode && (quantityPending || cloudLoading || amountState !== 'confirmed') ? '上次单价 ' : ''}}¥{{item.priceText}}</view>
+        <view class="price">{{cloudMode ? '参考单价 ' : ''}}¥{{item.priceText}}</view>
         <view class="subtotal">小计：¥{{item.subtotalText}}</view>
       </view>
       <view class="quantity">
@@ -95,14 +95,16 @@
     </view>
   </view>
 
-  <view class="footer cart-footer-compact">
-    <view wx:if="{{cloudMode && deliveryInfo}}" style="font-size:23rpx;color:#66776b;margin-bottom:12rpx;">{{deliveryInfo}}<navigator url="/pages/addresses/addresses">选择或编辑收货地址 ›</navigator></view>
-    <view wx:if="{{cloudMode}}" style="font-size:23rpx;color:#777">商品合计{{quantityPending || amountState !== 'confirmed' ? '待确认' : cloudLoading ? '（上次读取，正在刷新）' : '（以结算及下单校验为准）'}}</view>
-    <view class="cart-footer-summary">
-      <view class="cart-footer-count">共 {{totalCount}} 件商品</view>
-      <view class="total">¥{{totalText}}</view>
+<view class="surface cart-services"><view class="service-row" bindtap="couponInfo"><text class="service-icon">♧</text><text>优惠券</text><text class="value">暂未开通 ›</text></view><navigator class="service-row" url="/pages/addresses/addresses"><text class="service-icon">♧</text><text>配送方式</text><text class="value">按地址核对 ›</text></navigator><view class="cart-delivery-note">{{deliveryError || deliveryInfo}}</view><view class="service-row"><text class="service-icon">♧</text><text>订单备注</text><input maxlength="200" value="{{orderNote}}" bindinput="updateCartNote" placeholder="口味、配送等要求"/></view></view><view class="surface cart-breakdown"><view class="section-heading">费用明细</view><view class="service-row"><text>已选商品（{{selectedCount}} 件）</text><text class="value">{{quantityPending || amountState !== 'confirmed' ? '金额待确认' : '¥' + selectedTotalText}}</text></view><view class="service-row"><text>配送费</text><text class="value">结算时按地址核对</text></view><view class="service-row"><text>优惠券</text><text class="value">未使用</text></view><view class="cart-pay-summary"><text>商品合计</text><text>{{quantityPending || amountState !== 'confirmed' ? '待确认' : '¥' + selectedTotalText}}</text></view><view class="notice">应付总额以结算页及服务器下单校验为准</view></view>
+  <view class="footer cart-footer-compact" data-trace-list="footer" data-trace-key="cart-footer">
+    <render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="cart" list-name="footer" row-key="cart-footer" />
+    <view class="cart-footer-main">
+      <view class="cart-footer-summary">
+        <view class="cart-footer-count">已选 <text>{{selectedCount}}</text> 件<text class="quote-state">{{cloudMode && (quantityPending || amountState !== 'confirmed') ? ' · 待更新' : ''}}</text></view>
+        <view class="total">¥<text>{{quantityPending || amountState !== 'confirmed' ? (selectedConfirmedTotalText || (confirmedTotalText || totalText)) : selectedTotalText}}</text></view>
+      </view>
+      <button class="cart-checkout" data-trace-list="checkout" data-trace-key="cart-checkout" type="primary" disabled="{{selectedCount === 0 || !selectedMinimumReached || !minimumReached || (cloudMode && (amountState !== 'confirmed' || quantityPending || cloudLoading || deliveryLoading || cloudError || deliveryError || !cloudDeliveryReady))}}" bindtap="checkout">去结算</button>
     </view>
-    <view wx:if="{{minimumOrderText && minimumOrderText !== '0.00'}}" style="font-size:24rpx;color:#666;margin-bottom:12rpx;">起送 ¥{{minimumOrderText}} <text wx:if="{{!minimumReached}}">· 还差 ¥{{minimumRemainingText}}</text><text wx:else> · 已达起送金额</text></view>
-    <button type="primary" disabled="{{totalCount === 0 || !minimumReached || (cloudMode && (quantityPending || cloudLoading || deliveryLoading || cloudError || deliveryError || !cloudDeliveryReady))}}" bindtap="checkout">去结算</button>
+    <view class="cart-footer-error" aria-live="polite" hidden="{{!(quantityError || cloudError || deliveryError || (selectedCount > 0 && !selectedMinimumReached))}}">{{quantityError ? '数量校验失败，请重试' : cloudError ? '商品金额未确认，请重试' : deliveryError ? '当前暂不可配送' : '未达到起送金额'}}</view>
   </view>
 </view>

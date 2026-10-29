@@ -9,13 +9,19 @@ export const PURPOSES=Object.freeze({bootstrap:{role:'observer',scope:'bootstrap
   initialize:{role:'migrator',scope:'manifest-001-020',state:'bootstrap'},ready:{role:'observer',scope:'ready-select',state:'ready'},
   fixture:{role:'app',scope:'fixture-connections',state:'ready'},
   business:{role:'app',scope:'business-consistency-v1',state:'ready'}})
+export const PURPOSES021=Object.freeze({upgrade021:{role:'migrator',scope:'upgrade-020-to-021',state:'ready'},
+ ready021:{role:'observer',scope:'schema-acl-021-select',state:'ready021'},
+ business021:{role:'app',scope:'business-consistency-021',state:'ready021'},
+ payments021:{role:'app',scope:'payments-021-eleven-cases',state:'ready021'}})
+export const purposeSpec=purpose=>Object.hasOwn(PURPOSES,purpose)?PURPOSES[purpose]:Object.hasOwn(PURPOSES021,purpose)?PURPOSES021[purpose]:undefined
 export const check=(value,code)=>requireSafe(value,'phase8_v2_'+code)
 export function images(pg,runner) {
   const database=approvedImage(pg)
   check(runner?.approved===true&&runner.repository===V2.runnerRepository&&DIGEST.test(runner.digest||'')&&DIGEST.test(runner.imageId||'')&&
     HEX.test(runner.bundleSha256||'')&&typeof runner.reviewedBy==='string'&&runner.reviewedBy.trim()&&
     Number.isFinite(Date.parse(runner.reviewedAt))&&/^node@sha256:[a-f0-9]{64}$/.test(runner.baseReference||''),'image_not_approved')
-  return {database,runner:{reference:V2.runnerRepository+'@'+runner.digest,imageId:runner.imageId,bundleSha256:runner.bundleSha256}}
+  check(runner.schemaProfile===undefined||['baseline020','staging021'].includes(runner.schemaProfile),'image_schema_rejected')
+  return {database,runner:{reference:V2.runnerRepository+'@'+runner.digest,imageId:runner.imageId,bundleSha256:runner.bundleSha256,schemaProfile:runner.schemaProfile||'baseline020'}}
 }
 export function configuration(env,action,pg,runner) {
   check(env.PHASE8_V2_PROFILE===V2.profile,'profile_rejected')
@@ -24,13 +30,18 @@ export function configuration(env,action,pg,runner) {
   if(action==='recover-created')check(env.PHASE8_V2_RECOVER_CREATED==='START_PINNED_CREATED_ONCE','recovery_not_authorized')
   check(UUID.test(env.PHASE8_V2_INSTANCE||'')&&env.PHASE8_V2_INSTANCE!=='43805bf5-1391-4d3f-b8ce-e3bfa9448d48','instance_rejected')
   if(action==='run') {
-    check(UUID.test(env.PHASE8_V2_RUN_ID||'')&&Object.hasOwn(PURPOSES,env.PHASE8_V2_PURPOSE||''),'purpose_rejected')
+    check(UUID.test(env.PHASE8_V2_RUN_ID||'')&&!!purposeSpec(env.PHASE8_V2_PURPOSE),'purpose_rejected')
+    if(Object.hasOwn(PURPOSES021,env.PHASE8_V2_PURPOSE)){
+      check(env.PHASE8_V2_SCHEMA==='EXPLICIT_021_ONLY'&&env.PHASE8_V2_021_AUTHORIZE===({upgrade021:'UPGRADE_021_ATOMIC_ONCE',ready021:'VERIFY_021_READ_ONLY',business021:'RUN_EXISTING_26_ON_021',payments021:'RUN_11_PAYMENT_CASES_ON_021'})[env.PHASE8_V2_PURPOSE], 'schema021_not_authorized')
+    }
     if(env.PHASE8_V2_PURPOSE==='initialize')check(env.PHASE8_V2_MIGRATE==='INITIALIZE_NEW_V2_ONCE','migration_not_authorized')
     if(env.PHASE8_V2_PURPOSE==='fixture')check(env.PHASE8_V2_TEST==='V2_FIXTURE_ONLY','fixture_not_authorized')
     if(env.PHASE8_V2_PURPOSE==='business')check(env.PHASE8_V2_TEST==='V2_BUSINESS_TESTS_ONLY','business_not_authorized')
   }
   check(!['DATABASE_URL','PGHOST','PGPORT','PGUSER','PGPASSWORD','PGSERVICE','PGOPTIONS'].some(k=>env[k]),'connection_override_rejected')
-  return {profile:V2.profile,instance:env.PHASE8_V2_INSTANCE,runId:env.PHASE8_V2_RUN_ID,purpose:env.PHASE8_V2_PURPOSE,images:images(pg,runner)}
+  const selectedImages=images(pg,runner)
+  if(action==='run')check(selectedImages.runner.schemaProfile===(Object.hasOwn(PURPOSES021,env.PHASE8_V2_PURPOSE)?'staging021':'baseline020'),'image_schema_rejected')
+  return {profile:V2.profile,instance:env.PHASE8_V2_INSTANCE,runId:env.PHASE8_V2_RUN_ID,purpose:env.PHASE8_V2_PURPOSE,images:selectedImages}
 }
 export function receipt(r,c) {
   check(r?.version===2&&r.profile===V2.profile&&r.status==='created_verified'&&r.project===V2.project&&r.instance===c.instance&&
@@ -101,7 +112,8 @@ export function runnerIdentity(r,c,dbReceipt,paths,{running=false}={}) {
   check(vars.size===(r.Config.Env||[]).length&&/^\d+\.\d+\.\d+$/.test(vars.get('NODE_VERSION')||'')&&Number(vars.get('NODE_VERSION').split('.')[0])>=20,'runner_node_version_rejected')
   check(Object.keys(r.HostConfig.Tmpfs||{}).join()==='/tmp'&&r.HostConfig.Tmpfs['/tmp']==='rw,noexec,nosuid,size=16777216','runner_tmpfs_rejected')
   const expected=[['/run/phase8-grant',paths.grant,true],['/run/phase8-claim',paths.claim,false],['/run/secrets/phase8_role',paths.secret,true]]
-  check(r.Mounts?.length===3&&expected.every(([dest,src,ro])=>r.Mounts.filter(m=>m.Destination===dest&&sameSource(m.Source,src)&&m.Type==='bind'&&m.RW===!ro).length===1),'runner_mount_rejected')
+  if(c.purpose==='payments021')expected.push(['/run/secrets/phase8_migrator',paths.migratorSecret,true],['/run/secrets/phase8_authorizer',paths.authorizerSecret,true])
+  check(r.Mounts?.length===expected.length&&expected.every(([dest,src,ro])=>r.Mounts.filter(m=>m.Destination===dest&&sameSource(m.Source,src)&&m.Type==='bind'&&m.RW===!ro).length===1),'runner_mount_rejected')
 }
 export function sameSource(a,b) {
   const norm=s=>{if(typeof s!=='string')return '';s=s.replaceAll('\\','/').replace(/^\/run\/desktop\/mnt\/host\/([a-z])\//i,'$1:/');return /^[a-z]:\//i.test(s)?s.toLowerCase():s}

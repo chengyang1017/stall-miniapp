@@ -1,0 +1,1 @@
+const fs=require('fs');for(const p of ['docs/testing/TEST_HISTORY.md','docs/testing/TEST_STATUS.md']){const source=fs.readFileSync(p,'utf8');if(!source.includes('分类图标选择器中断后续做（本次结果）'))throw Error('Missing current record');fs.writeFileSync(p,source.replace(/(?:\r?\n){2,}$/,'\n'))}

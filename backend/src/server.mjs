@@ -1,4 +1,6 @@
 import { storeEntryRoute } from './storeEntry.mjs'
+import { stagingPaymentRoute } from './stagingPayments.mjs'
+import {runtimeDeployment,parsedDatabase} from './stagingDeployment.mjs'
 import { productReviewRoute } from './productReviews.mjs'
 import { deliveryTrackingRoute,startTrackingRetention } from './deliveryTracking.mjs'
 import { pageScope,pageQuery,pageResult,cursorTime } from './customerPagination.mjs'
@@ -26,9 +28,11 @@ const host = process.env.HOST || '127.0.0.1'
 const connectionString = process.env.DATABASE_URL
 if (!connectionString) throw new Error('DATABASE_URL is required')
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid PORT')
+const approvedStaging=runtimeDeployment()
+if(process.env.STAGING_SIMULATED_PAYMENTS&&!approvedStaging)console.warn('Staging simulation disabled: deployment identity not approved')
 const pool = new Pool({
-  connectionString,
-  ssl: process.env.PG_SSL === 'true' ? { rejectUnauthorized: true } : undefined,
+  ...(approvedStaging?parsedDatabase(connectionString,approvedStaging):{connectionString,
+  ssl: process.env.PG_SSL === 'true' ? { rejectUnauthorized: true } : undefined}),
   max: 10,
   connectionTimeoutMillis: 5000,
   query_timeout: 5000
@@ -43,6 +47,7 @@ const server = http.createServer(async (req, res) => {
   try { url = new URL(req.url || '/', 'http://localhost') }
   catch { return reply(res, 400, { error: 'invalid_url' }) }
   try {
+    if (await stagingPaymentRoute(req,res,url,pool)) return
     if (await productReviewRoute(req,res,url,pool)) return
     if (await deliveryTrackingRoute(req,res,url,pool)) return
     if (await storeEntryRoute(req,res,url,pool)) return
@@ -114,7 +119,7 @@ const server = http.createServer(async (req, res) => {
         ORDER BY p.created_at DESC, p.id DESC LIMIT $7
       `, [match[1],ids,search,category,page.anchor?.[1]??null,page.anchor?.[2]??null,ids?40:page.limit+1,discount==='1'])
       const result=pageResult(rows,ids?40:page.limit,scope)
-      const categories=ids?{rows:[]}:await pool.query(`SELECT c.id,c.name FROM categories c JOIN stores s ON s.id=c.store_id WHERE s.slug=$1 AND s.is_active=true ORDER BY c.sort_order,c.name,c.id LIMIT 1001`,[match[1]])
+      const categories=ids?{rows:[]}:await pool.query(`SELECT c.id,c.name,to_jsonb(c)->>'icon_key' AS "iconKey" FROM categories c JOIN stores s ON s.id=c.store_id WHERE s.slug=$1 AND s.is_active=true ORDER BY c.sort_order,c.name,c.id LIMIT 1001`,[match[1]])
       if(categories.rows.length>1000)return reply(res,413,{error:'category_limit'})
       const imageBase = (process.env.IMAGE_PUBLIC_BASE_URL || '').replace(/\/+$/, '')
       return reply(res, 200, { hasMore:result.hasMore,nextCursor:result.nextCursor,categories:categories.rows,products: result.items.map(p => ({ ...p,
