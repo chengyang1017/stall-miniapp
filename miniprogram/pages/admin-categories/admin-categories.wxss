@@ -40,7 +40,3 @@ page { background: var(--brand-background); }
 .icon-preview-line{display:flex;align-items:center;gap:12rpx;margin:20rpx 0;font-size:26rpx;color:#614676}.icon-draft-label{margin-left:auto;color:#a38bb2;font-size:21rpx}
 .icon-auto-choice{padding:16rpx;border:2rpx solid #ece5f5;border-radius:14rpx;margin-bottom:18rpx;font-size:23rpx;color:#9982ae}.icon-auto-choice.selected,.icon-option.selected{border-color:#8850dc;background:#f3eaff;color:#7137db}
 .icon-options-scroll{height:560rpx;max-height:55vh}.icon-options-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14rpx;padding:2rpx}.icon-option{position:relative;min-width:0;box-sizing:border-box;border:2rpx solid #eee7f7;border-radius:16rpx;padding:16rpx 4rpx 12rpx;text-align:center;color:#8c769f;font-size:22rpx}.icon-option image{width:42rpx;height:42rpx;display:block;margin:0 auto 8rpx}.icon-option-check{position:absolute;top:3rpx;right:9rpx;font-size:20rpx;color:#7137db}
-
-/* Reliable glyph fallback: the mini-program image component does not render local SVG consistently. */
-.icon-glyph{display:inline-flex;align-items:center;justify-content:center;min-width:38rpx;height:42rpx;line-height:42rpx;font-size:31rpx;text-align:center;vertical-align:middle}
-.category-row-icon .icon-glyph{font-size:30rpx}.icon-option .icon-glyph{display:flex;width:100%;height:47rpx;line-height:47rpx;font-size:37rpx;margin-bottom:7rpx}
