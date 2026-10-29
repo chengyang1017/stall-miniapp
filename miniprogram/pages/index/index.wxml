@@ -77,9 +77,9 @@
 <scroll-view scroll-x class="category-scroll">
 <view class="category-track">
 <view class="category {{selectedCategory === 'all' ? 'active' : ''}}" data-id="all" bindtap="chooseCategory">
-<text class="category-icon">{{allCategoryIcon.iconGlyph}}</text>全部</view>
+<image class="category-icon" src="{{selectedCategory === 'all' ? allCategoryIcon.iconActivePath : allCategoryIcon.iconPath}}" mode="aspectFit"/>全部</view>
 <view wx:for="{{categories}}" wx:key="id" class="category {{selectedCategory === item.id ? 'active' : ''}}" data-id="{{item.id}}" bindtap="chooseCategory">
-<text class="category-icon">{{item.iconGlyph}}</text>{{item.name}}</view>
+<image class="category-icon" src="{{selectedCategory === item.id ? item.iconActivePath : item.iconPath}}" mode="aspectFit"/>{{item.name}}</view>
 </view>
 </scroll-view>
 <view class="section-heading">
