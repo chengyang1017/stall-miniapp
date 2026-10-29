@@ -15,7 +15,7 @@
     "test:merchant-permissions:dev": "node scripts/test-merchant-permissions-dev.mjs",
     "test:tenant-catalog:dev": "node scripts/test-tenant-catalog-dev.mjs",
     "dev:ui-session": "node scripts/issue-ui-session-dev.mjs",
-    "test:payment": "node --test tests/paymentGateway.test.mjs tests/orderPaymentPreparation.test.mjs tests/paymentSettlement.test.mjs"
+    "test:payment": "node --test tests/paymentGateway.test.mjs tests/orderPaymentPreparation.test.mjs tests/paymentSettlement.test.mjs tests/paymentSettlementTransaction.test.mjs"
   },
   "dependencies": {
     "pg": "^8.13.0",
