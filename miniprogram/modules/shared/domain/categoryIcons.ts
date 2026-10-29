@@ -19,16 +19,37 @@ export const CATEGORY_ICONS = [
   {key:'bread',label:'烘焙',path:'/assets/category-icons/bread.svg',activePath:'/assets/category-icons/bread-white.svg'},
   {key:'seasoning',label:'调味品',path:'/assets/category-icons/seasoning.svg',activePath:'/assets/category-icons/seasoning-white.svg'},
   {key:'wine',label:'酒水',path:'/assets/category-icons/wine.svg',activePath:'/assets/category-icons/wine-white.svg'},
-  {key:'more',label:'其他',path:'/assets/category-icons/more.svg',activePath:'/assets/category-icons/more-white.svg'}
+  {key:'more',label:'其他',path:'/assets/category-icons/more.svg',activePath:'/assets/category-icons/more-white.svg'},
+  {key:'shirt',label:'服装',path:'/assets/category-icons/shirt.svg',activePath:'/assets/category-icons/shirt-white.svg'},
+  {key:'shoes',label:'鞋靴',path:'/assets/category-icons/shoes.svg',activePath:'/assets/category-icons/shoes-white.svg'},
+  {key:'bag',label:'箱包',path:'/assets/category-icons/bag.svg',activePath:'/assets/category-icons/bag-white.svg'},
+  {key:'phone',label:'手机数码',path:'/assets/category-icons/phone.svg',activePath:'/assets/category-icons/phone-white.svg'},
+  {key:'laptop',label:'电脑办公',path:'/assets/category-icons/laptop.svg',activePath:'/assets/category-icons/laptop-white.svg'},
+  {key:'headphones',label:'影音设备',path:'/assets/category-icons/headphones.svg',activePath:'/assets/category-icons/headphones-white.svg'},
+  {key:'beauty',label:'美妆护肤',path:'/assets/category-icons/beauty.svg',activePath:'/assets/category-icons/beauty-white.svg'},
+  {key:'jewelry',label:'珠宝饰品',path:'/assets/category-icons/jewelry.svg',activePath:'/assets/category-icons/jewelry-white.svg'},
+  {key:'baby',label:'母婴用品',path:'/assets/category-icons/baby.svg',activePath:'/assets/category-icons/baby-white.svg'},
+  {key:'toys',label:'玩具模型',path:'/assets/category-icons/toys.svg',activePath:'/assets/category-icons/toys-white.svg'},
+  {key:'books',label:'图书读物',path:'/assets/category-icons/books.svg',activePath:'/assets/category-icons/books-white.svg'},
+  {key:'stationery',label:'文具用品',path:'/assets/category-icons/stationery.svg',activePath:'/assets/category-icons/stationery-white.svg'},
+  {key:'furniture',label:'家具家居',path:'/assets/category-icons/furniture.svg',activePath:'/assets/category-icons/furniture-white.svg'},
+  {key:'lamp',label:'灯具照明',path:'/assets/category-icons/lamp.svg',activePath:'/assets/category-icons/lamp-white.svg'},
+  {key:'tools',label:'五金工具',path:'/assets/category-icons/tools.svg',activePath:'/assets/category-icons/tools-white.svg'},
+  {key:'garden',label:'花卉园艺',path:'/assets/category-icons/garden.svg',activePath:'/assets/category-icons/garden-white.svg'},
+  {key:'pets',label:'宠物用品',path:'/assets/category-icons/pets.svg',activePath:'/assets/category-icons/pets-white.svg'},
+  {key:'sports',label:'运动健身',path:'/assets/category-icons/sports.svg',activePath:'/assets/category-icons/sports-white.svg'},
+  {key:'outdoor',label:'户外旅行',path:'/assets/category-icons/outdoor.svg',activePath:'/assets/category-icons/outdoor-white.svg'},
+  {key:'auto',label:'汽车用品',path:'/assets/category-icons/auto.svg',activePath:'/assets/category-icons/auto-white.svg'},
+  {key:'medicine',label:'健康护理',path:'/assets/category-icons/medicine.svg',activePath:'/assets/category-icons/medicine-white.svg'},
+  {key:'gift',label:'礼品包装',path:'/assets/category-icons/gift.svg',activePath:'/assets/category-icons/gift-white.svg'},
+  {key:'craft',label:'手工艺术',path:'/assets/category-icons/craft.svg',activePath:'/assets/category-icons/craft-white.svg'},
+  {key:'digital',label:'虚拟商品',path:'/assets/category-icons/digital.svg',activePath:'/assets/category-icons/digital-white.svg'}
 ] as const
 export type CategoryIconKey = typeof CATEGORY_ICONS[number]['key']
 export function validCategoryIconKey(value:unknown):value is CategoryIconKey {return typeof value==='string'&&CATEGORY_ICONS.some(icon=>icon.key===value)}
-const NAME_ICONS:Array<[RegExp,CategoryIconKey]>=[[/奶茶|珍珠|bubble.?tea|boba/i,'bubble-tea'],[/咖啡|coffee/i,'coffee'],[/冷冻|冰冻|frozen|ice.?cream/i,'snowflake'],[/水果|生鲜|果蔬|fruit|fresh/i,'apple'],[/甜品|蛋糕|dessert|cake/i,'cake'],[/早餐|早饭|breakfast/i,'sunrise'],[/面食|面条|粉面|noodle|pasta/i,'noodle'],[/便当|饭盒|lunch.?box|bento/i,'lunchbox'],[/米饭|主食|米食|rice/i,'rice'],[/烘焙|面包|糕点|bread|bakery/i,'bread'],[/调味|酱料|seasoning|sauce/i,'seasoning'],[/酒水|啤酒|葡萄酒|wine|beer|alcohol/i,'wine'],[/饮料|饮品|果汁|drink|beverage|juice/i,'drink'],[/零食|饼干|snack|cookie/i,'snack'],[/日用|清洁|生活|household|daily/i,'bottle'],[/熟食|热食|cooked|deli/i,'cloche'],[/小吃|炸物|fries|street.?food/i,'fries'],[/食物|食品|餐食|food|meal/i,'bowl'],[/^全部|^all$/i,'grid'],[/其他|其它|other|misc/i,'more']]
 export function resolveCategoryIcon(category:{id?:string;name?:string;iconKey?:unknown}):CategoryIconKey {
   if(validCategoryIconKey(category.iconKey))return category.iconKey
-  const match=NAME_ICONS.find(([pattern])=>pattern.test(category.name||''));if(match)return match[1]
-  const seed=category.name||category.id||'category';let hash=0;for(let i=0;i<seed.length;i++)hash=(hash*31+seed.charCodeAt(i))>>>0
-  return CATEGORY_ICONS[1+hash%(CATEGORY_ICONS.length-1)].key
+  return 'more'
 }
 export function categoryIconView(category:{id?:string;name?:string;iconKey?:unknown}) {
   const resolvedIconKey=resolveCategoryIcon(category),icon=CATEGORY_ICONS.find(item=>item.key===resolvedIconKey)!
