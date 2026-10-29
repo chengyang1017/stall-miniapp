@@ -140,7 +140,7 @@ const server = http.createServer(async (req, res) => {
       const result=await pool.query("SELECT p.phone_e164,p.verified_at FROM customer_login_identities i LEFT JOIN customer_verified_phones p ON p.account_id=i.account_id WHERE i.provider='wechat' AND i.provider_subject=$1",[subject])
       if(!result.rows.length)return reply(res,404,{error:'profile_not_found'})
       const value=result.rows[0].phone_e164
-      const masked=typeof value==='string'?value.replace(/^(\\+?\\d{1,4})(\\d+)(\\d{2})$/,(_,start,middle,end)=>start+'*'.repeat(Math.min(middle.length,9))+end):null
+      const masked=typeof value==='string'&&value.length>4?value.slice(0,3)+'*'.repeat(Math.min(value.length-5,9))+value.slice(-2):null
       return reply(res,200,{bound:!!value,maskedPhone:masked,verifiedAt:result.rows[0].verified_at||null,verificationAvailable:false})
     }
     if(url.pathname==='/v1/customer/avatar-style' && req.method==='PUT'){
