@@ -7,7 +7,8 @@
       <input maxlength="30" placeholder="填写个人昵称" value="{{nickname}}" bindinput="onNicknameInput" /></view>
       <button size="mini" loading="{{profileBusy}}" disabled="{{profileBusy}}" bindtap="saveNickname">保存</button>
     </view>
-    <view wx:if="{{profileStatus}}" class="settings-desc">{{profileStatus}}</view>\n    <button wx:if="{{loggedIn}}" type="warn" loading="{{logoutBusy}}" disabled="{{logoutBusy}}" bindtap="logout">退出登录</button>
+    <view wx:if="{{profileStatus}}" class="settings-desc">{{profileStatus}}</view>
+    <button wx:if="{{loggedIn}}" type="warn" loading="{{logoutBusy}}" disabled="{{logoutBusy}}" bindtap="logout">退出登录</button>
   </view>
   <view class="settings-section-title">通知偏好</view>
   <view class="settings-card">
