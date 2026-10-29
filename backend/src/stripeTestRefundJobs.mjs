@@ -58,3 +58,39 @@ export async function processOneStripeTestRefund(db,client){
   return {action:status,jobId:job.id}
  }
 }
+
+/** Reconcile a previously submitted refund. Never issue a second refund here. */
+export async function reconcileOneSubmittedStripeTestRefund(db,client){
+ const claim=await db.query(`
+ UPDATE stripe_test_refund_jobs j SET lease_token=gen_random_uuid(),
+ lease_expires_at=clock_timestamp()+interval '2 minutes',updated_at=clock_timestamp()
+ WHERE j.id=(SELECT id FROM stripe_test_refund_jobs
+ WHERE status='submitted' AND lease_token IS NULL AND next_attempt_at<=clock_timestamp()
+ ORDER BY next_attempt_at,id FOR UPDATE SKIP LOCKED LIMIT 1)
+ RETURNING id,lease_token,refund_id,amount_cents`)
+ const job=claim.rows[0]
+ if(!job)return {action:'idle'}
+ try{
+  const result=await client.getRefundStatus(job.refund_id)
+  if(result.refundId!==job.refund_id||result.amountCents!==Number(job.amount_cents))
+   throw fail('refund_status_mismatch')
+  const state=result.status==='succeeded'?'succeeded':
+    ['failed','canceled'].includes(result.status)?'review':'submitted'
+  const updated=await db.query(`
+ UPDATE stripe_test_refund_jobs SET status=$3,lease_token=NULL,lease_expires_at=NULL,
+ next_attempt_at=clock_timestamp()+interval '5 minutes',
+ last_error=CASE WHEN $3='review' THEN 'stripe_refund_failed' ELSE NULL END,updated_at=clock_timestamp()
+ WHERE id=$1 AND lease_token=$2 AND status='submitted' RETURNING id`,[job.id,job.lease_token,state])
+  if(updated.rowCount!==1)throw fail('refund_lease_lost')
+  return {action:state,jobId:job.id}
+ }catch(error){
+  const updated=await db.query(`
+ UPDATE stripe_test_refund_jobs SET lease_token=NULL,lease_expires_at=NULL,
+ next_attempt_at=clock_timestamp()+interval '5 minutes',
+ last_error=$3,updated_at=clock_timestamp()
+ WHERE id=$1 AND lease_token=$2 AND status='submitted' RETURNING id`,
+ [job.id,job.lease_token,String(error.message||'refund_status_unavailable').slice(0,200)])
+  if(updated.rowCount!==1)throw fail('refund_lease_lost')
+  return {action:'submitted',jobId:job.id,lookupFailed:true}
+ }
+}

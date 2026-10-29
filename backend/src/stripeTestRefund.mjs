@@ -15,6 +15,14 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
   return response.json()
  }
  return Object.freeze({
+  async getRefundStatus(refundId){
+   if(typeof refundId!=='string'||!/^re_[A-Za-z0-9_]+$/.test(refundId))fail('invalid_stripe_refund_id')
+   const refund=await call('refunds/'+encodeURIComponent(refundId))
+   if(refund.id!==refundId||!['succeeded','pending','requires_action','failed','canceled'].includes(refund.status)||!intentId.test(refund.payment_intent||''))
+    fail('stripe_refund_status_invalid')
+   return Object.freeze({refundId,status:refund.status,paymentIntentId:refund.payment_intent,
+    amountCents:refund.amount,completed:refund.status==='succeeded'})
+  },
   // Database audit row must be supplied by a trusted backend operation.
   // For now this method is deliberately NOT automatically invoked.
   async refundLatePayment(audit){

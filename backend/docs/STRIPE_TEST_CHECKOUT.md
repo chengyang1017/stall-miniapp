@@ -20,3 +20,7 @@ A signed test-mode Stripe payment arriving after the order expires/cancels is sa
 ## Refund persistence (not running automatically)
 
 The optional isolated-branch migration `sql/022_stripe_test_refund_jobs.sql` creates a durable refund queue. `stripeTestRefundJobs.mjs` can enqueue, lease, finish, and retry jobs; submitted refunds require subsequent Stripe status reconciliation, and failures eventually require manual review. A lease plus Stripe idempotency key protects against duplicate requests. **Do not automatically start the worker or enable payments** until migration, least-privilege grants, isolated-DB verification, and reconciliation of submitted refunds have been reviewed. No migration is automatically executed.
+
+## Submitted refund polling
+
+`getRefundStatus(refundId)` makes a read-only call to Stripe `/v1/refunds/:id`. `reconcileOneSubmittedStripeTestRefund()` leases one submitted row, verifies refund ID and amount, and records `succeeded`, `submitted` (pending), or `review` (failed/canceled). Failed lookups remain `submitted` for later retries. No automatic timer or route is registered; the worker still requires explicit safe activation. Payment remains disabled.

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {enqueueStripeTestRefunds,claimStripeTestRefund,finishStripeTestRefund,failStripeTestRefund,processOneStripeTestRefund} from '../src/stripeTestRefundJobs.mjs'
+import {enqueueStripeTestRefunds,claimStripeTestRefund,finishStripeTestRefund,failStripeTestRefund,processOneStripeTestRefund,reconcileOneSubmittedStripeTestRefund} from '../src/stripeTestRefundJobs.mjs'
 const job={id:'job-1',order_id:'11111111-1111-4111-8111-111111111111',checkout_session_id:'cs_test_abc',amount_cents:1599,lease_token:'token-1',attempt_count:1}
 function fake(rows){const calls=[];const db={query:async(sql,args)=>{calls.push({sql,args});return rows.shift()||{rows:[],rowCount:0}}};return {db,calls}}
 test('queue only verified refund-required audit events and prevent duplicates',async()=>{
@@ -49,4 +49,26 @@ test('processing error schedules retry without claiming refund was completed',as
  const m=fake([{rows:[job]},{rowCount:1,rows:[{status:'pending'}]}])
  const out=await processOneStripeTestRefund(m.db,{refundLatePayment:async()=>{throw Error('network_timeout')}})
  assert.equal(out.action,'pending')
+})
+
+test('submitted refund reconciles succeeded without creating a new refund',async()=>{
+ const m=fake([{rows:[{id:'job-1',lease_token:'lease',refund_id:'re_abc',amount_cents:'1599'}]},{rowCount:1,rows:[{id:'job-1'}]}])
+ const out=await reconcileOneSubmittedStripeTestRefund(m.db,{getRefundStatus:async()=>({refundId:'re_abc',status:'succeeded',amountCents:1599})})
+ assert.equal(out.action,'succeeded')
+ assert.match(m.calls[0].sql,/FOR UPDATE SKIP LOCKED/)
+ assert.match(m.calls[1].sql,/lease_token=\$2/)
+})
+test('pending refund remains submitted with next poll scheduled',async()=>{
+ const m=fake([{rows:[{id:'job-1',lease_token:'lease',refund_id:'re_abc',amount_cents:'1599'}]},{rowCount:1,rows:[{id:'job-1'}]}])
+ const out=await reconcileOneSubmittedStripeTestRefund(m.db,{getRefundStatus:async()=>({refundId:'re_abc',status:'pending',amountCents:1599})})
+ assert.equal(out.action,'submitted')
+})
+test('failed remote refund moves to manual review',async()=>{
+ const m=fake([{rows:[{id:'job-1',lease_token:'lease',refund_id:'re_abc',amount_cents:'1599'}]},{rowCount:1,rows:[{id:'job-1'}]}])
+ assert.equal((await reconcileOneSubmittedStripeTestRefund(m.db,{getRefundStatus:async()=>({refundId:'re_abc',status:'failed',amountCents:1599})})).action,'review')
+})
+test('refund lookup failure keeps submitted status for retry',async()=>{
+ const m=fake([{rows:[{id:'job-1',lease_token:'lease',refund_id:'re_abc',amount_cents:'1599'}]},{rowCount:1,rows:[{id:'job-1'}]}])
+ const out=await reconcileOneSubmittedStripeTestRefund(m.db,{getRefundStatus:async()=>{throw Error('network')}})
+ assert.equal(out.lookupFailed,true);assert.equal(out.action,'submitted')
 })

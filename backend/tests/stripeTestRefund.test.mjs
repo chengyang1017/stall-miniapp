@@ -50,3 +50,18 @@ test('network failure propagates so refund remains unresolved',async()=>{
  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{throw Error('network_timeout')}})
  await assert.rejects(client.refundLatePayment(audit),/network_timeout/)
 })
+
+test('fetches Stripe refund state without issuing another refund',async()=>{
+ const calls=[]
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async(url,opts)=>{
+  calls.push({url,opts});return {ok:true,json:async()=>({...refund,status:'pending'})}
+ }})
+ const out=await client.getRefundStatus('re_abc123')
+ assert.equal(out.status,'pending');assert.equal(out.completed,false)
+ assert.equal(calls.length,1);assert.match(calls[0].url,/\/refunds\/re_abc123$/)
+ assert.equal(calls[0].opts.method,undefined)
+})
+test('rejects mismatching Stripe refund identity',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:true,json:async()=>({...refund,id:'re_different'})})})
+ await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+})
