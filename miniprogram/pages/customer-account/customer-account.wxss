@@ -17,3 +17,5 @@ page{background:#f7f6fa}
 .avatar-choice.selected{border:4rpx solid #633bc3;box-sizing:border-box;box-shadow:0 0 0 6rpx rgba(99,59,195,.09)}
 
 .avatar-circle{overflow:hidden}.avatar-photo{width:126rpx;height:126rpx;border-radius:50%}.photo-upload-btn{background:#f1eaff;color:#623bc1;font-size:26rpx;border-radius:16rpx;margin-top:18rpx}
+
+.phone-card{margin-top:24rpx}.phone-card .editor-title{margin-bottom:18rpx}.phone-summary{display:flex;align-items:center;justify-content:space-between;gap:20rpx}.phone-value{font-size:30rpx;color:#31283c;font-weight:600}.phone-bind-button{flex-shrink:0;margin:0;background:#f0eaff;color:#633bc3;border-radius:14rpx;font-size:25rpx;padding:0 26rpx}

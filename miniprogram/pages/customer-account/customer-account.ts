@@ -3,15 +3,16 @@ import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/co
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
 Page({
-  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',photoBusy:false,photoStatus:'' },
+  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'' },
   profileReadSerial:0,
   editSerial:0,
   async onShow() {
     const token=getSessionToken(), loggedIn=!!token
     const serial=++this.profileReadSerial
     const editAtStart=this.editSerial
-    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',photoStatus:'',nickname:loggedIn?cachedCustomerNickname():''})
+    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',photoStatus:'',nickname:loggedIn?cachedCustomerNickname():'',phoneBound:false,maskedPhone:'',phoneStatus:''})
     if(!token)return
+    this.loadPhoneStatus(token)
     try {
       const cfg=getCloudContext()
       if(!cfg)throw Error('missing_api')
@@ -22,6 +23,21 @@ Page({
       if(serial===this.profileReadSerial&&getSessionToken()===token)
         this.setData({profileStatus:'读取云端昵称失败：'+String(error?.message||error).slice(0,80)})
     }
+  },
+  async loadPhoneStatus(token:string){
+    const cfg=getCloudContext()
+    if(!cfg)return
+    this.setData({phoneLoading:true})
+    try{
+      const result=await authorizedGet(cfg.apiBase,'/v1/customer/phone')
+      if(getSessionToken()!==token)return
+      this.setData({phoneBound:result.bound===true,maskedPhone:String(result.maskedPhone||''),phoneStatus:''})
+    }catch(error:any){
+      if(getSessionToken()===token)this.setData({phoneStatus:'手机号状态读取失败，请稍后重试'})
+    }finally{if(getSessionToken()===token)this.setData({phoneLoading:false})}
+  },
+  showPhoneBindNotice(){
+    wx.showModal({title:'手机号绑定',content:'手机号必须通过微信官方手机号授权或短信验证码验证后才能绑定。当前测试环境尚未启用验证服务，因此暂不接受手工填写号码作为已绑定手机号。',showCancel:false,confirmText:'知道了'})
   },
   async loadAvatarPhoto(token:string){
     const cfg=getCloudContext();if(!cfg)return
