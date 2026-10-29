@@ -10,7 +10,7 @@ Page({
     const token=getSessionToken(), loggedIn=!!token
     const serial=++this.profileReadSerial
     const editAtStart=this.editSerial
-    this.setData({loggedIn,profileStatus:'',nickname:loggedIn?cachedCustomerNickname():''})
+    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',photoStatus:'',nickname:loggedIn?cachedCustomerNickname():''})
     if(!token)return
     try {
       const cfg=getCloudContext()
