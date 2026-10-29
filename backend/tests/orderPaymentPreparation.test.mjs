@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {createOrderPayment,prepareOrderPayment} from '../../src/orderPaymentPreparation.mjs'
-import {createPaymentGateway} from '../../src/paymentGateway.mjs'
+import {createOrderPayment,prepareOrderPayment} from '../src/orderPaymentPreparation.mjs'
+import {createPaymentGateway} from '../src/paymentGateway.mjs'
 const orderId='11111111-1111-4111-8111-111111111111'
 const good={id:orderId,total_cents:'1599',currency:'CNY',payment_status:'unpaid',fulfillment_status:'new',inventory_state:'held',payment_window_open:true}
 const db=(rows=[good])=>({query:async (sql,values)=>{assert.match(sql,/customer_subject=\$2/);assert.deepEqual(values,[orderId,'wx:test:customer']);return {rows}}})
