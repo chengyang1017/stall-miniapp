@@ -21,7 +21,7 @@ CREATE INDEX IF NOT EXISTS customer_login_identities_account_idx ON customer_log
 -- from a WeChat openid or from unverified user input.
 CREATE TABLE IF NOT EXISTS customer_verified_phones (
   account_id uuid PRIMARY KEY REFERENCES customer_accounts(id) ON DELETE RESTRICT,
-  phone_e164 text NOT NULL UNIQUE CHECK (phone_e164 ~ '^\\+86(1[3-9][0-9]{9})$'),
+  phone_e164 text NOT NULL UNIQUE CHECK (phone_e164 ~ '^[+]86(1[3-9][0-9]{9})$'),
   verified_at timestamptz NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
