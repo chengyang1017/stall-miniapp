@@ -18,14 +18,14 @@ function fixture(cloud=false){let definition,subject='A',store={categories:[{id:
  const p=create(),event=(id,key)=>({currentTarget:{dataset:{id,key}}})
  return {p,create,reads,writes,toasts,event,store:()=>store,subject:v=>subject=v,async load(supported=true){reads.at(-1).resolve({items:clone(store.categories),revision:'r1',categoryIconsSupported:supported});await tick()}}
 }
-test('20 icon keys match the independent server whitelist and own local purple/white assets',()=>{
- assert.equal(icons.CATEGORY_ICONS.length,20);assert.deepEqual(clone(icons.CATEGORY_ICONS.map(x=>x.key)),CATEGORY_ICON_KEYS)
+test('44 icon keys match the independent server whitelist and own local purple/white assets',()=>{
+ assert.equal(icons.CATEGORY_ICONS.length,44);assert.deepEqual(clone(icons.CATEGORY_ICONS.map(x=>x.key)),CATEGORY_ICON_KEYS)
  for(const icon of icons.CATEGORY_ICONS){assert.match(read('miniprogram'+icon.path),/<svg/);assert.match(read('miniprogram'+icon.activePath),/#ffffff/);assert.equal(validCategoryIconKey(icon.key),true)}
  for(const value of ['https://unit.invalid/evil.svg','../bad','<svg>','unknown',1,{}]){assert.equal(icons.validCategoryIconKey(value),false);assert.equal(validCategoryIconKey(value),false)}
 })
 test('explicit merchant choice takes precedence; missing and unknown keys have deterministic diverse defaults',()=>{
- assert.equal(icons.resolveCategoryIcon({name:'饮料',iconKey:'apple'}),'apple');assert.equal(icons.resolveCategoryIcon({name:'咖啡'}),'coffee');assert.equal(icons.resolveCategoryIcon({name:'奶茶'}),'bubble-tea');assert.equal(icons.resolveCategoryIcon({name:'饮料',iconKey:'https://evil.invalid'}),'drink')
- const categories=['123','456','你好','蔬菜','面食'].map((name,i)=>({id:String(i),name}));assert.ok(new Set(categories.map(icons.resolveCategoryIcon)).size>1);assert.equal(icons.resolveCategoryIcon(categories[0]),icons.resolveCategoryIcon(clone(categories[0])))
+ assert.equal(icons.resolveCategoryIcon({name:'饮料',iconKey:'apple'}),'apple');assert.equal(icons.resolveCategoryIcon({name:'咖啡'}),'more');assert.equal(icons.resolveCategoryIcon({name:'奶茶'}),'more');assert.equal(icons.resolveCategoryIcon({name:'饮料',iconKey:'https://evil.invalid'}),'more');assert.equal(icons.resolveCategoryIcon({name:'服装',iconKey:'shirt'}),'shirt');assert.equal(icons.resolveCategoryIcon({name:'宠物',iconKey:'pets'}),'pets')
+ const categories=['123','456','你好','蔬菜','面食'].map((name,i)=>({id:String(i),name}));assert.ok(categories.every(c=>icons.resolveCategoryIcon(c)==='more'));assert.equal(icons.resolveCategoryIcon(categories[0]),icons.resolveCategoryIcon(clone(categories[0])))
 })
 test('local add previews and persists merchant icon across page recreation',()=>{
  const f=fixture();f.p.onNewName({detail:{value:'新分类'}});f.p.openNewIconPicker();f.p.selectIcon(f.event('','coffee'));assert.match(f.p.data.newIconPath,/coffee.svg$/);f.p.closeIconPicker();f.p.addCategory();assert.equal(f.store().categories.at(-1).iconKey,'coffee');const reopened=f.create();assert.match(reopened.data.rows.at(-1).iconPath,/coffee.svg$/)
