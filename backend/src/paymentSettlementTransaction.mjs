@@ -31,6 +31,26 @@ export async function settleVerifiedOrderPayment(pool,{event,expectedProvider,ex
    }
    throw fail('paid_order_different_transaction')
   }
+  // A payment may succeed at Stripe after our 15-minute inventory hold has
+  // expired. Record the paid transaction durably for refund reconciliation,
+  // but NEVER mark the cancelled/expired order paid or re-reserve stock.
+  // This branch applies only to the explicitly isolated Stripe sandbox.
+  if(event.provider==='stripe'&&event.mode==='sandbox'&&
+    (order.payment_window_open!==true||order.fulfillment_status!=='new'||!['held','none'].includes(order.inventory_state)||order.payment_status!=='unpaid')){
+    const previous=await db.query(`SELECT order_id,amount_cents,event_type FROM payment_events
+      WHERE provider=$1 AND provider_event_id=$2`,[provider,event.transactionId])
+    if(previous.rows.length){
+      const prior=previous.rows[0]
+      if(prior.order_id!==order.id||Number(prior.amount_cents)!==event.amountCents||prior.event_type!=='refund_required')
+        throw fail('provider_transaction_reused')
+      await db.query('COMMIT');active=false
+      return {action:'refund_required',orderId:order.id,replayed:true}
+    }
+    await db.query(`INSERT INTO payment_events(order_id,provider,provider_event_id,event_type,amount_cents)
+      VALUES($1,$2,$3,'refund_required',$4)`,[order.id,provider,event.transactionId,event.amountCents])
+    await db.query('COMMIT');active=false
+    return {action:'refund_required',orderId:order.id,replayed:false}
+  }
   const decision=authorizePaymentSettlement({order,event,expectedProvider,expectedMode})
   const collision=await db.query('SELECT order_id FROM payment_events WHERE provider=$1 AND provider_event_id=$2',[provider,event.transactionId])
   if(collision.rows.length)throw fail('provider_transaction_reused')

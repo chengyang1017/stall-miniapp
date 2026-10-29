@@ -64,3 +64,26 @@ test('rolls back event insert when order update affects zero rows',async()=>{
  assert.ok(m.calls.some(s=>s.includes('INSERT INTO payment_events')))
  assert.ok(m.calls.includes('ROLLBACK'));assert.ok(!m.calls.includes('COMMIT'))
 })
+
+test('late signed Stripe sandbox payment is recorded for refund, not fulfilled',async()=>{
+ const stripe=createPaymentGateway({provider:'stripe',mode:'sandbox',createPayment:async()=>({}),verifyNotification:async()=>({
+  verifiedByProvider:true,provider:'stripe',mode:'sandbox',orderId:id,amountCents:1599,currency:'CNY',transactionId:'cs_test_late',status:'succeeded'
+ })})
+ const signed=await stripe.verifyNotification('signed',{request,headers:{}})
+ const m=mock({...baseOrder,payment_window_open:false,inventory_state:'released',fulfillment_status:'cancelled'})
+ const result=await settleVerifiedOrderPayment(m.pool,{event:signed,expectedProvider:'stripe',expectedMode:'sandbox'})
+ assert.equal(result.action,'refund_required')
+ assert.ok(m.calls.some(q=>q.includes("'refund_required'")))
+ assert.ok(m.calls.includes('COMMIT'))
+ assert.ok(!m.calls.some(q=>q.includes("UPDATE orders SET payment_status='paid'")))
+})
+test('late Stripe sandbox payment refund marker is idempotent',async()=>{
+ const stripe=createPaymentGateway({provider:'stripe',mode:'sandbox',createPayment:async()=>({}),verifyNotification:async()=>({
+  verifiedByProvider:true,provider:'stripe',mode:'sandbox',orderId:id,amountCents:1599,currency:'CNY',transactionId:'cs_test_late',status:'succeeded'
+ })})
+ const signed=await stripe.verifyNotification('signed',{request,headers:{}})
+ const m=mock({...baseOrder,payment_window_open:false},[{order_id:id,amount_cents:'1599',event_type:'refund_required'}])
+ const result=await settleVerifiedOrderPayment(m.pool,{event:signed,expectedProvider:'stripe',expectedMode:'sandbox'})
+ assert.equal(result.action,'refund_required');assert.equal(result.replayed,true)
+ assert.ok(!m.calls.some(q=>q.includes('INSERT INTO payment_events')))
+})
