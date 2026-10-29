@@ -4,14 +4,14 @@ import { getCloudContext } from '../../modules/shared/runtime/context'
 import { readCloudCategories,writeCloudCategories,cachedCloudCategories } from '../../utils/merchantCategoriesCloud'
 import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 
-type Row = Category & { y: number; iconPath:string; iconActivePath:string; iconLabel:string; iconGlyph:string; resolvedIconKey:string }
+type Row = Category & { y: number; iconPath:string; iconActivePath:string; iconLabel:string; resolvedIconKey:string }
 
 Page({
   revision:'',context:'',serial:0,operationSerial:0,disposed:false,moveAt:0,lastMove:null as any,rowIndexes:{} as Record<string,number>,
   data: {
     cloudMode:false,cloudBusy:false,cloudRefreshing:false,cloudError:'',syncState:'confirmed',syncMessage:'',
     categories: [] as Category[], rows: [] as Row[],
-    iconOptions:CATEGORY_ICONS,categoryIconsSupported:false,pickerTarget:'',newIconKey:'',editingIconKey:'',newIconPath:'',newIconLabel:'',newIconGlyph:'',editingIconPath:'',editingIconLabel:'',editingIconGlyph:'',
+    iconOptions:CATEGORY_ICONS,categoryIconsSupported:false,pickerTarget:'',newIconKey:'',editingIconKey:'',newIconPath:'',newIconLabel:'',editingIconPath:'',editingIconLabel:'',
     newName: '', editingId: '', editingName: '', draggingId: '',
     rowHeight: 86, areaHeight: 0
   },
@@ -136,7 +136,7 @@ Page({
     this.setData({ editingId: '', editingName: '' })
     this.reloadCategories()
   },
-  refreshIconPreviews(){const added=categoryIconView({name:this.data.newName,iconKey:this.data.newIconKey}),edited=categoryIconView({id:this.data.editingId,name:this.data.editingName,iconKey:this.data.editingIconKey});this.setData({newIconPath:added.iconPath,newIconLabel:added.iconLabel,newIconGlyph:added.iconGlyph,editingIconPath:edited.iconPath,editingIconLabel:edited.iconLabel,editingIconGlyph:edited.iconGlyph})},
+  refreshIconPreviews(){const added=categoryIconView({name:this.data.newName,iconKey:this.data.newIconKey}),edited=categoryIconView({id:this.data.editingId,name:this.data.editingName,iconKey:this.data.editingIconKey});this.setData({newIconPath:added.iconPath,newIconLabel:added.iconLabel,editingIconPath:edited.iconPath,editingIconLabel:edited.iconLabel})},
   openNewIconPicker(){if(this.data.cloudBusy)return;this.setData({pickerTarget:'new'})},
   openEditIconPicker(e:any){if(this.data.cloudBusy||this.data.cloudError||this.data.draggingId)return;const id=String(e.currentTarget.dataset.id||'');if(this.data.editingId!==id)this.beginRename(e);if(this.data.editingId===id)this.setData({pickerTarget:'edit'})},
   closeIconPicker(){this.setData({pickerTarget:''})},
