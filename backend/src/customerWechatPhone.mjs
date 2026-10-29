@@ -37,7 +37,7 @@ export async function customerWechatPhoneBindRoute(req,res,url,pool){
   if(typeof access.access_token!=='string'||!access.access_token)throw Error('wechat_access_token_unavailable')
   const result=await postJson('https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token='+encodeURIComponent(access.access_token),{code})
   phone=result?.phone_info
-  if(result.errcode!==0||!phone||phone.countryCode!=='86'||typeof phone.purePhoneNumber!=='string'||!/^1[3-9][0-9]{9}$/.test(phone.purePhoneNumber))throw Error('phone_verification_failed')
+  if(result.errcode!==0||!phone||String(phone.countryCode)!=='86'||typeof phone.purePhoneNumber!=='string'||!/^1[3-9][0-9]{9}$/.test(phone.purePhoneNumber))throw Error('phone_verification_failed')
  }catch{
   reply(res,502,{error:'wechat_phone_verification_failed'});return true
  }
@@ -52,7 +52,7 @@ export async function customerWechatPhoneBindRoute(req,res,url,pool){
   if(owned.rows.some(r=>r.account_id!==accountId)){await client.query('ROLLBACK');reply(res,409,{error:'phone_already_bound'});return true}
   await client.query('INSERT INTO customer_verified_phones(account_id,phone_e164,verified_at) VALUES ($1,$2,now()) ON CONFLICT (account_id) DO UPDATE SET phone_e164=EXCLUDED.phone_e164,verified_at=EXCLUDED.verified_at',[accountId,number])
   await client.query('COMMIT')
-  reply(res,200,{bound:true,maskedPhone:'+861******'+number.slice(-4)})
+  reply(res,200,{bound:true,maskedPhone:'+86*******'+number.slice(-4)})
  }catch(e){
   try{await client.query('ROLLBACK')}catch{}
   reply(res,e?.code==='23505'?409:503,{error:e?.code==='23505'?'phone_already_bound':'phone_bind_unavailable'})
