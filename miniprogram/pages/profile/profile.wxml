@@ -2,7 +2,7 @@
 <view class="customer-hero profile-header">
 <view class="hero-title">我的</view>
 <view class="hero-subtitle">管理账户 · 查看订单 · 享受服务</view>
-<view class="profile-identity" bindtap="loginWechat">
+<view class="profile-identity" bindtap="showLogin">
 <view class="profile-avatar">♙</view>
 <view class="profile-account">
 <view class="profile-name">{{accountName}}</view>
@@ -84,7 +84,26 @@
 </view>
 </view>
 <view class="surface account-controls">
-<button wx:if="{{cloudSupport || phonePreview}}" loading="{{loginBusy}}" disabled="{{loginBusy}}" bindtap="loginWechat">微信登录 / 重新验证身份</button>
+<button wx:if="{{cloudSupport || phonePreview}}" loading="{{loginBusy}}" disabled="{{loginBusy}}" bindtap="showLogin">登录 / 切换账号</button>
+<view wx:if="{{loginPanel}}" class="login-dialog">
+  <view class="login-dialog-title">登录账号</view>
+  <view class="login-dialog-subtitle">选择适合你的登录方式</view>
+  <view class="login-methods">
+    <view class="login-method {{loginMethod === 'wechat' ? 'active' : ''}}" data-method="wechat" bindtap="selectLoginMethod">微信快捷登录</view>
+    <view class="login-method {{loginMethod === 'phone' ? 'active' : ''}}" data-method="phone" bindtap="selectLoginMethod">手机号登录</view>
+  </view>
+  <view wx:if="{{loginMethod === 'wechat'}}">
+    <button class="wechat-login-button" loading="{{loginBusy}}" disabled="{{loginBusy}}" bindtap="loginWechat">使用微信账号登录</button>
+    <view class="login-hint">通过微信官方登录凭证验证身份，不获取手机号</view>
+  </view>
+  <view wx:else>
+    <view class="phone-input-row"><text>+86</text><input type="number" maxlength="11" placeholder="请输入中国大陆手机号" value="{{phoneNumber}}" bindinput="onPhoneInput"/></view>
+    <button class="sms-login-button" bindtap="requestSmsCode">获取短信验证码</button>
+    <view class="login-hint">短信验证服务尚未开通，目前不能使用手机号登录</view>
+  </view>
+  <view wx:if="{{loginStatus}}" class="notice">{{loginStatus}}</view>
+  <button class="login-close" disabled="{{loginBusy}}" bindtap="closeLogin">返回</button>
+</view>
 <view wx:if="{{loginStatus}}" class="notice">{{loginStatus}}</view>
 <navigator class="service-row" url="/pages/customer-settings/customer-settings">
 <text class="service-icon">⚙</text>设置与隐私<text class="value">›</text>

@@ -6,11 +6,24 @@ import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/
 import { CAN_OPEN_MERCHANT,openMerchantWorkspace } from '../../modules/integration/singleAppHost'
 Page({
   data:{accountName:'未登录',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
-    loginBusy:false,loginStatus:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
+    loginBusy:false,loginStatus:'',loginPanel:false,loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
   loginSerial:0,
   serial:0,
   merchantSerial:0,merchantContext:'',
   merchantOpening:false,
+  showLogin(){this.setData({loginPanel:true,loginStatus:''})},
+  closeLogin(){if(!this.data.loginBusy)this.setData({loginPanel:false,loginStatus:''})},
+  selectLoginMethod(e:any){
+    const method=String(e?.currentTarget?.dataset?.method||'wechat')
+    if(method==='wechat'||method==='phone')this.setData({loginMethod:method,loginStatus:''})
+  },
+  onPhoneInput(e:any){this.setData({phoneNumber:String(e?.detail?.value||'').replace(/\D/g,'').slice(0,11)})},
+  requestSmsCode(){
+    if(!/^1[3-9]\d{9}$/.test(this.data.phoneNumber)){
+      this.setData({loginStatus:'请输入正确的中国大陆11位手机号'});return
+    }
+    this.setData({loginStatus:'短信验证码服务尚未接入，暂不能使用手机号登录。请先选择微信快捷登录。'})
+  },
   async loginWechat(){
     const cfg=getCloudContext()
     if(!cfg||this.data.loginBusy)return
@@ -20,7 +33,7 @@ Page({
       await loginWithWechat(cfg.apiBase)
       const current=getCloudContext()
       if(serial!==this.loginSerial||!current||current.apiBase!==cfg.apiBase||current.storeSlug!==cfg.storeSlug)return
-      this.setData({loginStatus:'微信身份已确认；商家入口需服务器另行授权'})
+      this.setData({loginPanel:false,loginStatus:'微信身份已确认；商家入口需服务器另行授权',accountName:'微信用户',accountSubtitle:'微信身份已连接'})
       await this.checkMerchant()
     }catch(_){if(serial===this.loginSerial)this.setData({loginStatus:'微信登录失败；请核对当前AppID、后端配置及合法域名，不使用本地Token'})}
     finally{if(serial===this.loginSerial)this.setData({loginBusy:false})}

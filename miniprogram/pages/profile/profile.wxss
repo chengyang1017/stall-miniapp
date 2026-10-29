@@ -22,3 +22,17 @@
 .help-grid text{display:block;font-size:40rpx;color:#8350d3;margin-bottom:10rpx}
 .account-controls button{background:#eee5fb;color:#6d35cb;border-radius:30rpx;font-size:25rpx}
 
+
+.login-dialog{margin-top:20rpx;padding:28rpx;border:1rpx solid #e5d8f5;border-radius:24rpx;background:#fff}
+.login-dialog-title{font-weight:700;font-size:34rpx;color:#392260}
+.login-dialog-subtitle{font-size:24rpx;color:#7d718a;margin:10rpx 0 24rpx}
+.login-methods{display:flex;gap:12rpx;margin-bottom:24rpx}
+.login-method{flex:1;text-align:center;border:1rpx solid #ddd4ea;border-radius:18rpx;padding:18rpx 8rpx;font-size:26rpx;color:#6a5d77}
+.login-method.active{background:#f0e8ff;border-color:#7847ca;color:#6530bc;font-weight:700}
+.account-controls .wechat-login-button{background:#07b75a;color:white}
+.account-controls .sms-login-button{background:#e7e0ee;color:#685c76}
+.phone-input-row{display:flex;align-items:center;gap:22rpx;padding:20rpx 16rpx;border:1rpx solid #dfd4ea;border-radius:18rpx;margin-bottom:16rpx}
+.phone-input-row text{font-weight:700;color:#352744}
+.phone-input-row input{flex:1;min-width:0;font-size:28rpx}
+.login-hint{font-size:22rpx;color:#82788b;line-height:1.7;margin:16rpx 0}
+.account-controls .login-close{background:transparent;color:#776a85}
