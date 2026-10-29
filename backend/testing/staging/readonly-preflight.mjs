@@ -34,6 +34,11 @@ try {
       pg_has_role('stall_payment_migrator_limited',c.relowner,'SET') AS migrator_can_set_owner
     FROM pg_class c WHERE c.relnamespace='public'::regnamespace
     AND c.relname IN ('orders','stall_schema_migrations') ORDER BY c.relname`)
+  const ownerPrivilegeRisk=await q(`SELECT r.rolname, r.rolsuper,r.rolcreatedb,r.rolcreaterole,r.rolbypassrls,
+    EXISTS(SELECT 1 FROM pg_auth_members m JOIN pg_roles parent ON parent.oid=m.roleid
+      WHERE m.member=r.oid AND parent.rolname='neon_superuser') AS neon_admin_member
+    FROM pg_roles r WHERE r.rolname IN ('neondb_owner','stall_payment_migrator_limited')
+    ORDER BY r.rolname`)
   const roles=await q(`SELECT rolname,rolcanlogin,rolsuper,rolcreatedb,rolcreaterole,rolbypassrls
     FROM pg_roles WHERE rolname LIKE 'stall\\_payment\\_%' ESCAPE '\\' ORDER BY rolname`)
   const ledger=await q('SELECT filename,sha256 FROM public.stall_schema_migrations ORDER BY filename')
@@ -48,7 +53,9 @@ try {
   const marker=(await q("SELECT to_regclass('staging_control.deployment_identity') IS NOT NULL AS exists"))[0].exists
   const payment=(await q("SELECT to_regclass('public.staging_payment_environment') IS NOT NULL AS exists"))[0].exists
   const icon=(await q("SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='categories' AND column_name='icon_key') AS exists"))[0].exists
-  console.log(JSON.stringify({mode:'read_only',branchClaim:expectedBranch,branchVerifiedByNeonMetadata:true,database:who.db,dbUser:who.db_user,objects:objs,ddlOwnership,ddlOwnershipReady:ddlOwnership.length===2&&ddlOwnership.every(x=>x.migrator_inherits_owner||x.migrator_can_set_owner),roles,ledgerRows:ledger.length,historyFilenameChecks:history,identityAnchorExists:marker,paymentTablesExist:payment,categoryIconExists:icon,warning:'Endpoint-to-branch mapping checked against Neon metadata as of 2026-10-29; revalidate if the endpoint is rotated.'},null,2))
+  const ownerHasElevatedPrivileges=ownerPrivilegeRisk.some(r=>r.rolname==='neondb_owner'&&(r.rolsuper||r.rolcreatedb||r.rolcreaterole||r.rolbypassrls||r.neon_admin_member))
+  const grantOwnerMembershipUnsafe=ownerHasElevatedPrivileges
+  console.log(JSON.stringify({grantOwnerMembershipUnsafe,mode:'read_only',branchClaim:expectedBranch,branchVerifiedByNeonMetadata:true,database:who.db,dbUser:who.db_user,objects:objs,ownerPrivilegeRisk,ddlOwnership,ddlOwnershipReady:ddlOwnership.length===2&&ddlOwnership.every(x=>x.migrator_inherits_owner||x.migrator_can_set_owner),roles,ledgerRows:ledger.length,historyFilenameChecks:history,identityAnchorExists:marker,paymentTablesExist:payment,categoryIconExists:icon,warning:'Endpoint-to-branch mapping checked against Neon metadata as of 2026-10-29; revalidate if the endpoint is rotated.'},null,2))
   await client.query('ROLLBACK')
  }finally{client.release()}
 }finally{await pool.end()}
