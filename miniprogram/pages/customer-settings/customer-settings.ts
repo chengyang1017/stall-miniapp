@@ -1,4 +1,7 @@
-import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/context'\nimport { logoutCurrentSession } from '../../modules/shared/runtime/auth'\nconst NICKNAME_KEY='stall_customer_nickname_v1'\nconst PREF_KEY = 'stall_customer_order_notice_pref_v1'
+import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/context'
+import { logoutCurrentSession } from '../../modules/shared/runtime/auth'
+const NICKNAME_KEY='stall_customer_nickname_v1'
+const PREF_KEY = 'stall_customer_order_notice_pref_v1'
 Page({
   data: { orderNoticeEnabled: true,loggedIn:false,nickname:'',logoutBusy:false },
   onShow() {
