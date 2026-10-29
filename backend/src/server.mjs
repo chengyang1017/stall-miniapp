@@ -31,6 +31,12 @@ if (!connectionString) throw new Error('DATABASE_URL is required')
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid PORT')
 const approvedStaging=runtimeDeployment()
 if(process.env.STAGING_SIMULATED_PAYMENTS&&!approvedStaging)console.warn('Staging simulation disabled: deployment identity not approved')
+// Startup diagnostics only: never print AppSecret, login codes, sessions or tokens.
+if(process.env.PAYMENT_DB_ENV==='isolated-test'){
+  const configured=!!process.env.WX_APPID&&!!process.env.WX_APPSECRET
+  const appIdMatches=process.env.WX_APPID==='wxeb1890c397d038d8'
+  console.log('Staging WeChat auth readiness',configured?'credentials_present':'credentials_missing',appIdMatches?'app_id_matches':'app_id_mismatch_or_missing')
+}
 const pool = new Pool({
   ...(approvedStaging?parsedDatabase(connectionString,approvedStaging):{connectionString,
   ssl: process.env.PG_SSL === 'true' ? { rejectUnauthorized: true } : undefined}),
