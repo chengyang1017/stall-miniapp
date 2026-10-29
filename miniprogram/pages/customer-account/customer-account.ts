@@ -36,6 +36,33 @@ Page({
       if(getSessionToken()===token)this.setData({phoneStatus:'手机号状态读取失败，请稍后重试'})
     }finally{if(getSessionToken()===token)this.setData({phoneLoading:false})}
   },
+  bindWechatPhone(e:any){
+    const code=String(e?.detail?.code||'')
+    if(!code){
+      this.setData({phoneStatus:'未获得微信手机号授权，请确认小程序已开通该能力'})
+      return
+    }
+    const token=getSessionToken(),cfg=getCloudContext()
+    if(!token||!cfg||this.data.phoneLoading)return
+    this.setData({phoneLoading:true,phoneStatus:'正在通过微信官方验证手机号…'})
+    wx.request({
+      url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/phone/wechat-bind',
+      method:'POST',header:{Authorization:'Bearer '+token,'content-type':'application/json'},
+      data:{code},timeout:20000,
+      success:(r:any)=>{
+        if(getSessionToken()!==token)return
+        if(r.statusCode===200&&r.data?.bound===true){
+          this.setData({phoneBound:true,maskedPhone:String(r.data.maskedPhone||''),phoneStatus:'手机号已通过微信验证并绑定'})
+          this.loadPhoneStatus(token)
+        }else{
+          const error=String(r.data?.error||r.statusCode)
+          this.setData({phoneStatus:error==='phone_already_bound'?'该手机号已绑定其他账号，不能自动合并':'绑定未成功：'+error})
+        }
+      },
+      fail:()=>{if(getSessionToken()===token)this.setData({phoneStatus:'连接服务器失败，请重试'})},
+      complete:()=>{if(getSessionToken()===token)this.setData({phoneLoading:false})}
+    })
+  },
   showPhoneBindNotice(){
     wx.showModal({title:'手机号绑定',content:'手机号必须通过微信官方手机号授权或短信验证码验证后才能绑定。当前测试环境尚未启用验证服务，因此暂不接受手工填写号码作为已绑定手机号。',showCancel:false,confirmText:'知道了'})
   },
