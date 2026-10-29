@@ -84,8 +84,16 @@
 </view>
 </view>
 <view class="surface account-controls">
-<button wx:if="{{cloudSupport || phonePreview}}" loading="{{loginBusy}}" disabled="{{loginBusy}}" bindtap="showLogin">登录 / 切换账号</button>
-<view wx:if="{{loginPanel}}" class="login-dialog">
+<navigator class="service-row" url="/pages/customer-settings/customer-settings">
+<text class="service-icon">⚙</text>设置与隐私<text class="value">›</text>
+</navigator>
+</view>
+<view wx:if="{{phonePreview}}" class="notice">Staging 真机预览 · 非生产环境</view>
+</view>
+</view>
+<view wx:if="{{loginPanel}}" class="login-overlay" catchtap="closeLogin">
+  <view class="login-sheet" catchtap="keepLoginOpen">
+<view class="login-dialog">
   <view class="login-dialog-title">登录账号</view>
   <view class="login-dialog-subtitle">选择适合你的登录方式</view>
   <view class="login-methods">
@@ -104,11 +112,5 @@
   <view wx:if="{{loginStatus}}" class="notice">{{loginStatus}}</view>
   <button class="login-close" disabled="{{loginBusy}}" bindtap="closeLogin">返回</button>
 </view>
-<view wx:if="{{loginStatus}}" class="notice">{{loginStatus}}</view>
-<navigator class="service-row" url="/pages/customer-settings/customer-settings">
-<text class="service-icon">⚙</text>设置与隐私<text class="value">›</text>
-</navigator>
-</view>
-<view wx:if="{{phonePreview}}" class="notice">Staging 真机预览 · 非生产环境</view>
-</view>
+  </view>
 </view>

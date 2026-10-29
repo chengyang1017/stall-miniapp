@@ -11,6 +11,7 @@ Page({
   serial:0,
   merchantSerial:0,merchantContext:'',
   merchantOpening:false,
+  keepLoginOpen(){},
   showLogin(){this.setData({loginPanel:true,loginStatus:''})},
   closeLogin(){if(!this.data.loginBusy)this.setData({loginPanel:false,loginStatus:''})},
   selectLoginMethod(e:any){
