@@ -3,7 +3,7 @@ import { authorizedGet,logoutCurrentSession } from '../../modules/shared/runtime
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
 const PREF_KEY = 'stall_customer_order_notice_pref_v1'
 Page({
-  data: { orderNoticeEnabled: true,loggedIn:false,nickname:'',logoutBusy:false,profileBusy:false,profileStatus:'' },
+  data: { orderNoticeEnabled: true,loggedIn:false,nickname:'',logoutBusy:false,profileBusy:false,profileStatus:'',privacyExpanded:false },
   profileReadSerial:0,
   editSerial:0,
   async onShow() {
@@ -62,6 +62,7 @@ Page({
       finally{this.setData({logoutBusy:false});wx.showToast({title:'已退出当前设备',icon:'success'})}
     }})
   },
+  togglePrivacy(){this.setData({privacyExpanded:!this.data.privacyExpanded})},
   toggleOrderNotice(e: any) {
     const enabled = !!e.detail.value
     wx.setStorageSync(PREF_KEY, enabled)
