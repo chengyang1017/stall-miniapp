@@ -38,7 +38,8 @@
     "pages/merchant-tracking/merchant-tracking": "merchant",
     "pages/customer-reviews/customer-reviews": "customer",
     "pages/merchant-reviews/merchant-reviews": "merchant",
-    "pages/category/category": "customer"
+    "pages/category/category": "customer",
+    "pages/customer-account/customer-account": "customer"
   },
   "utils": {
     "addresses": "customer",
@@ -107,6 +108,7 @@
         "pages/delivery-proof/delivery-proof",
         "pages/order-detail/order-detail",
         "pages/profile/profile",
+        "pages/customer-account/customer-account",
         "pages/customer-settings/customer-settings",
         "pages/admin-note-tags/admin-note-tags",
         "pages/support-chat/support-chat",
@@ -135,6 +137,7 @@
         "pages/orders/orders",
         "pages/order-detail/order-detail",
         "pages/profile/profile",
+        "pages/customer-account/customer-account",
         "pages/customer-settings/customer-settings",
         "pages/customer-support-chat/customer-support-chat",
         "pages/customer-delivery-proof/customer-delivery-proof",
