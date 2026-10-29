@@ -2,6 +2,10 @@
 // A provider must verify its own signed server-to-server notifications before
 // returning a normalized settlement; browser/client claims are never trusted.
 const modes=new Set(['sandbox','live'])
+// Only events emitted by this module's gateway verification flow are accepted
+// by the settlement gate. A plain JSON object cannot claim verification.
+const verifiedEvents=new WeakSet()
+export const isVerifiedPaymentEvent=event=>!!event&&typeof event==='object'&&verifiedEvents.has(event)
 const money=/^[A-Z]{3}$/
 const id=/^[a-z0-9][a-z0-9._:-]{0,127}$/i
 const must=(v,reason)=>{if(!v)throw Error(reason)}
@@ -35,7 +39,9 @@ export function createPaymentGateway({provider,mode,createPayment,verifyNotifica
    // verifyNotification MUST authenticate the provider's signature using its
    // official algorithm, then look up the expected order on our server.
    const verified=await verifyNotification(raw,headers)
-   return verifiedPaymentEvent(verified,paymentRequest(request),{provider,mode})
+   const normalized=verifiedPaymentEvent(verified,paymentRequest(request),{provider,mode})
+   verifiedEvents.add(normalized)
+   return normalized
   }
  })
 }
