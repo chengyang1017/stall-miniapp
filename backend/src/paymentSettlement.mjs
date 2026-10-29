@@ -1,9 +1,11 @@
 // Pure settlement gate for a future provider webhook handler.
 // No writes or HTTP routes: actual settlement must lock the order in a DB
 // transaction, deduplicate provider transaction IDs, then update inventory.
+import {isVerifiedPaymentEvent} from './paymentGateway.mjs'
 const fail=code=>Object.assign(Error(code),{code})
 export function authorizePaymentSettlement({order,event,expectedMode,expectedProvider}){
  if(!order||!event||!['sandbox','live'].includes(expectedMode))throw fail('invalid_settlement_input')
+ if(!isVerifiedPaymentEvent(event))throw fail('unverified_payment_notification')
  if(event.status!=='succeeded'||event.provider!==expectedProvider||event.mode!==expectedMode)throw fail('untrusted_payment_result')
  if(!event.transactionId||typeof event.transactionId!=='string')throw fail('invalid_provider_transaction')
  if(event.orderId!==order.id||event.amountCents!==Number(order.total_cents)||event.currency!==order.currency)throw fail('payment_reconciliation_mismatch')
