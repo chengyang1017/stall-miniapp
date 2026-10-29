@@ -20,6 +20,8 @@ export async function settleVerifiedOrderPayment(pool,{event,expectedProvider,ex
   if(!order)throw fail('payment_order_not_found')
   const provider=providerKey(event)
   if(order.payment_status==='paid'){
+   // A repeated notification may be acknowledged only if its existing event
+   // matches this paid order; no duplicate inventory or status update.
    const prior=await db.query(`SELECT order_id,amount_cents,event_type FROM payment_events
     WHERE provider=$1 AND provider_event_id=$2`,[provider,event.transactionId])
    if(prior.rows.length===1&&prior.rows[0].order_id===order.id&&
@@ -36,8 +38,9 @@ export async function settleVerifiedOrderPayment(pool,{event,expectedProvider,ex
   // only resolves the hold, and is executed within the same transaction.
   await db.query(`INSERT INTO payment_events(order_id,provider,provider_event_id,event_type,amount_cents)
    VALUES($1,$2,$3,'payment_succeeded',$4)`,[order.id,provider,event.transactionId,event.amountCents])
-  await db.query(`UPDATE orders SET payment_status='paid',updated_at=clock_timestamp()
-   WHERE id=$1 AND payment_status='unpaid'`,[order.id])
+  const updated=await db.query(`UPDATE orders SET payment_status='paid',updated_at=clock_timestamp()
+   WHERE id=$1 AND payment_status='unpaid' RETURNING id`,[order.id])
+  if(updated.rowCount!==1||updated.rows?.[0]?.id!==order.id)throw fail('payment_order_update_failed')
   await resolveOrderInventory(db,{...order,payment_status:'paid'},'committed','payment','system:gateway',
    '支付网关验签成功，预留库存转为正式扣减（不再次扣库存）')
   await db.query('COMMIT');active=false

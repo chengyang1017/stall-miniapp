@@ -12,11 +12,12 @@ const event=async(mode='sandbox')=>{
  orderId:id,amountCents:1599,currency:'CNY',transactionId:'txn-1',status:'succeeded'})})
  return gateway.verifyNotification('signed',{request,headers:{}})
 }
-function mock(order=baseOrder,events=[]){
+function mock(order=baseOrder,events=[],options={}){
  const calls=[]
  const db={async query(sql,args){calls.push(sql)
   if(sql.startsWith('SELECT *, (created_at'))return {rows:[order]}
   if(sql.includes('FROM payment_events'))return {rows:events}
+  if(sql.includes("UPDATE orders SET payment_status='paid'"))return options.failUpdate?{rows:[],rowCount:0}:{rows:[{id:order.id}],rowCount:1}
   return {rows:[],rowCount:1}
  },release(){calls.push('RELEASE')}}
  return {pool:{connect:async()=>db},calls}
@@ -55,4 +56,11 @@ test('provider transaction already used rejects and rolls back',async()=>{
  const m=mock(baseOrder,[{order_id:'different'}])
  await assert.rejects(settleVerifiedOrderPayment(m.pool,{event:await event(),expectedProvider:'gateway',expectedMode:'sandbox'}),/provider_transaction_reused/)
  assert.ok(m.calls.includes('ROLLBACK'))
+})
+
+test('rolls back event insert when order update affects zero rows',async()=>{
+ const m=mock(baseOrder,[],{failUpdate:true})
+ await assert.rejects(settleVerifiedOrderPayment(m.pool,{event:await event(),expectedProvider:'gateway',expectedMode:'sandbox'}),/payment_order_update_failed/)
+ assert.ok(m.calls.some(s=>s.includes('INSERT INTO payment_events')))
+ assert.ok(m.calls.includes('ROLLBACK'));assert.ok(!m.calls.includes('COMMIT'))
 })
