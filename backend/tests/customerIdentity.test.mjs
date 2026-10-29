@@ -41,3 +41,11 @@ test('failed insert rolls back and releases connection',async()=>{
   assert.equal(rolledBack,true)
   assert.equal(released,true)
 })
+
+test('legacy order subject is not replaced by internal account id',async()=>{
+ const db=fakePool()
+ const internal=await resolveVerifiedWechatAccount(db,subject)
+ assert.equal(internal,'customer-1')
+ assert.notEqual(internal,subject)
+ assert.equal(db.state.identity,internal)
+})

@@ -21,6 +21,7 @@ import { billingRoute } from './billing.mjs'
 import { salesAnalyticsRoute } from './salesAnalytics.mjs'
 import { merchantDeliveryRoute, businessSettingsRoute } from './deliveryRules.mjs'
 import { authenticate, createSession, revokeSession, exchangeWechatCode, merchantStores, permittedStore } from './auth.mjs'
+import { resolveVerifiedWechatAccount } from './customerIdentity.mjs'
 
 // Public read-only API. Do not add merchant writes or customer checkout before
 // implementing verified WeChat identity, tenant authorization and rate limits.
@@ -88,6 +89,13 @@ const server = http.createServer(async (req, res) => {
         if (err.message === 'invalid_code') return reply(res, 400, { error: 'invalid_code' })
         if (err.message === 'wechat_not_configured') return reply(res, 503, { error: 'auth_not_configured' })
         return reply(res, 401, { error: 'wechat_auth_failed' })
+      }
+      // Opt-in only on isolated staging. Legacy subject remains the session/order identity.
+      // Do not enable in production until legacy orders and merchant role migration is designed.
+      if (process.env.PAYMENT_DB_ENV === 'isolated-test' && process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED === 'true') {
+        const accountId=await resolveVerifiedWechatAccount(pool,subject)
+        const session=await createSession(pool,subject)
+        return reply(res,200,{...session,accountId})
       }
       return reply(res, 200, await createSession(pool, subject))
     }
