@@ -9,7 +9,8 @@
     "build:customer": "node scripts/build-miniapp.mjs customer",
     "build:merchant": "node scripts/build-miniapp.mjs merchant",
     "check:boundaries": "node scripts/check-boundaries.mjs",
-    "check:build-output": "node scripts/check-build-output.mjs"
+    "check:build-output": "node scripts/check-build-output.mjs",
+    "preview:phone:update": "node scripts/update-phone-preview.mjs"
   },
   "keywords": [],
   "author": "",
