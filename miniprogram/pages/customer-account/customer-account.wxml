@@ -8,10 +8,10 @@
        <view class="phone-value">{{phoneLoading ? '正在读取…' : (phoneBound ? maskedPhone : '未绑定手机号')}}</view>
        <view class="editor-help">{{phoneBound ? '该号码已经通过验证' : '绑定前必须验证手机号所有权'}}</view>
      </view>
-     <button class="phone-bind-button" bindtap="showPhoneBindNotice">{{phoneBound ? '管理' : '绑定'}}</button>
+     <button class="phone-bind-button" open-type="getPhoneNumber" bindgetphonenumber="bindWechatPhone" loading="{{phoneLoading}}" disabled="{{phoneLoading}}">{{phoneBound ? '重新验证' : '微信授权绑定'}}</button>
    </view>
    <view wx:if="{{phoneStatus}}" class="profile-message">{{phoneStatus}}</view>
-   <view class="editor-help">当前版本暂未接通手机号验证服务，不能直接绑定未经验证的号码。</view>
+   <view class="editor-help">使用微信官方手机号授权，需小程序账号具备相应权限；若未启用服务，绑定将被拒绝。</view>
  </view>
  <view class="footnote">个人资料与账号关联，手机号只有通过身份验证后才能绑定。</view>
 </view>
