@@ -1,7 +1,6 @@
 // Read-only inspection of the isolated Staging payment migration prerequisites.
 // This script never executes DDL, GRANT, or a migration. Requires explicitly scoped
 // STAGING_PREFLIGHT_DATABASE_URL and expected branch/database. Do not use DATABASE_URL.
-import {createHash} from 'node:crypto'
 import {readFile} from 'node:fs/promises'
 const fail=(code)=>{throw Error(code)}
 const url=process.env.STAGING_PREFLIGHT_DATABASE_URL
@@ -16,6 +15,7 @@ if([...target.searchParams.keys()].some(k=>k!=='sslmode')||target.searchParams.g
 // Caller must independently compare endpoint ID to the branch in Neon console.
 const {Pool}=await import('pg')
 const pool=new Pool({host:target.hostname,port:5432,database:expectedDatabase,user:decodeURIComponent(target.username),password:decodeURIComponent(target.password),ssl:{rejectUnauthorized:true},max:1,connectionTimeoutMillis:5000})
+const {createHash}=await import('node:crypto')
 const sha=v=>createHash('sha256').update(v).digest('hex')
 try {
  const client=await pool.connect()
@@ -31,11 +31,13 @@ try {
     FROM pg_roles WHERE rolname LIKE 'stall\\_payment\\_%' ESCAPE '\\' ORDER BY rolname`)
   const ledger=await q('SELECT filename,sha256 FROM public.stall_schema_migrations ORDER BY filename')
   const manifest=JSON.parse(await readFile(new URL('./migration-plan.json',import.meta.url),'utf8'))
+  const shaOfCRLFByFile=new Map(await Promise.all(manifest.files.map(async x=>{const raw=await readFile(new URL('../../sql/'+x.filename,import.meta.url),'utf8');return [x.filename,sha(raw.replace(/\r\n/g,'\n').replace(/\n/g,'\r\n'))]})))
   const history=ledger.map((row,i)=>{
    const item=manifest.files[i]
    const status=item?.filename===row.filename?'filename_ok':'filename_mismatch'
-   return {file:row.filename,status,hashCompatible: status==='filename_ok'&&item.sha256===String(row.sha256).trim()?true:null}
+   return {file:row.filename,status,hashCompatible:status==='filename_ok'&&[item.sha256,shaOfCRLFByFile.get(row.filename)].includes(String(row.sha256).trim())}
   })
+  if(ledger.length!==20||history.some(x=>x.status!=='filename_ok'||!x.hashCompatible))fail('historical_migration_mismatch')
   const marker=(await q("SELECT to_regclass('staging_control.deployment_identity') IS NOT NULL AS exists"))[0].exists
   const payment=(await q("SELECT to_regclass('public.staging_payment_environment') IS NOT NULL AS exists"))[0].exists
   const icon=(await q("SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='categories' AND column_name='icon_key') AS exists"))[0].exists
