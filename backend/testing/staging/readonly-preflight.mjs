@@ -28,6 +28,12 @@ try {
   const objs=await q(`SELECT c.relname,pg_get_userbyid(c.relowner) AS owner FROM pg_class c
     WHERE c.relnamespace='public'::regnamespace AND c.relname=ANY($1::text[]) ORDER BY c.relname`,
    [['orders','stall_schema_migrations','stores','inventory_reservations','payment_events']])
+  const ddlOwnership=await q(`SELECT c.relname,
+      pg_get_userbyid(c.relowner) AS owner,
+      pg_has_role('stall_payment_migrator_limited',c.relowner,'USAGE') AS migrator_inherits_owner,
+      pg_has_role('stall_payment_migrator_limited',c.relowner,'SET') AS migrator_can_set_owner
+    FROM pg_class c WHERE c.relnamespace='public'::regnamespace
+    AND c.relname IN ('orders','stall_schema_migrations') ORDER BY c.relname`)
   const roles=await q(`SELECT rolname,rolcanlogin,rolsuper,rolcreatedb,rolcreaterole,rolbypassrls
     FROM pg_roles WHERE rolname LIKE 'stall\\_payment\\_%' ESCAPE '\\' ORDER BY rolname`)
   const ledger=await q('SELECT filename,sha256 FROM public.stall_schema_migrations ORDER BY filename')
@@ -42,7 +48,7 @@ try {
   const marker=(await q("SELECT to_regclass('staging_control.deployment_identity') IS NOT NULL AS exists"))[0].exists
   const payment=(await q("SELECT to_regclass('public.staging_payment_environment') IS NOT NULL AS exists"))[0].exists
   const icon=(await q("SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='categories' AND column_name='icon_key') AS exists"))[0].exists
-  console.log(JSON.stringify({mode:'read_only',branchClaim:expectedBranch,branchVerifiedByNeonMetadata:true,database:who.db,dbUser:who.db_user,objects:objs,roles,ledgerRows:ledger.length,historyFilenameChecks:history,identityAnchorExists:marker,paymentTablesExist:payment,categoryIconExists:icon,warning:'Endpoint-to-branch mapping checked against Neon metadata as of 2026-10-29; revalidate if the endpoint is rotated.'},null,2))
+  console.log(JSON.stringify({mode:'read_only',branchClaim:expectedBranch,branchVerifiedByNeonMetadata:true,database:who.db,dbUser:who.db_user,objects:objs,ddlOwnership,ddlOwnershipReady:ddlOwnership.length===2&&ddlOwnership.every(x=>x.migrator_inherits_owner||x.migrator_can_set_owner),roles,ledgerRows:ledger.length,historyFilenameChecks:history,identityAnchorExists:marker,paymentTablesExist:payment,categoryIconExists:icon,warning:'Endpoint-to-branch mapping checked against Neon metadata as of 2026-10-29; revalidate if the endpoint is rotated.'},null,2))
   await client.query('ROLLBACK')
  }finally{client.release()}
 }finally{await pool.end()}
