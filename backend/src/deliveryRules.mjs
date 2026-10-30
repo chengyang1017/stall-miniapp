@@ -149,8 +149,7 @@ export async function verifyDelivery(client,storeId,address,slot){
  if(rules.deliveryPaused)return {error:'delivery_paused'}
  const clock=await client.query('SELECT clock_timestamp() AS now')
  const now=clock.rows[0].now;const localNow=new Date(now.getTime()+8*3600000);const day=localNow.getUTCDay();const time=localNow.toISOString().slice(11,16)
- const business=rules.days[day]
- if(!business.enabled||time<business.start||time>=business.end)return {error:'store_closed'}
+ // Orders may be placed outside business/delivery hours; the chosen future slot still has to be valid.
  const area=rules.areas.find(a=>a.enabled&&a.id===address.areaId)
  if(!area)return {error:'outside_delivery_area'}
  if(area.latitude!==null){if(!coord(address.latitude,-90,90)||!coord(address.longitude,-180,180)||distanceMeters(area.latitude,area.longitude,address.latitude,address.longitude)>area.radiusMeters)return {error:'outside_delivery_area'}}
