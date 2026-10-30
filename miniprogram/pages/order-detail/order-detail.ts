@@ -3,15 +3,16 @@ import { supportKey } from '../../modules/shared/domain/support'
 import { proofUrl } from '../../modules/customer/api/proof' // PHASE38_PROOF_READ
 import { customerOrdersConfig, customerOrdersRequest,stagingOrderPayment } from '../../modules/customer/api/orders' // PHASE35_CUSTOMER_ORDERS
 import { loadWorkflowOrders, chinaTime } from '../../modules/customer/demo/orders'
-import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
+import { cloudIdentity as supportIdentity, getCloudContext } from '../../modules/shared/runtime/context'
 function workflowText(st: string): string {
   const labels: {[key: string]: string} = {new:'待接单',accepted:'已接单',preparing:'备货中',delivering:'配送中',delivered:'已送达',cancelled:'已取消',canceled:'已取消',abnormal:'配送异常',exception:'配送异常',refunded:'已退款'}
   return labels[st] || '待接单'
 }
 Page({
-  detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
+  phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
   data: { simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
+    this.phoneReadOnly=options.phone==='1'
     this.setData({ order: { id: options.id || '' } })
   },
   async onShow() {
@@ -20,6 +21,20 @@ Page({
     const cloud=customerOrdersConfig()
     if(this.detailContext!==JSON.stringify([identity,id])){this.detailContext=JSON.stringify([identity,id]);this.simulationKey='';this.simulationOperation++;this.setData({found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:''})}
     this.setData({cloudMode:!!cloud,proofImage:'',proofError:'',proofLoading:false})
+    if(cloud&&this.phoneReadOnly){
+      const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+      if(!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'){this.setData({found:false});return}
+      const token=saved.token
+      wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/account/stores/'+cfg.storeSlug+'/orders/'+encodeURIComponent(id),method:'GET',timeout:15000,header:{Authorization:'Bearer '+token},
+        success:(r:any)=>{
+          const cur=wx.getStorageSync('stall_customer_phone_session_v1') as any
+          if(!this.detailVisible||serial!==this.detailSerial||cur?.token!==token||cur?.apiBase!==cfg.apiBase)return
+          if(r.statusCode!==200||!r.data?.order){this.setData({found:false});wx.showToast({title:'手机号订单详情不可用',icon:'none'});return}
+          const o=r.data.order,addr=o.contactSnapshot||{},slot=o.deliverySlotSnapshot||{}
+          this.setData({found:true,order:{...o,receiverName:addr.receiverName||'',phone:addr.phone||'',area:addr.areaName||slot.areaName||'',detail:addr.detail||'',totalText:(Number(o.totalCents)/100).toFixed(2)},items:(r.data.items||[]).map((i:any)=>({...i,subtotal:(Number(i.lineTotalCents)/100).toFixed(2)})),statusText:workflowText(String(o.fulfillmentStatus||'new')),paymentText:paymentLabel(o),createdText:o.createdAt?chinaTime(o.createdAt):'',deliveredText:o.deliveredAt?chinaTime(o.deliveredAt):'',issueText:String(o.issueReason||''),simulationAuthorized:false,proofImage:''})
+        },fail:()=>wx.showToast({title:'订单详情网络异常',icon:'none'})})
+      return
+    }
     if (cloud) {
       // Preserve this same-context detail while refreshing; 401/403 still clear it.
       try {
@@ -71,7 +86,7 @@ Page({
   },
   async confirmSimulation(){
     const cfg=customerOrdersConfig(),identity=supportIdentity(),id=String(this.data.order.id||'')
-    if(!cfg||!this.detailVisible||this.detailContext!==JSON.stringify([identity,id])||!this.data.simulationAuthorized||!this.data.simulationEligible||this.data.simulationBusy)return
+    if(this.phoneReadOnly||!cfg||!this.detailVisible||this.detailContext!==JSON.stringify([identity,id])||!this.data.simulationAuthorized||!this.data.simulationEligible||this.data.simulationBusy)return
     const operation=++this.simulationOperation;this.setData({simulationBusy:true,simulationError:''})
     try{
       const ok=await new Promise<boolean>(resolve=>wx.showModal({title:'Staging测试操作',content:'仅模拟支付确认，不涉及真实扣款或到账。是否继续？',success:r=>resolve(r.confirm),fail:()=>resolve(false)}))
@@ -85,7 +100,7 @@ Page({
   proofReadError(){this.setData({proofImage:'',proofError:'凭证链接过期或读取失败，请重新获取'})},
   async renewProof(){
     const cfg=customerOrdersConfig(),serial=this.detailSerial,identity=supportIdentity(),id=String(this.data.order.id||'')
-    if(!cfg||this.data.proofLoading||!this.data.found)return
+    if(this.phoneReadOnly||!cfg||this.data.proofLoading||!this.data.found)return
     this.setData({proofLoading:true,proofError:''})
     try{const url=await proofUrl(id);if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({proofImage:url})}catch(_){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({proofError:'凭证暂不可用；请检查身份或稍后重新获取。'})}finally{if(serial===this.detailSerial)this.setData({proofLoading:false})}
   },

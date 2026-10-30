@@ -65,7 +65,7 @@ function normalizeCloudOrder(value: unknown): any {
 Page({
   serial:0,phoneOrdersSerial:0,visible:false,listContext:'',
   data: {
-    phoneOrders:[] as any[],phoneOrdersStatus:'',phoneOrdersLoading:false,phoneOrdersHasMore:false,
+    phoneOrders:[] as any[],phoneOrdersStatus:'',phoneOrdersLoading:false,phoneOrdersHasMore:false,phoneOrdersNextOffset:0,
     cloudMode:false,loading:false,error:'',hasMore:false,nextCursor:'',
     tabs: TABS.map(t => ({ ...t, count: 0 })),
     activeTab: 'all' as OrderTab,
@@ -76,14 +76,18 @@ Page({
   onLoad(options: Record<string, string | undefined>) {
     this.setData({ createdId: options.created || '',activeTab:TABS.some(t=>t.key===options.tab)?options.tab as OrderTab:'all',entryFulfillment:['pending','delivering','refund'].includes(options.fulfillment||'')?options.fulfillment||'':'' })
   },
-  refreshPhoneOrders(){
+  refreshPhoneOrders(){this.loadPhoneOrders(true)},
+  loadMorePhoneOrders(){this.loadPhoneOrders(false)},
+  loadPhoneOrders(reset:boolean){
     const serial=++this.phoneOrdersSerial,cfg=getCloudContext()
     const saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
-    this.setData({phoneOrders:[],phoneOrdersStatus:'',phoneOrdersLoading:false,phoneOrdersHasMore:false})
+    if(!reset&&(this.data.phoneOrdersLoading||!this.data.phoneOrdersHasMore))return
+    const offset=reset?0:this.data.phoneOrdersNextOffset
+    if(reset)this.setData({phoneOrders:[],phoneOrdersStatus:'',phoneOrdersLoading:false,phoneOrdersHasMore:false,phoneOrdersNextOffset:0})
     if(!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'||!/^[A-Za-z0-9_-]{40,100}$/.test(saved.token))return
     const token=saved.token,apiBase=cfg.apiBase,slug=cfg.storeSlug
     this.setData({phoneOrdersLoading:true,phoneOrdersStatus:'正在验证手机号顾客身份并读取历史订单…'})
-    wx.request({url:apiBase.replace(/\/$/,'')+'/v1/customer/account/stores/'+slug+'/orders',method:'GET',timeout:15000,
+    wx.request({url:apiBase.replace(/\/$/,'')+'/v1/customer/account/stores/'+slug+'/orders?offset='+offset,method:'GET',timeout:15000,
       header:{Authorization:'Bearer '+token},
       success:(r:any)=>{
         const current=wx.getStorageSync('stall_customer_phone_session_v1') as any
@@ -92,16 +96,17 @@ Page({
         if(r.statusCode===200&&Array.isArray(r.data?.orders)){
           try{
             const orders=r.data.orders.map(normalizeCloudOrder)
-            this.setData({phoneOrders:orders,phoneOrdersHasMore:r.data.hasMore===true,phoneOrdersStatus:'手机号顾客历史订单（只读，暂不能打开详情或付款）'})
+            this.setData({phoneOrders:reset?orders:[...this.data.phoneOrders,...orders],phoneOrdersHasMore:r.data.hasMore===true,phoneOrdersNextOffset:r.data.hasMore===true&&Number.isSafeInteger(r.data.nextOffset)?r.data.nextOffset:0,phoneOrdersStatus:'手机号顾客历史订单（只读，详情可查看，暂不能付款）'})
           }catch(_){this.setData({phoneOrdersStatus:'服务器返回的订单数据无法验证',phoneOrders:[]})}
         }else{
-          this.setData({phoneOrders:[],phoneOrdersStatus:r.statusCode===404?'手机号订单预览尚未启用':r.statusCode===401?'手机号会话已失效，请重新授权':'手机号历史订单暂时无法读取'})
+          this.setData({phoneOrders:reset?[]:this.data.phoneOrders,phoneOrdersStatus:r.statusCode===404?'手机号订单预览尚未启用':r.statusCode===401?'手机号会话已失效，请重新授权':'手机号历史订单暂时无法读取'})
         }
       },
       fail:()=>{if(this.visible&&serial===this.phoneOrdersSerial)this.setData({phoneOrdersStatus:'手机号订单读取失败，请检查网络'})},
       complete:()=>{if(serial===this.phoneOrdersSerial)this.setData({phoneOrdersLoading:false})}
     })
   },
+  openPhoneOrder(e:any){const id=String(e.currentTarget.dataset.id||'');if(/^[0-9a-f-]{36}$/i.test(id))wx.navigateTo({url:'/pages/order-detail/order-detail?id='+encodeURIComponent(id)+'&phone=1'})},
   entryMatches(o:any){const filter=this.data.entryFulfillment;if(!filter)return true;const status=fulfillment(o);return filter==='pending'?payment(o)==='paid'&&['new','accepted','preparing'].includes(status):filter==='delivering'?status==='delivering':payment(o).includes('refund')||status==='refunded'},
   onShow() {
     this.visible=true

@@ -3,11 +3,11 @@
   <view wx:if="{{phoneOrdersLoading || phoneOrdersStatus || phoneOrders.length}}" class="customer-order-card">
     <view class="customer-orders-title">手机号顾客历史订单（只读）</view>
     <view class="customer-orders-tip">{{phoneOrdersStatus}}</view>
-    <view wx:for="{{phoneOrders}}" wx:key="id" class="customer-order-info">
+    <view wx:for="{{phoneOrders}}" wx:key="id" class="customer-order-info" data-id="{{item.id}}" bindtap="openPhoneOrder">
       <view>{{item.id}} · {{item.statusText}}</view>
       <view>{{item.createdText}} · {{item.paymentText}} · ¥{{item.totalText}}</view>
     </view>
-    <view wx:if="{{phoneOrdersHasMore}}" class="customer-orders-tip">仅显示最近 50 笔；更多历史订单暂未开放读取</view>
+    <button wx:if="{{phoneOrdersHasMore}}" size="mini" loading="{{phoneOrdersLoading}}" disabled="{{phoneOrdersLoading}}" bindtap="loadMorePhoneOrders">加载更多手机号历史订单</button>
   </view>
   <view wx:if="{{createdId && !cloudMode}}" class="customer-orders-tip">演示订单 {{createdId}} 已创建，尚未支付。</view>
   <view class="customer-orders-tip">{{cloudMode ? '当前登录顾客的云端订单；支付与配送状态分别显示。' : '本机演示订单，支付尚未接入。'}}<text wx:if="{{cloudMode}}">分类数量为当前店铺本人全部订单统计，可继续加载历史订单。</text></view>
