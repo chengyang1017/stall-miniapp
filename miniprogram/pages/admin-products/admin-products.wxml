@@ -2,14 +2,14 @@
   <view wx:if="{{cloudLoading}}" style="padding:22rpx">正在读取商品和分类…</view>
   <view wx:if="{{cloudError}}" style="padding:22rpx;color:#b33">{{cloudError}}</view>
   <view class="product-manage-header">
-    <text class="product-manage-heading">商品管理</text>
+    <view class="product-manage-identity"><text class="product-manage-heading">商品管理</text><text class="product-manage-caption">管理商品、库存与上架状态</text></view>
     <view class="product-manage-header-actions">
       <button wx:if="{{products.length || batchMode}}" size="mini" bindtap="toggleBatchMode" disabled="{{batchBusy || cloudLoading || queryDirty}}">{{batchMode ? '退出批量管理' : '批量管理'}}</button>
       <button wx:if="{{!batchMode}}" size="mini" type="primary" bindtap="openNewProduct">+ 新增商品</button>
     </view>
   </view>
   <view class="product-query-panel">
-    <button wx:if="{{!batchMode}}" size="mini" bindtap="toggleImagePanel" disabled="{{batchBusy || imageBusy}}">{{imagePanel ? '收起图片管理' : '云端图片引用与清理计划'}}</button>
+    <button wx:if="{{!batchMode}}" class="product-tools-toggle" size="mini" bindtap="toggleImagePanel" disabled="{{batchBusy || imageBusy}}">{{imagePanel ? '收起图片管理' : '云端图片引用与清理计划'}}</button>
     <view wx:if="{{imagePanel && !batchMode}}" class="image-management-panel">
       <text class="product-query-note">只管理当前店铺商品图。历史、草稿、订单快照、归档和备份引用永久保护；旧对象来源不明时保留。保护期至少7天。此处不会执行删除，清理检查与计划仅owner可操作。</text>
       <view wx:if="{{imageError}}" class="product-query-pending">{{imageError}}</view>
@@ -27,7 +27,8 @@
       <input value="{{searchText}}" bindinput="inputSearch" bindconfirm="searchProducts" confirm-type="search" maxlength="100" placeholder="商品名称／分类名称，或完整商品 ID" disabled="{{batchBusy}}" />
       <button size="mini" bindtap="clearSearch" disabled="{{batchBusy}}">清空</button>
     </view>
-    <view class="product-query-filters">
+    <view class="product-filter-toggle" bindtap="toggleProductFilters" role="button" aria-label="展开或收起商品筛选"><text>分类与筛选</text><text class="product-filter-current">{{categoryFilters[categoryFilterIndex].name}} · {{filtersExpanded ? "收起 ▲" : "展开 ▼"}}</text></view>
+    <view wx:if="{{filtersExpanded}}" class="product-query-filters">
       <picker mode="selector" range="{{categoryFilters}}" range-key="name" value="{{categoryFilterIndex}}" bindchange="chooseQueryCategory" disabled="{{batchBusy}}">
         <view class="product-query-choice"><text>商品分类</text><text>{{categoryFilters[categoryFilterIndex].name}} ▾</text></view>
       </picker>
@@ -39,10 +40,9 @@
       <button size="mini" type="primary" bindtap="searchProducts" disabled="{{batchBusy}}">搜索／刷新</button>
       <button size="mini" bindtap="resetQuery" disabled="{{batchBusy}}">重置条件</button>
     </view>
-    <text class="product-query-note">筛选可组合；上架、定时及手动售罄仅适用于正式商品。折扣指已设置的有效折扣价格，包含未开始和已结束的优惠。</text>
-    <text class="product-query-note">价格按原价排序；不限库存、未填写数值排在末尾。全选仅选中当前已加载的正式商品。</text>
     <text wx:if="{{queryDirty}}" class="product-query-pending">{{refreshRequired ? '数据已变化，请刷新后再操作。' : '搜索内容已修改，请点击搜索。旧结果暂不能操作。'}}</text>
   </view>
+  <view class="product-list-heading"><text>商品列表</text><text>{{entries.length}} 条</text></view>
   <view wx:if="{{batchMode}}" class="product-batch-panel">
     <view class="product-batch-summary">
       <text>已选 {{batchSelectedCount}} / {{products.length}} 件商品</text>
@@ -135,8 +135,8 @@
 </view>
     <view class="product-manage-info">
       <text class="product-manage-name">{{item.name}}</text>
-      <text class="product-manage-price">¥{{item.price}}</text>
-      <text class="product-manage-state">{{item.statusLabel}} · {{item.soldOut ? '商家手动售罄' : '未手动售罄'}}</text>
+      <view class="product-card-meta"><text class="product-manage-price">¥{{item.price}}</text><text class="product-card-edit">编辑 ›</text></view>
+      <text class="product-manage-state">{{item.statusLabel}}{{item.soldOut ? ' · 已售罄' : ''}}</text>
       <text class="product-schedule-label">{{item.inventoryLabel}}</text>
       <text wx:if="{{item.publishAt}}" class="product-schedule-label">{{item.pendingPublication ? '计划上架：' : '已按计划上架：'}}{{item.publishTimeText || item.publishAt}}（{{storeTimeZone === 'Asia/Shanghai' ? '北京时间 UTC+8' : storeTimeZone}}）</text>
       <button wx:if="{{!batchMode}}" class="product-copy-button" size="mini" catchtap="openCopyProduct" data-id="{{item.id}}" disabled="{{cloudLoading || batchBusy || cloudError || queryDirty}}">复制</button>
