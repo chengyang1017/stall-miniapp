@@ -7,7 +7,7 @@ import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/c
 type Row = Category & { y: number; iconPath:string; iconActivePath:string; iconLabel:string; resolvedIconKey:string }
 
 Page({
-  revision:'',context:'',serial:0,operationSerial:0,disposed:false,moveAt:0,lastMove:null as any,rowIndexes:{} as Record<string,number>,
+  revision:'',context:'',serial:0,operationSerial:0,disposed:false,saving:false,saveQueue:[] as Array<{method:'POST'|'PATCH'|'DELETE';id:string;body:Record<string,any>;temporaryId:string}>,confirmed:[] as Category[],moveAt:0,lastMove:null as any,rowIndexes:{} as Record<string,number>,
   data: {
     cloudMode:false,cloudBusy:false,cloudRefreshing:false,cloudError:'',syncState:'confirmed',syncMessage:'',
     categories: [] as Category[], rows: [] as Row[],
@@ -30,37 +30,63 @@ Page({
   onHide(){this.serial++;if(this.data.draggingId)this.renderCategories(this.data.categories);this.setData({cloudRefreshing:false,draggingId:'',pickerTarget:''})},
   onUnload(){this.disposed=true;this.serial++;this.operationSerial++},
   renderCategories(categories:Category[]){const h=this.data.rowHeight;this.setData({categories,rows:categories.map((c,i)=>({...c,...categoryIconView(c),y:i*h})),areaHeight:categories.length*h})},
-  async cloudChange(method:'POST'|'PATCH'|'DELETE',id:string,body:Record<string,any>){
-    if(this.data.cloudBusy||this.data.cloudError||!this.revision||this.context!==supportIdentity())return
+  applyCloudChange(items:Category[],change:{method:'POST'|'PATCH'|'DELETE';id:string;body:Record<string,any>;temporaryId:string}):Category[]{
+    const {method,id,body,temporaryId}=change
+    if(method==='POST')return items.concat({id:temporaryId,name:body.name,...body.iconKey!==undefined?{iconKey:body.iconKey}:{}} as Category)
+    if(method==='DELETE')return items.filter(c=>c.id!==id)
+    if(id==='order'){const lookup=new Map(items.map(c=>[c.id,c]));return (body.ids as string[]).map(key=>lookup.get(key)).filter(Boolean) as Category[]}
+    return items.map(c=>c.id===id?{...c,name:body.name,...body.iconKey!==undefined?{iconKey:body.iconKey}:{}}:c)
+  },
+  cloudChange(method:'POST'|'PATCH'|'DELETE',id:string,body:Record<string,any>){
+    if(this.data.cloudError||!this.revision||this.context!==supportIdentity())return
+    if(id.startsWith('pending-')){wx.showToast({title:'新分类保存中，请稍后编辑',icon:'none'});return}
     if(Object.prototype.hasOwnProperty.call(body,'iconKey')&&!this.data.categoryIconsSupported){wx.showToast({title:'当前服务未启用图标保存',icon:'none'});return}
-    const operation=++this.operationSerial,context=this.context,before=this.data.categories.map(c=>({...c}));this.serial++
-    let optimistic=before
-    if(method==='POST')optimistic=before.concat({id:'pending-'+newId(),name:body.name,...body.iconKey!==undefined?{iconKey:body.iconKey}:{}}  as Category)
-    else if(method==='DELETE')optimistic=before.filter(c=>c.id!==id)
-    else if(id==='order'){const lookup=new Map(before.map(c=>[c.id,c]));optimistic=body.ids.map((key:string)=>lookup.get(key)!)}
-    else optimistic=before.map(c=>c.id===id?{...c,name:body.name,...body.iconKey!==undefined?{iconKey:body.iconKey}:{}}:c)
-    this.renderCategories(optimistic)
-    this.setData({cloudBusy:true,cloudRefreshing:false,cloudError:'',syncState:'pending',syncMessage:'正在同步，尚未保存确认',draggingId:''})
+    const change={method,id,body:{...body},temporaryId:'pending-'+newId()}
+    this.saveQueue.push(change)
+    this.serial++
+    this.renderCategories(this.applyCloudChange(this.data.categories,change))
+    this.setData({cloudBusy:true,cloudRefreshing:false,cloudError:'',syncState:'pending',syncMessage:'正在后台保存，可继续操作',draggingId:''})
+    if(method==='POST'&&this.data.newName.trim()===body.name)this.setData({newName:'',newIconKey:''})
+    if(method==='PATCH'&&id!=='order'&&this.data.editingId===id)this.setData({editingId:'',editingName:'',editingIconKey:''})
+    this.refreshIconPreviews()
+    void this.flushCloudChanges()
+  },
+  async flushCloudChanges(){
+    if(this.saving)return
+    this.saving=true
+    const operation=++this.operationSerial,context=this.context
     try{
-      const r=await writeCloudCategories(method,id,{...body,expectedRevision:this.revision})
-      if(this.disposed||operation!==this.operationSerial||context!==supportIdentity())return
-      this.revision=r.revision;this.renderCategories(r.items);this.setData({categoryIconsSupported:r.categoryIconsSupported===true})
-      this.setData({syncState:'confirmed',syncMessage:'已保存',...(method==='POST'&&this.data.newName.trim()===body.name&&(body.iconKey===undefined||this.data.newIconKey===(body.iconKey||''))?{newName:'',newIconKey:''}:{}),...(method==='PATCH'&&id!=='order'&&this.data.editingId===id&&this.data.editingName.trim()===body.name&&(body.iconKey===undefined||this.data.editingIconKey===(body.iconKey||''))?{editingId:'',editingName:'',editingIconKey:''}:{})})
-      this.refreshIconPreviews()
-    }catch(e){if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity()){
-      this.renderCategories(/http_40[13]/.test(String(e))?[]:before)
-      this.setData({syncState:'failed',syncMessage:'修改未确认，输入已保留',cloudError:String(e).includes('category_icons_not_available')?'当前服务未启用分类图标保存，请联系维护者升级后再试':String(e).includes('409')?'分类版本冲突、名称重复或仍有商品。请重新读取后核对，再重试；未覆盖云端':'云端修改未确认，请重新读取核对后重试，避免重复新增'})
-    }}finally{if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity())this.setData({cloudBusy:false})}
+      while(this.saveQueue.length){
+        const change=this.saveQueue[0]
+        const result=await writeCloudCategories(change.method,change.id,{...change.body,expectedRevision:this.revision})
+        if(this.disposed||operation!==this.operationSerial||context!==supportIdentity())return
+        this.revision=result.revision
+        this.confirmed=result.items
+        this.saveQueue.shift()
+        this.renderCategories(this.saveQueue.reduce((items,next)=>this.applyCloudChange(items,next),result.items))
+        this.setData({categoryIconsSupported:result.categoryIconsSupported===true})
+      }
+      if(!this.disposed&&context===supportIdentity())this.setData({syncState:'confirmed',syncMessage:'已保存'})
+    }catch(e){
+      if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity()){
+        this.saveQueue=[]
+        this.renderCategories(this.confirmed)
+        this.setData({syncState:'failed',syncMessage:'保存结果未确认，待办修改已撤回',cloudError:String(e).includes('category_icons_not_available')?'当前服务未启用分类图标保存':String(e).includes('409')?'分类版本冲突、名称重复或仍有商品，请重新读取后核对':'保存失败或结果未知，请重新读取核对后再操作'})
+      }
+    }finally{
+      this.saving=false
+      if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity())this.setData({cloudBusy:false})
+    }
   },
   async reloadCategories() {
     if(this.data.cloudBusy)return
     const cfg=getCloudContext(),context=supportIdentity(),changed=context!==this.context,serial=++this.serial
-    if(changed){this.operationSerial++;this.revision='';this.setData({categories:[],rows:[],newName:'',editingId:'',editingName:'',areaHeight:0,pickerTarget:'',newIconKey:'',editingIconKey:'',categoryIconsSupported:false,syncState:'confirmed',syncMessage:''});this.refreshIconPreviews()}
+    if(changed){this.operationSerial++;this.saveQueue=[];this.saving=false;this.confirmed=[];this.revision='';this.setData({categories:[],rows:[],newName:'',editingId:'',editingName:'',areaHeight:0,pickerTarget:'',newIconKey:'',editingIconKey:'',categoryIconsSupported:false,syncState:'confirmed',syncMessage:''});this.refreshIconPreviews()}
     this.context=context;this.setData({cloudMode:!!cfg,cloudError:'',draggingId:''})
     if(cfg){
-      const cached=cachedCloudCategories();if(changed&&cached){this.revision=cached.revision;this.renderCategories(cached.items);this.setData({categoryIconsSupported:cached.categoryIconsSupported===true})}
+      const cached=cachedCloudCategories();if(changed&&cached){this.revision=cached.revision;this.confirmed=cached.items;this.renderCategories(cached.items);this.setData({categoryIconsSupported:cached.categoryIconsSupported===true})}
       this.setData({cloudRefreshing:true})
-      try{const r=await readCloudCategories();if(serial!==this.serial||this.disposed||context!==supportIdentity())return;this.revision=r.revision;this.renderCategories(r.items);this.setData({categoryIconsSupported:r.categoryIconsSupported===true,syncState:'confirmed',syncMessage:''})}
+      try{const r=await readCloudCategories();if(serial!==this.serial||this.disposed||context!==supportIdentity())return;this.revision=r.revision;this.confirmed=r.items;this.renderCategories(r.items);this.setData({categoryIconsSupported:r.categoryIconsSupported===true,syncState:'confirmed',syncMessage:''})}
       catch(e){if(serial===this.serial&&!this.disposed&&context===supportIdentity()){if(/http_40[13]/.test(String(e))){this.revision='';this.renderCategories([])}this.setData({cloudError:'云端分类读取失败，请检查网络及权限；已有内容未用本机数据替代'})}}
       finally{if(serial===this.serial&&!this.disposed&&context===supportIdentity())this.setData({cloudRefreshing:false})}return
     }
@@ -76,8 +102,7 @@ Page({
   },
   onNewName(e: any) { this.setData({ newName: e.detail.value });this.refreshIconPreviews() },
   addCategory() {
-    if(this.data.cloudBusy)return
-    const name = String(this.data.newName || '').trim()
+        const name = String(this.data.newName || '').trim()
     if (!name) { wx.showToast({ title: '请输入分类名称', icon: 'none' }); return }
     if(getCloudContext()){if(this.data.newIconKey&&!this.data.categoryIconsSupported){wx.showToast({title:'图标尚未保存，请等待服务升级',icon:'none'});return}this.cloudChange('POST','',{name,...this.data.categoryIconsSupported?{iconKey:this.data.newIconKey||null}:{}});return}
     const store = loadStore()
@@ -88,10 +113,9 @@ Page({
     this.reloadCategories()
   },
   deleteCategory(e: any) {
-    if(this.data.cloudBusy)return
-    if (this.data.draggingId) return
+        if (this.data.draggingId) return
     const id = String(e.currentTarget.dataset.id || '')
-    if(getCloudContext()){const context=this.context;wx.showModal({title:'删除云端分类？',content:'服务端会拒绝删除仍有商品的分类，历史订单不受影响。',success:r=>{if(r.confirm&&context===supportIdentity())this.cloudChange('DELETE',id,{})}});return}
+    if(getCloudContext()){if(id.startsWith('pending-'))return;const context=this.context;wx.showModal({title:'删除云端分类？',content:'服务端会拒绝删除仍有商品的分类，历史订单不受影响。',success:r=>{if(r.confirm&&context===supportIdentity())this.cloudChange('DELETE',id,{})}});return}
     const store = loadStore()
     const category = store.categories.find(c => c.id === id)
     if (!category) return
@@ -109,17 +133,17 @@ Page({
     } })
   },
   beginRename(e: any) {
-    if(this.data.cloudBusy||this.data.cloudError)return
+    if(this.data.cloudError)return
     if (this.data.draggingId) return
     const id = String(e.currentTarget.dataset.id || '')
     const cat = (getCloudContext()?this.data.categories:loadStore().categories).find(c => c.id === id)
+    if(id.startsWith('pending-'))return
     if (cat) {this.setData({ editingId: id, editingName: cat.name,editingIconKey:validCategoryIconKey(cat.iconKey)?cat.iconKey:'' });this.refreshIconPreviews()}
   },
   onEditingName(e: any) { this.setData({ editingName: e.detail.value });this.refreshIconPreviews() },
   cancelRename() { this.setData({ editingId: '', editingName: '',editingIconKey:'',pickerTarget:'' }) },
   saveRename() {
-    if(this.data.cloudBusy)return
-    const id = this.data.editingId
+        const id = this.data.editingId
     const name = String(this.data.editingName || '').trim()
     if (!id) return
     if (!name) { wx.showToast({ title: '名称不能为空', icon: 'none' }); return }
@@ -137,18 +161,18 @@ Page({
     this.reloadCategories()
   },
   refreshIconPreviews(){const added=categoryIconView({name:this.data.newName,iconKey:this.data.newIconKey}),edited=categoryIconView({id:this.data.editingId,name:this.data.editingName,iconKey:this.data.editingIconKey});this.setData({newIconPath:added.iconPath,newIconLabel:added.iconLabel,editingIconPath:edited.iconPath,editingIconLabel:edited.iconLabel})},
-  openNewIconPicker(){if(this.data.cloudBusy)return;this.setData({pickerTarget:'new'})},
-  openEditIconPicker(e:any){if(this.data.cloudBusy||this.data.cloudError||this.data.draggingId)return;const id=String(e.currentTarget.dataset.id||'');if(this.data.editingId!==id)this.beginRename(e);if(this.data.editingId===id)this.setData({pickerTarget:'edit'})},
+  openNewIconPicker(){this.setData({pickerTarget:'new'})},
+  openEditIconPicker(e:any){if(this.data.cloudError||this.data.draggingId)return;const id=String(e.currentTarget.dataset.id||'');if(this.data.editingId!==id)this.beginRename(e);if(this.data.editingId===id)this.setData({pickerTarget:'edit'})},
   closeIconPicker(){this.setData({pickerTarget:''})},
   stopPickerTap(){},
-  selectIcon(e:any){if(this.data.cloudBusy||!this.data.pickerTarget)return;const key=String(e.currentTarget.dataset.key||'');if(key&&!validCategoryIconKey(key))return;this.setData(this.data.pickerTarget==='new'?{newIconKey:key}:{editingIconKey:key});this.refreshIconPreviews()},
+  selectIcon(e:any){if(!this.data.pickerTarget)return;const key=String(e.currentTarget.dataset.key||'');if(key&&!validCategoryIconKey(key))return;this.setData(this.data.pickerTarget==='new'?{newIconKey:key}:{editingIconKey:key});this.refreshIconPreviews()},
   // Handle-only touch sorting. No movable-view or input remounting.
   handleStart(e: any) {
-    if(this.data.cloudBusy||this.data.cloudError)return
+    if(this.data.cloudError)return
     const id = String(e.currentTarget.dataset.id || '')
     const idx = this.data.categories.findIndex(c => c.id === id)
     const touch = e.touches && e.touches[0]
-    if (idx < 0 || !touch || this.data.draggingId) return
+    if (idx < 0 || !touch || this.data.draggingId || this.data.categories.some(c=>c.id.startsWith('pending-'))) return
     this.serial++;this.setData({cloudRefreshing:false})
     this.dragOrder = this.data.categories.map(c => c.id)
     this.dragSlot = idx
