@@ -50,6 +50,7 @@ Page({
       return
     }
     const serial=this.loginSerial,token=saved.token
+    this.setData({customerPhoneSessionActive:false})
     wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/auth/session',method:'GET',timeout:15000,
       header:{Authorization:'Bearer '+token},
       success:(r:any)=>{
@@ -66,6 +67,7 @@ Page({
     })
   },
   logoutPhoneSession(){
+    ++this.loginSerial
     const cfg=getCloudContext()
     const saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
     wx.removeStorageSync('stall_customer_phone_session_v1')
