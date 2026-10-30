@@ -5,6 +5,7 @@ on:
     paths:
       - 'miniprogram/pages/profile/**'
       - 'miniprogram/pages/addresses/**'
+      - 'miniprogram/pages/orders/**'
       - 'backend/src/customer*'
       - 'backend/tests/customer*'
       - 'backend/tests/wechat-phone-bind.test.mjs'
