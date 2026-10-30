@@ -1,0 +1,13 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {customerAccountSnapshotRoute} from '../src/customerAccountSnapshot.mjs'
+const url=new URL('http://localhost/v1/customer/account')
+const subject='wx:wx0123456789abcdef:openid'
+const valid={id:'7f08a781-f880-41e6-a088-f6a849c1648a',nickname:'Sample',avatar_style:'blue',phone_bound:true,masked_phone:'+86*******5678'}
+function response(){const out={};return {out,res:{writeHead(status){out.status=status},end(x){out.body=JSON.parse(x)}}}}
+async function gate(fn){const keys=['PAYMENT_DB_ENV','CUSTOMER_ACCOUNT_MAPPING_ENABLED'];const old=keys.map(k=>process.env[k]);try{process.env.PAYMENT_DB_ENV='isolated-test';process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED='true';await fn()}finally{keys.forEach((k,i)=>old[i]===undefined?delete process.env[k]:process.env[k]=old[i])}}
+test('unrelated path does not intercept',async()=>{const {res}=response();assert.equal(await customerAccountSnapshotRoute({method:'GET'},res,new URL('http://localhost/no'),null),false)})
+test('disabled stage returns not enabled before database access',async()=>{const before=process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED;delete process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED;try{const {res,out}=response();await customerAccountSnapshotRoute({},res,url,null);assert.equal(out.status,404)}finally{if(before===undefined)delete process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED;else process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED=before}})
+test('invalid and absent WeChat sessions cannot read account',async()=>gate(async()=>{for(const s of [null,'phone:subject','wx:bad']){const {res,out}=response();await customerAccountSnapshotRoute({},res,url,{query(){throw Error('must not query')}},{authenticateSession:async()=>s});assert.equal(out.status,401)}}))
+test('valid session exposes only own account and masked phone',async()=>gate(async()=>{const {res,out}=response();let args;const pool={query:async(sql,params)=>{assert.match(sql,/i\.provider='wechat' AND i\.provider_subject=\$1/);args=params;return {rows:[valid]}}};await customerAccountSnapshotRoute({},res,url,pool,{authenticateSession:async()=>subject});assert.equal(out.status,200);assert.deepEqual(args,[subject]);assert.deepEqual(out.body,{accountId:valid.id,nickname:'Sample',avatarStyle:'blue',phoneBound:true,maskedPhone:'+86*******5678'});assert.equal(JSON.stringify(out.body).includes('merchant'),false)}))
+test('missing account fails closed',async()=>gate(async()=>{const {res,out}=response();await customerAccountSnapshotRoute({},res,url,{query:async()=>({rows:[]})},{authenticateSession:async()=>subject});assert.equal(out.status,404)}))
