@@ -47,6 +47,19 @@ try{
  // The database itself is thrown away with the GitHub Actions service container.
  process.on('exit',()=>{})
 }
+test('limited role can read and update its own cloud profile with scoped SQL',async()=>{
+ const owner=await runtime.query("SELECT account_id FROM customer_login_identities WHERE provider='wechat' AND provider_subject=$1",[subjectA])
+ const accountId=owner.rows[0].account_id
+ const changed=await runtime.query("UPDATE customer_accounts a SET nickname=$1,updated_at=now() FROM customer_login_identities i WHERE i.account_id=a.id AND i.provider='wechat' AND i.provider_subject=$2 RETURNING a.id,a.nickname",['Test shopper',subjectA])
+ assert.equal(changed.rows[0].id,accountId)
+ assert.equal(changed.rows[0].nickname,'Test shopper')
+ const avatar=await runtime.query("UPDATE customer_accounts a SET avatar_style=$1,updated_at=now() FROM customer_login_identities i WHERE i.account_id=a.id AND i.provider='wechat' AND i.provider_subject=$2 RETURNING a.avatar_style",['blue',subjectA])
+ assert.equal(avatar.rows[0].avatar_style,'blue')
+ const read=await runtime.query("SELECT a.id,a.nickname,a.avatar_style FROM customer_accounts a JOIN customer_login_identities i ON i.account_id=a.id WHERE i.provider='wechat' AND i.provider_subject=$1",[subjectA])
+ assert.deepEqual(read.rows[0],{id:accountId,nickname:'Test shopper',avatar_style:'blue'})
+ const blocked=await runtime.query("UPDATE customer_accounts a SET nickname=$1 FROM customer_login_identities i WHERE i.account_id=a.id AND i.provider='wechat' AND i.provider_subject=$2 RETURNING a.id",['Blocked','wx:wx0123456789abcdef:unknown'])
+ assert.equal(blocked.rowCount,0)
+})
 test('limited role cannot access merchant membership or grant itself privileges',async()=>{
  await assert.rejects(runtime.query('SELECT * FROM merchant_members'),e=>e.code==='42P01'||e.code==='42501')
  await assert.rejects(runtime.query('SELECT token_hash FROM customer_account_sessions'),e=>e.code==='42P01'||e.code==='42501')
