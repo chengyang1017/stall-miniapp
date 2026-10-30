@@ -10,7 +10,8 @@ Page({
  editor:null as DeliveryEditor|null,editorNotify:null as (()=>void)|null,visible:false,context:'',revision:null as string|null,serial:0,mapSelecting:false,
  data:{areas:[] as DeliveryConfig['areas'],slots:[] as DeliverySlot[],specialDates:[] as Array<{date:string;paused:boolean}>,deliveryPaused:false,
   areaName:'',slotLabel:'',slotStart:'',slotEnd:'',specialDate:new Date(Date.now()+8*3600000).toISOString().slice(0,10),specialPaused:true,
-  slotViews:[] as any[],enabledAreas:0,enabledSlots:0,syncState:'unsaved',cloudMode:false,sourceStore:'',configured:false,loading:false,saving:false,confirming:false,ready:false,dirty:false,conflict:false,error:'',feedback:''},
+  activeSection:'areas',slotViews:[] as any[],enabledAreas:0,enabledSlots:0,syncState:'unsaved',cloudMode:false,sourceStore:'',configured:false,loading:false,saving:false,confirming:false,ready:false,dirty:false,conflict:false,error:'',feedback:''},
+ selectSection(e:any){const s=String(e.currentTarget.dataset.section||'');if(['areas','slots','dates'].includes(s))this.setData({activeSection:s})},
  onShow(){
   this.visible=true;if(this.mapSelecting){if(this.editor&&this.editor.context===businessContextKey())this.editor.notify=this.editorNotify;return}
   if(getCloudContext()){
@@ -80,10 +81,10 @@ Page({
  labelInput(e:any){if(this.editable(true)){this.setData({slotLabel:String(e.detail.value),dirty:true,feedback:'',error:''});this.rememberInputs()}},
  startInput(e:any){if(this.editable(true)){this.setData({slotStart:String(e.detail.value),dirty:true,feedback:'',error:''});this.rememberInputs();this.tryAddSlot()}},
  endInput(e:any){if(this.editable(true)){this.setData({slotEnd:String(e.detail.value),dirty:true,feedback:'',error:''});this.rememberInputs();this.tryAddSlot()}},
- addArea(){if(!this.editable())return;const name=this.data.areaName.trim();if(!name){wx.showToast({title:'请输入配送区域名称',icon:'none'});return}const c=this.config();let id='area_'+newId();while(c.areas.some(a=>a.id===id))id='area_'+newId();c.areas.push({id,name,enabled:true});this.apply(c);this.setData({areaName:''})},
+ addArea(){if(!this.editable())return;const name=this.data.areaName.trim();if(!name){wx.showToast({title:'请输入配送区域名称',icon:'none'});return}const c=this.config();let id='area_'+newId();while(c.areas.some(a=>a.id===id))id='area_'+newId();c.areas.push({id,name,enabled:true});this.apply(c);this.setData({areaName:''});this.autoSave()},
  editAreaName(e:any){if(!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===String(e.currentTarget.dataset.id));if(!a)return;a.name=String(e.detail.value);this.apply(c)},
- toggleArea(e:any){if(!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===String(e.currentTarget.dataset.id));if(!a)return;a.enabled=!!e.detail.value;this.apply(c)},
- moveArea(e:any){if(!this.editable())return;const c=this.config(),i=c.areas.findIndex(a=>a.id===String(e.currentTarget.dataset.id)),j=i+Number(e.currentTarget.dataset.step);if(i<0||j<0||j>=c.areas.length)return;[c.areas[i],c.areas[j]]=[c.areas[j],c.areas[i]];this.apply(c)},
+ toggleArea(e:any){if(!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===String(e.currentTarget.dataset.id));if(!a)return;a.enabled=!!e.detail.value;this.apply(c);this.autoSave()},
+ moveArea(e:any){if(!this.editable())return;const c=this.config(),i=c.areas.findIndex(a=>a.id===String(e.currentTarget.dataset.id)),j=i+Number(e.currentTarget.dataset.step);if(i<0||j<0||j>=c.areas.length)return;[c.areas[i],c.areas[j]]=[c.areas[j],c.areas[i]];this.apply(c);this.autoSave()},
  async remove(kind:'area'|'slot'|'date',id:string){
   if(!this.editable())return;const context=this.context;this.setData({confirming:true})
   const ok=await new Promise<boolean>(resolve=>wx.showModal({title:'删除此配送配置？',content:'不会修改已下单订单的快照。区域被删除后，对应地址需重新选择区域。',success:r=>resolve(r.confirm),fail:()=>resolve(false)}));this.setData({confirming:false})
@@ -92,7 +93,7 @@ Page({
   if(kind==='area'){c.areas=c.areas.filter(a=>a.id!==id);c.slots=c.slots.map(s=>{if(!s.areaIds)return s;const areaIds=s.areaIds.filter(a=>a!==id);return {...s,areaIds,enabled:areaIds.length?s.enabled:false}})}
   else if(kind==='slot')c.slots=c.slots.filter(s=>s.id!==id)
   else c.specialDates=(c.specialDates||[]).filter(d=>d.date!==id)
-  this.apply(c);if(kind==='slot')this.autoSave()
+  this.apply(c);this.autoSave()
  },
  deleteArea(e:any){this.remove('area',String(e.currentTarget.dataset.id))},deleteSlot(e:any){this.remove('slot',String(e.currentTarget.dataset.id))},deleteDate(e:any){this.remove('date',String(e.currentTarget.dataset.date))},
  tryAddSlot(){if(this.data.slotLabel.trim()&&/^([01]\d|2[0-3]):[0-5]\d$/.test(this.data.slotStart)&&/^([01]\d|2[0-3]):[0-5]\d$/.test(this.data.slotEnd)&&this.data.slotStart<this.data.slotEnd)this.addSlot();else{this.setData({syncState:'unsaved',feedback:'新时段未完整有效，尚未提交'});this.rememberInputs()}},
@@ -102,15 +103,15 @@ Page({
  chooseWeekdays(e:any){if(!this.editable(true))return;const c=this.config(),s=c.slots.find(s=>s.id===String(e.currentTarget.dataset.id));if(!s)return;s.weekdays=(e.detail.value as string[]).map(Number);this.apply(c);this.autoSave()},
  toggleAllAreas(e:any){if(!this.editable(true))return;const c=this.config(),s=c.slots.find(s=>s.id===String(e.currentTarget.dataset.id));if(!s)return;s.areaIds=e.detail.value?undefined:c.areas.slice(0,1).map(a=>a.id);this.apply(c);this.autoSave()},
  chooseSlotAreas(e:any){if(!this.editable(true))return;const c=this.config(),s=c.slots.find(s=>s.id===String(e.currentTarget.dataset.id));if(!s)return;s.areaIds=e.detail.value;this.apply(c);this.autoSave()},
- togglePaused(e:any){if(!this.editable())return;const c=this.config();c.deliveryPaused=!!e.detail.value;this.apply(c)},
+ togglePaused(e:any){if(!this.editable())return;const c=this.config();c.deliveryPaused=!!e.detail.value;this.apply(c);this.autoSave()},
  chooseSpecialDate(e:any){if(this.editable())this.setData({specialDate:String(e.detail.value)})},
  chooseSpecialPaused(e:any){if(this.editable())this.setData({specialPaused:!!e.detail.value})},
- addSpecialDate(){if(!this.editable())return;const c=this.config(),dates=c.specialDates||[],date=this.data.specialDate,existing=dates.find(d=>d.date===date);if(existing)existing.paused=this.data.specialPaused;else dates.push({date,paused:this.data.specialPaused});c.specialDates=dates;this.apply(c)},
- toggleSpecialDate(e:any){if(!this.editable())return;const c=this.config(),date=(c.specialDates||[]).find(d=>d.date===String(e.currentTarget.dataset.date));if(!date)return;date.paused=!!e.detail.value;this.apply(c)},
+ addSpecialDate(){if(!this.editable())return;const c=this.config(),dates=c.specialDates||[],date=this.data.specialDate,existing=dates.find(d=>d.date===date);if(existing)existing.paused=this.data.specialPaused;else dates.push({date,paused:this.data.specialPaused});c.specialDates=dates;this.apply(c);this.autoSave()},
+ toggleSpecialDate(e:any){if(!this.editable())return;const c=this.config(),date=(c.specialDates||[]).find(d=>d.date===String(e.currentTarget.dataset.date));if(!date)return;date.paused=!!e.detail.value;this.apply(c);this.autoSave()},
  setAreaMapCenter(e:any){
   if(!this.editable())return;const id=String(e.currentTarget.dataset.id),context=this.context;this.mapSelecting=true
-  wx.chooseLocation({success:loc=>{if(context!==businessContextKey()||!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===id);if(!a)return;a.centerLat=Number(loc.latitude);a.centerLng=Number(loc.longitude);a.radiusMeters=a.radiusMeters||1500;this.apply(c)},fail:e=>{if(!String(e.errMsg).includes('cancel'))wx.showToast({title:'地图暂时无法打开',icon:'none'})},complete:()=>{this.mapSelecting=false}})
+  wx.chooseLocation({success:loc=>{if(context!==businessContextKey()||!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===id);if(!a)return;a.centerLat=Number(loc.latitude);a.centerLng=Number(loc.longitude);a.radiusMeters=a.radiusMeters||1500;this.apply(c);this.autoSave()},fail:e=>{if(!String(e.errMsg).includes('cancel'))wx.showToast({title:'地图暂时无法打开',icon:'none'})},complete:()=>{this.mapSelecting=false}})
  },
- changeAreaRadius(e:any){if(!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===String(e.currentTarget.dataset.id));if(!a)return;a.radiusMeters=Number(e.detail.value);this.apply(c)},
- clearAreaMap(e:any){if(!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===String(e.currentTarget.dataset.id));if(!a)return;delete a.centerLat;delete a.centerLng;delete a.radiusMeters;this.apply(c)}
+ changeAreaRadius(e:any){if(!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===String(e.currentTarget.dataset.id));if(!a)return;a.radiusMeters=Number(e.detail.value);this.apply(c);this.autoSave()},
+ clearAreaMap(e:any){if(!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===String(e.currentTarget.dataset.id));if(!a)return;delete a.centerLat;delete a.centerLng;delete a.radiusMeters;this.apply(c);this.autoSave()}
 })
