@@ -687,3 +687,8 @@ page { background: #f5f6f8; }
 .product-search-submit{font-size:24rpx;font-weight:600;color:#6839d1;padding:15rpx 14rpx}
 .product-filter-toggle{background:transparent;border-bottom:1rpx solid #eee8f5;margin-top:2rpx;padding:19rpx 5rpx}
 .product-query-actions{padding-top:10rpx}
+
+/* Small unobtrusive loading indicator */
+.product-loading-spinner-wrap{display:flex;align-items:center;justify-content:center;height:60rpx}
+.product-loading-spinner{box-sizing:border-box;width:34rpx;height:34rpx;border:4rpx solid #e7ddfa;border-top-color:#6936de;border-radius:50%;animation:product-spin .7s linear infinite}
+@keyframes product-spin{to{transform:rotate(360deg)}}
