@@ -47,6 +47,26 @@ try{
  // The database itself is thrown away with the GitHub Actions service container.
  process.on('exit',()=>{})
 }
+test('parallel first-login requests converge on exactly one permanent account',async()=>{
+ const subject='wx:wx0123456789abcdef:parallel_login'
+ const accounts=await Promise.all(Array.from({length:8},()=>resolveVerifiedWechatAccount(runtime,subject)))
+ assert.equal(new Set(accounts).size,1)
+ const stored=await pool.query("SELECT COUNT(*)::int AS n FROM customer_login_identities WHERE provider='wechat' AND provider_subject=$1",[subject])
+ assert.equal(stored.rows[0].n,1)
+})
+test('concurrent binding of one phone to different accounts never merges identities',async()=>{
+ const a='wx:wx0123456789abcdef:concurrent_a'
+ const b='wx:wx0123456789abcdef:concurrent_b'
+ const [aid,bid]=await Promise.all([resolveVerifiedWechatAccount(runtime,a),resolveVerifiedWechatAccount(runtime,b)])
+ const candidate='+8613712345678'
+ const results=await Promise.all([saveVerifiedWechatPhone(runtime,a,candidate),saveVerifiedWechatPhone(runtime,b,candidate)])
+ assert.deepEqual(results.sort(),['bound','phone_already_bound'])
+ const actual=await pool.query('SELECT account_id FROM customer_verified_phones WHERE phone_e164=$1',[candidate])
+ assert.equal(actual.rows.length,1)
+ assert.ok([aid,bid].includes(actual.rows[0].account_id))
+ const identityCount=await pool.query("SELECT COUNT(*)::int AS n FROM customer_login_identities WHERE provider='wechat' AND provider_subject IN ($1,$2)",[a,b])
+ assert.equal(identityCount.rows[0].n,2)
+})
 test('limited role can read and update its own cloud profile with scoped SQL',async()=>{
  const owner=await runtime.query("SELECT account_id FROM customer_login_identities WHERE provider='wechat' AND provider_subject=$1",[subjectA])
  const accountId=owner.rows[0].account_id
