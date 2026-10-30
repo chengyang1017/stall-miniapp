@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs'
 import pg from 'pg'
 import {resolveVerifiedWechatAccount} from '../src/customerIdentity.mjs'
 import {saveVerifiedWechatPhone} from '../src/customerWechatPhone.mjs'
+import {resolveExistingVerifiedPhoneAccount} from '../src/customerPhoneAccountLookup.mjs'
 const host=process.env.IDENTITY_CI_DB_HOST
 const db=process.env.IDENTITY_CI_DB_NAME
 if(process.env.CI!=='true'||host!=='127.0.0.1'||db!=='identity_ci'||process.env.IDENTITY_CI_DB_USER!=='postgres')
@@ -66,6 +67,14 @@ test('concurrent binding of one phone to different accounts never merges identit
  assert.ok([aid,bid].includes(actual.rows[0].account_id))
  const identityCount=await pool.query("SELECT COUNT(*)::int AS n FROM customer_login_identities WHERE provider='wechat' AND provider_subject IN ($1,$2)",[a,b])
  assert.equal(identityCount.rows[0].n,2)
+})
+test('verified phone resolves original permanent ID without account creation',async()=>{
+ const subjectAccount=await runtime.query("SELECT account_id FROM customer_login_identities WHERE provider='wechat' AND provider_subject=$1",[subjectA])
+ const id=await resolveExistingVerifiedPhoneAccount(runtime,{phone,verifiedByServer:true})
+ assert.equal(id,subjectAccount.rows[0].account_id)
+ assert.equal(await resolveExistingVerifiedPhoneAccount(runtime,{phone:'+8613612345678',verifiedByServer:true}),null)
+ const count=await runtime.query('SELECT COUNT(*)::int AS n FROM customer_accounts')
+ assert.equal(count.rows[0].n>=2,true)
 })
 test('limited role can read and update its own cloud profile with scoped SQL',async()=>{
  const owner=await runtime.query("SELECT account_id FROM customer_login_identities WHERE provider='wechat' AND provider_subject=$1",[subjectA])
