@@ -27,7 +27,7 @@ Page({
     if(!code||!cfg||this.data.customerPhoneLoginBusy){this.setData({customerPhoneLoginStatus:'请先授权微信手机号'});return}
     const serial=this.loginSerial
     this.setData({customerPhoneLoginBusy:true,customerPhoneLoginStatus:'正在验证已绑定的手机号…'})
-    wx.request({url:cfg.apiBase.replace(/\\/$/,'')+'/v1/customer/auth/wechat-phone',method:'POST',timeout:20000,data:{code},
+    wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/auth/wechat-phone',method:'POST',timeout:20000,data:{code},
       success:(res:any)=>{
         if(serial!==this.loginSerial)return
         if(res.statusCode===200&&typeof res.data?.token==='string'&&/^[A-Za-z0-9_-]{40,100}$/.test(res.data.token)){
