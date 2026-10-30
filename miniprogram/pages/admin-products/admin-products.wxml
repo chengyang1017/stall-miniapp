@@ -1,5 +1,5 @@
 <view class="product-manage-page"><view wx:if="{{presentationError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{presentationError}}</view>
-  <view wx:if="{{cloudLoading}}" style="padding:22rpx">正在读取商品和分类…</view>
+  <view wx:if="{{cloudLoading}}" class="product-loading-spinner-wrap" aria-label="正在加载"><view class="product-loading-spinner"></view></view>
   <view wx:if="{{cloudError}}" style="padding:22rpx;color:#b33">{{cloudError}}</view>
   <view class="product-manage-header">
     
