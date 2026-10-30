@@ -137,9 +137,9 @@ test('isolated PostgreSQL SMS issuance, one-time consumption and 60-second rate 
  assert.equal(state.rows[0].attempts,1)
  assert.ok(state.rows[0].consumed_at)
 })
-test('isolated SMS database tables deny PUBLIC permissions',async()=>{
- const x=await pool.query(`SELECT has_table_privilege('PUBLIC','customer_sms_challenges','SELECT') AS challenge_public,
- has_table_privilege('PUBLIC','customer_sms_issue_attempts','SELECT') AS attempts_public`)
- assert.equal(x.rows[0].challenge_public,false)
- assert.equal(x.rows[0].attempts_public,false)
+test('isolated SMS database tables grant minimum privileges to limited role',async()=>{
+ const x=await pool.query(`SELECT has_table_privilege('stall_payment_app_limited','customer_sms_challenges','SELECT') AS challenge_granted,
+ has_table_privilege('stall_payment_app_limited','customer_sms_issue_attempts','SELECT') AS attempts_granted`)
+ assert.equal(x.rows[0].challenge_granted,true)
+ assert.equal(x.rows[0].attempts_granted,true)
 })
