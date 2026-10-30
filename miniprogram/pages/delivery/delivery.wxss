@@ -40,3 +40,8 @@ page{background:#f7f6fb}
 .delivery-sync-warning{font-size:23rpx;color:#a85b28;padding:12rpx 4rpx}
 .delivery-checks{gap:10rpx 12rpx}
 .delivery-checks label{background:#faf9fd;border-radius:10rpx;padding:3rpx 8rpx;font-size:23rpx}
+
+.delivery-nav{display:flex;gap:8rpx;margin:14rpx 0 20rpx;background:#ede8f7;padding:8rpx;border-radius:16rpx}
+.delivery-tab{flex:1;text-align:center;padding:20rpx 5rpx;font-size:24rpx;color:#796b8e;border-radius:12rpx}
+.delivery-tab.selected{background:white;color:#6435d2;font-weight:700;box-shadow:0 3rpx 11rpx rgba(58,29,102,.09)}
+.delivery-toolbar{position:relative;top:auto;z-index:1;margin:0 0 12rpx}
