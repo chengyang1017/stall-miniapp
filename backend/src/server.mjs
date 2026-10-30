@@ -1,3 +1,4 @@
+import {customerSmsLoginRoute} from './customerSmsLogin.mjs'
 import {customerAccountAddressWriteRoute} from './customerAccountAddressWrite.mjs'
 import {customerAccountOrdersReadRoute} from './customerAccountOrdersRead.mjs'
 import {customerAccountAddressReadRoute} from './customerAccountAddressRead.mjs'
@@ -75,6 +76,7 @@ const server = http.createServer(async (req, res) => {
     if (await customerAvatarPhotoRoute(req,res,url,pool)) return
     if (await customerWechatPhoneBindRoute(req,res,url,pool)) return
     if (await customerWechatPhoneLoginRoute(req,res,url,pool)) return
+    if (await customerSmsLoginRoute(req,res,url,pool)) return
     if (await customerSessionRoute(req,res,url,pool)) return
     if (await customerAccountAddressReadRoute(req,res,url,pool)) return
     if (await customerAccountAddressWriteRoute(req,res,url,pool)) return
