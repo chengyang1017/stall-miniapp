@@ -24,3 +24,11 @@
 - **注意**：`verifiedByWechat` 和 `accountOwnershipVerified` 是内部调用方必须严格履行的前置约定，不能接受客户端声称的布尔值。正式 HTTP API 还未实现，必须在真实登录会话下验证账号所有权、由服务端兑换微信 code 后才能调用。
 - 先手机号的账号与旧微信订单/会话如何统一迁移仍需独立设计，不能只改登录按钮就认定历史数据已经打通。
 - 本次补充 `node --test backend/tests/customer-identity-link.test.mjs backend/tests/customer-phone-identity.test.mjs` 用于事务与冲突防回退测试，须在本地执行并再做数据库集成验证。
+
+
+## 自有账户 Session 隔离（新增）
+- 新增 `backend/src/customerAccountSessions.mjs`：仅供未来完成服务端验证的独立登录流程调用；会话对应 `customer_accounts.id`，不伪造微信 `external_subject`。
+- 新增未执行的迁移提案 `backend/migrations/proposals/024_customer_account_sessions.sql`：随机令牌仅存 SHA-256 哈希，具备过期和撤销字段，默认撤销 PUBLIC 权限。执行前须审查数据库角色授权、清理任务及回滚计划。
+- 新增 `backend/tests/customer-account-sessions.test.mjs`；静态/模拟测试不能替代真实 PostgreSQL 集成验证。
+- `verifiedLogin` 仅是内部方法的防误调用前置条件，**不是 OTP 验证实现，也不能由请求体直接赋值**；实际短信供应商、短信发送、抗滥用、账户恢复和合法的 phone-session 入口都尚未开发。
+- 旧版 `auth_sessions` 仍用于现有微信登录和商家权限。两套会话不互认，直到订单归属和权限迁移完成，绝不能直接用新账号会话调用旧版订单/商家接口。
