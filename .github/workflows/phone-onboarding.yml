@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'miniprogram/pages/profile/**'
+      - 'miniprogram/pages/addresses/**'
       - 'backend/src/customer*'
       - 'backend/tests/customer*'
       - 'backend/tests/wechat-phone-bind.test.mjs'
