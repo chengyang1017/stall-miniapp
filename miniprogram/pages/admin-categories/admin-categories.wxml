@@ -9,7 +9,7 @@
   </view>
   <view class="panel">
     <view class="panel-title">分类列表</view>
-    <view wx:if="{{categories.length === 0}}" class="empty">{{cloudRefreshing ? '正在读取分类…' : '暂无分类'}}</view>
+    <view wx:if="{{categories.length === 0 && cloudRefreshing}}" class="global-loading-wrap"><view class="global-loading-spinner"></view></view><view wx:elif="{{categories.length === 0}}" class="empty">暂无分类</view>
     <view wx:else class="sort-area" style="height:{{areaHeight}}px;">
       <view wx:for="{{rows}}" wx:key="id" class="sort-row {{draggingId === item.id ? 'is-dragging' : ''}}" style="height:{{rowHeight}}px;transform:translateY({{item.y}}px);">
         <view class="cat-row {{editingId === item.id ? 'is-editing' : ''}}">
