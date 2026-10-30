@@ -3,7 +3,7 @@
 import {createHmac,timingSafeEqual} from 'node:crypto'
 import {canonicalMainlandPhone} from './customerPhoneIdentity.mjs'
 const digest=(secret,phone,code)=>createHmac('sha256',secret).update(phone+'|'+code).digest('hex')
-export async function consumeCustomerSmsChallenge(pool,{phone,code,secret,now=new Date()}){
+export async function consumeCustomerSmsChallenge(pool,{phone,code,secret}){
  const normalized=canonicalMainlandPhone(phone)
  if(typeof code!=='string'||!/^[0-9]{6}$/.test(code))throw Error('invalid_otp')
  if(typeof secret!=='string'||secret.length<32)throw Error('otp_secret_not_configured')
@@ -11,9 +11,9 @@ export async function consumeCustomerSmsChallenge(pool,{phone,code,secret,now=ne
  try{
   await db.query('BEGIN')
   // All attempts (including wrong codes) are serialized and persisted.
-  const r=await db.query(`SELECT phone_e164,code_hash,attempts,expires_at,consumed_at
+  const r=await db.query(`SELECT phone_e164,code_hash,attempts,expires_at,consumed_at,expires_at>clock_timestamp() AS unexpired
     FROM customer_sms_challenges WHERE phone_e164=$1 FOR UPDATE`,[normalized])
-  const row=r.rows[0],validTime=row&&new Date(row.expires_at)>now&&!row.consumed_at
+  const row=r.rows[0],validTime=row&&row.unexpired===true&&!row.consumed_at
   if(!validTime||row.attempts>=5){await db.query('COMMIT');return false}
   await db.query('UPDATE customer_sms_challenges SET attempts=attempts+1 WHERE phone_e164=$1',[normalized])
   const expected=digest(secret,normalized,code)

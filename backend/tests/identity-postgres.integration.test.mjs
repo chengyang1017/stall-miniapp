@@ -133,6 +133,9 @@ test('isolated PostgreSQL SMS issuance, one-time consumption and 60-second rate 
  assert.equal(await consumeCustomerSmsChallenge(runtime,{phone,code:'invalid',secret}).catch(e=>e.message),'invalid_otp')
  assert.equal(await consumeCustomerSmsChallenge(runtime,{phone,code:sent.code,secret}),true)
  assert.equal(await consumeCustomerSmsChallenge(runtime,{phone,code:sent.code,secret}),false)
+ // PostgreSQL itself decides whether OTP is expired, not application clock.
+ await runtime.query("UPDATE customer_sms_challenges SET consumed_at=NULL,expires_at=now()-interval '1 second' WHERE phone_e164=$1",[phone])
+ assert.equal(await consumeCustomerSmsChallenge(runtime,{phone,code:sent.code,secret,now:new Date('2000-01-01')}),false)
  const state=await runtime.query('SELECT attempts,consumed_at FROM customer_sms_challenges WHERE phone_e164=$1',[phone])
  assert.equal(state.rows[0].attempts,1)
  assert.ok(state.rows[0].consumed_at)
