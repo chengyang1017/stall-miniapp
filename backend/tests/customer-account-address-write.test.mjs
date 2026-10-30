@@ -11,3 +11,18 @@ test('writes remain disabled without explicit isolated test opt-in',async()=>gat
 test('invalid session is denied before linked identity lookup',async()=>gate(async()=>{const {out,res}=output();await customerAccountAddressWriteRoute({method:'POST',headers:{authorization:'Bearer bad'}},res,base,{query(){throw Error('no query')}});assert.equal(out.status,401)}))
 test('accounts without a unique verified WeChat identity cannot mutate addresses',async()=>gate(async()=>{for(const rows of [[],[{provider_subject:'a'},{provider_subject:'b'}]]){const {out,res}=output();let n=0;const pool={async query(){n++;return n===1?{rows:[{account_id:id}]}:{rows}}};await customerAccountAddressWriteRoute(req('POST'),res,base,pool);assert.equal(out.status,409);assert.equal(n,2)}}))
 test('reject malformed address IDs and unexpected methods',async()=>gate(async()=>{const {out,res}=output();await customerAccountAddressWriteRoute(req('DELETE'),res,new URL(base.href+'/x'),null);assert.equal(out.status,400);const x=output();await customerAccountAddressWriteRoute(req('POST'),x.res,new URL(base.href+'/'+id),null);assert.equal(x.out.status,405)}))
+
+test('WeChat PUT is translated to legacy PATCH only after session and identity verification',async()=>gate(async()=>{
+ const {out,res}=output()
+ const subject='wx:wx0123456789abcdef:verified_sub'
+ const request={...req('PUT'),async *[Symbol.asyncIterator](){yield Buffer.from(JSON.stringify({isDefault:true,expectedVersion:1}))}}
+ const queries=[]
+ const store='a5b6dfee-83b7-414f-af12-14293848d012'
+ const client={async query(sql,params){queries.push(sql);if(sql.startsWith('SELECT * FROM customer_addresses'))return {rows:[]};return {rows:[]}},release(){}}
+ const pool={async query(sql){queries.push(sql);if(sql.includes('customer_account_sessions'))return {rows:[{account_id:id}]};if(sql.includes('customer_login_identities'))return {rows:[{provider_subject:subject}]};if(sql.includes('SELECT id FROM stores'))return {rows:[{id:store}]};return {rows:[]}},async connect(){return client}}
+ await customerAccountAddressWriteRoute(request,res,new URL(base.href+'/'+id),pool)
+ assert.equal(request.method,'PATCH')
+ assert.equal(out.status,404)
+ assert.equal(out.body.error,'address_not_found')
+ assert.ok(queries.some(x=>x.includes('customer_login_identities')))
+}))

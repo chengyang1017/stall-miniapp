@@ -12,7 +12,7 @@ const uuid=/^[0-9a-f-]{36}$/i
 export async function customerAccountAddressWriteRoute(req,res,url,pool){
  const match=/^\/v1\/customer\/account\/stores\/([^/]+)\/addresses(?:\/([^/]+))?$/.exec(url.pathname)
  if(!match)return false
- if(!['POST','PATCH','DELETE'].includes(req.method))return false
+ if(!['POST','PUT','PATCH','DELETE'].includes(req.method))return false
  if(!enabled()){reply(res,404,{error:'not_enabled'});return true}
  if(!slug.test(match[1])||(match[2]&&!uuid.test(match[2]))||url.search){reply(res,400,{error:'invalid_query'});return true}
  if((req.method==='POST'&&match[2])||(req.method!=='POST'&&!match[2])){reply(res,405,{error:'method_not_allowed'});return true}
@@ -24,5 +24,7 @@ export async function customerAccountAddressWriteRoute(req,res,url,pool){
  if(typeof subject!=='string'||!/^wx:wx[a-f0-9]{16}:[A-Za-z0-9_-]{1,128}$/.test(subject)){reply(res,409,{error:'invalid_linked_identity'});return true}
  const legacyUrl=new URL(url)
  legacyUrl.pathname='/v1/stores/'+match[1]+'/addresses'+(match[2]?'/'+match[2]:'')
+ // The WeChat request API supports PUT, not PATCH. Convert only after authentication.
+ if(req.method==='PUT')req.method='PATCH'
  return customerAddressRoute(req,res,legacyUrl,pool,subject)
 }

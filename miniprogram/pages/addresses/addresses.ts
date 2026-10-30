@@ -66,14 +66,14 @@ Page({
   },
   phoneNew(){if(this.data.phoneWriteBusy)return;this.phoneCreateKey='';this.setData({phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:'',phoneAddressStatus:'新增手机号账号地址（测试环境）'})},
   phoneField(e:any){const field=String(e.currentTarget.dataset.field);if(['phoneName','phoneNumber','phoneAreaId','phoneDetail'].includes(field))this.setData({[field]:String(e.detail.value||'')})},
-  phoneWrite(method:'POST'|'PATCH'|'DELETE',id:string,body:Record<string,unknown>):Promise<boolean>{
+  phoneWrite(method:'POST'|'PUT'|'DELETE',id:string,body:Record<string,unknown>):Promise<boolean>{
     const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
     if(this.data.phoneWriteBusy||!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'||!/^[A-Za-z0-9_-]{40,100}$/.test(saved.token))return Promise.resolve(false)
     const serial=++this.phoneWriteSerial,token=saved.token,apiBase=cfg.apiBase,slug=cfg.storeSlug
     this.setData({phoneWriteBusy:true,phoneAddressStatus:'正在提交手机号地址操作…'})
     return new Promise(resolve=>wx.request({
       url:apiBase.replace(/\/$/,'')+'/v1/customer/account/stores/'+slug+'/addresses'+(id?'/'+id:''),
-      method:method as WechatMiniprogram.RequestOption['method'],timeout:20000,header:{Authorization:'Bearer '+token,'content-type':'application/json'},data:body,
+      method,timeout:20000,header:{Authorization:'Bearer '+token,'content-type':'application/json'},data:body,
       success:(r:any)=>{
         const now=getCloudContext(),session=wx.getStorageSync('stall_customer_phone_session_v1') as any
         if(this.disposed||serial!==this.phoneWriteSerial||session?.token!==token||session?.apiBase!==apiBase||now?.apiBase!==apiBase||now?.storeSlug!==slug){resolve(false);return}
@@ -96,7 +96,7 @@ Page({
     if(!name||name.length>100||!/^1[3-9]\d{9}$/.test(number)||!area||area.length>60||!detail||detail.length>300){this.setData({phoneAddressStatus:'请填写正确的姓名、11位手机号、配送区域 ID 和详细地址'});return}
     const existing=this.data.phoneEditId
     if(!existing&&!this.phoneCreateKey)this.phoneCreateKey='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,(c)=>{const r=Math.floor(Math.random()*16);return(c==='x'?r:(r&3|8)).toString(16)})
-    const ok=await this.phoneWrite(existing?'PATCH':'POST',existing,{receiverName:name,phone:number,deliveryAreaId:area,detail,latitude:null,longitude:null,locationName:'',mapAddress:'',...(existing?{expectedVersion:this.data.phoneEditVersion}:{clientKey:this.phoneCreateKey})})
+    const ok=await this.phoneWrite(existing?'PUT':'POST',existing,{receiverName:name,phone:number,deliveryAreaId:area,detail,latitude:null,longitude:null,locationName:'',mapAddress:'',...(existing?{expectedVersion:this.data.phoneEditVersion}:{clientKey:this.phoneCreateKey})})
     if(ok){this.phoneCreateKey='';this.setData({phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:''})}
   },
   async phoneRemove(e:any){
@@ -106,7 +106,7 @@ Page({
   },
   async phoneDefault(e:any){
     const id=String(e.currentTarget.dataset.id||''),a=(this.data.phoneAddressList as any[]).find(x=>x.id===id)
-    if(a&&!this.data.phoneWriteBusy)await this.phoneWrite('PATCH',id,{isDefault:true,expectedVersion:a.version})
+    if(a&&!this.data.phoneWriteBusy)await this.phoneWrite('PUT',id,{isDefault:true,expectedVersion:a.version})
   },
   async refresh() {
     const cfg=getCloudContext(),serial=++this.deliverySerial,key=cfg?deliveryStoreKey(cfg):'local-demo'
