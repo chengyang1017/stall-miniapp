@@ -3,12 +3,13 @@ import assert from 'node:assert/strict'
 import {canonicalMainlandPhone,linkVerifiedPhoneToAccount} from '../src/customerPhoneIdentity.mjs'
 const id='7f08a781-f880-41e6-a088-f6a849c1648a'
 const phone='+8613812345678'
-function fixture({account=true,owner=null,insertError=null}={}){
+function fixture({account=true,owner=null,currentPhone=null,insertError=null}={}){
  const queries=[]
  const client={async query(sql,args=[]){
   queries.push({sql,args})
   if(sql.startsWith('SELECT id'))return {rows:account?[{id}]:[]}
   if(sql.startsWith('SELECT account_id'))return {rows:owner?[{account_id:owner}]:[]}
+  if(sql.startsWith('SELECT phone_e164'))return {rows:currentPhone?[{phone_e164:currentPhone}]:[]}
   if(sql.startsWith('INSERT')&&insertError)throw Object.assign(Error('db_failure'),{code:insertError})
   return {rows:[]}
  },release(){queries.push({sql:'RELEASE'})}}
@@ -28,7 +29,7 @@ test('unverified claim and invalid account fail before database access',async()=
 test('verified linking is transactional',async()=>{
  const f=fixture()
  assert.equal(await linkVerifiedPhoneToAccount(f.pool,{accountId:id,phone,verifiedByServer:true}),'bound')
- assert.deepEqual(f.queries.map(q=>q.sql.startsWith('SELECT')?'SELECT':q.sql.startsWith('INSERT')?'INSERT':q.sql),['BEGIN','SELECT','SELECT','INSERT','COMMIT','RELEASE'])
+ assert.deepEqual(f.queries.map(q=>q.sql.startsWith('SELECT')?'SELECT':q.sql.startsWith('INSERT')?'INSERT':q.sql),['BEGIN','SELECT','SELECT','SELECT','INSERT','COMMIT','RELEASE'])
 })
 test('never reassigns another account phone',async()=>{
  const f=fixture({owner:'other-account'})
@@ -45,4 +46,17 @@ test('unique constraint conflict is not an account merge',async()=>{
  const f=fixture({insertError:'23505'})
  assert.equal(await linkVerifiedPhoneToAccount(f.pool,{accountId:id,phone,verifiedByServer:true}),'phone_already_bound')
  assert.equal(f.queries.at(-2).sql,'ROLLBACK')
+})
+
+test('previously bound number cannot silently change',async()=>{
+ const f=fixture({currentPhone:'+8613912345678'})
+ assert.equal(await linkVerifiedPhoneToAccount(f.pool,{accountId:id,phone,verifiedByServer:true}),'phone_change_requires_reverification')
+ assert.equal(f.queries.some(q=>q.sql.startsWith('INSERT')),false)
+ assert.equal(f.queries.at(-2).sql,'ROLLBACK')
+})
+test('same-number linking is safely idempotent',async()=>{
+ const f=fixture({currentPhone:phone})
+ assert.equal(await linkVerifiedPhoneToAccount(f.pool,{accountId:id,phone,verifiedByServer:true}),'bound')
+ assert.equal(f.queries.some(q=>q.sql.startsWith('INSERT')),false)
+ assert.equal(f.queries.at(-2).sql,'COMMIT')
 })
