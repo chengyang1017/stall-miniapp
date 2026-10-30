@@ -1,6 +1,6 @@
 <view class="bill-page">
   <view class="bill-header"><view class="bill-title">账单与营业统计</view><view class="bill-hint">{{cloudMode ? '云端数据库账单 · CNY · 北京时间' : '本机演示订单 · 并非真实收款流水'}}</view></view>
-  <view wx:if="{{loading}}" class="bill-warning">正在读取云端账单…</view>
+  <view wx:if="{{loading}}" class="global-loading-wrap"><view class="global-loading-spinner"></view></view>
   <view wx:if="{{error}}" class="bill-warning">{{error}}<button disabled="{{exporting}}" size="mini" bindtap="refresh">重试</button></view>
   <view class="bill-filter">
     <picker disabled="{{exporting}}" mode="date" start="2000-01-01" end="2100-12-31" value="{{day}}" bindchange="chooseDay"><view class="bill-date">选择日期：{{day}}　⌄</view></picker>
