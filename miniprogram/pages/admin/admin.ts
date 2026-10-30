@@ -1,7 +1,7 @@
 import { getMinimumOrder, saveMinimumOrder } from '../../modules/merchant/demo/settings'
 import { getCloudContext } from '../../modules/shared/runtime/context'
 import { merchantBusiness, patchMerchantBusiness, businessContextKey } from '../../modules/merchant/api/business'
-import { fetchMerchantPendingCount } from '../../modules/merchant/api/orders'
+import { fetchMerchantOrderSummary } from '../../modules/merchant/api/orders'
 import { loadWorkflowOrders } from '../../modules/merchant/demo/orders'
 import { merchantSupportGet,supportIdentity } from '../../modules/merchant/api/support'
 import { authorizedGet,hasRecentMerchantPermission } from '../../modules/shared/runtime/auth'
@@ -16,13 +16,13 @@ Page({
  // Page-local proof only: bound to API, store and session; shows reuse a short-lived shared proof or recheck the server.
  accessSerial:0,accessContext:'',
  revision:null as string|null, serial:0,pendingSerial:0, loadedContext:'',supportSerial:0,supportTimer:0 as any,
- data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,pendingNewOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
+ data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,pendingNewOrderCount:null as number|null,unpaidOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
  async onShow(){
   const cfg=getCloudContext(),serial=++this.accessSerial,identity=supportIdentity()
   const retained=this.accessContext===identity&&this.data.workspaceAuthorized||!!cfg&&hasRecentMerchantPermission(cfg.apiBase,cfg.storeSlug)
   if(this.accessContext!==identity){
    this.accessContext=identity;this.serial++;this.pendingSerial++;this.supportSerial++;clearTimeout(this.supportTimer);this.revision=null;this.loadedContext=''
-   this.setData({workspaceAuthorized:false,settingsReady:false,minimumOrderInput:'',pendingNewOrderCount:null,supportUnread:null})
+   this.setData({workspaceAuthorized:false,settingsReady:false,minimumOrderInput:'',pendingNewOrderCount:null,unpaidOrderCount:null,supportUnread:null})
   }
   this.setData({workspaceAuthorized:retained,accessLoading:!!cfg&&!retained,accessError:''})
   if(cfg){
@@ -73,9 +73,9 @@ Page({
   const cfg=getCloudContext(),context=businessContextKey(),serial=++this.pendingSerial
   this.setData({pendingLoading:!!cfg,pendingError:''})
   try{
-   const count=cfg?await fetchMerchantPendingCount(cfg):loadWorkflowOrders().filter(o=>String(o.fulfillmentStatus||'new')==='new').length
+   const summary=cfg?await fetchMerchantOrderSummary(cfg):{pendingCount:loadWorkflowOrders().filter(o=>String(o.fulfillmentStatus||'new')==='new'&&o.paymentStatus==='paid').length,unpaidCount:loadWorkflowOrders().filter(o=>String(o.paymentStatus||'unpaid')==='unpaid').length}
    if(serial!==this.pendingSerial||context!==businessContextKey())return
-   this.setData({pendingNewOrderCount:count})
+   this.setData({pendingNewOrderCount:summary.pendingCount,unpaidOrderCount:summary.unpaidCount})
   }catch(_){if(serial===this.pendingSerial&&context===businessContextKey())this.setData({pendingError:'待处理订单读取失败，当前数量可能过期，请进入订单管理核对'})}
   finally{if(serial===this.pendingSerial&&context===businessContextKey())this.setData({pendingLoading:false})}
  }
