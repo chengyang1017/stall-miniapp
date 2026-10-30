@@ -1,34 +1,35 @@
-<view class="note-admin-page">
-  <view class="note-hint">{{cloudMode ? '云端店铺标签 · 复用营业配置版本保护' : '本机演示标签'}}<text wx:if="{{loading || busy}}"> · 正在处理…</text></view>
-  <view wx:if="{{error}}" class="note-hint">{{error}}</view><button size="mini" bindtap="refresh" disabled="{{busy || loading}}">重新读取</button>
-  <view class="note-intro">
-    <view class="note-title">备注快捷标签</view>
-    <view class="note-desc">顾客结算时可一键添加这些备注。没有设置标签时，只显示自由输入框。</view>
-  </view>
-  <view class="note-panel">
-    <view class="note-section">新增标签</view>
-    <view class="note-add-row">
-      <input class="note-input" maxlength="20" placeholder="输入适合店铺的备注" value="{{draft}}" bindinput="typeDraft" disabled="{{busy}}" />
-      <button class="note-add" size="mini" bindtap="add" disabled="{{busy || !ready}}">添加</button>
+<view class="category-page">
+  <view wx:if="{{loading && !ready}}" class="global-loading-wrap"><view class="global-loading-spinner"></view></view>
+  <view wx:if="{{error}}" class="note-error">{{error}}</view>
+  <view class="panel">
+    <view class="panel-title">新增标签</view>
+    <view class="add-row">
+      <input class="name-input" placeholder="输入标签名称" maxlength="20" value="{{draft}}" bindinput="typeDraft" disabled="{{!ready}}" />
+      <button class="add-btn" size="mini" bindtap="add" disabled="{{!ready}}">添加</button>
     </view>
   </view>
-  <view class="note-panel">
-    <view class="note-section">已设置标签（{{tags.length}}）</view>
-    <view wx:if="{{tags.length === 0}}" class="note-empty">尚未设置快捷标签</view>
-    <view wx:for="{{tags}}" wx:key="*this" class="note-row">
-      <block wx:if="{{editingIndex === index}}">
-        <input class="note-input note-edit-input" maxlength="20" value="{{editingValue}}" bindinput="typeEdit" />
-        <text class="note-action" bindtap="saveEdit">保存</text>
-        <text class="note-action muted" bindtap="cancelEdit">取消</text>
-      </block>
-      <block wx:else>
-        <text class="note-row-name">{{item}}</text>
-        <text class="note-action" data-index="{{index}}" bindtap="edit">编辑</text>
-        <text class="note-action danger" data-index="{{index}}" bindtap="remove">删除</text>
-        <text class="note-action muted" wx:if="{{index > 0}}" data-index="{{index}}" data-step="-1" bindtap="move">↑</text>
-        <text class="note-action muted" wx:if="{{index < tags.length - 1}}" data-index="{{index}}" data-step="1" bindtap="move">↓</text>
-      </block>
+  <view class="panel">
+    <view class="panel-title">标签列表</view>
+    <view wx:if="{{ready && tags.length === 0}}" class="empty">暂无标签</view>
+    <view wx:else class="sort-area" style="height:{{areaHeight}}px;">
+      <view wx:for="{{rows}}" wx:key="key" class="sort-row {{draggingIndex === index ? 'is-dragging' : ''}}" style="height:{{rowHeight}}px;transform:translateY({{item.y}}px);">
+        <view class="cat-row {{editingIndex === index ? 'is-editing' : ''}}">
+          <view class="category-row-icon"><text class="note-glyph">▦</text></view>
+          <view class="cat-info">
+            <input wx:if="{{editingIndex === index}}" class="inline-cat-input" maxlength="20" value="{{editingValue}}" bindinput="typeEdit" bindconfirm="saveEdit" confirm-type="done" />
+            <text wx:else class="cat-name">{{item.name}}</text>
+          </view>
+          <block wx:if="{{editingIndex === index}}">
+            <button class="save-inline-btn" size="mini" bindtap="saveEdit">保存</button>
+            <button class="cancel-inline-btn" size="mini" bindtap="cancelEdit">取消</button>
+          </block>
+          <block wx:else>
+            <button class="edit-btn" size="mini" data-index="{{index}}" bindtap="edit">编辑</button>
+            <button class="delete-btn" size="mini" data-index="{{index}}" bindtap="remove">删除</button>
+          </block>
+          <view class="handle" data-index="{{index}}" catchtouchstart="handleStart" catchtouchmove="handleMove" catchtouchend="handleEnd" catchtouchcancel="handleEnd">☰</view>
+        </view>
+      </view>
     </view>
   </view>
-  <view class="note-hint">{{cloudMode ? '保存到当前店铺服务器，跨设备同步。历史订单备注保持原样；顾客仍可自由填写备注。' : '本机演示标签仅影响当前设备。'}}</view>
 </view>
