@@ -9,6 +9,20 @@ async function postJson(url,body){
  if(!response.ok)throw Error('wechat_unavailable')
  return response.json()
 }
+export async function verifyWechatPhoneCode(app,code,request=fetch){
+ const credentials=new URLSearchParams({grant_type:'client_credential',appid:app.appId,secret:app.secret})
+ const tokenResult=await request('https://api.weixin.qq.com/cgi-bin/token?'+credentials.toString(),{signal:AbortSignal.timeout(8000)})
+ if(!tokenResult.ok)throw Error('wechat_unavailable')
+ const access=await tokenResult.json()
+ if(typeof access.access_token!=='string'||!access.access_token)throw Error('wechat_access_token_unavailable')
+ const result=await request('https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token='+encodeURIComponent(access.access_token),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code}),signal:AbortSignal.timeout(8000)})
+ if(!result.ok)throw Error('wechat_unavailable')
+ const body=await result.json()
+ const phone=body?.phone_info
+ if(body.errcode!==0||!phone||String(phone.countryCode)!=='86'||typeof phone.purePhoneNumber!=='string'||!/^1[3-9][0-9]{9}$/.test(phone.purePhoneNumber))throw Error('phone_verification_failed')
+ return '+86'+phone.purePhoneNumber
+}
+
 export async function saveVerifiedWechatPhone(pool,subject,number){
  if(typeof subject!=='string'||!subject.startsWith('wx:')||typeof number!=='string'||!/^\+861[3-9][0-9]{9}$/.test(number))throw Error('invalid_verified_phone_input')
  const client=await pool.connect()
@@ -48,20 +62,8 @@ export async function customerWechatPhoneBindRoute(req,res,url,pool){
  if(typeof code!=='string'||! /^[a-zA-Z0-9_-]{8,256}$/.test(code)){
   reply(res,400,{error:'invalid_wechat_phone_code'});return true
  }
- let phone
- try{
-  const credentials=new URLSearchParams({grant_type:'client_credential',appid:app.appId,secret:app.secret})
-  const tokenResult=await fetch('https://api.weixin.qq.com/cgi-bin/token?'+credentials.toString(),{signal:AbortSignal.timeout(8000)})
-  if(!tokenResult.ok)throw Error('wechat_unavailable')
-  const access=await tokenResult.json()
-  if(typeof access.access_token!=='string'||!access.access_token)throw Error('wechat_access_token_unavailable')
-  const result=await postJson('https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token='+encodeURIComponent(access.access_token),{code})
-  phone=result?.phone_info
-  if(result.errcode!==0||!phone||String(phone.countryCode)!=='86'||typeof phone.purePhoneNumber!=='string'||!/^1[3-9][0-9]{9}$/.test(phone.purePhoneNumber))throw Error('phone_verification_failed')
- }catch{
-  reply(res,502,{error:'wechat_phone_verification_failed'});return true
- }
- const number='+86'+phone.purePhoneNumber
+ let number
+ try{number=await verifyWechatPhoneCode(app,code)}catch{reply(res,502,{error:'wechat_phone_verification_failed'});return true}
  try{
   const outcome=await saveVerifiedWechatPhone(pool,subject,number)
   if(outcome==='profile_not_found')reply(res,404,{error:outcome})
