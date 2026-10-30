@@ -76,7 +76,7 @@ Page({
     const serial=this.loginSerial
     this.setData({phoneBindBusy:true,phoneBindStatus:'正在通过微信验证手机号…'})
     wx.request({
-      url:cfg.apiBase.replace(/\\/$/,'')+'/v1/customer/phone/wechat-bind',
+      url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/phone/wechat-bind',
       method:'POST',timeout:20000,
       header:{Authorization:'Bearer '+token,'content-type':'application/json'},
       data:{code},
