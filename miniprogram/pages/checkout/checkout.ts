@@ -122,9 +122,9 @@ Page({
         nextDate=candidate;break
       }
     }
-    const slots=addressIssue?[]:availableCloudSlots(rules,nextDate,area?.id).map(s=>({...s,displayLabel:s.label+' '+s.start+'–'+s.end})),index=slots.findIndex(s=>s.id===preferred)
+    const slots=addressIssue?[]:availableCloudSlots(rules,nextDate,area?.id).map(s=>({...s,displayLabel:s.label+' '+s.start+'–'+s.end})),matched=slots.findIndex(s=>s.id===preferred),index=matched>=0?matched:!preferred&&slots.length?0:-1
     this.setData({selectedAddress:address?{...address,area:area?.name||address.area}:null,hasAddress:!!address,cloudAreaName:area?.name||'',deliveryError:nextDate!==date&&!addressIssue?'':addressIssue&&policyIssue&&addressIssue!==policyIssue?addressIssue+'；'+policyIssue:issue,
-      deliveryDate:nextDate,slots,slotIndex:index,selectionNotice:nextDate!==date?'已安排下次可配送日期，请选择配送时段。':preferred&&index<0?'原配送时段已暂停、删除或不适用，请重新选择。':'',selectedSlotId:index>=0?slots[index].id:'',selectedSlotText:index>=0?slots[index].label+' '+slots[index].start+'–'+slots[index].end:''})
+      deliveryDate:nextDate,slots,slotIndex:index,selectionNotice:nextDate!==date?'已安排下次可配送时间，可在下方调整。':preferred&&index<0?'原配送时段已暂停、删除或不适用，请重新选择。':'',selectedSlotId:index>=0?slots[index].id:'',selectedSlotText:index>=0?slots[index].label+' '+slots[index].start+'–'+slots[index].end:''})
   },
   chooseDeliveryDate(e:any) {
     const date=String(e.detail.value||''),rules=this.data.cloudRules
