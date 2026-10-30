@@ -10,11 +10,11 @@
     <text wx:if="{{imageUrls.length > 1}}" class="gallery-counter">{{imageIndex + 1}} / {{imageUrls.length}}</text>
   </view>
   <view class="detail-body">
-    <view class="detail-sync" aria-live="polite">{{cloudLoading ? '正在确认商品…' : cloudError}}</view>
+    <view class="detail-sync" aria-live="polite"><view wx:if="{{cloudLoading}}" class="global-loading-spinner"></view><text wx:else>{{cloudError}}</text></view>
     <view wx:if="{{libraryStatus}}" class="detail-sync">{{libraryStatus}}</view>
     <button wx:if="{{cloudError}}" size="mini" bindtap="refresh">重新加载</button>
     <view class="detail-info surface">
-      <view class="detail-info-top"><view class="detail-name">{{name || (cloudLoading ? '正在读取商品' : '商品详情')}}</view><view class="detail-prices"><view class="detail-price">{{current ? '¥' + current : '—'}}</view><view wx:if="{{discounted && current}}" class="detail-original"><text>¥{{original}}</text><text class="sale-badge">-{{discountPercent}}%</text></view></view></view>
+      <view class="detail-info-top"><view class="detail-name">{{name || '商品详情'}}</view><view class="detail-prices"><view class="detail-price">{{current ? '¥' + current : '—'}}</view><view wx:if="{{discounted && current}}" class="detail-original"><text>¥{{original}}</text><text class="sale-badge">-{{discountPercent}}%</text></view></view></view>
       <view wx:if="{{description}}" class="detail-summary">{{description}}</view>
       <view class="detail-meta"><text wx:if="{{categoryName}}" class="category-label">{{categoryName}}</text><text>{{inventoryText}}</text><text wx:if="{{manualSoldOut}}" class="unavailable">商家手动售罄</text></view>
     </view>
