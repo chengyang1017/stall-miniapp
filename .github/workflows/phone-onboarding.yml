@@ -24,5 +24,5 @@ jobs:
         run: node --test backend/tests/wechat-phone-bind.test.mjs backend/tests/customer-account-sessions.test.mjs backend/tests/customer-identity-link.test.mjs backend/tests/customer-phone-identity.test.mjs backend/tests/customer-wechat-identity-link-route.test.mjs backend/tests/frontend-phone-onboarding-source.test.mjs
       - name: Typecheck
         run: npx tsc --noEmit
-      - name: Build phone preview
-        run: npm run preview:phone:update
+      - name: Build combined app (CI environment)
+        run: npm run build:combined
