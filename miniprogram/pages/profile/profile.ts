@@ -8,7 +8,7 @@ import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/
 import { CAN_OPEN_MERCHANT,openMerchantWorkspace } from '../../modules/integration/singleAppHost'
 Page({
   data:{favoriteCount:0 as number|null,historyCount:0 as number|null,libraryError:'',accountName:'未登录',avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
-    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:'',loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
+    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:'',loginMethod:'wechat',phoneNumber:'',customerPhoneSessionActive:false,customerPhoneLoginBusy:false,customerPhoneLoginStatus:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
   loginSerial:0,
   serial:0,
   merchantSerial:0,merchantContext:'',
@@ -21,6 +21,27 @@ Page({
     if(method==='wechat'||method==='phone')this.setData({loginMethod:method,loginStatus:''})
   },
   onPhoneInput(e:any){this.setData({phoneNumber:String(e?.detail?.value||'').replace(/\D/g,'').slice(0,11)})},
+  loginWithWechatPhone(e:any){
+    const code=String(e?.detail?.code||'')
+    const cfg=getCloudContext()
+    if(!code||!cfg||this.data.customerPhoneLoginBusy){this.setData({customerPhoneLoginStatus:'请先授权微信手机号'});return}
+    const serial=this.loginSerial
+    this.setData({customerPhoneLoginBusy:true,customerPhoneLoginStatus:'正在验证已绑定的手机号…'})
+    wx.request({url:cfg.apiBase.replace(/\\/$/,'')+'/v1/customer/auth/wechat-phone',method:'POST',timeout:20000,data:{code},
+      success:(res:any)=>{
+        if(serial!==this.loginSerial)return
+        if(res.statusCode===200&&typeof res.data?.token==='string'&&/^[A-Za-z0-9_-]{40,100}$/.test(res.data.token)){
+          // Keep distinct from stall_server_session_v1 used for orders and merchants.
+          wx.setStorageSync('stall_customer_phone_session_v1',{token:res.data.token,apiBase:cfg.apiBase})
+          this.setData({customerPhoneSessionActive:true,loginPanel:false,customerPhoneLoginStatus:'手机号已验证，独立顾客会话已建立。订单与商家功能仍需微信登录。'})
+        }else{
+          const error=String(res.data?.error||'')
+          this.setData({customerPhoneLoginStatus:error==='phone_not_linked'?'该手机号尚未绑定账号，请先通过微信登录并绑定':error==='not_enabled'?'测试环境尚未开放手机号授权登录':error==='phone_verification_failed'?'微信未能验证手机号，请重试':'登录失败，请稍后重试'})
+        }
+      },fail:()=>{if(serial===this.loginSerial)this.setData({customerPhoneLoginStatus:'服务器连接失败，请重试'})},
+      complete:()=>{if(serial===this.loginSerial)this.setData({customerPhoneLoginBusy:false})}
+    })
+  },
   requestSmsCode(){
     if(!/^1[3-9]\d{9}$/.test(this.data.phoneNumber)){
       this.setData({loginStatus:'请输入正确的中国大陆11位手机号'});return

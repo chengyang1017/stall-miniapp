@@ -109,6 +109,8 @@
   <view wx:else>
     <view class="phone-input-row"><text>+86</text><input type="number" maxlength="11" placeholder="请输入中国大陆手机号" value="{{phoneNumber}}" bindinput="onPhoneInput"/></view>
     <button class="sms-login-button" bindtap="requestSmsCode">获取短信验证码</button>
+    <button class="wechat-login-button" open-type="getPhoneNumber" bindgetphonenumber="loginWithWechatPhone" loading="{{customerPhoneLoginBusy}}" disabled="{{customerPhoneLoginBusy}}">通过微信授权已绑定的手机号登录（测试）</button>
+    <view wx:if="{{customerPhoneLoginStatus}}" class="login-hint">{{customerPhoneLoginStatus}}</view>
     <view class="login-hint">短信验证服务尚未开通，目前不能使用手机号登录</view>
   </view>
   <view wx:if="{{loginStatus}}" class="notice">{{loginStatus}}</view>
