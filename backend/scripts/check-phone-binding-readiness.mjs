@@ -66,8 +66,8 @@ try{
   if(env.CUSTOMER_PHONE_SESSION_ENABLED!=='true'||env.CUSTOMER_SMS_PROVIDER_READY!=='true'||
    !env.CUSTOMER_SMS_HMAC_SECRET||env.CUSTOMER_SMS_HMAC_SECRET.length<32||
    !env.TENCENTCLOUD_SECRET_ID||!env.TENCENTCLOUD_SECRET_KEY||
-   !/^\\d{5,20}$/.test(env.TENCENT_SMS_APP_ID||'')||
-   !/^\\d{4,20}$/.test(env.TENCENT_SMS_TEMPLATE_ID||'')||
+   !/^\d{5,20}$/.test(env.TENCENT_SMS_APP_ID||'')||
+   !/^\d{4,20}$/.test(env.TENCENT_SMS_TEMPLATE_ID||'')||
    !env.TENCENT_SMS_SIGN_NAME)fail('sms_provider_configuration_incomplete')
   const smsTables=await client.query(`SELECT table_name FROM information_schema.tables
    WHERE table_schema='public' AND table_name=ANY($1::text[])`,
