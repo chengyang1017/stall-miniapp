@@ -4,7 +4,7 @@ import {randomInt,createHash} from 'node:crypto'
 import {canonicalMainlandPhone} from './customerPhoneIdentity.mjs'
 import {hashCustomerSmsCode} from './customerSmsChallenge.mjs'
 const ipDigest=(secret,ip)=>createHash('sha256').update(secret+':'+ip).digest('hex')
-export async function issueCustomerSmsChallenge(pool,{phone,remoteIp,secret,send,now=new Date()}){
+export async function issueCustomerSmsChallenge(pool,{phone,remoteIp,secret,send}){
  const normalized=canonicalMainlandPhone(phone)
  if(typeof remoteIp!=='string'||remoteIp.length<3||remoteIp.length>64||!/^[a-fA-F0-9:.]+$/.test(remoteIp))throw Error('trusted_remote_ip_required')
  if(typeof secret!=='string'||secret.length<32)throw Error('sms_secret_required')
@@ -20,22 +20,22 @@ export async function issueCustomerSmsChallenge(pool,{phone,remoteIp,secret,send
   const keys=['ip:'+ipHash,'phone:'+normalized].sort()
   for(const key of keys)await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',['sms-issue:'+key])
   const count=await db.query(`SELECT
-    count(*) FILTER (WHERE phone_e164=$1 AND created_at>$3::timestamptz-interval '1 hour')::int AS phone_hour,
+    count(*) FILTER (WHERE phone_e164=$1 AND created_at>clock_timestamp()-interval '1 hour')::int AS phone_hour,
     count(*) FILTER (WHERE ip_hash=$2 AND created_at>$3::timestamptz-interval '1 hour')::int AS ip_hour,
-    count(*) FILTER (WHERE phone_e164=$1 AND created_at>$3::timestamptz-interval '60 seconds')::int AS phone_minute
-    FROM customer_sms_issue_attempts`,[normalized,ipHash,now.toISOString()])
+    count(*) FILTER (WHERE phone_e164=$1 AND created_at>clock_timestamp()-interval '60 seconds')::int AS phone_minute
+    FROM customer_sms_issue_attempts`,[normalized,ipHash])
   const quota=count.rows[0]
   if(!quota||quota.phone_hour>=5||quota.ip_hour>=20||quota.phone_minute>=1){
    await db.query('ROLLBACK');return {accepted:false,reason:'rate_limited'}
   }
   // Record the quota and challenge atomically before calling the provider.
   // Do not return the OTP in the result or log it.
-  await db.query('INSERT INTO customer_sms_issue_attempts(phone_e164,ip_hash,created_at) VALUES($1,$2,$3)',[normalized,ipHash,now.toISOString()])
+  await db.query('INSERT INTO customer_sms_issue_attempts(phone_e164,ip_hash,created_at) VALUES($1,$2,clock_timestamp())',[normalized,ipHash])
   await db.query(`INSERT INTO customer_sms_challenges(phone_e164,code_hash,attempts,expires_at,consumed_at,created_at)
-   VALUES($1,$2,0,$3,NULL,$4)
+   VALUES($1,$2,0,clock_timestamp()+interval '5 minutes',NULL,clock_timestamp())
    ON CONFLICT(phone_e164) DO UPDATE SET code_hash=EXCLUDED.code_hash,attempts=0,
    expires_at=EXCLUDED.expires_at,consumed_at=NULL,created_at=EXCLUDED.created_at`,
-   [normalized,hashCustomerSmsCode(secret,normalized,code),new Date(now.getTime()+5*60000).toISOString(),now.toISOString()])
+   [normalized,hashCustomerSmsCode(secret,normalized,code)])
   // Commit the OTP before dispatching SMS: never send an unusable code because
   // a later database commit failed. Keep quota records even when SMS fails.
   await db.query('COMMIT')

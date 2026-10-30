@@ -53,3 +53,15 @@ test('failure to invalidate OTP is surfaced, never reported as successful delive
  await assert.rejects(()=>issueCustomerSmsChallenge(pool,{phone,remoteIp:'127.0.0.1',secret,send:async()=>{throw Error('provider_timeout')}}),/sms_challenge_invalidation_failed/)
  assert.equal(queries.filter(q=>q==='ROLLBACK').length,0)
 })
+
+test('SMS quota and expiry SQL use database clock, not application time',async()=>{
+ const db=mock();await issueCustomerSmsChallenge(db.pool,{phone,remoteIp:'127.0.0.1',secret,send:async()=>{},now:new Date('1990-01-01')})
+ const quota=db.q.find(x=>x.sql.includes('AS phone_hour'))
+ const attempt=db.q.find(x=>x.sql.includes('INSERT INTO customer_sms_issue_attempts'))
+ const challenge=db.q.find(x=>x.sql.includes('INSERT INTO customer_sms_challenges'))
+ assert.match(quota.sql,/clock_timestamp\(\)/)
+ assert.equal(quota.params.length,2)
+ assert.match(attempt.sql,/clock_timestamp\(\)/)
+ assert.match(challenge.sql,/clock_timestamp\(\)\+interval '5 minutes'/)
+ assert.equal(challenge.params.length,2)
+})
