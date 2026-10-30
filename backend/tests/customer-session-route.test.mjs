@@ -16,5 +16,5 @@ test('session profile SQL only selects account-owned masked phone',async()=>gate
 test('phone session SQL uses real whitespace, never literal backslash-n tokens',async()=>gate(async()=>{
  const sql=[];const pool={async query(q){sql.push(q);return sql.length===1?{rows:[{account_id:id}]}:{rows:[{id,nickname:'Shopper',avatar_style:'blue',phone_bound:true,masked_phone:'+86*******5678'}]}}};
  const {out,res}=response();await customerSessionRoute({method:'GET',headers:{authorization:'Bearer '+token}},res,url,pool);
- assert.equal(out.status,200);assert.ok(sql[1].includes('phone_bound,\\n CASE'));assert.ok(sql[1].includes('masked_phone\\n FROM'));assert.equal(sql[1].includes('\\\\n'),false)
+ assert.equal(out.status,200);assert.match(sql[1],/phone_bound,\s+CASE/);assert.match(sql[1],/masked_phone\s+FROM/);assert.equal(sql[1].includes(String.raw`\n`),false)
 }))
