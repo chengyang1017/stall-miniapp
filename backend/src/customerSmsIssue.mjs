@@ -21,7 +21,7 @@ export async function issueCustomerSmsChallenge(pool,{phone,remoteIp,secret,send
   for(const key of keys)await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',['sms-issue:'+key])
   const count=await db.query(`SELECT
     count(*) FILTER (WHERE phone_e164=$1 AND created_at>clock_timestamp()-interval '1 hour')::int AS phone_hour,
-    count(*) FILTER (WHERE ip_hash=$2 AND created_at>$3::timestamptz-interval '1 hour')::int AS ip_hour,
+    count(*) FILTER (WHERE ip_hash=$2 AND created_at>clock_timestamp()-interval '1 hour')::int AS ip_hour,
     count(*) FILTER (WHERE phone_e164=$1 AND created_at>clock_timestamp()-interval '60 seconds')::int AS phone_minute
     FROM customer_sms_issue_attempts`,[normalized,ipHash])
   const quota=count.rows[0]
