@@ -43,7 +43,7 @@ Page({
     if(!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'||!/^[A-Za-z0-9_-]{40,100}$/.test(saved.token))return
     const token=saved.token,slug=cfg.storeSlug,apiBase=cfg.apiBase
     this.setData({phoneAddressLoading:true,phoneAddressStatus:'正在验证手机号顾客身份并读取地址…'})
-    wx.request({url:apiBase.replace(/\\/$/,'')+'/v1/customer/account/stores/'+slug+'/addresses',method:'GET',timeout:15000,
+    wx.request({url:apiBase.replace(/\/$/,'')+'/v1/customer/account/stores/'+slug+'/addresses',method:'GET',timeout:15000,
       header:{Authorization:'Bearer '+token},
       success:(r:any)=>{
         const current=wx.getStorageSync('stall_customer_phone_session_v1') as any
