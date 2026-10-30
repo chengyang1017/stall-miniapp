@@ -23,6 +23,10 @@ export async function rotateVerifiedPhone(pool,{accountId,expectedOldPhone,newPh
   if(other.rows.some(row=>row.account_id!==accountId)){await client.query('ROLLBACK');return 'phone_already_bound'}
   const changed=await client.query('UPDATE customer_verified_phones SET phone_e164=$2,verified_at=now() WHERE account_id=$1 AND phone_e164=$3',[accountId,nextNumber,oldNumber])
   if(changed.rowCount!==1){await client.query('ROLLBACK');return 'old_phone_mismatch'}
+  // Security-sensitive change, audit and revoke existing independent account sessions
+  // in the SAME transaction. No actual change is committed if any step fails.
+  await client.query('INSERT INTO customer_phone_rotation_audit(account_id,old_phone_tail,new_phone_tail,event_type) VALUES ($1,$2,$3,$4)',[accountId,oldNumber.slice(-4),nextNumber.slice(-4),'phone_rotated'])
+  await client.query('UPDATE customer_account_sessions SET revoked_at=now() WHERE account_id=$1 AND revoked_at IS NULL',[accountId])
   await client.query('COMMIT')
   return 'rotated'
  }catch(error){

@@ -4,14 +4,16 @@ import {rotateVerifiedPhone} from '../src/customerPhoneRotation.mjs'
 const accountId='7f08a781-f880-41e6-a088-f6a849c1648a'
 const expectedOldPhone='+8613812345678',newPhone='+8613912345678'
 const input={accountId,expectedOldPhone,newPhone,accountStepUpVerified:true,newPhoneVerified:true}
-function mock({account=true,bound=expectedOldPhone,owner=null,updateError=null,updatedRows=1}={}){
+function mock({account=true,bound=expectedOldPhone,owner=null,updateError=null,updatedRows=1,auditError=null,sessionError=null}={}){
  const calls=[]
  const client={async query(sql,params=[]){
   calls.push({sql,params})
   if(sql.startsWith('SELECT id'))return {rows:account?[{id:accountId}]:[]}
   if(sql.startsWith('SELECT phone_e164'))return {rows:bound?[{phone_e164:bound}]:[]}
   if(sql.startsWith('SELECT account_id'))return {rows:owner?[{account_id:owner}]:[]}
-  if(sql.startsWith('UPDATE')&&updateError)throw Object.assign(Error('db_failure'),{code:updateError})
+  if(sql.startsWith('INSERT INTO customer_phone_rotation_audit')&&auditError)throw Error('audit_write_failed')
+  if(sql.startsWith('UPDATE customer_account_sessions')&&sessionError)throw Error('session_revoke_failed')
+  if(sql.startsWith('UPDATE customer_verified_phones')&&updateError)throw Object.assign(Error('db_failure'),{code:updateError})
   if(sql.startsWith('UPDATE'))return {rowCount:updatedRows}
   return {rows:[]}
  },release(){calls.push({sql:'RELEASE'})}}
@@ -30,9 +32,12 @@ test('invalid account and phone fail before any database query',async()=>{
 test('rotates only verified current account phone in one transaction',async()=>{
  const f=mock()
  assert.equal(await rotateVerifiedPhone(f.pool,input),'rotated')
- assert.equal(f.calls.filter(x=>x.sql.startsWith('UPDATE')).length,1)
+ assert.equal(f.calls.filter(x=>x.sql.startsWith('UPDATE')).length,2)
+ assert.equal(f.calls.filter(x=>x.sql.startsWith('INSERT INTO customer_phone_rotation_audit')).length,1)
+ assert.equal(f.calls.find(x=>x.sql.startsWith('INSERT INTO customer_phone_rotation_audit')).params[1],'5678')
+ assert.equal(f.calls.some(x=>x.sql.startsWith('UPDATE customer_account_sessions')),true)
  assert.equal(f.calls.at(-2).sql,'COMMIT')
- assert.equal(f.calls.find(x=>x.sql.startsWith('UPDATE')).params[1],newPhone)
+ assert.equal(f.calls.find(x=>x.sql.startsWith('UPDATE customer_verified_phones')).params[1],newPhone)
 })
 test('stale expected old phone fails without update',async()=>{
  const f=mock({bound:'+8613712345678'})
@@ -69,4 +74,22 @@ test('concurrent update with zero affected rows is not reported as a successful 
  const f=mock({updatedRows:0})
  assert.equal(await rotateVerifiedPhone(f.pool,input),'old_phone_mismatch')
  assert.equal(f.calls.at(-2).sql,'ROLLBACK')
+})
+
+test('audit failure rolls back number change and session operations',async()=>{
+ const f=mock({auditError:true})
+ await assert.rejects(rotateVerifiedPhone(f.pool,input),/audit_write_failed/)
+ assert.equal(f.calls.at(-2).sql,'ROLLBACK')
+ assert.equal(f.calls.some(x=>x.sql.startsWith('UPDATE customer_account_sessions')),false)
+})
+test('session revocation failure rolls back number change and audit',async()=>{
+ const f=mock({sessionError:true})
+ await assert.rejects(rotateVerifiedPhone(f.pool,input),/session_revoke_failed/)
+ assert.equal(f.calls.at(-2).sql,'ROLLBACK')
+})
+test('no phone change means no audit record or session revocation',async()=>{
+ const f=mock()
+ assert.equal(await rotateVerifiedPhone(f.pool,{...input,newPhone:expectedOldPhone}),'unchanged')
+ assert.equal(f.calls.some(x=>x.sql.startsWith('INSERT INTO customer_phone_rotation_audit')),false)
+ assert.equal(f.calls.some(x=>x.sql.startsWith('UPDATE customer_account_sessions')),false)
 })

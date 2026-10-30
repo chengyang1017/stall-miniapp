@@ -9,6 +9,7 @@ on:
       - 'backend/tests/wechat-phone-bind.test.mjs'
       - '.github/workflows/phone-onboarding.yml'
       - 'backend/scripts/check-phone-binding-readiness.mjs'
+      - 'backend/migrations/proposals/025_customer_phone_rotation_audit.sql'
   workflow_dispatch:
 jobs:
   verify:
