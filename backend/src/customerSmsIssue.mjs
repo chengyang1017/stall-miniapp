@@ -34,8 +34,18 @@ export async function issueCustomerSmsChallenge(pool,{phone,remoteIp,secret,send
    ON CONFLICT(phone_e164) DO UPDATE SET code_hash=EXCLUDED.code_hash,attempts=0,
    expires_at=EXCLUDED.expires_at,consumed_at=NULL,created_at=EXCLUDED.created_at`,
    [normalized,hashCustomerSmsCode(secret,normalized,code),new Date(now.getTime()+5*60000).toISOString(),now.toISOString()])
-  await send({phone:normalized,code})
+  // Commit the OTP before dispatching SMS: never send an unusable code because
+  // a later database commit failed. Keep quota records even when SMS fails.
   await db.query('COMMIT')
+  try{
+   await send({phone:normalized,code})
+  }catch(error){
+   // Guard by the exact hash so a concurrent replacement is not invalidated.
+   await db.query(`UPDATE customer_sms_challenges SET consumed_at=now()
+    WHERE phone_e164=$1 AND code_hash=$2 AND consumed_at IS NULL`,
+    [normalized,hashCustomerSmsCode(secret,normalized,code)]).catch(()=>{})
+   throw error
+  }
   return {accepted:true}
  }catch(e){await db.query('ROLLBACK').catch(()=>{});throw e}finally{db.release()}
 }

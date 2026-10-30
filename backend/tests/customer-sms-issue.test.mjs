@@ -21,10 +21,21 @@ test('generated code is six digits, stored hashed, never returned',async()=>{
  assert.equal(db.q.filter(x=>x.sql.includes('pg_advisory_xact_lock')).length,2)
  assert.ok(db.q.some(x=>x.sql==='COMMIT'))
 })
-test('provider failure rolls back issuance',async()=>{
+test('provider failure invalidates the committed OTP while keeping the quota record',async()=>{
  const db=mock()
- await assert.rejects(()=>issueCustomerSmsChallenge(db.pool,{phone,remoteIp:'127.0.0.1',secret,send:async()=>{throw Error('provider_offline')}}),/provider_offline/)
- assert.ok(db.q.some(x=>x.sql==='ROLLBACK'));assert.ok(db.released)
+ await assert.rejects(()=>issueCustomerSmsChallenge(db.pool,{phone,remoteIp:'127.0.0.1',secret,send:async()=>{
+  assert.ok(db.q.some(x=>x.sql==='COMMIT'))
+  throw Error('provider_offline')
+ }}),/provider_offline/)
+ assert.ok(db.q.some(x=>x.sql.includes('UPDATE customer_sms_challenges SET consumed_at=now()')))
+ assert.ok(db.q.some(x=>x.sql.includes('INSERT INTO customer_sms_issue_attempts')))
+ assert.ok(db.released)
+})
+test('SMS is dispatched only after the challenge is committed',async()=>{
+ const db=mock()
+ await issueCustomerSmsChallenge(db.pool,{phone,remoteIp:'127.0.0.1',secret,send:async()=>{
+  assert.equal(db.q.at(-1).sql,'COMMIT')
+ }})
 })
 test('no untrusted client-supplied provider or IP accepted',async()=>{
  const db=mock()
