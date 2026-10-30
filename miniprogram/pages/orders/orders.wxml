@@ -11,7 +11,7 @@
   </view>
   <view wx:if="{{createdId && !cloudMode}}" class="customer-orders-tip">演示订单 {{createdId}} 已创建，尚未支付。</view>
   <view class="customer-orders-tip">{{cloudMode ? '当前登录顾客的云端订单；支付与配送状态分别显示。' : '本机演示订单，支付尚未接入。'}}<text wx:if="{{cloudMode}}">分类数量为当前店铺本人全部订单统计，可继续加载历史订单。</text></view>
-  <view wx:if="{{loading}}">正在读取订单…</view><view wx:if="{{error}}">{{error}}<button size="mini" bindtap="refresh">重新读取</button></view>
+  <view wx:if="{{loading}}" class="global-loading-wrap"><view class="global-loading-spinner"></view></view><view wx:if="{{error}}">{{error}}<button size="mini" bindtap="refresh">重新读取</button></view>
   <scroll-view class="customer-order-tabs" scroll-x="true">
     <view class="customer-order-tabs-row">
       <view wx:for="{{tabs}}" wx:key="key" class="customer-tab {{activeTab === item.key ? 'customer-tab-active' : ''}}" data-tab="{{item.key}}" bindtap="switchTab">{{item.label}} <text class="customer-tab-count">{{item.count}}</text></view>
