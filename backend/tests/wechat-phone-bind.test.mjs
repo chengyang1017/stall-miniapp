@@ -116,3 +116,23 @@ test('HTTP error from WeChat does not produce a number',async()=>{
  const request=async()=>({ok:false,status:503})
  await assert.rejects(verifyWechatPhoneCode(app,'test-code',request),/wechat_unavailable/)
 })
+
+import {readFileSync} from 'node:fs'
+import {fileURLToPath} from 'node:url'
+
+test('identity schema and phone grants are present in reviewed migrations',()=>{
+ const root=new URL('../',import.meta.url)
+ const schema=readFileSync(new URL('sql/023_customer_identity_groundwork.sql',root),'utf8')
+ const grants=readFileSync(new URL('migrations/proposals/wechat-verified-phone-binding.sql',root),'utf8')
+ assert.match(schema,/CREATE TABLE IF NOT EXISTS customer_verified_phones/)
+ assert.match(schema,/phone_e164 text NOT NULL UNIQUE/)
+ assert.match(schema,/account_id uuid PRIMARY KEY/)
+ assert.match(schema,/REVOKE ALL ON customer_accounts,customer_login_identities,customer_verified_phones FROM PUBLIC/)
+ for(const fragment of [
+  'GRANT SELECT (id) ON public.customer_accounts',
+  'GRANT SELECT (account_id,provider,provider_subject) ON public.customer_login_identities',
+  'GRANT SELECT (account_id,phone_e164,verified_at) ON public.customer_verified_phones',
+  'GRANT INSERT (account_id,phone_e164,verified_at) ON public.customer_verified_phones',
+  'GRANT UPDATE (phone_e164,verified_at) ON public.customer_verified_phones'
+ ])assert.ok(grants.includes(fragment),'missing permission: '+fragment)
+})

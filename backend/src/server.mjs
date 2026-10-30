@@ -1,5 +1,6 @@
 import {customerAvatarPhotoRoute} from './customerAvatarPhoto.mjs'
 import {customerWechatPhoneBindRoute} from './customerWechatPhone.mjs'
+import {customerWechatIdentityLinkRoute} from './customerWechatIdentityLinkRoute.mjs'
 import { storeEntryRoute } from './storeEntry.mjs'
 import { stripeTestPaymentRoute } from './stripeTestPaymentRoute.mjs'
 import { stagingPaymentRoute } from './stagingPayments.mjs'
@@ -66,6 +67,7 @@ const server = http.createServer(async (req, res) => {
     if (await deliveryTrackingRoute(req,res,url,pool)) return
     if (await customerAvatarPhotoRoute(req,res,url,pool)) return
     if (await customerWechatPhoneBindRoute(req,res,url,pool)) return
+    if (await customerWechatIdentityLinkRoute(req,res,url,pool)) return
     if (await storeEntryRoute(req,res,url,pool)) return
     if (await supportRoute(req,res,url,pool)) return
     if (await merchantArchivesRoute(req,res,url,pool)) return

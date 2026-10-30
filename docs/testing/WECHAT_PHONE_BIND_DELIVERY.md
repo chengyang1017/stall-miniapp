@@ -26,3 +26,15 @@
 `node --test backend/tests/wechat-phone-bind.test.mjs backend/tests/customerIdentity.test.mjs backend/tests/wechat-login.test.mjs`
 
 以上测试使用模拟微信返回和模拟事务。最后一次由用户在 2026-10-30 本地执行得到 24/24 通过；后续代码调整仍需重新执行，不应引用这一结果为新提交已验证。
+
+
+## 商家真实手机号测试前的准备顺序（不执行正式数据库操作）
+1. 在独立测试数据库核实 `023_customer_identity_groundwork.sql` 已按审查版本执行；确认三张账号相关表存在、手机号全局唯一约束生效，并核对现有微信登录账户能关联至 `customer_accounts`。不得在正式库直接试跑。
+2. 审查 `migrations/proposals/wechat-verified-phone-binding.sql` 的授权目标、最小权限和回滚计划。该文件是**提案**，单纯提交 GitHub 不代表已经授权。
+3. 确认测试后端使用独立测试数据库，才考虑启用 `PAYMENT_DB_ENV=isolated-test`、`CUSTOMER_ACCOUNT_MAPPING_ENABLED=true`、`WECHAT_PHONE_BIND_ENABLED=true`。不得为了绕过门禁而把正式环境伪装为隔离测试环境。
+4. 在服务端核对 `WX_APPID` / `WX_APPSECRET` 对应真实小程序，且具备微信官方手机号授权能力；任何密钥不得放进前端或 GitHub。
+5. 先跑模拟测试与三端构建，再用独立 PostgreSQL 集成测试验证账号关联、首次绑定、重复绑定、换绑、冲突和事务回滚。完成这些后，才安排商家 +86 实号授权。
+6. 真实验收时只在商家许可下测试：同意授权、拒绝授权、读取脱敏号码、退出再登录后仍能读取以及绑定冲突。正式腾讯云迁移与生产开关属于另外的上线审批。
+
+### 自动化与真实环境的边界
+`node --test backend/tests/wechat-phone-bind.test.mjs` 包含数据库结构及授权提案的静态防回退检查；它**不会连接 PostgreSQL**、**不会执行 SQL**，也不能证明实际测试库已经迁移或获得权限。
