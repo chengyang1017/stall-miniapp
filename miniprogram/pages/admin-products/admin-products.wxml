@@ -139,7 +139,6 @@
       <text class="product-manage-state">{{item.statusLabel}}{{item.soldOut ? ' · 已售罄' : ''}}</text>
       <text class="product-schedule-label">{{item.inventoryLabel}}</text>
       <text wx:if="{{item.publishAt}}" class="product-schedule-label">{{item.pendingPublication ? '计划上架：' : '已按计划上架：'}}{{item.publishTimeText || item.publishAt}}（{{storeTimeZone === 'Asia/Shanghai' ? '北京时间 UTC+8' : storeTimeZone}}）</text>
-      <button wx:if="{{!batchMode}}" class="product-copy-button" size="mini" catchtap="openCopyProduct" data-id="{{item.id}}" disabled="{{cloudLoading || batchBusy || cloudError || queryDirty}}">复制</button>
     </view>
     
   </view>
