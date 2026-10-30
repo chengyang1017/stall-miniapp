@@ -43,3 +43,13 @@ test('no untrusted client-supplied provider or IP accepted',async()=>{
  await assert.rejects(()=>issueCustomerSmsChallenge(db.pool,{phone,remoteIp:'127.0.0.1',secret}),/approved_sms_provider_required/)
  assert.equal(db.q.length,0)
 })
+
+test('committed challenge is not rolled back after provider error',async()=>{
+ const db=mock();await assert.rejects(()=>issueCustomerSmsChallenge(db.pool,{phone,remoteIp:'127.0.0.1',secret,send:async()=>{throw Error('provider_failure')}}),/provider_failure/)
+ assert.equal(db.q.filter(x=>x.sql==='ROLLBACK').length,0)
+})
+test('failure to invalidate OTP is surfaced, never reported as successful delivery',async()=>{
+ const queries=[];const pool={async connect(){return {async query(sql){queries.push(sql);if(sql.includes('AS phone_hour'))return {rows:[{phone_hour:0,ip_hour:0,phone_minute:0}]};if(sql.includes('UPDATE customer_sms_challenges SET consumed_at=now()'))throw Error('db_write_failure');return {rows:[]}},release(){}}}}
+ await assert.rejects(()=>issueCustomerSmsChallenge(pool,{phone,remoteIp:'127.0.0.1',secret,send:async()=>{throw Error('provider_timeout')}}),/sms_challenge_invalidation_failed/)
+ assert.equal(queries.filter(q=>q==='ROLLBACK').length,0)
+})

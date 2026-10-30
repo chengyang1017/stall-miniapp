@@ -11,7 +11,9 @@ export async function issueCustomerSmsChallenge(pool,{phone,remoteIp,secret,send
  if(typeof send!=='function')throw Error('approved_sms_provider_required')
  const code=String(randomInt(0,1000000)).padStart(6,'0'),ipHash=ipDigest(secret,remoteIp)
  const db=await pool.connect()
+ let transactionOpen=false
  try{
+  transactionOpen=true
   await db.query('BEGIN')
   await db.query("SET LOCAL statement_timeout='12s'")
   // Serialize both quota scopes; fixed lock order avoids deadlocks.
@@ -26,7 +28,7 @@ export async function issueCustomerSmsChallenge(pool,{phone,remoteIp,secret,send
   if(!quota||quota.phone_hour>=5||quota.ip_hour>=20||quota.phone_minute>=1){
    await db.query('ROLLBACK');return {accepted:false,reason:'rate_limited'}
   }
-  // Record before provider call. A provider failure rolls back the challenge.
+  // Record the quota and challenge atomically before calling the provider.
   // Do not return the OTP in the result or log it.
   await db.query('INSERT INTO customer_sms_issue_attempts(phone_e164,ip_hash,created_at) VALUES($1,$2,$3)',[normalized,ipHash,now.toISOString()])
   await db.query(`INSERT INTO customer_sms_challenges(phone_e164,code_hash,attempts,expires_at,consumed_at,created_at)
@@ -37,15 +39,21 @@ export async function issueCustomerSmsChallenge(pool,{phone,remoteIp,secret,send
   // Commit the OTP before dispatching SMS: never send an unusable code because
   // a later database commit failed. Keep quota records even when SMS fails.
   await db.query('COMMIT')
+  transactionOpen=false
   try{
    await send({phone:normalized,code})
   }catch(error){
    // Guard by the exact hash so a concurrent replacement is not invalidated.
-   await db.query(`UPDATE customer_sms_challenges SET consumed_at=now()
-    WHERE phone_e164=$1 AND code_hash=$2 AND consumed_at IS NULL`,
-    [normalized,hashCustomerSmsCode(secret,normalized,code)]).catch(()=>{})
+   try{
+    await db.query(`UPDATE customer_sms_challenges SET consumed_at=now()
+     WHERE phone_e164=$1 AND code_hash=$2 AND consumed_at IS NULL`,
+     [normalized,hashCustomerSmsCode(secret,normalized,code)])
+   }catch{
+    // A failed invalidation must remain visible to operators, without exposing OTPs.
+    throw Error('sms_challenge_invalidation_failed')
+   }
    throw error
   }
   return {accepted:true}
- }catch(e){await db.query('ROLLBACK').catch(()=>{});throw e}finally{db.release()}
+ }catch(e){if(transactionOpen)await db.query('ROLLBACK').catch(()=>{});throw e}finally{db.release()}
 }
