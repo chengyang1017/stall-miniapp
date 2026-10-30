@@ -38,3 +38,15 @@
 
 ### 自动化与真实环境的边界
 `node --test backend/tests/wechat-phone-bind.test.mjs` 包含数据库结构及授权提案的静态防回退检查；它**不会连接 PostgreSQL**、**不会执行 SQL**，也不能证明实际测试库已经迁移或获得权限。
+
+
+## 新增：只读数据库预检（尚未连接真实环境）
+脚本：`backend/scripts/check-phone-binding-readiness.mjs`。只读取数据库目录、约束与当前角色权限，不执行 DDL、GRANT、INSERT、UPDATE，也不会读取手机号记录。需要在有 `backend/node_modules` 的环境中执行，提前设置以下**专用隔离测试环境变量**：
+
+- `PAYMENT_DB_ENV=isolated-test`
+- `CUSTOMER_ACCOUNT_MAPPING_ENABLED=true`
+- `PHONE_PREFLIGHT_DATABASE_URL`（仅隔离测试库的授权连接字符串，包含 `sslmode=verify-full`）
+- `PHONE_PREFLIGHT_EXPECTED_HOST`（事先核对过的测试数据库主机）
+- `PHONE_PREFLIGHT_EXPECTED_DATABASE`（事先核对过的测试数据库名）
+
+先在 Neon 控制台独立核对分支身份，不能只凭主机名假定安全。命令：`node backend/scripts/check-phone-binding-readiness.mjs`（从项目根目录运行）。不要在 GitHub Actions 或日志中提交密码、连接字符串。即使输出 `status=inspected`，也只表示静态结构与当前连接的权限检查完成；不代表手机号授权已开通，更不能取代真实 PostgreSQL 事务测试。
