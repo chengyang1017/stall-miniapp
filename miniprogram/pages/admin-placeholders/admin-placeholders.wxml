@@ -1,8 +1,7 @@
 <view class="page">
-<view class="hint">{{cloudMode ? '云端店铺缺图设置，顾客与商家共用；自定义图不会写入商品真实图片字段。' : '本机演示缺图设置'}}<text wx:if="{{busy}}"> · 正在处理…</text></view>
-<view wx:if="{{error}}" class="hint">{{error}}</view><button size="mini" bindtap="refresh" disabled="{{busy}}">重新读取设置</button>
+<view wx:if="{{error}}" class="hint">{{error}}</view>
 
-<view class="card stall-placeholder-admin-card" ><view class="subheading">商品缺图样式</view>
+<view class="card stall-placeholder-admin-card" >
   <view class="merchant-style-gallery-v1">
 <view class="merchant-gallery-card {{placeholderStyle === 'classic' ? 'merchant-gallery-selected' : ''}}" data-style="classic" bindtap="chooseGalleryStyle">
 <view class="merchant-gallery-preview"><view class="stall-empty-thumb-v4 stall-classic-picker"><view class="stall-classic-icon"><view class="stall-classic-sun"></view><view class="stall-classic-hill"></view></view><text class="stall-classic-text">暂无图片</text></view></view>
