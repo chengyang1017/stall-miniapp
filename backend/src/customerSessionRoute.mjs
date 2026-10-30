@@ -11,8 +11,8 @@ export async function customerSessionRoute(req,res,url,pool){
   await revokeCustomerAccountSession(pool,req)
   reply(res,200,{ok:true});return true
  }
- const result=await pool.query('SELECT id,nickname,avatar_style FROM customer_accounts WHERE id=$1',[accountId])
+ const result=await pool.query(`SELECT a.id,a.nickname,a.avatar_style, p.phone_e164 IS NOT NULL AS phone_bound,\n CASE WHEN p.phone_e164 IS NOT NULL THEN '+86*******'||right(p.phone_e164,4) ELSE NULL END AS masked_phone\n FROM customer_accounts a LEFT JOIN customer_verified_phones p ON p.account_id=a.id WHERE a.id=$1`,[accountId])
  if(result.rows.length!==1){reply(res,401,{error:'unauthorized'});return true}
- reply(res,200,{accountId:result.rows[0].id,nickname:result.rows[0].nickname,avatarStyle:result.rows[0].avatar_style})
+ reply(res,200,{accountId:result.rows[0].id,nickname:result.rows[0].nickname,avatarStyle:result.rows[0].avatar_style,phoneBound:result.rows[0].phone_bound,maskedPhone:result.rows[0].masked_phone})
  return true
 }
