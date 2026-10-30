@@ -12,3 +12,9 @@ test('independent customer session can read its profile',async()=>gate(async()=>
 test('logout invalidates independent token and no merchant session',async()=>gate(async()=>{const {out,res}=response();let queries=[];const pool={async query(sql){queries.push(sql);return sql.includes('UPDATE')?{rowCount:1}:{rows:[{account_id:id}]}}};await customerSessionRoute({method:'DELETE',headers:{authorization:'Bearer '+token}},res,url,pool);assert.equal(out.status,200);assert.ok(queries.some(x=>x.includes('UPDATE customer_account_sessions')));assert.equal(queries.some(x=>x.includes('auth_sessions SET')),false)}))
 
 test('session profile SQL only selects account-owned masked phone',async()=>gate(async()=>{const {out,res}=response();const sql=[];const pool={async query(q){sql.push(q);return sql.length===1?{rows:[{account_id:id}]}:{rows:[{id,nickname:null,avatar_style:null,phone_bound:false,masked_phone:null}]}}};await customerSessionRoute({method:'GET',headers:{authorization:'Bearer '+token}},res,url,pool);assert.equal(out.status,200);assert.equal(out.body.maskedPhone,null);assert.equal(out.body.phoneBound,false);assert.match(sql[1],/p\.account_id=a\.id/);assert.match(sql[1],/WHERE a\.id=\$1/);assert.equal(JSON.stringify(out.body).includes('phone_e164'),false)}))
+
+test('phone session SQL uses real whitespace, never literal backslash-n tokens',async()=>gate(async()=>{
+ const sql=[];const pool={async query(q){sql.push(q);return sql.length===1?{rows:[{account_id:id}]}:{rows:[{id,nickname:'Shopper',avatar_style:'blue',phone_bound:true,masked_phone:'+86*******5678'}]}}};
+ const {out,res}=response();await customerSessionRoute({method:'GET',headers:{authorization:'Bearer '+token}},res,url,pool);
+ assert.equal(out.status,200);assert.ok(sql[1].includes('phone_bound,\\n CASE'));assert.ok(sql[1].includes('masked_phone\\n FROM'));assert.equal(sql[1].includes('\\\\n'),false)
+}))
