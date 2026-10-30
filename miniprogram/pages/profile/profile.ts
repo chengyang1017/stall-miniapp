@@ -8,7 +8,7 @@ import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/
 import { CAN_OPEN_MERCHANT,openMerchantWorkspace } from '../../modules/integration/singleAppHost'
 Page({
   data:{favoriteCount:0 as number|null,historyCount:0 as number|null,libraryError:'',accountName:'未登录',avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
-    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:'',loginMethod:'wechat',phoneNumber:'',customerPhoneSessionActive:false,customerPhoneLoginBusy:false,customerPhoneLoginStatus:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
+    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:'',loginMethod:'wechat',phoneNumber:'',smsCode:'',smsBusy:false,smsLoginBusy:false,customerPhoneSessionActive:false,customerPhoneLoginBusy:false,customerPhoneLoginStatus:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
   loginSerial:0,
   serial:0,
   merchantSerial:0,merchantContext:'',
@@ -76,11 +76,43 @@ Page({
     wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/auth/session',method:'DELETE',timeout:15000,
       header:{Authorization:'Bearer '+saved.token}})
   },
+  onSmsCodeInput(e:any){this.setData({smsCode:String(e?.detail?.value||'').replace(/\D/g,'').slice(0,6)})},
   requestSmsCode(){
-    if(!/^1[3-9]\d{9}$/.test(this.data.phoneNumber)){
-      this.setData({loginStatus:'请输入正确的中国大陆11位手机号'});return
-    }
-    this.setData({loginStatus:'短信验证码服务尚未接入，暂不能使用手机号登录。请先选择微信快捷登录。'})
+    const phone=this.data.phoneNumber,cfg=getCloudContext()
+    if(!/^1[3-9]\d{9}$/.test(phone)){this.setData({loginStatus:'请输入正确的中国大陆11位手机号'});return}
+    if(!cfg||this.data.smsBusy||this.data.smsLoginBusy)return
+    const serial=this.loginSerial,apiBase=cfg.apiBase
+    this.setData({smsBusy:true,loginStatus:'正在向服务器申请短信验证码…'})
+    wx.request({url:apiBase.replace(/\/$/,'')+'/v1/customer/auth/sms/send',method:'POST',data:{phone:'+86'+phone},timeout:20000,
+      success:(r:any)=>{
+        if(serial!==this.loginSerial||this.data.phoneNumber!==phone||getCloudContext()?.apiBase!==apiBase)return
+        const message=r.statusCode===200&&r.data?.ok===true?'验证码发送请求已被服务商接受，请查看短信':r.statusCode===404?'短信服务尚未启用，请使用微信授权手机号登录':r.statusCode===429?'请求过于频繁，请稍后再试':'验证码发送失败，请稍后重试'
+        this.setData({loginStatus:message})
+      },
+      fail:()=>{if(serial===this.loginSerial)this.setData({loginStatus:'短信服务网络连接失败'})},
+      complete:()=>{if(serial===this.loginSerial)this.setData({smsBusy:false})}
+    })
+  },
+  loginWithSms(){
+    const phone=this.data.phoneNumber,code=this.data.smsCode,cfg=getCloudContext()
+    if(!/^1[3-9]\d{9}$/.test(phone)||!/^\d{6}$/.test(code)){this.setData({loginStatus:'请输入11位手机号和6位验证码'});return}
+    if(!cfg||this.data.smsLoginBusy||this.data.smsBusy)return
+    const serial=this.loginSerial,apiBase=cfg.apiBase
+    this.setData({smsLoginBusy:true,loginStatus:'正在验证短信验证码…'})
+    wx.request({url:apiBase.replace(/\/$/,'')+'/v1/customer/auth/sms',method:'POST',data:{phone:'+86'+phone,code},timeout:20000,
+      success:(r:any)=>{
+        if(serial!==this.loginSerial||this.data.phoneNumber!==phone||this.data.smsCode!==code||getCloudContext()?.apiBase!==apiBase)return
+        if(r.statusCode===200&&typeof r.data?.token==='string'&&/^[A-Za-z0-9_-]{40,100}$/.test(r.data.token)){
+          wx.setStorageSync('stall_customer_phone_session_v1',{token:r.data.token,apiBase})
+          this.setData({loginPanel:false,smsCode:'',customerPhoneSessionActive:true,loginStatus:'',customerPhoneLoginStatus:'短信验证成功，已建立独立顾客会话'})
+          this.refreshPhoneSession()
+        }else{
+          this.setData({loginStatus:r.statusCode===404?'短信登录功能尚未启用':r.statusCode===401?'验证码无效、已过期或手机号尚未绑定':'短信登录失败，请稍后重试'})
+        }
+      },
+      fail:()=>{if(serial===this.loginSerial)this.setData({loginStatus:'短信登录网络连接失败'})},
+      complete:()=>{if(serial===this.loginSerial)this.setData({smsLoginBusy:false})}
+    })
   },
   loginErrorMessage(error:any):string{
     const code=String(error?.message||error||'')

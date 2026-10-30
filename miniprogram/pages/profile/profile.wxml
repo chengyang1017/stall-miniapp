@@ -109,10 +109,12 @@
   </view>
   <view wx:else>
     <view class="phone-input-row"><text>+86</text><input type="number" maxlength="11" placeholder="请输入中国大陆手机号" value="{{phoneNumber}}" bindinput="onPhoneInput"/></view>
-    <button class="sms-login-button" bindtap="requestSmsCode">获取短信验证码</button>
+    <button class="sms-login-button" bindtap="requestSmsCode" loading="{{smsBusy}}" disabled="{{smsBusy || smsLoginBusy}}">获取短信验证码</button>
+    <view class="phone-input-row"><text>验证码</text><input type="number" maxlength="6" placeholder="请输入6位验证码" value="{{smsCode}}" bindinput="onSmsCodeInput"/></view>
+    <button class="sms-login-button" bindtap="loginWithSms" loading="{{smsLoginBusy}}" disabled="{{smsLoginBusy || smsBusy}}">使用短信验证码登录</button>
     <button class="wechat-login-button" open-type="getPhoneNumber" bindgetphonenumber="loginWithWechatPhone" loading="{{customerPhoneLoginBusy}}" disabled="{{customerPhoneLoginBusy}}">通过微信授权已绑定的手机号登录（测试）</button>
     <view wx:if="{{customerPhoneLoginStatus}}" class="login-hint">{{customerPhoneLoginStatus}}</view>
-    <view class="login-hint">短信验证服务尚未开通，目前不能使用手机号登录</view>
+    <view class="login-hint">短信验证码登录仅在服务端完成腾讯云配置及审核后开放；未启用时可使用微信授权手机号登录</view>
   </view>
   <view wx:if="{{loginStatus}}" class="notice">{{loginStatus}}</view>
   <button class="login-close" disabled="{{loginBusy}}" bindtap="closeLogin">返回</button>
