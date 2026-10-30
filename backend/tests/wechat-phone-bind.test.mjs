@@ -31,12 +31,13 @@ test('phone binding rejects unexpected HTTP method',async()=>{
 })
 
 import {saveVerifiedWechatPhone} from '../src/customerWechatPhone.mjs'
-function fakeDb({account='account-a',owner=null,failInsert=null}={}){
+function fakeDb({account='account-a',owner=null,currentPhone=null,failInsert=null}={}){
  const statements=[];let released=false
  const client={async query(sql,args=[]){
   statements.push({sql,args})
   if(sql.startsWith('SELECT a.id'))return {rows:account?[{id:account}]:[]}
   if(sql.startsWith('SELECT account_id'))return {rows:owner?[{account_id:owner}]:[]}
+  if(sql.startsWith('SELECT phone_e164'))return {rows:currentPhone?[{phone_e164:currentPhone}]:[]}
   if(sql.startsWith('INSERT')&&failInsert)throw Object.assign(Error('database error'),{code:failInsert})
   return {rows:[]}
  },release(){released=true}}
@@ -45,7 +46,7 @@ function fakeDb({account='account-a',owner=null,failInsert=null}={}){
 test('verified phone is saved transactionally against authenticated account',async()=>{
  const db=fakeDb()
  assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:verified','+8613812345678'),'bound')
- assert.deepEqual(db.statements.map(x=>x.sql.startsWith('SELECT')?'SELECT':x.sql.startsWith('INSERT')?'INSERT':x.sql),['BEGIN','SELECT','SELECT','INSERT','COMMIT'])
+ assert.deepEqual(db.statements.map(x=>x.sql.startsWith('SELECT')?'SELECT':x.sql.startsWith('INSERT')?'INSERT':x.sql),['BEGIN','SELECT','SELECT','SELECT','INSERT','COMMIT'])
  assert.equal(db.statements.find(x=>x.sql.startsWith('INSERT')).args[0],'account-a')
  assert.equal(db.released,true)
 })
@@ -55,6 +56,18 @@ test('different account owning phone is never merged or overwritten',async()=>{
  assert.equal(db.statements.some(x=>x.sql.startsWith('INSERT')),false)
  assert.equal(db.statements.at(-1).sql,'ROLLBACK')
  assert.equal(db.released,true)
+})
+test('repeated same-number binding is idempotent and cannot overwrite verification timestamp',async()=>{
+ const db=fakeDb({currentPhone:'+8613812345678'})
+ assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:verified','+8613812345678'),'bound')
+ assert.equal(db.statements.some(x=>x.sql.startsWith('INSERT')),false)
+ assert.equal(db.statements.at(-1).sql,'COMMIT')
+})
+test('first-login binding cannot silently replace a previously verified phone',async()=>{
+ const db=fakeDb({currentPhone:'+8613912345678'})
+ assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:verified','+8613812345678'),'phone_change_requires_reverification')
+ assert.equal(db.statements.some(x=>x.sql.startsWith('INSERT')),false)
+ assert.equal(db.statements.at(-1).sql,'ROLLBACK')
 })
 test('missing authenticated account cannot bind',async()=>{
  const db=fakeDb({account:null})
