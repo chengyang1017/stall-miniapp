@@ -15,3 +15,12 @@
 4. 独立手机号登录产生**独立服务端 session**，同时制定订单数据从旧微信 subject 迁移到统一 account_id 的兼容方案；未经设计不要复用微信外部 subject。
 5. PostgreSQL 独立环境真实测试并核查最小权限，再进行用户授权测试。腾讯云部署另外审批。
 6. 手机号可被运营商回收，设计更换、注销、恢复机制，敏感操作需再验证。
+
+
+## 先手机号、后微信：双向账号绑定
+- 已增加 `backend/src/customerIdentityLink.mjs` 的非 HTTP、非自动启用服务端事务基础方法。只有当前账号所有权已验证、微信身份也经服务端微信接口验证后，才能关联至同一 `customer_accounts.id`。
+- 若微信身份属于其他账号，返回冲突；若当前账号已有不同微信身份，拒绝覆盖；若重复绑定同一身份，返回已关联。
+- 反方向（先微信、后手机号）暂由 `customerPhoneIdentity.mjs` 提供隔离的事务基础逻辑；两者都不会自动合并已存在的不同账号。
+- **注意**：`verifiedByWechat` 和 `accountOwnershipVerified` 是内部调用方必须严格履行的前置约定，不能接受客户端声称的布尔值。正式 HTTP API 还未实现，必须在真实登录会话下验证账号所有权、由服务端兑换微信 code 后才能调用。
+- 先手机号的账号与旧微信订单/会话如何统一迁移仍需独立设计，不能只改登录按钮就认定历史数据已经打通。
+- 本次补充 `node --test backend/tests/customer-identity-link.test.mjs backend/tests/customer-phone-identity.test.mjs` 用于事务与冲突防回退测试，须在本地执行并再做数据库集成验证。
