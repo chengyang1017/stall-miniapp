@@ -140,8 +140,8 @@ Page({
           :/http_503/.test(failure)?'服务端暂不可用 (503)'
           :/http_500/.test(failure)?'服务端错误 (500)'
           :/timeout/i.test(failure)?'请求超时，无法确认保存状态'
-          :/http_(\\d{3})/.test(failure)?'保存失败：HTTP '+failure.match(/http_(\\d{3})/)?.[1]
-          :'保存失败：'+failure.replace(/^Error:\\s*/,'').slice(0,90)
+          :/http_(\d{3})/.test(failure)?'保存失败：HTTP '+failure.match(/http_(\d{3})/)?.[1]
+          :'保存失败：'+failure.replace(/^Error:\s*/,'').slice(0,90)
         wx.showToast({title:readable,icon:'none',duration:3500})
         console.error('[categories] save failed; cause:',failure)
       }
