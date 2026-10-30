@@ -60,8 +60,41 @@ try{
  has_column_privilege(current_user,'public.customer_verified_phones','phone_e164','INSERT') AS can_insert,
  has_column_privilege(current_user,'public.customer_verified_phones','phone_e164','UPDATE') AS can_update`)
  if(!privileges.rows[0]?.can_read||!privileges.rows[0]?.can_insert||!privileges.rows[0]?.can_update)fail('insufficient_phone_column_privileges')
+ // SMS is an explicit second-stage gate: inspect schema and permissions only when requested.
+ let smsReady=false
+ if(env.CUSTOMER_SMS_LOGIN_ENABLED==='true'){
+  if(env.CUSTOMER_PHONE_SESSION_ENABLED!=='true'||env.CUSTOMER_SMS_PROVIDER_READY!=='true'||
+   !env.CUSTOMER_SMS_HMAC_SECRET||env.CUSTOMER_SMS_HMAC_SECRET.length<32||
+   !env.TENCENTCLOUD_SECRET_ID||!env.TENCENTCLOUD_SECRET_KEY||
+   !/^\\d{5,20}$/.test(env.TENCENT_SMS_APP_ID||'')||
+   !/^\\d{4,20}$/.test(env.TENCENT_SMS_TEMPLATE_ID||'')||
+   !env.TENCENT_SMS_SIGN_NAME)fail('sms_provider_configuration_incomplete')
+  const smsTables=await client.query(`SELECT table_name FROM information_schema.tables
+   WHERE table_schema='public' AND table_name=ANY($1::text[])`,
+   [['customer_sms_challenges','customer_sms_issue_attempts','customer_account_sessions']])
+  const found=new Set(smsTables.rows.map(x=>x.table_name))
+  if(['customer_sms_challenges','customer_sms_issue_attempts','customer_account_sessions'].some(t=>!found.has(t)))
+   fail('sms_migrations_missing')
+  const smsCols=await client.query(`SELECT table_name,column_name FROM information_schema.columns
+   WHERE table_schema='public' AND
+   ((table_name='customer_sms_challenges' AND column_name=ANY($1::text[]))
+   OR (table_name='customer_sms_issue_attempts' AND column_name=ANY($2::text[])))`,
+   [['phone_e164','code_hash','attempts','expires_at','consumed_at'],['phone_e164','ip_hash','created_at']])
+  const colSet=new Set(smsCols.rows.map(x=>x.table_name+'.'+x.column_name))
+  if(['phone_e164','code_hash','attempts','expires_at','consumed_at'].some(c=>!colSet.has('customer_sms_challenges.'+c))||
+     ['phone_e164','ip_hash','created_at'].some(c=>!colSet.has('customer_sms_issue_attempts.'+c)))fail('sms_columns_missing')
+  const grants=await client.query(`SELECT
+   has_table_privilege(current_user,'public.customer_sms_challenges','SELECT') AS challenge_read,
+   has_table_privilege(current_user,'public.customer_sms_challenges','INSERT') AS challenge_insert,
+   has_table_privilege(current_user,'public.customer_sms_challenges','UPDATE') AS challenge_update,
+   has_table_privilege(current_user,'public.customer_sms_issue_attempts','SELECT') AS issue_read,
+   has_table_privilege(current_user,'public.customer_sms_issue_attempts','INSERT') AS issue_insert,
+   has_sequence_privilege(current_user,'public.customer_sms_issue_attempts_id_seq','USAGE') AS issue_sequence`)
+  if(Object.values(grants.rows[0]||{}).some(v=>v!==true))fail('sms_runtime_privileges_missing')
+  smsReady=true
+ }
  // Report only object/privilege readiness. Never output customer data or credentials.
- console.log(JSON.stringify({status:'inspected',databaseMatched:true,identityTablesPresent:true,phoneConstraintsPresent:true,loginIdentityConstraintPresent:true,firstWechatLoginPrivileges:onboardingPrivileges.rows[0],runtimePhonePrivileges:privileges.rows[0]}))
+ console.log(JSON.stringify({status:'inspected',databaseMatched:true,identityTablesPresent:true,phoneConstraintsPresent:true,loginIdentityConstraintPresent:true,firstWechatLoginPrivileges:onboardingPrivileges.rows[0],runtimePhonePrivileges:privileges.rows[0],smsReadinessChecked:env.CUSTOMER_SMS_LOGIN_ENABLED==='true',smsReady}))
  await client.query('ROLLBACK')
 }catch(error){
  if(client)try{await client.query('ROLLBACK')}catch{}
