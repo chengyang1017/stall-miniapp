@@ -3,14 +3,14 @@ import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/co
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
 Page({
-  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'' },
+  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneReadSerial:0 },
   profileReadSerial:0,
   editSerial:0,
   async onShow() {
     const token=getSessionToken(), loggedIn=!!token
     const serial=++this.profileReadSerial
     const editAtStart=this.editSerial
-    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',photoStatus:'',nickname:loggedIn?cachedCustomerNickname():'',phoneBound:false,maskedPhone:'',phoneStatus:''})
+    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',photoStatus:'',nickname:loggedIn?cachedCustomerNickname():'',phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false})
     if(!token)return
     this.loadPhoneStatus(token)
     try {
@@ -27,14 +27,15 @@ Page({
   async loadPhoneStatus(token:string){
     const cfg=getCloudContext()
     if(!cfg)return
-    this.setData({phoneLoading:true})
+    const readSerial=this.data.phoneReadSerial+1
+    this.setData({phoneLoading:true,phoneReadSerial:readSerial})
     try{
       const result=await authorizedGet(cfg.apiBase,'/v1/customer/phone')
-      if(getSessionToken()!==token)return
-      this.setData({phoneBound:result.bound===true,maskedPhone:String(result.maskedPhone||''),phoneStatus:''})
+      if(getSessionToken()!==token||this.data.phoneReadSerial!==readSerial)return
+      this.setData({phoneBound:result.bound===true,maskedPhone:String(result.maskedPhone||''),phoneVerificationAvailable:result.verificationAvailable===true})
     }catch(error:any){
-      if(getSessionToken()===token)this.setData({phoneStatus:'手机号状态读取失败，请稍后重试'})
-    }finally{if(getSessionToken()===token)this.setData({phoneLoading:false})}
+      if(getSessionToken()===token&&this.data.phoneReadSerial===readSerial)this.setData({phoneVerificationAvailable:false,phoneStatus:'手机号状态尚不可用，请稍后重试'})
+    }finally{if(getSessionToken()===token&&this.data.phoneReadSerial===readSerial)this.setData({phoneLoading:false})}
   },
   bindWechatPhone(e:any){
     const code=String(e?.detail?.code||'')
@@ -56,7 +57,7 @@ Page({
           this.loadPhoneStatus(token)
         }else{
           const error=String(r.data?.error||r.statusCode)
-          this.setData({phoneStatus:error==='phone_already_bound'?'该手机号已绑定其他账号，不能自动合并':'绑定未成功：'+error})
+          this.setData({phoneStatus:error==='phone_already_bound'?'该手机号已绑定其他账号，不能自动合并':error==='not_enabled'?'手机号绑定服务尚未启用':error==='wechat_phone_verification_failed'?'微信未能验证该号码，仅支持中国大陆 +86 手机号':error==='unauthorized'?'登录状态已失效，请重新登录':'绑定未成功，请稍后重试'})
         }
       },
       fail:()=>{if(getSessionToken()===token)this.setData({phoneStatus:'连接服务器失败，请重试'})},
