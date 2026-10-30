@@ -83,6 +83,7 @@ Page({
  endInput(e:any){if(this.editable(true)){this.setData({slotEnd:String(e.detail.value),dirty:true,feedback:'',error:''});this.rememberInputs();this.tryAddSlot()}},
  addArea(){if(!this.editable())return;const name=this.data.areaName.trim();if(!name){wx.showToast({title:'请输入配送区域名称',icon:'none'});return}const c=this.config();let id='area_'+newId();while(c.areas.some(a=>a.id===id))id='area_'+newId();c.areas.push({id,name,enabled:true});this.apply(c);this.setData({areaName:''});this.autoSave()},
  editAreaName(e:any){if(!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===String(e.currentTarget.dataset.id));if(!a)return;a.name=String(e.detail.value);this.apply(c)},
+ saveAreaName(){if(this.data.ready&&this.data.dirty)this.autoSave()},
  toggleArea(e:any){if(!this.editable())return;const c=this.config(),a=c.areas.find(a=>a.id===String(e.currentTarget.dataset.id));if(!a)return;a.enabled=!!e.detail.value;this.apply(c);this.autoSave()},
  moveArea(e:any){if(!this.editable())return;const c=this.config(),i=c.areas.findIndex(a=>a.id===String(e.currentTarget.dataset.id)),j=i+Number(e.currentTarget.dataset.step);if(i<0||j<0||j>=c.areas.length)return;[c.areas[i],c.areas[j]]=[c.areas[j],c.areas[i]];this.apply(c);this.autoSave()},
  async remove(kind:'area'|'slot'|'date',id:string){
