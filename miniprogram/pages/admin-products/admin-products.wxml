@@ -2,7 +2,7 @@
   <view wx:if="{{cloudLoading}}" style="padding:22rpx">正在读取商品和分类…</view>
   <view wx:if="{{cloudError}}" style="padding:22rpx;color:#b33">{{cloudError}}</view>
   <view class="product-manage-header">
-    <view class="product-manage-identity"><text class="product-manage-heading">商品管理</text><text class="product-manage-caption">管理商品、库存与上架状态</text></view>
+    
     <view class="product-manage-header-actions">
       <button wx:if="{{products.length || batchMode}}" size="mini" bindtap="toggleBatchMode" disabled="{{batchBusy || cloudLoading || queryDirty}}">{{batchMode ? '退出批量管理' : '批量管理'}}</button>
       <button wx:if="{{!batchMode}}" size="mini" type="primary" bindtap="openNewProduct">+ 新增商品</button>
