@@ -1,13 +1,10 @@
-import {authenticate,exchangeWechatCode} from './auth.mjs'
-import {linkVerifiedWechatIdentity} from './customerIdentityLink.mjs'
+import {authenticate} from './auth.mjs'
 const reply=(res,status,body)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(body))}
 const enabled=()=>process.env.PAYMENT_DB_ENV==='isolated-test'&&process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED==='true'&&process.env.CUSTOMER_WECHAT_LINK_ENABLED==='true'
 
 // A valid session proves ownership only of the account resolved on the server.
 // Never accept an account ID, verification boolean, or identity from request JSON.
-export async function customerWechatIdentityLinkRoute(req,res,url,pool,{
- authenticateSession=authenticate,verifyWechatCode=exchangeWechatCode,link=linkVerifiedWechatIdentity
-}={}){
+export async function customerWechatIdentityLinkRoute(req,res,url,pool,{authenticateSession=authenticate}={}){
  if(url.pathname!=='/v1/customer/identity/wechat-link'||req.method!=='POST')return false
  if(!enabled()){reply(res,404,{error:'not_enabled'});return true}
  const subject=await authenticateSession(pool,req)
