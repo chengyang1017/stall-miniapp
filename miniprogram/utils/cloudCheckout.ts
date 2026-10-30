@@ -60,7 +60,7 @@ export function availableCloudSlots(rules:CloudDeliveryRules,date:string,areaId?
   const d=rules.days[day]
   if(!d||!d.enabled)return []
   const current=new Date(deliveryNow(rules)+8*3600000),time=current.toISOString().slice(11,16)
-  return (rules.slots||[]).filter(s=>s.enabled&&(!s.weekdays||s.weekdays.includes(day))&&(!s.areaIds||s.areaIds.includes(areaId))&&s.start>=d.start&&s.end<=d.end&&!(date===localDate(0,rules)&&s.end<=time))
+  return (rules.slots||[]).filter(s=>s.enabled&&(!s.weekdays||s.weekdays.includes(day))&&(!s.areaIds||s.areaIds.includes(areaId))&&!(date===localDate(0,rules)&&s.end<=time))
 }
 export function cloudDeliveryReason(rules:CloudDeliveryRules,date?:string,areaId?:string):string {
   if(!rules.accepting)return '店铺整体暂停接单'
