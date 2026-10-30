@@ -10,7 +10,7 @@
     <button type="primary" bindtap="refresh" disabled="{{loading || exporting}}">{{loading ? '统计中…' : '搜索／刷新统计'}}</button>
     <text class="note">最长366天；商品名称按订单快照展示，分类按下单时分类快照筛选。旧订单归入“未记录历史分类”。</text>
   </view>
-  <view wx:if="{{loading}}" class="state">正在读取真实统计来源…</view>
+  <view wx:if="{{loading}}" class="global-loading-wrap"><view class="global-loading-spinner"></view></view>
   <view wx:if="{{dirty}}" class="state">输入后点击搜索，旧报表已隐藏。</view>
   <view wx:if="{{error}}" class="error">{{error}}</view>
   <block wx:if="{{hasReport}}">
