@@ -113,3 +113,17 @@ WECHAT-DEVTOOLS、iOS、Android三类验收均WAITING_FOR_OWNER_PREVIEW且无回
 - 无残留冲突标记；相对origin/main的backend/src、backend/sql、backend/testing无差异。用户指定继续zh；不推main、不自动合并PR。
 
 本轮未执行微信平台/真机/staging/真实支付，不对朋友其他机器已有验收结果作额外判断；本机离线验证仍不能替代平台验收。
+
+## 2026-10-30｜FE-06 收藏/浏览记录实测
+
+前置同步：main再次前进到2f0aab3，仅账号资料页；已在zh普通merge（d9c05cc），不覆盖双方历史。最初检索确认首页/详情/个人页收藏和浏览记录均为unavailable占位，没有真实收藏或历史后端。只使用现有入口，不新造后端路由。
+
+实现中首次脚本因profile.wxml CRLF锚点未匹配而停止，保留当时20261030-library-first.txt（170项通过仅表示当时既有测试，不作为完整功能验收）；补齐入口与独立新测试后npm run verify:frontend：208通过/0失败/0跳过，20261030-library-regression.txt。
+
+补充真实模块重建恢复、旧云端详情响应、新旧清空/重载/切标签竞态，以及登录退出后统计更新；最终再次 npm run verify:frontend：**215通过/0失败/0跳过/0取消/0待办**，evidence/20261030-library-final.txt。新45项=9基础存储/隔离/边界用例+1跨模块会话恢复+每Combined/Customer17项+1Merchant不打包检查；215是最终覆盖总数，不叠加前两轮。
+
+覆盖：收藏/取消、无伪造历史、MRU去重/100上限、200收藏拒绝溢出、浏览更新收藏快照、账号/store/API/guest/demo隔离、稳定cacheScope重登录恢复、旧scope拒绝读写、清空/删除仅当前kind、损坏记录/签名URL/额外字段过滤、不持久化Bearer；实际详情记录/无效详情/写入失败；列表实时价格/下架/缺货/删除/40ID分批/断网重试不回退demo/身份店铺切换及隐藏旧响应；清空取消/确认/跨身份/重载/标签切换；入口与数量；Merchant依赖隔离。
+
+最终构建：Combined139模块39页377产物、Customer85模块16页253产物、Merchant90模块19页249产物。源码边界、产物清单通过；静态预览0错误、各1个历史预编译JS插件警告。代码/配置/Markdown diff检查通过（原始证据中的空白不为美化而改写），原占位提示已无匹配。相对origin/main的backend/src、sql、testing无差异。
+
+测试使用合成商品、.invalid域名和内存wx，未连接真实微信/API/支付、未运行后端、数据库或Docker。平台/真机WAITING_FOR_OWNER_PREVIEW；实服务未运行项总数未枚举，不记成0。用户要求检查后push，本轮源代码和测试检查已完成，随后才提交推送。

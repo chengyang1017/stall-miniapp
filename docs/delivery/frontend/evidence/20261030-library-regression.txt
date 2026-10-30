@@ -1,0 +1,265 @@
+
+> miniprogram-ts-quickstart@1.0.0 verify:frontend
+> node scripts/verify-frontend.mjs
+
+
+> node scripts/check-boundaries.mjs
+combined: 139 source files; dependency boundaries and cycles checked
+customer: 85 source files; dependency boundaries and cycles checked
+merchant: 90 source files; dependency boundaries and cycles checked
+
+> node scripts/build-miniapp.mjs combined
+combined: emitted modules, page ownership and resource inventory checked
+combined: compiled 139 source modules, 39 pages, 377 artifacts -> dist/combined
+
+> node scripts/build-miniapp.mjs customer
+customer: emitted modules, page ownership and resource inventory checked
+customer: compiled 85 source modules, 16 pages, 253 artifacts -> dist/customer
+
+> node scripts/build-miniapp.mjs merchant
+merchant: emitted modules, page ownership and resource inventory checked
+merchant: compiled 90 source modules, 19 pages, 249 artifacts -> dist/merchant
+
+> node scripts/check-build-output.mjs
+combined: emitted modules, page ownership and resource inventory checked
+customer: emitted modules, page ownership and resource inventory checked
+merchant: emitted modules, page ownership and resource inventory checked
+
+> node scripts/miniapp-preview-audit.mjs dist/combined
+Preview preflight: scanned 139 JS and 46 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node scripts/miniapp-preview-audit.mjs dist/customer
+Preview preflight: scanned 85 JS and 23 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node scripts/miniapp-preview-audit.mjs dist/merchant
+Preview preflight: scanned 90 JS and 22 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node --test apps/tests/navigation.test.cjs apps/tests/auth-session.test.cjs apps/tests/demo-checkout.test.cjs apps/tests/product-library.test.cjs backend/tests/build-role-contracts.test.mjs backend/tests/frontend-navigation.test.mjs backend/tests/frontend-navigation-flows.test.mjs backend/tests/frontend-navigation-guards.test.mjs backend/tests/frontend-navigation-lifecycle.test.mjs backend/tests/frontend-navigation-orders-phase6.test.mjs backend/tests/frontend-navigation-runtime.test.mjs backend/tests/merchant-entry-contract.test.mjs backend/tests/miniapp-preview-audit.test.mjs backend/tests/miniapp-preview-build-guard.test.mjs
+✔ current WeChat login saves the verified response and cache scope (10.8277ms)
+✔ store switch during wx.login prevents sending the old code (7.306ms)
+✔ backend switch during exchange cannot overwrite session or scope (6.9414ms)
+✔ logout during exchange cannot be undone by a late login response (7.4297ms)
+✔ replacement session cannot be overwritten by a late exchange (6.0301ms)
+✔ newer login supersedes an earlier exchange even if the earlier one returns first (6.3091ms)
+✔ inactive requesting page cannot start a backend exchange (6.2836ms)
+✔ inactive requesting page cannot save an in-flight exchange (8.1443ms)
+✔ malformed server token is rejected without overwriting the session (24.4573ms)
+✔ HTTP and network failures preserve the previous session (19.3681ms)
+✔ combined merchant logout: old response cannot release a newer identity verification (54.4114ms)
+✔ combined merchant login: hidden page cannot authenticate or navigate after permission response (15.3292ms)
+✔ combined merchant login: current explicit verification opens workspace only after authorization (11.2102ms)
+✔ combined merchant login: old finally cannot release a newer page verification (11.0457ms)
+✔ combined merchant login: busy inputs and repeat verification cannot switch the request context (9.0081ms)
+✔ combined merchant login: leaving during code exchange prevents session resurrection (9.5585ms)
+✔ merchant merchant logout: old response cannot release a newer identity verification (11.6518ms)
+✔ merchant merchant login: hidden page cannot authenticate or navigate after permission response (8.5056ms)
+✔ merchant merchant login: current explicit verification opens workspace only after authorization (9.857ms)
+✔ merchant merchant login: old finally cannot release a newer page verification (9.3111ms)
+✔ merchant merchant login: busy inputs and repeat verification cannot switch the request context (8.7195ms)
+✔ merchant merchant login: leaving during code exchange prevents session resurrection (8.4588ms)
+✔ combined DEMO checkout saves one unpaid order and opens the orders Tab (85.0938ms)
+✔ combined DEMO checkout allows only one pending confirmation (53.8217ms)
+✔ combined cancelled or failed confirmation preserves cart and allows retry (90.3103ms)
+✔ combined confirmation after onHide cannot create an order (52.4734ms)
+✔ combined confirmation after onUnload cannot create an order (59.6417ms)
+✔ combined switching to CLOUD while DEMO confirmation is pending does not create local data (74.8025ms)
+✔ combined business pause during confirmation is revalidated (70.6197ms)
+✔ combined delivery pause during confirmation is revalidated (58.9757ms)
+✔ combined changed price is shown again instead of silently accepting a new total (36.858ms)
+✔ combined route failure is reported as saved unpaid order and does not resubmit (47.6899ms)
+✔ combined direct purchase only clears its own selection (46.1092ms)
+✔ combined existing orders Tab selects all once and does not replay creation notice (53.3679ms)
+✔ combined a DEMO order notice cannot cross an identity or cloud context (39.2269ms)
+✔ customer DEMO checkout saves one unpaid order and opens the orders Tab (55.9738ms)
+✔ customer DEMO checkout allows only one pending confirmation (42.1761ms)
+✔ customer cancelled or failed confirmation preserves cart and allows retry (94.2863ms)
+✔ customer confirmation after onHide cannot create an order (35.997ms)
+✔ customer confirmation after onUnload cannot create an order (36.6891ms)
+✔ customer switching to CLOUD while DEMO confirmation is pending does not create local data (36.157ms)
+✔ customer business pause during confirmation is revalidated (38.2675ms)
+✔ customer delivery pause during confirmation is revalidated (34.6345ms)
+✔ customer changed price is shown again instead of silently accepting a new total (45.7304ms)
+✔ customer route failure is reported as saved unpaid order and does not resubmit (40.4108ms)
+✔ customer direct purchase only clears its own selection (43.0345ms)
+✔ customer existing orders Tab selects all once and does not replay creation notice (40.4826ms)
+✔ customer a DEMO order notice cannot cross an identity or cloud context (29.5716ms)
+✔ Combined homepage keeps the customer landing page despite a saved merchant preference (49.2786ms)
+✔ Customer homepage ignores a saved Combined merchant preference (44.917ms)
+✔ Customer profile never requests merchant permissions or opens workspace (27.2538ms)
+✔ Combined profile still authorizes before explicitly opening workspace (18.4902ms)
+✔ Combined profile does not navigate after a rejected permission request (27.2462ms)
+✔ Combined workbench can explicitly switch back to customer tab (39.463ms)
+✔ Merchant workbench hides and rejects an unavailable customer tab (56.8401ms)
+✔ Combined profile suppresses repeated taps while permission is pending (29.7282ms)
+✔ Combined profile ignores permission response after hiding (15.4357ms)
+✔ Combined profile ignores permission response after identity replacement (37.2195ms)
+✔ Combined homepage does not resume workspace after denied permission (48.5593ms)
+✔ favorite toggles persist without inventing browsing history (14.0416ms)
+✔ history is deduplicated, most recent first, and bounded to 100 (53.8942ms)
+✔ favorite cap refuses overflow without removing an existing favorite (139.5223ms)
+✔ revisiting updates favorite snapshots without changing favorite order or saved time (8.9504ms)
+✔ account, store, origin, guest and demo namespaces remain separate (26.1259ms)
+✔ stale scope cannot read or mutate a replacement identity (38.0568ms)
+✔ stored snapshots exclude token, extra fields and signed image query strings (9.3974ms)
+✔ corrupt records are filtered and invalid incoming products cannot overwrite data (17.5118ms)
+✔ remove and clear affect only the chosen kind (24.4628ms)
+✔ combined: existing detail button favorites and confirmed visits create history (40.9075ms)
+✔ combined: invalid detail does not record a visit or allow favorite (37.0389ms)
+✔ combined: storage failure reports unsuccessful favorite instead of fake success (45.9286ms)
+✔ combined: saved list uses live demo price, preserves deleted rows and allows removing them (40.4689ms)
+✔ combined: sold out product stays visible and can open its detail (21.4312ms)
+✔ combined: cloud lookup batches at most 40 IDs and confirms current prices (42.0189ms)
+✔ combined: cloud failure preserves explicitly stale snapshots and retry succeeds (24.7772ms)
+✔ combined: late response after identity cannot show previous records (25.8676ms)
+✔ combined: late response after store cannot show previous records (20.7003ms)
+✔ combined: late response after hide cannot show previous records (17.887ms)
+✔ combined: old clear confirmation cannot delete another account or another kind (24.0256ms)
+✔ combined: clear only current history after confirmation and preserve favorite (21.9875ms)
+✔ combined: list storage read and write errors keep records recoverable (19.6361ms)
+✔ combined: existing profile and homepage entries open the shared library and show counts (49.8179ms)
+✔ customer: existing detail button favorites and confirmed visits create history (36.0706ms)
+✔ customer: invalid detail does not record a visit or allow favorite (27.2685ms)
+✔ customer: storage failure reports unsuccessful favorite instead of fake success (33.5025ms)
+✔ customer: saved list uses live demo price, preserves deleted rows and allows removing them (26.7043ms)
+✔ customer: sold out product stays visible and can open its detail (18.4247ms)
+✔ customer: cloud lookup batches at most 40 IDs and confirms current prices (27.4004ms)
+✔ customer: cloud failure preserves explicitly stale snapshots and retry succeeds (19.9584ms)
+✔ customer: late response after identity cannot show previous records (15.9752ms)
+✔ customer: late response after store cannot show previous records (17.924ms)
+✔ customer: late response after hide cannot show previous records (17.2637ms)
+✔ customer: old clear confirmation cannot delete another account or another kind (17.1241ms)
+✔ customer: clear only current history after confirmation and preserve favorite (17.8101ms)
+✔ customer: list storage read and write errors keep records recoverable (17.6954ms)
+✔ customer: existing profile and homepage entries open the shared library and show counts (41.2509ms)
+✔ merchant output contains no customer library page or storage module (0.6418ms)
+✔ customer and merchant pages each have a declared owner (1.5983ms)
+✔ GPS and review pages remain role-specific (0.6847ms)
+✔ checkout and basket are customer-only, administration merchant-only (1.0647ms)
+✔ customer product and order destinations are registered (2.4473ms)
+✔ product-card tap encodes reserved characters in product IDs (14.0132ms)
+✔ empty product ID never opens an arbitrary detail (16.3349ms)
+✔ order-card tap encodes reserved characters in order IDs (27.3496ms)
+✔ empty order ID is rejected before navigation (6.4749ms)
+✔ product detail decodes ID on load and checkout is the direct-purchase destination (9.815ms)
+✔ cart checkout navigation remains gated by cart/amount validation (3.34ms)
+✔ checkout address selector opens registered customer address page (14.3215ms)
+✔ successful local checkout uses the orders Tab and transfers its creation notice without URL parameters (30.142ms)
+✔ order details preserve the supplied order ID for subsequent data retrieval (11.2889ms)
+✔ role-specific customer tracking, proof and review destinations stay out of merchant build (0.2833ms)
+(node:25228) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ cloud cart: minimum-order shortfall prevents checkout (73.2153ms)
+✔ cloud cart: catalog/delivery load error prevents checkout (8.5943ms)
+✔ cloud cart: empty cart prevents checkout (15.3801ms)
+✔ cloud cart: valid cart opens checkout exactly once (38.4322ms)
+✔ cloud cart: last confirmed display amount cannot bypass an unconfirmed current quote (53.864ms)
+✔ local cart: minimum-order shortfall blocks checkout (13.0053ms)
+✔ local cart: empty cart blocks checkout (9.9479ms)
+✔ local cart: valid cart opens checkout exactly once (22.7408ms)
+✔ local cart: a positive shortfall with an empty cart never navigates (8.8537ms)
+✔ order detail: pending response is ignored after page hide (108.2313ms)
+✔ order detail: pending response is ignored after unload (43.9412ms)
+✔ order detail: old request cannot overwrite newer onShow (65.0738ms)
+✔ order detail: identity change discards pending order response (58.2514ms)
+✔ order detail: obsolete fetch failure does not show toast (16.0753ms)
+✔ order detail: current fetch failure shows error, not fabricated order (21.9363ms)
+✔ proof: concurrent refreshes make one request and show latest URL (17.0161ms)
+✔ proof: hiding page discards a late signed URL (19.0743ms)
+✔ proof: identity change discards a late signed URL (4.9438ms)
+✔ proof: current URL failure is reported without image (7.1436ms)
+✔ proof: preview with no image does not open image viewer (13.6165ms)
+(node:28056) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ phase6: initial load sends scoped authenticated parameters and normalizes real page state (8.8462ms)
+✔ phase6: empty successful response clears pagination without inventing orders (12.5751ms)
+✔ phase6: next page appends orders and forwards the opaque cursor unchanged (6.3859ms)
+✔ phase6: overlapping IDs across pages are not displayed twice (4.9788ms)
+✔ phase6: duplicate IDs inside a single returned page are displayed once (14.7557ms)
+✔ phase6: repeated reach-bottom events share one in-flight pagination request (9.9687ms)
+✔ phase6: unknown filter leaves tab, rows and request count unchanged (10.7719ms)
+✔ phase6: rapid filter requests completing in reverse order retain only the newest result (6.7565ms)
+✔ phase6: stale failure cannot clear the newer filter loading indicator or set its error (4.4283ms)
+✔ phase6: pull refresh clears cursor and rejects a late pre-refresh page (12.0523ms)
+✔ phase6: onHide invalidates late resolve without additional setData (6.3945ms)
+✔ phase6: onHide invalidates late reject without additional setData (16.4236ms)
+✔ phase6: onUnload invalidates late resolve without additional setData (5.033ms)
+✔ phase6: onUnload invalidates late reject without additional setData (5.1902ms)
+✔ phase6: changed identity rejects a pending response before orders reach the page (8.477ms)
+✔ phase6: identity change before pagination cannot retain or append the previous user orders (6.3699ms)
+✔ phase6: store change before pagination cannot reuse the previous store rows or cursor (3.9973ms)
+✔ phase6: onShow after identity change resets old rows and makes a fresh first-page request (3.3944ms)
+✔ phase6: malformed null page is rejected without exposing invalid rows (3.6174ms)
+✔ phase6: malformed non-array orders is rejected without exposing invalid rows (2.9772ms)
+✔ phase6: malformed non-boolean hasMore is rejected without exposing invalid rows (3.2904ms)
+✔ phase6: malformed non-string next cursor is rejected without exposing invalid rows (3.8623ms)
+✔ phase6: malformed empty next cursor is rejected without exposing invalid rows (4.5261ms)
+✔ phase6: malformed order with no stable ID is rejected without exposing invalid rows (2.8785ms)
+✔ phase6: malformed order with non-numeric total is rejected without exposing invalid rows (3.0758ms)
+✔ phase6: first-page network failure never falls back to local demo orders (3.3219ms)
+✔ phase6: failed next page retains loaded rows and cursor and can be retried successfully (3.8183ms)
+✔ phase6: exhausted pagination never makes another request on button or reach-bottom (5.7836ms)
+✔ phase6: local mode sorts, filters and counts local orders without any cloud requests (7.314ms)
+✔ phase6: switching cloud to local invalidates an outstanding cloud result (9.5883ms)
+✔ phase6: switching local to cloud clears demo rows and stale errors before awaiting cloud (5.5904ms)
+✔ phase6: pull refresh always stops its spinner after a current request failure (4.7724ms)
+✔ phase6 API: no session token rejects without invoking wx.request (6.0233ms)
+✔ phase6 API: non-200 response rejects instead of returning its payload (5.0567ms)
+✔ phase6 API: invalid detail ID is rejected without network activity (8.6244ms)
+✔ phase6: identity switch keeps new loading and list isolated when old pagination resolve runs finally (8.6459ms)
+✔ phase6: identity switch keeps new loading and list isolated when old pagination reject runs finally (6.0348ms)
+✔ phase6: store switch keeps new loading and list isolated when old pagination resolve runs finally (3.9546ms)
+✔ phase6: store switch keeps new loading and list isolated when old pagination reject runs finally (6.5711ms)
+✔ profile: a verified merchant explicitly enters workspace and saves preference (41.4351ms)
+✔ profile: rejected permission never navigates or stores merchant preference (29.6887ms)
+✔ profile: simultaneous taps make only one authorization request (16.672ms)
+✔ profile: hiding while permission is pending prevents late navigation (18.3678ms)
+✔ profile: session identity changes invalidate a pending authorization (7.9411ms)
+✔ merchant login: passive session verification must not navigate (2.6297ms)
+✔ merchant login: explicit verified action can navigate (2.2423ms)
+✔ merchant login: invalid permission response never navigates (2.3944ms)
+✔ merchant workbench: customer switch navigates to home tab (4.7608ms)
+✔ combined registration and three build target page sets agree (5.6651ms)
+✔ all tabBar targets are registered and present in customer build (0.2752ms)
+✔ every literal navigator URL on registered pages has a valid page target (66.1708ms)
+✔ customer profile static links stay in customer build (2.5653ms)
+✔ merchant workbench static links stay in merchant build (1.7829ms)
+✔ switching from merchant workspace to customer uses the home tab (3.0806ms)
+✔ profile merchant shortcut is gated by verified authorization (3.9354ms)
+✔ passive merchant session check cannot automatically navigate (1.7632ms)
+✔ customer-only build disables merchant workspace navigation (2.2962ms)
+✔ role-specific chat, proof, reviews and tracking destinations are registered (7.7124ms)
+✔ one AppID contains merchant-login and admin plus customer landing page (3.7637ms)
+✔ shop homepage does not display a merchant administration entry (0.4342ms)
+✔ merchant preference is set only after server-backed permission check (0.2789ms)
+✔ customer onShow never routes from a saved merchant preference (1.3378ms)
+✔ merchant logout clears saved merchant-first preference (0.2874ms)
+✔ merchant can choose the customer shop without creating another AppID (4.1138ms)
+✔ customer profile shows merchant navigation only after a server check (3.2482ms)
+✔ preview scanner detects optional chaining in generated JS with exact location (3.3215ms)
+✔ preview scanner detects nullish coalescing and assignment (1.2654ms)
+✔ preview scanner does not flag simple strings and comments (0.2421ms)
+✔ preview scanner rejects known broken checkbox-group opening tag (0.3567ms)
+✔ preview scanner does not reject a valid checkbox-group (0.2142ms)
+✔ preview configuration warns about ES2020/es6=false mismatch without calling it a definite compiler failure (0.3123ms)
+✔ end-to-end audit of disposable fixture detects both real preview blockers (12.7326ms)
+✔ missing generated JS is reported as unverified, not as full preview success (4.1041ms)
+✔ real TypeScript ES2019 emission removes optional chaining and nullish coalescing (233.3408ms)
+✔ mutation: emitted ES2020 optional chaining is rejected by build guard (211.851ms)
+✔ mutation: injected nullish syntax is rejected by build guard (0.2618ms)
+✔ string literals mentioning optional chaining do not fail the build (0.2677ms)
+ℹ tests 208
+ℹ suites 0
+ℹ pass 208
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1506.8603
+Frontend offline verification passed. WeChat/device acceptance is WAITING_FOR_OWNER_PREVIEW.
+EXIT_CODE=0

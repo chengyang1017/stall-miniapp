@@ -61,3 +61,7 @@
 ## 2026-10-27｜FE-04 当前补充
 
 checkout/orders在Combined/Customer新增26个实际编译DEMO回归（内存wx，不是模拟器截图），覆盖建单/unpaid/库存/购物车/Tab、一次性提示及确认竞态；最终全前端169项离线测试通过。上方页面UI人工验收依然WAITING_FOR_OWNER_PREVIEW，无平台截图或设备证据。完整18项现状见STATUS_AUDIT.md；商家经营/上传/客服等不能因本轮通过而改成已验收。
+
+## 2026-10-30｜FE-06 页面增量
+
+新增pages/product-library/product-library（kind=favorites/history），仅Combined/Customer；已有index/profile/product-detail按钮复用。45项新离线回归通过，总215项；官方微信平台/Android/iOS界面与交互仍WAITING_FOR_OWNER_PREVIEW。截图暂无，不能把离线wx mock标为DEMO人工验收或真实服务验收。

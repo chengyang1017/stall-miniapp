@@ -42,7 +42,8 @@
     "pages/customer-tracking/customer-tracking",
     "pages/merchant-tracking/merchant-tracking",
     "pages/customer-reviews/customer-reviews",
-    "pages/merchant-reviews/merchant-reviews"
+    "pages/merchant-reviews/merchant-reviews",
+    "pages/product-library/product-library"
   ],
   "window": {
     "navigationBarTitleText": "小摊商店",

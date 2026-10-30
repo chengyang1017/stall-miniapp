@@ -7,6 +7,8 @@ import { getRemoteProducts, getRemoteProductPage } from '../../utils/remoteApi'
 import { currentPresentation, refreshPagePresentation, invalidatePagePresentation } from '../../utils/storePresentation'
 import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 
+import { favoriteProduct, toggleFavorite, recordProductView, libraryScope } from '../../modules/customer/domain/productLibrary'
+
 interface Recommendation { id:string; name:string; imageUrl:string; current:string }
 function stockLimit(p:{stockMode?:string;stockQuantity?:number}):number {
   return p.stockMode==='finite' ? (Number.isSafeInteger(p.stockQuantity)?Math.max(0,Math.min(99,Number(p.stockQuantity))):0) : 99
@@ -14,6 +16,7 @@ function stockLimit(p:{stockMode?:string;stockQuantity?:number}):number {
 Page({
   detailSerial:0, detailContext:'', pageVisible:true, actionPending:false,
   data: {
+    isFavorite:false, libraryStatus:'',
     purchaseBusy:false, inventoryText:'', manualSoldOut:false, maxQuantity:99,
     productId:'', name:'', original:'', current:'', discounted:false, discountPercent:0,
     available:false, quantity:1, totalText:'0.00', categoryName:'', description:'', imageUrl:'',
@@ -27,7 +30,7 @@ Page({
     let top=28;try{top=wx.getMenuButtonBoundingClientRect().top}catch(_){/* Older runtimes use a safe fallback. */}
     this.setData({productId:id,navigationTop:top})
   },
-  onShow(){this.pageVisible=true;this.setData({purchaseBusy:this.actionPending});refreshPagePresentation(this);this.refreshCartCount();this.refresh()},
+  onShow(){this.pageVisible=true;this.setData({isFavorite:false,libraryStatus:''});this.setData({purchaseBusy:this.actionPending});refreshPagePresentation(this);this.refreshCartCount();this.refresh()},
   onHide(){this.pageVisible=false;this.detailSerial++;invalidatePagePresentation(this)},
   onUnload(){this.pageVisible=false;this.detailSerial++;invalidatePagePresentation(this)},
   async refresh(){
@@ -50,6 +53,7 @@ Page({
           inventoryText:p.stockMode==='finite'?(stockAllows(p)?`库存 ${p.stockQuantity} 件`:'暂时缺货'):'不限库存',
           categoryName:p.categoryName||'',description:p.description||'',imageUrl,imageUrls:imageUrl?[imageUrl]:[],imageIndex:0,
           quantity:qty,cloudPriceCents:price,totalText:(price*qty/100).toFixed(2),cloudLoading:false,cloudError:''})
+        this.rememberProduct()
         wx.setNavigationBarTitle({title:p.name||'商品详情'})
         this.loadRecommendations(serial,context,p.categoryId||'')
       }catch(error){
@@ -71,6 +75,7 @@ Page({
       categoryName:category?.name||'',description:(product as any).description||'',imageUrl,imageUrls:imageUrl?[imageUrl]:[],imageIndex:0,
       totalText:money(Math.round(current*qty*100)/100),...currentPresentation(),
       recommendations:store.products.filter(p=>p.id!==product.id&&productIsPublished(p)&&!p.soldOut&&stockAllows(p)).sort((a,b)=>Number(b.categoryId===product.categoryId)-Number(a.categoryId===product.categoryId)).slice(0,4).map(p=>({id:p.id,name:p.name,imageUrl:p.imageUrl||'',current:money(effectivePrice(p))}))})
+    this.rememberProduct()
     wx.setNavigationBarTitle({title:product.name})
   },
   async loadRecommendations(serial:number,context:string,categoryId:string){
@@ -123,7 +128,17 @@ Page({
   changeImage(e:any){this.setData({imageIndex:Number(e.detail.current)||0})},
   previewImages(){if(this.data.imageUrls.length)wx.previewImage({urls:this.data.imageUrls,current:this.data.imageUrls[this.data.imageIndex]})},
   toggleDetails(){this.setData({detailsExpanded:!this.data.detailsExpanded})},
-  favorite(){wx.showToast({title:'收藏服务暂未开通',icon:'none'})},
+  libraryProduct(){return {id:this.data.productId,name:this.data.name,imageUrl:this.data.imageUrl,priceCents:this.data.cloudMode?this.data.cloudPriceCents:Math.round(Number(this.data.current)*100)}},
+  rememberProduct(){
+    if(!this.pageVisible||this.detailContext!==supportIdentity()||this.data.cloudLoading||this.data.cloudError||!this.data.name)return
+    try{const scope=libraryScope();this.setData({isFavorite:favoriteProduct(this.data.productId,scope)});recordProductView(this.libraryProduct(),scope);this.setData({libraryStatus:''})}
+    catch(_){this.setData({libraryStatus:'收藏或浏览记录暂未保存，请检查设备存储。'})}
+  },
+  favorite(){
+    if(!this.pageVisible||this.detailContext!==supportIdentity()||this.data.cloudLoading||this.data.cloudError||!this.data.name){wx.showToast({title:'请先确认商品信息',icon:'none'});return}
+    try{const isFavorite=toggleFavorite(this.libraryProduct());this.setData({isFavorite,libraryStatus:''});wx.showToast({title:isFavorite?'已收藏':'已取消收藏',icon:'none'})}
+    catch(error){wx.showToast({title:String(error).includes('favorite_limit')?'收藏已达200件，请先移除部分商品':'收藏保存失败，请检查设备存储',icon:'none'})}
+  },
   goCart(){wx.switchTab({url:'/pages/cart/cart'})},goCategories(){wx.switchTab({url:'/pages/category/category'})},
   goBack(){if(getCurrentPages().length>1)wx.navigateBack();else wx.switchTab({url:'/pages/index/index'})},
   openRecommendation(e:any){const id=String(e.currentTarget.dataset.id||'');if(this.data.recommendations.some(p=>p.id===id))wx.navigateTo({url:'/pages/product-detail/product-detail?id='+encodeURIComponent(id)})}
