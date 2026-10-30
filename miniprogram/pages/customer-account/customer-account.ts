@@ -3,7 +3,7 @@ import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/co
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
 Page({
-  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneReadSerial:0 },
+  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneReadSerial:0,regionParts:[] as string[],regionLabel:'',customerId:'' },
   profileReadSerial:0,
   editSerial:0,
   async onShow() {
@@ -18,7 +18,7 @@ Page({
       if(!cfg)throw Error('missing_api')
       const profile=await authorizedGet(cfg.apiBase,'/v1/customer/profile')
       if(serial!==this.profileReadSerial||getSessionToken()!==token||this.editSerial!==editAtStart)return
-      cacheCustomerNickname(String(profile.nickname||''));this.setData({nickname:String(profile.nickname||''),profileStatus:'',avatarStyle:String(profile.avatarStyle||'violet')});this.loadAvatarPhoto(token)
+      cacheCustomerNickname(String(profile.nickname||''));this.setData({nickname:String(profile.nickname||''),profileStatus:'',avatarStyle:String(profile.avatarStyle||'violet'),customerId:String(profile.customerId||profile.userId||'')});this.loadAvatarPhoto(token)
     } catch(error:any) {
       if(serial===this.profileReadSerial&&getSessionToken()===token)
         this.setData({profileStatus:'读取云端昵称失败：'+String(error?.message||error).slice(0,80)})
@@ -121,6 +121,19 @@ Page({
       this.setData({avatarStyle:style,avatarStatus:'头像样式已保存到云端'})
     }catch(_){if(getSessionToken()===token)this.setData({avatarStatus:'保存头像失败，请重试'})}
     finally{this.setData({avatarBusy:false})}
+  },
+  onRegionChange(e:any){
+    const parts=Array.isArray(e?.detail?.value)?e.detail.value.map(String):[]
+    this.setData({regionParts:parts,regionLabel:parts.join(' ')})
+    wx.showToast({title:'地区仅在本页暂存',icon:'none'})
+  },
+  copyCustomerId(){
+    const id=String(this.data.customerId||'')
+    if(!id){wx.showToast({title:'用户 ID 尚未开放',icon:'none'});return}
+    wx.setClipboardData({data:id})
+  },
+  showAccountCancellation(){
+    wx.showModal({title:'账号注销',content:'账号注销需要后端验证身份、核对未完成订单，并处理依法需要保留的交易记录。当前尚未开通注销接口，因此不会直接删除账号。',showCancel:false,confirmText:'知道了'})
   },
   onNicknameInput(e:any){this.editSerial++;this.setData({nickname:String(e.detail.value||'').slice(0,30),profileStatus:''})},
   async saveNickname(){
