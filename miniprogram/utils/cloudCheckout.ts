@@ -59,16 +59,13 @@ export function availableCloudSlots(rules:CloudDeliveryRules,date:string,areaId?
   if(!Number.isFinite(day)||new Date(date+'T00:00:00Z').toISOString().slice(0,10)!==date)return []
   const d=rules.days[day]
   if(!d||!d.enabled)return []
-  const current=new Date(deliveryNow(rules)+8*3600000),time=current.toISOString().slice(11,16),business=rules.days[current.getUTCDay()]
-  if(!business?.enabled||time<business.start||time>=business.end)return []
+  const current=new Date(deliveryNow(rules)+8*3600000),time=current.toISOString().slice(11,16)
   return (rules.slots||[]).filter(s=>s.enabled&&(!s.weekdays||s.weekdays.includes(day))&&(!s.areaIds||s.areaIds.includes(areaId))&&s.start>=d.start&&s.end<=d.end&&!(date===localDate(0,rules)&&s.end<=time))
 }
 export function cloudDeliveryReason(rules:CloudDeliveryRules,date?:string,areaId?:string):string {
   if(!rules.accepting)return '店铺整体暂停接单'
   if(rules.deliveryPaused)return '临时暂停全部配送'
   if(!rules.areas.some(a=>a.enabled&&rules.slots.some(s=>s.enabled&&(!s.areaIds||s.areaIds.includes(a.id)))))return '尚无可用配送区域或时段，暂不支持下单'
-  const now=new Date(deliveryNow(rules)+8*3600000),today=rules.days[now.getUTCDay()],clock=now.toISOString().slice(11,16)
-  if(!today?.enabled||clock<today.start||clock>=today.end)return '当前不在店铺营业时间'
   if(!date)return ''
   if((rules.specialDates||[]).some(d=>d.date===date&&d.paused))return '所选特殊日期暂停配送，请选择其他日期'
   if(!areaId)return '请先选择可配送的收货区域'
