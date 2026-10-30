@@ -1,7 +1,4 @@
 <view class="category-page">
-  <view wx:if="{{cloudError}}" class="hint">{{cloudError}}</view>
-  <view class="hint" wx:if="{{syncMessage}}">{{syncMessage}}（{{syncState}}）</view>
-  <view class="page-subtitle">添加、重命名和拖动排列商品分类</view>
   <view class="panel">
     <view class="panel-title">新增分类</view>
     <view class="add-row">
@@ -9,11 +6,9 @@
       <button class="add-btn" size="mini" bindtap="addCategory">添加</button>
     </view>
     <view class="category-icon-field" bindtap="openNewIconPicker"><image src="{{newIconPath}}" mode="aspectFit"/><text>分类图标 · {{newIconKey ? newIconLabel : '默认图标'}}</text><text class="icon-field-arrow">选择 ›</text></view>
-    <view wx:if="{{cloudMode && !categoryIconsSupported}}" class="icon-capability-note">当前服务尚未启用图标保存；旧分类使用默认图标，名称和排序仍可正常管理。</view>
   </view>
   <view class="panel">
     <view class="panel-title">分类列表</view>
-    <view class="hint">按住右侧拖动手柄调整顺序，松手自动保存。</view>
     <view wx:if="{{categories.length === 0}}" class="empty">{{cloudRefreshing ? '正在读取分类…' : '暂无分类'}}</view>
     <view wx:else class="sort-area" style="height:{{areaHeight}}px;">
       <view wx:for="{{rows}}" wx:key="id" class="sort-row {{draggingId === item.id ? 'is-dragging' : ''}}" style="height:{{rowHeight}}px;transform:translateY({{item.y}}px);">
