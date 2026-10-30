@@ -10,8 +10,10 @@
   </view>
   <view class="product-query-panel">
     <view class="product-query-search">
-      <input value="{{searchText}}" bindinput="inputSearch" bindconfirm="searchProducts" confirm-type="search" maxlength="100" placeholder="商品名称／分类名称，或完整商品 ID" disabled="{{batchBusy}}" />
-      <button size="mini" bindtap="clearSearch" disabled="{{batchBusy}}">清空</button>
+      <text class="product-search-icon">⌕</text>
+      <input value="{{searchText}}" bindinput="inputSearch" bindconfirm="searchProducts" confirm-type="search" maxlength="100" placeholder="搜索商品名称或分类" disabled="{{batchBusy}}" />
+      <text wx:if="{{searchText}}" class="product-search-clear" bindtap="clearSearch">×</text>
+      <text class="product-search-submit" bindtap="searchProducts">搜索</text>
     </view>
     <view class="product-filter-toggle" bindtap="toggleProductFilters" role="button" aria-label="展开或收起商品筛选"><text>分类与筛选</text><text class="product-filter-current">{{categoryFilters[categoryFilterIndex].name}} · {{filtersExpanded ? "收起 ▲" : "展开 ▼"}}</text></view>
     <view wx:if="{{filtersExpanded}}" class="product-query-filters">
