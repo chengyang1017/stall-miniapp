@@ -6,7 +6,7 @@
   <button wx:if="{{!cloudMode}}" bindtap="demo">查看本地演示会话并回复</button>
   <view wx:if="{{cloudMode && !loading && !error && !conversations.length}}" class="support-empty">暂无顾客咨询</view>
   <view wx:for="{{conversations}}" wx:key="id" class="support-thread" data-id="{{item.id}}" bindtap="open"><view>{{item.label}}<text class="support-count">未读 {{item.unread}}</text></view><view class="support-preview">{{item.preview}}</view><view class="support-meta">{{item.time}} · {{item.status === 'open' ? '咨询中' : '已关闭'}}</view></view>
-  <view wx:if="{{loading}}" class="support-empty">正在加载…</view>
+  <view wx:if="{{loading}}" class="global-loading-wrap"><view class="global-loading-spinner"></view></view>
   <button wx:if="{{hasMore}}" size="mini" bindtap="more" disabled="{{loading}}">加载更多会话</button>
   <view wx:if="{{cloudMode && conversations.length && !hasMore}}" class="support-empty">已加载全部会话</view>
  </scroll-view>
