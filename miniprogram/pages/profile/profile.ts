@@ -88,7 +88,7 @@ Page({
           wx.showToast({title:'手机号绑定成功',icon:'success'})
         }else{
           const err=String(res.data?.error||'')
-          const message=err==='phone_already_bound'?'该号码已关联另一账号，请联系商家处理，不能自动合并':err==='not_enabled'?'手机号绑定暂未开通':err==='wechat_phone_verification_failed'?'微信未能验证该号码，仅支持中国大陆 +86 手机号':'绑定未成功，可以稍后重试'
+          const message=err==='phone_already_bound'?'该号码已关联另一账号，请联系商家处理，不能自动合并':err==='phone_change_requires_reverification'?'当前账号已有其他手机号，不能在首次登录时直接替换，请通过安全流程更换':err==='not_enabled'?'手机号绑定暂未开通':err==='wechat_phone_verification_failed'?'微信未能验证该号码，仅支持中国大陆 +86 手机号':'绑定未成功，可以稍后重试'
           this.setData({phoneBindStatus:message})
         }
       },
