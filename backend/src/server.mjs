@@ -1,3 +1,4 @@
+import {tencentSmsConfiguration,sendTencentSms} from './customerTencentSms.mjs'
 import {customerSmsSendRoute} from './customerSmsSend.mjs'
 import {customerSmsLoginRoute} from './customerSmsLogin.mjs'
 import {customerAccountAddressWriteRoute} from './customerAccountAddressWrite.mjs'
@@ -78,7 +79,7 @@ const server = http.createServer(async (req, res) => {
     if (await customerWechatPhoneBindRoute(req,res,url,pool)) return
     if (await customerWechatPhoneLoginRoute(req,res,url,pool)) return
     if (await customerSmsLoginRoute(req,res,url,pool)) return
-    if (await customerSmsSendRoute(req,res,url,pool)) return
+    if (await customerSmsSendRoute(req,res,url,pool,{send:tencentSmsConfiguration()?sendTencentSms:null})) return
     if (await customerSessionRoute(req,res,url,pool)) return
     if (await customerAccountAddressReadRoute(req,res,url,pool)) return
     if (await customerAccountAddressWriteRoute(req,res,url,pool)) return
