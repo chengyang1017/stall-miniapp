@@ -664,3 +664,16 @@ page { background: #f5f6f8; }
 .product-card-edit{color:#7541d5;font-size:22rpx;white-space:nowrap}
 .product-manage-price{font-weight:700;color:#dc485d;font-size:29rpx}
 .product-manage-state,.product-schedule-label{font-size:21rpx;color:#8a8299}
+
+/* Compact product search and single navigation title */
+.product-manage-page{padding:16rpx 22rpx 36rpx}
+.product-manage-header{margin:0 0 14rpx;justify-content:flex-end;min-height:48rpx;align-items:center}
+.product-manage-header-actions{gap:12rpx}
+.product-query-panel{padding:14rpx 18rpx;border-radius:18rpx;margin-bottom:16rpx}
+.product-query-search{padding:4rpx 8rpx;border-radius:12rpx;gap:8rpx}
+.product-query-search input{padding:8rpx 10rpx;min-height:50rpx;font-size:24rpx}
+.product-query-search button{padding:0 14rpx;font-size:22rpx;line-height:50rpx;min-height:50rpx}
+.product-filter-toggle{margin-top:6rpx;padding:14rpx 4rpx;font-size:24rpx}
+.product-query-actions{padding-top:12rpx;gap:10rpx}
+.product-query-actions button{font-size:23rpx;line-height:56rpx;min-height:56rpx}
+.product-list-heading{margin:14rpx 4rpx 12rpx}
