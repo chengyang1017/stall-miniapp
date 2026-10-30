@@ -1,0 +1,28 @@
+name: Phone onboarding and identity checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'miniprogram/pages/profile/**'
+      - 'backend/src/customer*'
+      - 'backend/tests/customer*'
+      - 'backend/tests/wechat-phone-bind.test.mjs'
+      - '.github/workflows/phone-onboarding.yml'
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Phone identity and onboarding tests
+        run: node --test backend/tests/wechat-phone-bind.test.mjs backend/tests/customer-account-sessions.test.mjs backend/tests/customer-identity-link.test.mjs backend/tests/customer-phone-identity.test.mjs backend/tests/customer-wechat-identity-link-route.test.mjs backend/tests/frontend-phone-onboarding-source.test.mjs
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Build phone preview
+        run: npm run preview:phone:update
