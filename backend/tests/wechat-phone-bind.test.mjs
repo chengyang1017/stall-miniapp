@@ -52,43 +52,43 @@ test('verified phone is saved transactionally against authenticated account',asy
 })
 test('different account owning phone is never merged or overwritten',async()=>{
  const db=fakeDb({owner:'account-b'})
- assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:verified','+8613812345678'),'phone_already_bound')
+ assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:wx0123456789abcdef:verified','+8613812345678'),'phone_already_bound')
  assert.equal(db.statements.some(x=>x.sql.startsWith('INSERT')),false)
  assert.equal(db.statements.at(-1).sql,'ROLLBACK')
  assert.equal(db.released,true)
 })
 test('repeated same-number binding is idempotent and cannot overwrite verification timestamp',async()=>{
  const db=fakeDb({currentPhone:'+8613812345678'})
- assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:verified','+8613812345678'),'bound')
+ assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:wx0123456789abcdef:verified','+8613812345678'),'bound')
  assert.equal(db.statements.some(x=>x.sql.startsWith('INSERT')),false)
  assert.equal(db.statements.at(-1).sql,'COMMIT')
 })
 test('first-login binding cannot silently replace a previously verified phone',async()=>{
  const db=fakeDb({currentPhone:'+8613912345678'})
- assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:verified','+8613812345678'),'phone_change_requires_reverification')
+ assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:wx0123456789abcdef:verified','+8613812345678'),'phone_change_requires_reverification')
  assert.equal(db.statements.some(x=>x.sql.startsWith('INSERT')),false)
  assert.equal(db.statements.at(-1).sql,'ROLLBACK')
 })
 test('missing authenticated account cannot bind',async()=>{
  const db=fakeDb({account:null})
- assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:verified','+8613812345678'),'profile_not_found')
+ assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:wx0123456789abcdef:verified','+8613812345678'),'profile_not_found')
  assert.equal(db.statements.at(-1).sql,'ROLLBACK')
  assert.equal(db.released,true)
 })
 test('database write failures roll back and release connection',async()=>{
  const db=fakeDb({failInsert:'08006'})
- await assert.rejects(saveVerifiedWechatPhone(db.pool,'wx:verified','+8613812345678'))
+ await assert.rejects(saveVerifiedWechatPhone(db.pool,'wx:wx0123456789abcdef:verified','+8613812345678'))
  assert.equal(db.statements.at(-1).sql,'ROLLBACK')
  assert.equal(db.released,true)
 })
 test('unique phone constraint conflicts return conflict without commit',async()=>{
  const db=fakeDb({failInsert:'23505'})
- assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:verified','+8613812345678'),'phone_already_bound')
+ assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:wx0123456789abcdef:verified','+8613812345678'),'phone_already_bound')
  assert.equal(db.statements.at(-1).sql,'ROLLBACK')
 })
 test('invalid phone and untrusted subject never connect to database',async()=>{
  const db=fakeDb()
- await assert.rejects(saveVerifiedWechatPhone(db.pool,'wx:verified','13812345678'),/invalid_verified_phone_input/)
+ await assert.rejects(saveVerifiedWechatPhone(db.pool,'wx:wx0123456789abcdef:verified','13812345678'),/invalid_verified_phone_input/)
  await assert.rejects(saveVerifiedWechatPhone(db.pool,'unverified','+8613812345678'),/invalid_verified_phone_input/)
  assert.equal(db.statements.length,0)
 })
@@ -168,7 +168,7 @@ test('first login requires profile read and update permissions plus correct migr
 })
 test('malformed WeChat subject is rejected before opening a database connection',async()=>{
  const pool={connect(){throw Error('unexpected database connection')}}
- for(const bad of ['wx:verified','wx:other-app:openid','wx:wx0123456789abcdef:bad!']){
+ for(const bad of ['wx:wx0123456789abcdef:verified','wx:other-app:openid','wx:wx0123456789abcdef:bad!']){
   await assert.rejects(saveVerifiedWechatPhone(pool,bad,'+8613812345678'),/invalid_verified_phone_input/)
  }
 })
