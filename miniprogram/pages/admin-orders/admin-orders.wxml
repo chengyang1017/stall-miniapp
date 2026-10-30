@@ -31,7 +31,7 @@
       </view>
     </view>
   </scroll-view>
-  <view wx:if="{{cloudBusy}}" class="notice">正在读取订单和全店数量…</view>
+  <view wx:if="{{cloudBusy}}" class="global-loading-wrap"><view class="global-loading-spinner"></view></view>
   <view wx:if="{{!canManage && cloudMode}}" class="notice">当前账号仅可查看订单；状态修改需要有权限的商家角色。</view>
   <view wx:if="{{batchMode}}" class="order-batch-panel">
     <view class="row"><text>已选择 {{selectedCount}} 单（最多50单）</text><button size="mini" bindtap="selectAll" disabled="{{operationBusy || cloudBusy || queryDirty}}">{{allSelected ? '取消全选' : '全选已加载可选订单'}}</button></view>
