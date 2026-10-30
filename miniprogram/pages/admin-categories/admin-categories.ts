@@ -78,7 +78,7 @@ Page({
       if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity()){
         this.saveQueue=[]
         this.renderCategories(this.confirmed)
-        this.setData({syncState:'failed',syncMessage:'保存未确认，正在自动重新读取',cloudError:'云端同步异常，正在自动恢复'})
+        this.setData({syncState:'failed',syncMessage:'保存未确认，正在自动重新读取',cloudError:'云端同步异常，正在自动恢复'});wx.showToast({title:'保存失败，已恢复分类',icon:'none'})
       }
     }finally{
       this.saving=false
@@ -126,7 +126,7 @@ Page({
   deleteCategory(e: any) {
         if (this.data.draggingId) return
     const id = String(e.currentTarget.dataset.id || '')
-    if(getCloudContext()){if(id.startsWith('pending-'))return;const context=this.context;wx.showModal({title:'删除云端分类？',content:'服务端会拒绝删除仍有商品的分类，历史订单不受影响。',success:r=>{if(r.confirm&&context===supportIdentity())this.cloudChange('DELETE',id,{})}});return}
+    if(getCloudContext()){if(id.startsWith('pending-'))return;this.cloudChange('DELETE',id,{});return}
     const store = loadStore()
     const category = store.categories.find(c => c.id === id)
     if (!category) return
