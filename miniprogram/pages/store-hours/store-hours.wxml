@@ -1,6 +1,6 @@
 <view class="hours-page">
   <view class="hours-tip">{{cloudMode ? '云端经营设置' : '本机演示设置'}} · 北京时间（UTC+8）</view>
-  <view wx:if="{{busy}}" class="hours-tip">正在读取或保存…</view>
+  <view wx:if="{{busy}}" class="global-loading-wrap"><view class="global-loading-spinner"></view></view>
   <view wx:if="{{error}}" class="hours-tip">{{error}}<button size="mini" bindtap="refresh" disabled="{{busy}}">重新读取</button></view>
   <view class="hours-card"><view class="hours-row"><text class="hours-heading">接单开关</text><switch disabled="{{busy || !ready}}" color="#16865d" checked="{{accepting}}" bindchange="toggleAccept" /></view><text class="hours-tip">当前状态：{{status}}。暂停时顾客仍可浏览商品，但不能提交新订单。</text></view>
   <view class="hours-card"><view class="hours-heading">店铺公告</view><textarea disabled="{{busy || !ready}}" maxlength="200" value="{{notice}}" bindinput="changeNotice" placeholder="例如：今日新品、临时休息通知" class="hours-notice"/><button disabled="{{busy || !ready}}" type="primary" bindtap="saveNotice">保存公告</button></view>
