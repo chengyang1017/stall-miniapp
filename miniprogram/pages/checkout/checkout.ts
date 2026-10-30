@@ -113,9 +113,18 @@ Page({
     const addressIssue=address?deliveryAddressReason(address,rules.areas,key):'请选择收货地址'
     const policyIssue=cloudDeliveryReason(rules,date,area?.id)
     const issue=policyIssue&&policyIssue!=='请先选择可配送的收货区域'?policyIssue:addressIssue||policyIssue
-    const slots=addressIssue?[]:availableCloudSlots(rules,date,area?.id).map(s=>({...s,displayLabel:s.label+' '+s.start+'–'+s.end})),index=slots.findIndex(s=>s.id===preferred)
-    this.setData({selectedAddress:address?{...address,area:area?.name||address.area}:null,hasAddress:!!address,cloudAreaName:area?.name||'',deliveryError:addressIssue&&policyIssue&&addressIssue!==policyIssue?addressIssue+'；'+policyIssue:issue,
-      deliveryDate:date,slots,slotIndex:index,selectionNotice:preferred&&index<0?'原配送时段已暂停、删除或不适用，请重新选择。':'',selectedSlotId:index>=0?slots[index].id:'',selectedSlotText:index>=0?slots[index].label+' '+slots[index].start+'–'+slots[index].end:''})
+    // If today's delivery window has passed, automatically select the next deliverable day.
+    let nextDate=date
+    if(area?.id&&!preferred&&!availableCloudSlots(rules,nextDate,area.id).length){
+      for(let offset=1;offset<=7;offset++){
+        const candidate=localDate(offset,rules)
+        if(candidate<=date||!availableCloudSlots(rules,candidate,area.id).length)continue
+        nextDate=candidate;break
+      }
+    }
+    const slots=addressIssue?[]:availableCloudSlots(rules,nextDate,area?.id).map(s=>({...s,displayLabel:s.label+' '+s.start+'–'+s.end})),index=slots.findIndex(s=>s.id===preferred)
+    this.setData({selectedAddress:address?{...address,area:area?.name||address.area}:null,hasAddress:!!address,cloudAreaName:area?.name||'',deliveryError:nextDate!==date&&!addressIssue?'':addressIssue&&policyIssue&&addressIssue!==policyIssue?addressIssue+'；'+policyIssue:issue,
+      deliveryDate:nextDate,slots,slotIndex:index,selectionNotice:nextDate!==date?'已安排下次可配送日期，请选择配送时段。':preferred&&index<0?'原配送时段已暂停、删除或不适用，请重新选择。':'',selectedSlotId:index>=0?slots[index].id:'',selectedSlotText:index>=0?slots[index].label+' '+slots[index].start+'–'+slots[index].end:''})
   },
   chooseDeliveryDate(e:any) {
     const date=String(e.detail.value||''),rules=this.data.cloudRules
