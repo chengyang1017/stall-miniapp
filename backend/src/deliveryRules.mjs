@@ -162,6 +162,6 @@ export async function verifyDelivery(client,storeId,address,slot){
  const weekday=new Date(startDay).getUTCDay()
  if(!rules.days[weekday].enabled)return {error:'delivery_date_unavailable'}
  const chosen=rules.slots.find(s=>s.enabled&&s.id===slot.id)
- if(!chosen||!weekdays(chosen).includes(weekday)||chosen.areaIds&&!chosen.areaIds.includes(area.id)||chosen.start<rules.days[weekday].start||chosen.end>rules.days[weekday].end||startDay===today&&chosen.end<=time)return {error:'delivery_slot_unavailable'}
+ if(!chosen||!weekdays(chosen).includes(weekday)||chosen.areaIds&&!chosen.areaIds.includes(area.id)||startDay===today&&chosen.end<=time)return {error:'delivery_slot_unavailable'}
  return {snapshot:{id:chosen.id,label:chosen.label,start:chosen.start,end:chosen.end,date:slot.date,areaId:area.id,areaName:area.name},area,minimumOrderCents:rules.minimumOrderCents||0}
 }
