@@ -6,7 +6,16 @@
     <view wx:for="{{phoneAddressList}}" wx:key="id" class="address-detail">
       <view>{{item.receiverName}} · {{item.phone}}</view>
       <view>{{item.area}} {{item.detail}}</view>
+      <button size="mini" data-id="{{item.id}}" bindtap="phoneEdit" disabled="{{phoneWriteBusy}}">编辑</button>
+      <button wx:if="{{!item.isDefault}}" size="mini" data-id="{{item.id}}" bindtap="phoneDefault" disabled="{{phoneWriteBusy}}">设为默认</button>
+      <button size="mini" data-id="{{item.id}}" bindtap="phoneRemove" disabled="{{phoneWriteBusy}}">删除</button>
     </view>
+    <button size="mini" bindtap="phoneNew" disabled="{{phoneWriteBusy}}">新增手机号地址</button>
+    <view class="field"><text>收货人</text><input data-field="phoneName" bindinput="phoneField" value="{{phoneName}}" disabled="{{phoneWriteBusy}}"/></view>
+    <view class="field"><text>中国大陆手机号</text><input data-field="phoneNumber" type="number" maxlength="11" bindinput="phoneField" value="{{phoneNumber}}" disabled="{{phoneWriteBusy}}"/></view>
+    <view class="field"><text>配送区域 ID</text><input data-field="phoneAreaId" bindinput="phoneField" value="{{phoneAreaId}}" disabled="{{phoneWriteBusy}}"/></view>
+    <view class="field"><text>详细地址</text><input data-field="phoneDetail" bindinput="phoneField" value="{{phoneDetail}}" disabled="{{phoneWriteBusy}}"/></view>
+    <button size="mini" bindtap="phoneSave" loading="{{phoneWriteBusy}}" disabled="{{phoneWriteBusy}}">保存手机号地址（测试）</button>
   </view>
   <view class="tip">{{cloudMode ? '当前登录顾客的云端地址 · 当前店铺配送区域' : '本机演示配送规则'}} · {{deliveryStatus}}</view>
   <button wx:if="{{cloudMode}}" size="mini" bindtap="login" disabled="{{addressBusy}}">微信登录／重新验证身份</button>

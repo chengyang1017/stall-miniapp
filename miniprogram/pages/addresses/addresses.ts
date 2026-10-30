@@ -13,11 +13,11 @@ import { loginWithWechat } from '../../modules/shared/runtime/auth'
 const newAddressId = () => `addr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
 Page({
-  phoneAddressSerial:0,
+  phoneAddressSerial:0,phoneWriteSerial:0,phoneCreateKey:'',
   disposed:false,writeSerial:0,addressIdentity:'',createRequest:{fingerprint:'',key:''},
   deliverySerial:0,cloudRules:null as CloudDeliveryRules|null,deliveryContext:'',
   data: {
-    phoneAddressList:[] as Array<{id:string;receiverName:string;phone:string;area:string;detail:string;isDefault:boolean}>,phoneAddressStatus:'',phoneAddressLoading:false,
+    phoneAddressList:[] as Array<{id:string;receiverName:string;phone:string;area:string;detail:string;isDefault:boolean}>,phoneAddressStatus:'',phoneAddressLoading:false,phoneWriteBusy:false,phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:'',
     addressBusy:false,addressListSync:false,addressSync:'idle',addressFeedback:'',addressTiming:{validationMs:0,writeMs:0,listMs:0},
     addresses: [] as Array<SavedAddress & {deliveryIssue?:string}>,
     cloudMode:false,deliveryBusy:false,deliveryError:'',deliveryStatus:'',deliveryAreaId:'',
@@ -33,8 +33,8 @@ Page({
     mapAddress: ''
   },
   onShow() { this.disposed=false;this.refreshPhoneAddresses();if(this.addressIdentity===supportIdentity()&&(this.data.addressBusy||this.data.addressListSync))return;this.refresh() },
-  onHide(){this.phoneAddressSerial++;this.deliverySerial++;this.setData({deliveryBusy:false})},
-  onUnload(){this.phoneAddressSerial++;this.disposed=true;this.deliverySerial++;this.writeSerial++},
+  onHide(){this.phoneAddressSerial++;this.phoneWriteSerial++;this.deliverySerial++;this.setData({deliveryBusy:false})},
+  onUnload(){this.phoneAddressSerial++;this.phoneWriteSerial++;this.disposed=true;this.deliverySerial++;this.writeSerial++},
   refreshPhoneAddresses(){
     const cfg=getCloudContext()
     const saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
@@ -50,7 +50,7 @@ Page({
         const now=getCloudContext()
         if(this.disposed||serial!==this.phoneAddressSerial||current?.token!==token||current?.apiBase!==apiBase||now?.storeSlug!==slug||now?.apiBase!==apiBase)return
         if(r.statusCode===200&&Array.isArray(r.data?.addresses)){
-          this.setData({phoneAddressList:r.data.addresses,phoneAddressStatus:'手机号顾客地址（只读；编辑请用微信登录）'})
+          this.setData({phoneAddressList:r.data.addresses,phoneAddressStatus:'手机号顾客地址（独立账号；写入仅限测试环境）'})
         }else{
           this.setData({phoneAddressList:[],phoneAddressStatus:r.statusCode===404?'手机号地址预览暂未启用':r.statusCode===401?'手机号顾客会话已失效，请重新授权':'暂时无法读取手机号顾客地址'})
         }
@@ -58,6 +58,55 @@ Page({
       fail:()=>{if(!this.disposed&&serial===this.phoneAddressSerial)this.setData({phoneAddressStatus:'手机号地址读取失败，请检查网络'})},
       complete:()=>{if(!this.disposed&&serial===this.phoneAddressSerial)this.setData({phoneAddressLoading:false})}
     })
+  },
+  phoneEdit(e:any){
+    const item=this.data.phoneAddressList.find(a=>a.id===String(e.currentTarget.dataset.id)) as any
+    if(!item||this.data.phoneWriteBusy)return
+    this.setData({phoneEditId:item.id,phoneEditVersion:Number(item.version)||0,phoneName:item.receiverName||'',phoneNumber:item.phone||'',phoneAreaId:item.deliveryAreaId||'',phoneDetail:item.detail||'',phoneAddressStatus:'编辑手机号账号地址（测试环境）'})
+  },
+  phoneNew(){if(this.data.phoneWriteBusy)return;this.phoneCreateKey='';this.setData({phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:'',phoneAddressStatus:'新增手机号账号地址（测试环境）'})},
+  phoneField(e:any){const field=String(e.currentTarget.dataset.field);if(['phoneName','phoneNumber','phoneAreaId','phoneDetail'].includes(field))this.setData({[field]:String(e.detail.value||'')})},
+  phoneWrite(method:'POST'|'PATCH'|'DELETE',id:string,body:Record<string,unknown>):Promise<boolean>{
+    const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+    if(this.data.phoneWriteBusy||!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'||!/^[A-Za-z0-9_-]{40,100}$/.test(saved.token))return Promise.resolve(false)
+    const serial=++this.phoneWriteSerial,token=saved.token,apiBase=cfg.apiBase,slug=cfg.storeSlug
+    this.setData({phoneWriteBusy:true,phoneAddressStatus:'正在提交手机号地址操作…'})
+    return new Promise(resolve=>wx.request({
+      url:apiBase.replace(/\/$/,'')+'/v1/customer/account/stores/'+slug+'/addresses'+(id?'/'+id:''),
+      method,timeout:20000,header:{Authorization:'Bearer '+token,'content-type':'application/json'},data:body,
+      success:(r:any)=>{
+        const now=getCloudContext(),session=wx.getStorageSync('stall_customer_phone_session_v1') as any
+        if(this.disposed||serial!==this.phoneWriteSerial||session?.token!==token||session?.apiBase!==apiBase||now?.apiBase!==apiBase||now?.storeSlug!==slug){resolve(false);return}
+        if(r.statusCode===200&&r.data?.ok===true){
+          this.setData({phoneAddressStatus:'服务器已确认保存'})
+          this.refreshPhoneAddresses()
+          resolve(true)
+        }else{
+          this.setData({phoneAddressStatus:r.statusCode===404?'手机号地址写入尚未启用':r.statusCode===409?'地址已变化或账号关联需要审核，请刷新核对':r.statusCode===401?'手机号会话已失效':'保存未成功，请重试'})
+          resolve(false)
+        }
+      },
+      fail:()=>{if(!this.disposed&&serial===this.phoneWriteSerial)this.setData({phoneAddressStatus:'请求失败或结果未知，请刷新地址列表确认'});resolve(false)},
+      complete:()=>{if(!this.disposed&&serial===this.phoneWriteSerial)this.setData({phoneWriteBusy:false})}
+    }))
+  },
+  async phoneSave(){
+    if(this.data.phoneWriteBusy)return
+    const name=this.data.phoneName.trim(),number=this.data.phoneNumber.trim(),area=this.data.phoneAreaId.trim(),detail=this.data.phoneDetail.trim()
+    if(!name||name.length>100||!/^1[3-9]\d{9}$/.test(number)||!area||area.length>60||!detail||detail.length>300){this.setData({phoneAddressStatus:'请填写正确的姓名、11位手机号、配送区域 ID 和详细地址'});return}
+    const existing=this.data.phoneEditId
+    if(!existing&&!this.phoneCreateKey)this.phoneCreateKey='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,(c)=>{const r=Math.floor(Math.random()*16);return(c==='x'?r:(r&3|8)).toString(16)})
+    const ok=await this.phoneWrite(existing?'PATCH':'POST',existing,{receiverName:name,phone:number,deliveryAreaId:area,detail,latitude:null,longitude:null,locationName:'',mapAddress:'',...(existing?{expectedVersion:this.data.phoneEditVersion}:{clientKey:this.phoneCreateKey})})
+    if(ok){this.phoneCreateKey='';this.setData({phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:''})}
+  },
+  async phoneRemove(e:any){
+    const id=String(e.currentTarget.dataset.id||''),a=(this.data.phoneAddressList as any[]).find(x=>x.id===id)
+    if(!a||this.data.phoneWriteBusy)return
+    wx.showModal({title:'删除手机号地址',content:'确认删除这条地址？',success:async r=>{if(r.confirm)await this.phoneWrite('DELETE',id,{expectedVersion:a.version})}})
+  },
+  async phoneDefault(e:any){
+    const id=String(e.currentTarget.dataset.id||''),a=(this.data.phoneAddressList as any[]).find(x=>x.id===id)
+    if(a&&!this.data.phoneWriteBusy)await this.phoneWrite('PATCH',id,{isDefault:true,expectedVersion:a.version})
   },
   async refresh() {
     const cfg=getCloudContext(),serial=++this.deliverySerial,key=cfg?deliveryStoreKey(cfg):'local-demo'
