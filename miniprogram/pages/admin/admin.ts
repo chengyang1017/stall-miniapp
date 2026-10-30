@@ -52,6 +52,8 @@ Page({
   catch(_){if(serial===this.serial&&context===businessContextKey())this.setData({settingsError:'云端起送金额读取失败，请检查权限后重试'})}
   finally{if(serial===this.serial&&context===businessContextKey())this.setData({settingsLoading:false})}
  },
+ beginMinimumEdit(){if(this.data.settingsReady&&!this.data.settingsLoading&&!this.data.settingsSaving)this.setData({minimumEditing:true})},
+ cancelMinimumEdit(){if(!this.data.settingsSaving)this.setData({minimumEditing:false})},
  async saveMinimumOrder(){
   if(this.data.settingsSaving||!this.data.settingsReady)return
   const raw=this.data.minimumOrderInput.trim()
