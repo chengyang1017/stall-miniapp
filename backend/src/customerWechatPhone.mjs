@@ -33,7 +33,9 @@ export async function saveVerifiedWechatPhone(pool,subject,number){
   const accountId=found.rows[0].id
   const owned=await client.query('SELECT account_id FROM customer_verified_phones WHERE phone_e164=$1',[number])
   if(owned.rows.some(r=>r.account_id!==accountId)){await client.query('ROLLBACK');return 'phone_already_bound'}
-  await client.query('INSERT INTO customer_verified_phones(account_id,phone_e164,verified_at) VALUES ($1,$2,now()) ON CONFLICT (account_id) DO UPDATE SET phone_e164=EXCLUDED.phone_e164,verified_at=EXCLUDED.verified_at',[accountId,number])
+  const current=await client.query('SELECT phone_e164 FROM customer_verified_phones WHERE account_id=$1',[accountId])
+  if(current.rows.length&&current.rows[0].phone_e164!==number){await client.query('ROLLBACK');return 'phone_change_requires_reverification'}
+  if(!current.rows.length)await client.query('INSERT INTO customer_verified_phones(account_id,phone_e164,verified_at) VALUES ($1,$2,now())',[accountId,number])
   await client.query('COMMIT')
   return 'bound'
  }catch(e){
@@ -67,7 +69,7 @@ export async function customerWechatPhoneBindRoute(req,res,url,pool){
  try{
   const outcome=await saveVerifiedWechatPhone(pool,subject,number)
   if(outcome==='profile_not_found')reply(res,404,{error:outcome})
-  else if(outcome==='phone_already_bound')reply(res,409,{error:outcome})
+  else if(outcome==='phone_already_bound'||outcome==='phone_change_requires_reverification')reply(res,409,{error:outcome})
   else reply(res,200,{bound:true,maskedPhone:'+86*******'+number.slice(-4)})
  }catch{reply(res,503,{error:'phone_bind_unavailable'})}
  return true
