@@ -3,3 +3,40 @@ page{background:#f5f6f8}.page{padding:28rpx}.title{font-size:38rpx;font-weight:b
 .delivery-toolbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;flex-wrap:wrap;gap:12rpx;padding:18rpx;margin:18rpx 0;background:var(--brand-background);border-radius:12rpx;font-size:24rpx}.delivery-toolbar button{margin:0}.error{background:#fff1e5;color:#a65b24;border-radius:12rpx;padding:18rpx;font-size:25rpx;line-height:1.6}.success{color:#16865d;padding:18rpx;font-size:25rpx}.area-editor,.slot-editor,.special-date{border-top:1rpx solid var(--brand-background);padding:18rpx 0;overflow-wrap:anywhere}.mini-actions{display:flex;gap:12rpx;flex-wrap:wrap;margin:14rpx 0}.mini-actions button{margin:0}.time-choice{padding:18rpx;background:var(--brand-background);border-radius:10rpx;font-size:26rpx;margin:12rpx 0}.delivery-checks{display:flex;flex-wrap:wrap;gap:8rpx;margin:16rpx 0;font-size:24rpx}.delivery-checks label{display:flex;align-items:center;min-height:58rpx;overflow-wrap:anywhere}.delivery-checks checkbox{transform:scale(.72)}.area-geo-block{font-size:24rpx;margin-top:18rpx}.card input{min-width:0;box-sizing:border-box}.tip{overflow-wrap:anywhere}
 
 @import "../../styles/merchant-theme.wxss";
+
+/* Delivery settings – unified merchant redesign */
+page{background:#f7f6fb}
+.page{padding:22rpx 24rpx 64rpx;box-sizing:border-box;min-height:100vh}
+.delivery-summary-header{display:flex;flex-direction:column;gap:7rpx;padding:10rpx 8rpx 24rpx}
+.delivery-eyebrow{color:#312840;font-size:30rpx;font-weight:700}
+.delivery-summary-subtitle{font-size:22rpx;color:#9b91a9}
+.card{box-sizing:border-box;background:#fff;border-radius:22rpx;padding:24rpx;margin-bottom:18rpx;border:1rpx solid #eeeaf5;box-shadow:0 5rpx 20rpx rgba(42,25,77,.035)}
+.heading{font-size:29rpx;font-weight:700;color:#342d42;margin:0 0 18rpx}
+.delivery-overview-card{padding:26rpx}
+.delivery-stats{display:grid;grid-template-columns:1fr 1fr;gap:14rpx;margin:16rpx 0 22rpx}
+.delivery-stat{display:flex;flex-direction:column;gap:9rpx;padding:24rpx 20rpx;background:#f7f3ff;border-radius:16rpx}
+.delivery-stat-number{font-size:46rpx;font-weight:750;line-height:1;color:#6836d8}
+.delivery-stat-label{font-size:22rpx;color:#857893}
+.delivery-overview-card .line{margin-top:12rpx}
+.delivery-heading-row{display:flex;align-items:center;justify-content:space-between;border-bottom:1rpx solid #f1edf7;margin-bottom:16rpx;padding-bottom:14rpx}
+.delivery-heading-row .heading{margin:0}
+.delivery-count{font-size:22rpx;color:#8c7fa1}
+.delivery-section>.tip{margin-bottom:18rpx;font-size:22rpx;color:#9289a0}
+.card input{width:100%;background:#faf9fd;border:1rpx solid #e9e4f2;min-height:74rpx;padding:16rpx 20rpx;border-radius:13rpx;font-size:26rpx}
+.line{padding:18rpx 0;border-bottom:1rpx solid #f1edf7}
+.line text{font-size:25rpx;color:#4c425c}
+.area-editor,.slot-editor,.special-date{padding:22rpx 0;border-top:1rpx solid #eee9f4}
+.area-editor:first-of-type,.slot-editor:first-of-type{border-top:0}
+.mini-actions{gap:10rpx;flex-wrap:nowrap}
+.mini-actions button{flex:1;margin:0;font-size:23rpx;background:#f7f4fc;color:#7044c5;border:0;border-radius:11rpx}
+.delivery-action,.card>button.delivery-action{background:#6a38df!important;color:#fff!important;border:0;border-radius:14rpx;padding:8rpx 16rpx;font-size:25rpx}
+.time-choice{box-sizing:border-box;background:#faf8fe;border:1rpx solid #e8e0f4;border-radius:12rpx;padding:19rpx;margin:10rpx 0;color:#594775}
+.delivery-toolbar{position:sticky;top:0;z-index:5;margin:0 0 18rpx;padding:14rpx 16rpx;background:rgba(255,255,255,.98);border:1rpx solid #eae4f2;border-radius:16rpx;display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:8rpx;box-shadow:0 4rpx 16rpx rgba(42,25,77,.06)}
+.delivery-unsaved{display:flex;align-items:center;gap:7rpx;flex:1;min-width:0;font-size:21rpx;color:#8c8299}
+.delivery-status-dot{width:12rpx;height:12rpx;background:#71b29b;border-radius:50%;flex-shrink:0}
+.delivery-status-dot.is-dirty{background:#e9a94d}
+.delivery-toolbar button{margin:0;padding:0 14rpx;font-size:22rpx;min-width:0;flex-shrink:0;border-radius:10rpx}
+.delivery-toolbar button[type=primary]{background:#6a38df;border:0}
+.delivery-sync-warning{font-size:23rpx;color:#a85b28;padding:12rpx 4rpx}
+.delivery-checks{gap:10rpx 12rpx}
+.delivery-checks label{background:#faf9fd;border-radius:10rpx;padding:3rpx 8rpx;font-size:23rpx}
