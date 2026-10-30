@@ -48,5 +48,8 @@
 - `PHONE_PREFLIGHT_DATABASE_URL`（仅隔离测试库的授权连接字符串，包含 `sslmode=verify-full`）
 - `PHONE_PREFLIGHT_EXPECTED_HOST`（事先核对过的测试数据库主机）
 - `PHONE_PREFLIGHT_EXPECTED_DATABASE`（事先核对过的测试数据库名）
+- `PHONE_PREFLIGHT_EXPECTED_ROLE`（事先核对过的隔离数据库应用角色）
 
 先在 Neon 控制台独立核对分支身份，不能只凭主机名假定安全。命令：`node backend/scripts/check-phone-binding-readiness.mjs`（从项目根目录运行）。不要在 GitHub Actions 或日志中提交密码、连接字符串。即使输出 `status=inspected`，也只表示静态结构与当前连接的权限检查完成；不代表手机号授权已开通，更不能取代真实 PostgreSQL 事务测试。
+
+预检现在会在连接角色不符、手机号读写权限不足、手机号唯一约束或微信身份唯一约束缺失时返回失败，不会把权限不足误报为准备完成。检查本身仍为只读。
