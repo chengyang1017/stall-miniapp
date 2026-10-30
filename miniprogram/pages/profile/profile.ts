@@ -51,8 +51,8 @@ Page({
       const current=getCloudContext()
       if(serial!==this.loginSerial||!current||current.apiBase!==cfg.apiBase||current.storeSlug!==cfg.storeSlug)return
       this.setData({loginPanel:false,loginStatus:'微信身份已确认；商家入口需服务器另行授权',accountName:cachedCustomerNickname()||'微信用户',accountSubtitle:'微信身份已连接',loggedIn:true})
-      await this.checkMerchant()
       await this.checkFirstLoginPhoneBinding(serial,cfg.apiBase)
+      if(serial===this.loginSerial)await this.checkMerchant()
     }catch(error){if(serial===this.loginSerial)this.setData({loginStatus:this.loginErrorMessage(error)})}
     finally{if(serial===this.loginSerial)this.setData({loginBusy:false})}
   },
@@ -65,7 +65,7 @@ Page({
       // No extra consent for existing bound accounts. If the backend isn't ready,
       // do not trap customers in an onboarding dialog.
       this.setData({phoneOnboarding:status?.bound===false&&status?.verificationAvailable===true,phoneBindStatus:''})
-    }catch(_){if(serial===this.loginSerial)this.setData({phoneOnboarding:false})}
+    }catch(_){if(serial===this.loginSerial&&getSessionToken()===token)this.setData({phoneOnboarding:false})}
   },
   dismissPhoneOnboarding(){if(!this.data.phoneBindBusy)this.setData({phoneOnboarding:false,phoneBindStatus:''})},
   bindFirstLoginPhone(e:any){
@@ -92,7 +92,7 @@ Page({
         }
       },
       fail:()=>{if(serial===this.loginSerial)this.setData({phoneBindStatus:'网络异常，请稍后重试'})},
-      complete:()=>{if(serial===this.loginSerial)this.setData({phoneBindBusy:false})}
+      complete:()=>{if(serial===this.loginSerial&&getSessionToken()===token)this.setData({phoneBindBusy:false})}
     })
   },
   logout(){
@@ -157,7 +157,7 @@ Page({
     })
   },
   async onShow(){const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){const token=getSessionToken();if(token)this.loadAvatarForHeader(token,cfg.apiBase,serial);authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
-  onHide(){this.serial++;this.merchantSerial++;this.loginSerial++;this.setData({loginBusy:false})},
+  onHide(){this.serial++;this.merchantSerial++;this.loginSerial++;this.setData({loginBusy:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:''})},
   onUnload(){this.serial++;this.merchantSerial++;this.loginSerial++},
   openOrders(e:any) {
     const tab=String(e?.currentTarget?.dataset?.tab||'all'),fulfillment=String(e?.currentTarget?.dataset?.fulfillment||'')
