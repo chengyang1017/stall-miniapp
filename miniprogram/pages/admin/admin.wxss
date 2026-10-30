@@ -58,3 +58,7 @@
 /* MERCHANT_ICON_FILL_V2_END */
 
 @import "../../styles/merchant-theme.wxss";
+
+/* Align the minimum-order edit action at the far right. */
+.merchant-minimum-current{flex:1;min-width:0;font-size:30rpx;font-weight:600;color:var(--brand-text)}
+.merchant-minimum-row>.merchant-save{margin-left:auto!important;flex-shrink:0}
