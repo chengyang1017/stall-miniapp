@@ -45,7 +45,7 @@ function fakeDb({account='account-a',owner=null,currentPhone=null,failInsert=nul
 }
 test('verified phone is saved transactionally against authenticated account',async()=>{
  const db=fakeDb()
- assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:verified','+8613812345678'),'bound')
+ assert.equal(await saveVerifiedWechatPhone(db.pool,'wx:wx0123456789abcdef:verified','+8613812345678'),'bound')
  assert.deepEqual(db.statements.map(x=>x.sql.startsWith('SELECT')?'SELECT':x.sql.startsWith('INSERT')?'INSERT':x.sql),['BEGIN','SELECT','SELECT','SELECT','INSERT','COMMIT'])
  assert.equal(db.statements.find(x=>x.sql.startsWith('INSERT')).args[0],'account-a')
  assert.equal(db.released,true)
@@ -143,7 +143,7 @@ test('identity schema and phone grants are present in reviewed migrations',()=>{
  assert.match(schema,/REVOKE ALL ON customer_accounts,customer_login_identities,customer_verified_phones FROM PUBLIC/)
  for(const fragment of [
   'GRANT INSERT ON public.customer_accounts',
-  'GRANT SELECT (id) ON public.customer_accounts',
+  'GRANT SELECT (id,nickname,avatar_style) ON public.customer_accounts',
   'GRANT INSERT (account_id,provider,provider_subject,verified_at) ON public.customer_login_identities',
   'GRANT SELECT (account_id,provider,provider_subject) ON public.customer_login_identities',
   'GRANT SELECT (account_id,phone_e164,verified_at) ON public.customer_verified_phones',
@@ -157,4 +157,18 @@ test('first verified WeChat login privilege preflight is not phone-write-only',(
  const preflight=readFileSync(new URL('scripts/check-phone-binding-readiness.mjs',root),'utf8')
  for(const flag of ['account_create','account_id_read','login_account_insert','login_provider_insert','login_subject_insert','login_verified_insert','insufficient_first_wechat_login_privileges'])
   assert.ok(preflight.includes(flag),'missing first-login preflight check: '+flag)
+})
+
+test('first login requires profile read and update permissions plus correct migrations',()=>{
+ const root=new URL('../',import.meta.url)
+ const check=readFileSync(new URL('scripts/check-phone-binding-readiness.mjs',root),'utf8')
+ for(const name of ['nickname_read','avatar_style_read','nickname_write','avatar_style_write','timestamp_write','customer_profile_migrations_missing']){
+  assert.ok(check.includes(name),'missing cloud profile preflight: '+name)
+ }
+})
+test('malformed WeChat subject is rejected before opening a database connection',async()=>{
+ const pool={connect(){throw Error('unexpected database connection')}}
+ for(const bad of ['wx:verified','wx:other-app:openid','wx:wx0123456789abcdef:bad!']){
+  await assert.rejects(saveVerifiedWechatPhone(pool,bad,'+8613812345678'),/invalid_verified_phone_input/)
+ }
 })

@@ -24,7 +24,7 @@ export async function verifyWechatPhoneCode(app,code,request=fetch){
 }
 
 export async function saveVerifiedWechatPhone(pool,subject,number){
- if(typeof subject!=='string'||!subject.startsWith('wx:')||typeof number!=='string'||!/^\+861[3-9][0-9]{9}$/.test(number))throw Error('invalid_verified_phone_input')
+ if(typeof subject!=='string'||!/^wx:wx[a-f0-9]{16}:[A-Za-z0-9_-]{1,128}$/.test(subject)||typeof number!=='string'||!/^\+861[3-9][0-9]{9}$/.test(number))throw Error('invalid_verified_phone_input')
  const client=await pool.connect()
  try{
   await client.query('BEGIN')

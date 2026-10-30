@@ -11,6 +11,8 @@ on:
       - 'backend/scripts/check-phone-binding-readiness.mjs'
       - 'backend/migrations/proposals/025_customer_phone_rotation_audit.sql'
       - 'backend/migrations/proposals/wechat-verified-phone-binding.sql'
+      - 'backend/sql/024_customer_cloud_profile.sql'
+      - 'backend/sql/025_customer_avatar_style.sql'
   workflow_dispatch:
 jobs:
   verify:

@@ -26,6 +26,10 @@ try{
  WHERE table_schema='public' AND table_name=ANY($1::text[])`,
  [['customer_accounts','customer_login_identities','customer_verified_phones']])
  const present=new Set(tables.rows.map(x=>x.table_name))
+ const profileColumns=await client.query(`SELECT column_name FROM information_schema.columns
+ WHERE table_schema='public' AND table_name='customer_accounts' AND column_name=ANY($1::text[])`,
+ [['id','nickname','avatar_style','updated_at']])
+ if(profileColumns.rows.length!==4)fail('customer_profile_migrations_missing')
  const missing=['customer_accounts','customer_login_identities','customer_verified_phones'].filter(x=>!present.has(x))
  if(missing.length)fail('missing_tables:'+missing.join(','))
  const constraints=await client.query(`SELECT conrelid::regclass::text AS tbl,contype,pg_get_constraintdef(oid) AS definition
@@ -38,6 +42,11 @@ try{
  const onboardingPrivileges=await client.query(`SELECT
  has_table_privilege(current_user,'public.customer_accounts','INSERT') AS account_create,
  has_column_privilege(current_user,'public.customer_accounts','id','SELECT') AS account_id_read,
+ has_column_privilege(current_user,'public.customer_accounts','nickname','SELECT') AS nickname_read,
+ has_column_privilege(current_user,'public.customer_accounts','avatar_style','SELECT') AS avatar_style_read,
+ has_column_privilege(current_user,'public.customer_accounts','nickname','UPDATE') AS nickname_write,
+ has_column_privilege(current_user,'public.customer_accounts','avatar_style','UPDATE') AS avatar_style_write,
+ has_column_privilege(current_user,'public.customer_accounts','updated_at','UPDATE') AS timestamp_write,
  has_column_privilege(current_user,'public.customer_login_identities','account_id','SELECT') AS login_account_read,
  has_column_privilege(current_user,'public.customer_login_identities','provider','SELECT') AS login_provider_read,
  has_column_privilege(current_user,'public.customer_login_identities','provider_subject','SELECT') AS login_subject_read,
