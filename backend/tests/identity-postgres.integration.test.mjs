@@ -11,10 +11,6 @@ if(process.env.CI!=='true'||host!=='127.0.0.1'||db!=='identity_ci'||process.env.
  throw Error('ephemeral_ci_postgres_only')
 const pool=new pg.Pool({host,port:5432,database:db,user:'postgres',password:process.env.IDENTITY_CI_DB_PASSWORD,max:4})
 const limitedPassword='ci_limited_role_only_password'
-await pool.query(`CREATE ROLE stall_payment_app_limited LOGIN PASSWORD '${limitedPassword}'`)
-await pool.query(readFileSync(new URL('../sql/024_customer_cloud_profile.sql',import.meta.url),'utf8'))
-await pool.query(readFileSync(new URL('../sql/025_customer_avatar_style.sql',import.meta.url),'utf8'))
-await pool.query(readFileSync(new URL('../migrations/proposals/wechat-verified-phone-binding.sql',import.meta.url),'utf8'))
 const runtime=new pg.Pool({host,port:5432,database:db,user:'stall_payment_app_limited',password:limitedPassword,max:4})
 const subjectA='wx:wx0123456789abcdef:identity_ci_a'
 const subjectB='wx:wx0123456789abcdef:identity_ci_b'
@@ -22,10 +18,14 @@ const phone='+8613812345678'
 try{
  await pool.query(readFileSync(new URL('../sql/023_customer_identity_groundwork.sql',import.meta.url),'utf8'))
  // Create dedicated ephemeral application role after base schema is installed.
+ await pool.query(`CREATE ROLE stall_payment_app_limited LOGIN PASSWORD '${limitedPassword}'`)
+ await pool.query(readFileSync(new URL('../sql/024_customer_cloud_profile.sql',import.meta.url),'utf8'))
+ await pool.query(readFileSync(new URL('../sql/025_customer_avatar_style.sql',import.meta.url),'utf8'))
+ await pool.query(readFileSync(new URL('../migrations/proposals/wechat-verified-phone-binding.sql',import.meta.url),'utf8'))
  test('verified WeChat accounts persist across repeated login and remain distinct',async()=>{
   const a=await resolveVerifiedWechatAccount(runtime,subjectA)
-  const again=await resolveVerifiedWechatAccount(pool,subjectA)
-  const b=await resolveVerifiedWechatAccount(pool,subjectB)
+  const again=await resolveVerifiedWechatAccount(runtime,subjectA)
+  const b=await resolveVerifiedWechatAccount(runtime,subjectB)
   assert.equal(again,a)
   assert.notEqual(b,a)
  })
