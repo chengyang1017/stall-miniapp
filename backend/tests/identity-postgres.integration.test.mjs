@@ -6,6 +6,7 @@ import pg from 'pg'
 import {resolveVerifiedWechatAccount} from '../src/customerIdentity.mjs'
 import {saveVerifiedWechatPhone} from '../src/customerWechatPhone.mjs'
 import {resolveExistingVerifiedPhoneAccount} from '../src/customerPhoneAccountLookup.mjs'
+import {createCustomerAccountSession,authenticateCustomerAccountSession,revokeCustomerAccountSession} from '../src/customerAccountSessions.mjs'
 const host=process.env.IDENTITY_CI_DB_HOST
 const db=process.env.IDENTITY_CI_DB_NAME
 if(process.env.CI!=='true'||host!=='127.0.0.1'||db!=='identity_ci'||process.env.IDENTITY_CI_DB_USER!=='postgres')
@@ -23,6 +24,7 @@ try{
  await pool.query(readFileSync(new URL('../sql/024_customer_cloud_profile.sql',import.meta.url),'utf8'))
  await pool.query(readFileSync(new URL('../sql/025_customer_avatar_style.sql',import.meta.url),'utf8'))
  await pool.query(readFileSync(new URL('../migrations/proposals/wechat-verified-phone-binding.sql',import.meta.url),'utf8'))
+ await pool.query(readFileSync(new URL('../migrations/proposals/024_customer_account_sessions.sql',import.meta.url),'utf8'))
  test('verified WeChat accounts persist across repeated login and remain distinct',async()=>{
   const a=await resolveVerifiedWechatAccount(runtime,subjectA)
   const again=await resolveVerifiedWechatAccount(runtime,subjectA)
@@ -75,6 +77,15 @@ test('verified phone resolves original permanent ID without account creation',as
  assert.equal(await resolveExistingVerifiedPhoneAccount(runtime,{phone:'+8613612345678',verifiedByServer:true}),null)
  const count=await runtime.query('SELECT COUNT(*)::int AS n FROM customer_accounts')
  assert.equal(count.rows[0].n>=2,true)
+})
+test('customer account session persists, authenticates and revokes in PostgreSQL',async()=>{
+ const account=await pool.query("SELECT account_id FROM customer_login_identities WHERE provider_subject=$1",[subjectA])
+ const id=account.rows[0].account_id
+ const session=await createCustomerAccountSession(pool,{accountId:id,verifiedLogin:true})
+ const req={headers:{authorization:'Bearer '+session.token}}
+ assert.equal(await authenticateCustomerAccountSession(pool,req),id)
+ assert.equal(await revokeCustomerAccountSession(pool,req),true)
+ assert.equal(await authenticateCustomerAccountSession(pool,req),null)
 })
 test('limited role can read and update its own cloud profile with scoped SQL',async()=>{
  const owner=await runtime.query("SELECT account_id FROM customer_login_identities WHERE provider='wechat' AND provider_subject=$1",[subjectA])
