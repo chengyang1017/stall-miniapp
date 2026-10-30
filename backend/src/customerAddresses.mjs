@@ -4,12 +4,12 @@ const fail=(code,status=400)=>{throw Object.assign(Error(code),{status})}
 const reply=(res,status,value)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(value))}
 const fields=`id,receiver_name AS "receiverName",phone,area_id AS "deliveryAreaId",area_name AS area,detail,is_default AS "isDefault",latitude,longitude,location_name AS "locationName",map_address AS "mapAddress",version`
 async function read(req){let n=0,parts=[];for await(const c of req){n+=c.length;if(n>4096)fail('too_large',413);parts.push(c)}try{const v=JSON.parse(Buffer.concat(parts).toString('utf8'));if(!v||typeof v!=='object'||Array.isArray(v))throw Error();return v}catch{fail('invalid_json')}}
-export async function customerAddressRoute(req,res,url,pool){
+export async function customerAddressRoute(req,res,url,pool,verifiedCustomerSubject=null){
  const m=/^\/v1\/stores\/([a-z0-9][a-z0-9-]{1,62})\/addresses(?:\/([0-9a-f-]{36}))?$/.exec(url.pathname)
  if(!m)return false
  let db
  try{
-  const subject=await authenticate(pool,req);if(!subject)fail('login_required',401)
+  const subject=verifiedCustomerSubject===null?await authenticate(pool,req):verifiedCustomerSubject;if(!subject)fail('login_required',401)
   if(url.search||m[2]&&!uuid.test(m[2]))fail('invalid_address_query')
   const store=(await pool.query('SELECT id FROM stores WHERE slug=$1',[m[1]])).rows[0];if(!store)fail('store_not_found',404)
   if(req.method==='GET'&&!m[2]){const rows=(await pool.query(`SELECT ${fields} FROM customer_addresses WHERE store_id=$1 AND customer_subject=$2 AND deleted_at IS NULL ORDER BY is_default DESC,created_at,id LIMIT 51`,[store.id,subject])).rows;if(rows.length>50)fail('address_limit',413);reply(res,200,{addresses:rows});return true}
