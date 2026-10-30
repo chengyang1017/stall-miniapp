@@ -73,7 +73,7 @@ Page({
   const cfg=getCloudContext(),context=businessContextKey(),serial=++this.pendingSerial
   this.setData({pendingLoading:!!cfg,pendingError:''})
   try{
-   const summary=cfg?await fetchMerchantOrderSummary(cfg):{pendingCount:loadWorkflowOrders().filter(o=>String(o.fulfillmentStatus||'new')==='new'&&o.paymentStatus==='paid').length,unpaidCount:loadWorkflowOrders().filter(o=>String(o.paymentStatus||'unpaid')==='unpaid').length}
+   const summary=cfg?await fetchMerchantOrderSummary(cfg):{pendingCount:loadWorkflowOrders().filter(o=>String(o.fulfillmentStatus||'new')==='new'&&String(o.paymentStatus)==='paid').length,unpaidCount:loadWorkflowOrders().filter(o=>String(o.paymentStatus||'unpaid')==='unpaid').length}
    if(serial!==this.pendingSerial||context!==businessContextKey())return
    this.setData({pendingNewOrderCount:summary.pendingCount,unpaidOrderCount:summary.unpaidCount})
   }catch(_){if(serial===this.pendingSerial&&context===businessContextKey())this.setData({pendingError:'待处理订单读取失败，当前数量可能过期，请进入订单管理核对'})}
