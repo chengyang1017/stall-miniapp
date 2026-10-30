@@ -1,21 +1,27 @@
-page{background:#f7f6fa}
-.account-page{padding:32rpx 28rpx 72rpx}
-.account-card,.editor-card{background:#fff;border-radius:26rpx;padding:36rpx 32rpx}
-.account-card{display:flex;flex-direction:column;align-items:center}
-.avatar-circle{width:126rpx;height:126rpx;border-radius:50%;display:flex;justify-content:center;align-items:center;background:#ece5fc;color:#623bc1;font-size:50rpx;font-weight:700}
-.account-title{margin-top:20rpx;color:#302643;font-size:36rpx;font-weight:700}
-.account-hint{margin-top:8rpx;font-size:23rpx;color:#9890a6}
-.editor-card{margin-top:24rpx}.editor-title{font-size:31rpx;font-weight:700;color:#332a42;margin-bottom:32rpx}
-.field-title{font-size:27rpx;font-weight:600;color:#42374f}
-.nickname-editor{border:1rpx solid #e6e0ef;border-radius:16rpx;background:#faf9fc;padding:0 22rpx;height:90rpx;font-size:30rpx;margin-top:16rpx}
-.editor-help{color:#9991a7;font-size:22rpx;line-height:1.6;margin-top:12rpx}
-.primary-btn{margin-top:32rpx;background:#663bc5;color:white;border-radius:18rpx;font-size:29rpx}
-.profile-message{margin-top:18rpx;font-size:24rpx;color:#715d92;overflow-wrap:anywhere}
-.footnote{color:#aaa2b2;font-size:23rpx;line-height:1.6;text-align:center;margin-top:30rpx}
-.avatar-options{display:flex;gap:24rpx;margin:20rpx 0 36rpx}.avatar-choice{height:88rpx;width:88rpx;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:31rpx;font-weight:700}.avatar-violet{background:#ece5fc;color:#623bc1}.avatar-blue{background:#e2f0ff;color:#2563a6}.avatar-green{background:#e1f5e9;color:#267349}.avatar-peach{background:#ffe8e0;color:#b75a48}
-
-.avatar-choice.selected{border:4rpx solid #633bc3;box-sizing:border-box;box-shadow:0 0 0 6rpx rgba(99,59,195,.09)}
-
-.avatar-circle{overflow:hidden}.avatar-photo{width:126rpx;height:126rpx;border-radius:50%}.photo-upload-btn{background:#f1eaff;color:#623bc1;font-size:26rpx;border-radius:16rpx;margin-top:18rpx}
-
-.phone-card{margin-top:24rpx}.phone-card .editor-title{margin-bottom:18rpx}.phone-summary{display:flex;align-items:center;justify-content:space-between;gap:20rpx}.phone-value{font-size:30rpx;color:#31283c;font-weight:600}.phone-bind-button{flex-shrink:0;margin:0;background:#f0eaff;color:#633bc3;border-radius:14rpx;font-size:25rpx;padding:0 26rpx}
+page{background:#f7f5ff}
+.account-page{min-height:100vh;background:#f7f5ff;padding-bottom:80rpx}
+.profile-hero{height:365rpx;background:linear-gradient(116deg,#5731cf 0%,#7548e6 53%,#af81f2 100%);position:relative;overflow:hidden}
+.hero-orb{position:absolute;right:107rpx;top:32rpx;width:64rpx;height:64rpx;border-radius:50%;background:rgba(255,215,222,.6)}
+.hero-wave{position:absolute;width:850rpx;height:260rpx;border-radius:50% 50% 0 0;bottom:-210rpx;left:50rpx;transform:rotate(-12deg)}
+.wave-back{background:rgba(220,183,255,.21);bottom:-188rpx;left:155rpx}.wave-front{background:rgba(82,39,185,.32);left:340rpx;bottom:-200rpx}
+.hero-user{position:absolute;left:40rpx;top:55rpx;display:flex;align-items:center;gap:24rpx}
+.hero-avatar{width:130rpx;height:130rpx;position:relative;border:5rpx solid #fff;border-radius:50%;background:linear-gradient(145deg,#fbd2bc,#e68971);display:flex;align-items:center;justify-content:center;color:white;box-sizing:border-box}
+.avatar-photo{width:100%;height:100%;border-radius:50%}.avatar-placeholder{font-size:74rpx;color:white}
+.avatar-camera{position:absolute;bottom:-5rpx;right:-7rpx;width:38rpx;height:38rpx;border-radius:50%;background:#783dff;border:3rpx solid #fff;display:flex;align-items:center;justify-content:center;font-size:28rpx}
+.hero-name{font-size:38rpx;color:white;font-weight:700}.hero-subtitle{margin-top:10rpx;color:#fff;font-size:25rpx}
+.account-content{position:relative;margin:-28rpx 28rpx 0}
+.settings-card{background:#fff;border-radius:27rpx;padding:9rpx 30rpx;box-shadow:0 10rpx 28rpx rgba(88,49,159,.045);margin-bottom:22rpx}
+.settings-row{display:flex;align-items:center;gap:20rpx;min-height:113rpx;border-bottom:1rpx solid #eeeafb;padding:14rpx 4rpx;box-sizing:border-box}
+.nickname-row,.phone-row{min-height:136rpx}
+.last-row{border-bottom:0}
+.outline-icon{width:45rpx;flex-shrink:0;color:#854cff;font-size:40rpx;text-align:center;font-weight:400}
+.row-main{flex:1;min-width:0}.row-title{font-size:29rpx;font-weight:600;color:#241938}.row-hint{font-size:22rpx;color:#a198b3;margin-top:8rpx}
+.row-value{font-size:26rpx;color:#9082a7;text-align:right;max-width:250rpx;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nickname-input{width:195rpx;text-align:right;font-size:28rpx;color:#2e2342}
+.chevron{font-size:38rpx;color:#9c8eb2;margin-left:5rpx}
+.copy-mark{font-size:34rpx;color:#75618d;padding:8rpx}
+.phone-right{display:flex;align-items:center;gap:8rpx}.phone-action{margin:0;padding:0 16rpx;font-size:23rpx;height:56rpx;line-height:56rpx;color:#7542dc;background:#f0e8ff;border-radius:13rpx}.phone-action::after{border:0}
+.danger-card{margin-top:22rpx}
+.save-button{margin-top:20rpx;border-radius:40rpx;background:linear-gradient(90deg,#6540e8,#a168f4);color:white;font-size:30rpx;font-weight:600;height:89rpx;line-height:89rpx}.save-button::after{border:0}
+.inline-message{padding:15rpx 20rpx;font-size:23rpx;color:#7754a6;line-height:1.5}
+.login-note{padding:32rpx;text-align:center;color:#86769e}
