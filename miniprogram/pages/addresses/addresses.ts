@@ -13,11 +13,11 @@ import { loginWithWechat } from '../../modules/shared/runtime/auth'
 const newAddressId = () => `addr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
 Page({
-  phoneAddressSerial:0,phoneWriteSerial:0,phoneCreateKey:'',
+  phoneAddressSerial:0,phoneWriteSerial:0,phoneCreateKey:'',phoneCreateFingerprint:'',
   disposed:false,writeSerial:0,addressIdentity:'',createRequest:{fingerprint:'',key:''},
   deliverySerial:0,cloudRules:null as CloudDeliveryRules|null,deliveryContext:'',
   data: {
-    phoneAddressList:[] as Array<{id:string;receiverName:string;phone:string;area:string;detail:string;isDefault:boolean}>,phoneAddressStatus:'',phoneAddressLoading:false,phoneWriteBusy:false,phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:'',
+    phoneAddressList:[] as Array<{id:string;receiverName:string;phone:string;area:string;detail:string;isDefault:boolean;version:number;deliveryAreaId:string;latitude:number|null;longitude:number|null;locationName:string;mapAddress:string}>,phoneAddressStatus:'',phoneAddressLoading:false,phoneWriteBusy:false,phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:'',
     addressBusy:false,addressListSync:false,addressSync:'idle',addressFeedback:'',addressTiming:{validationMs:0,writeMs:0,listMs:0},
     addresses: [] as Array<SavedAddress & {deliveryIssue?:string}>,
     cloudMode:false,deliveryBusy:false,deliveryError:'',deliveryStatus:'',deliveryAreaId:'',
@@ -64,7 +64,7 @@ Page({
     if(!item||this.data.phoneWriteBusy)return
     this.setData({phoneEditId:item.id,phoneEditVersion:Number(item.version)||0,phoneName:item.receiverName||'',phoneNumber:item.phone||'',phoneAreaId:item.deliveryAreaId||'',phoneDetail:item.detail||'',phoneAddressStatus:'编辑手机号账号地址（测试环境）'})
   },
-  phoneNew(){if(this.data.phoneWriteBusy)return;this.phoneCreateKey='';this.setData({phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:'',phoneAddressStatus:'新增手机号账号地址（测试环境）'})},
+  phoneNew(){if(this.data.phoneWriteBusy)return;this.phoneCreateKey='';this.phoneCreateFingerprint='';this.setData({phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:'',phoneAddressStatus:'新增手机号账号地址（测试环境）'})},
   phoneField(e:any){const field=String(e.currentTarget.dataset.field);if(['phoneName','phoneNumber','phoneAreaId','phoneDetail'].includes(field))this.setData({[field]:String(e.detail.value||'')})},
   phoneWrite(method:'POST'|'PUT'|'DELETE',id:string,body:Record<string,unknown>):Promise<boolean>{
     const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
@@ -95,9 +95,20 @@ Page({
     const name=this.data.phoneName.trim(),number=this.data.phoneNumber.trim(),area=this.data.phoneAreaId.trim(),detail=this.data.phoneDetail.trim()
     if(!name||name.length>100||!/^1[3-9]\d{9}$/.test(number)||!area||area.length>60||!detail||detail.length>300){this.setData({phoneAddressStatus:'请填写正确的姓名、11位手机号、配送区域 ID 和详细地址'});return}
     const existing=this.data.phoneEditId
-    if(!existing&&!this.phoneCreateKey)this.phoneCreateKey='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,(c)=>{const r=Math.floor(Math.random()*16);return(c==='x'?r:(r&3|8)).toString(16)})
-    const ok=await this.phoneWrite(existing?'PUT':'POST',existing,{receiverName:name,phone:number,deliveryAreaId:area,detail,latitude:null,longitude:null,locationName:'',mapAddress:'',...(existing?{expectedVersion:this.data.phoneEditVersion}:{clientKey:this.phoneCreateKey})})
-    if(ok){this.phoneCreateKey='';this.setData({phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:''})}
+    // A full PUT must preserve coordinates previously chosen on the map.
+    const original=existing?this.data.phoneAddressList.find(a=>a.id===existing):undefined
+    if(existing&&!original){this.setData({phoneAddressStatus:'地址列表已变化，请刷新后重试'});return}
+    const fingerprint=JSON.stringify([name,number,area,detail])
+    if(!existing&&(!this.phoneCreateKey||this.phoneCreateFingerprint!==fingerprint)){
+      // Keep the same idempotency key for retries of identical content.
+      this.phoneCreateKey=supportKey()
+      this.phoneCreateFingerprint=fingerprint
+    }
+    const ok=await this.phoneWrite(existing?'PUT':'POST',existing,{receiverName:name,phone:number,deliveryAreaId:area,detail,
+      latitude:original?.latitude??null,longitude:original?.longitude??null,
+      locationName:original?.locationName??'',mapAddress:original?.mapAddress??'',
+      ...(existing?{expectedVersion:this.data.phoneEditVersion}:{clientKey:this.phoneCreateKey})})
+    if(ok){this.phoneCreateKey='';this.phoneCreateFingerprint='';this.setData({phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:''})}
   },
   async phoneRemove(e:any){
     const id=String(e.currentTarget.dataset.id||''),a=(this.data.phoneAddressList as any[]).find(x=>x.id===id)

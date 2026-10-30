@@ -31,3 +31,14 @@ test('phone login session is stored separately and can be independently verified
  assert.match(ts,/\/v1\/customer\/auth\/session/)
  assert.match(wxml,/bindtap="logoutPhoneSession"/)
 })
+
+test('phone address editing preserves existing map coordinates and stable create retry key',()=>{
+ const addr=readFileSync(new URL('../addresses/addresses.ts',root),'utf8')
+ assert.match(addr,/latitude:original\?\.latitude\?\?null/)
+ assert.match(addr,/longitude:original\?\.longitude\?\?null/)
+ assert.match(addr,/locationName:original\?\.locationName\?\?''/)
+ assert.match(addr,/mapAddress:original\?\.mapAddress\?\?''/)
+ assert.match(addr,/this\.phoneCreateFingerprint!==fingerprint/)
+ assert.match(addr,/this\.phoneCreateKey=supportKey\(\)/)
+ assert.doesNotMatch(addr,/detail,latitude:null,longitude:null,locationName:'',mapAddress:''/)
+})
