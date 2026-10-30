@@ -65,7 +65,7 @@ Page({
         this.confirmed=result.items
         this.saveQueue.shift()
         if(change.method==='POST'){
-          const created=result.items.find(c=>!this.confirmedBeforeIds.includes(c.id))
+          const created=(result.items as Category[]).find((c:Category)=>!this.confirmedBeforeIds.includes(c.id))
           if(created){for(const queued of this.saveQueue){if(queued.id===change.temporaryId)queued.id=created.id;if(Array.isArray(queued.body.ids))queued.body.ids=queued.body.ids.map((v:string)=>v===change.temporaryId?created.id:v)}}
         }
 
