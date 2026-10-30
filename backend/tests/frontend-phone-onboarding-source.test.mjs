@@ -23,3 +23,11 @@ test('onboarding does not survive logout or navigation',()=>{
  assert.match(ts,/phoneOnboarding:false,phoneBindBusy:false,loginBusy:false/)
  assert.match(ts,/onHide\(\).*phoneOnboarding:false/)
 })
+
+test('phone login session is stored separately and can be independently verified and revoked',()=>{
+ assert.match(ts,/stall_customer_phone_session_v1/)
+ assert.match(ts,/refreshPhoneSession\(\)/)
+ assert.match(ts,/logoutPhoneSession\(\)/)
+ assert.match(ts,/\/v1\/customer\/auth\/session/)
+ assert.match(wxml,/bindtap="logoutPhoneSession"/)
+})

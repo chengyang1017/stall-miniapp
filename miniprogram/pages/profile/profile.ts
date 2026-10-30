@@ -33,7 +33,7 @@ Page({
         if(res.statusCode===200&&typeof res.data?.token==='string'&&/^[A-Za-z0-9_-]{40,100}$/.test(res.data.token)){
           // Keep distinct from stall_server_session_v1 used for orders and merchants.
           wx.setStorageSync('stall_customer_phone_session_v1',{token:res.data.token,apiBase:cfg.apiBase})
-          this.setData({customerPhoneSessionActive:true,loginPanel:false,customerPhoneLoginStatus:'手机号已验证，独立顾客会话已建立。订单与商家功能仍需微信登录。'})
+          this.setData({customerPhoneSessionActive:true,loginPanel:false,customerPhoneLoginStatus:'手机号已验证，独立顾客会话已建立。订单与商家功能仍需微信登录。'});this.refreshPhoneSession()
         }else{
           const error=String(res.data?.error||'')
           this.setData({customerPhoneLoginStatus:error==='phone_not_linked'?'该手机号尚未绑定账号，请先通过微信登录并绑定':error==='not_enabled'?'测试环境尚未开放手机号授权登录':error==='phone_verification_failed'?'微信未能验证手机号，请重试':'登录失败，请稍后重试'})
@@ -41,6 +41,38 @@ Page({
       },fail:()=>{if(serial===this.loginSerial)this.setData({customerPhoneLoginStatus:'服务器连接失败，请重试'})},
       complete:()=>{if(serial===this.loginSerial)this.setData({customerPhoneLoginBusy:false})}
     })
+  },
+  refreshPhoneSession(){
+    const cfg=getCloudContext()
+    const saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+    if(!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'||!/^[A-Za-z0-9_-]{40,100}$/.test(saved.token)){
+      this.setData({customerPhoneSessionActive:false})
+      return
+    }
+    const serial=this.loginSerial,token=saved.token
+    wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/auth/session',method:'GET',timeout:15000,
+      header:{Authorization:'Bearer '+token},
+      success:(r:any)=>{
+        if(serial!==this.loginSerial)return
+        const now=wx.getStorageSync('stall_customer_phone_session_v1') as any
+        if(now?.token!==token||now?.apiBase!==cfg.apiBase)return
+        if(r.statusCode===200&&r.data?.accountId){
+          this.setData({customerPhoneSessionActive:true,customerPhoneLoginStatus:'手机号已验证，账号：'+String(r.data.nickname||'顾客')})
+        }else{
+          wx.removeStorageSync('stall_customer_phone_session_v1')
+          this.setData({customerPhoneSessionActive:false})
+        }
+      },fail:()=>{if(serial===this.loginSerial)this.setData({customerPhoneLoginStatus:'独立顾客会话暂无法验证，请检查网络'})}
+    })
+  },
+  logoutPhoneSession(){
+    const cfg=getCloudContext()
+    const saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+    wx.removeStorageSync('stall_customer_phone_session_v1')
+    this.setData({customerPhoneSessionActive:false,customerPhoneLoginStatus:'已清除本机手机号登录状态'})
+    if(!cfg||saved?.apiBase!==cfg.apiBase||typeof saved?.token!=='string')return
+    wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/auth/session',method:'DELETE',timeout:15000,
+      header:{Authorization:'Bearer '+saved.token}})
   },
   requestSmsCode(){
     if(!/^1[3-9]\d{9}$/.test(this.data.phoneNumber)){
@@ -178,7 +210,7 @@ Page({
       }
     })
   },
-  async onShow(){this.refreshLibraryCounts();const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){const token=getSessionToken();if(token)this.loadAvatarForHeader(token,cfg.apiBase,serial);authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
+  async onShow(){this.refreshPhoneSession();this.refreshLibraryCounts();const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){const token=getSessionToken();if(token)this.loadAvatarForHeader(token,cfg.apiBase,serial);authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
   onHide(){this.serial++;this.merchantSerial++;this.loginSerial++;this.setData({loginBusy:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:''})},
   onUnload(){this.serial++;this.merchantSerial++;this.loginSerial++},
   openOrders(e:any) {

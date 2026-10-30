@@ -84,6 +84,7 @@
 <text>ⓘ</text>关于我们</view>
 </view>
 </view>
+<view wx:if="{{customerPhoneSessionActive}}" class="surface account-controls"><view class="service-row"><text class="service-icon">✓</text>手机号顾客身份已连接<text class="value">独立会话</text></view><view class="service-row" bindtap="logoutPhoneSession"><text class="service-icon">⇥</text>退出手机号顾客会话<text class="value">›</text></view></view>
 <view class="surface account-controls">
 <navigator wx:if="{{loggedIn}}" class="service-row" url="/pages/customer-account/customer-account"><text class="service-icon">♙</text>个人资料<text class="value">›</text></navigator>\n<view wx:if="{{loggedIn}}" class="service-row" bindtap="logout"><text class="service-icon">⇥</text>退出登录<text class="value">›</text></view>
 <navigator class="service-row" url="/pages/customer-settings/customer-settings">
