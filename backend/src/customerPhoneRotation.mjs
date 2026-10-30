@@ -19,6 +19,14 @@ export async function rotateVerifiedPhone(pool,{accountId,expectedOldPhone,newPh
   const bound=await client.query('SELECT phone_e164 FROM customer_verified_phones WHERE account_id=$1 FOR UPDATE',[accountId])
   if(bound.rows.length!==1||bound.rows[0].phone_e164!==oldNumber){await client.query('ROLLBACK');return 'old_phone_mismatch'}
   if(oldNumber===nextNumber){await client.query('COMMIT');return 'unchanged'}
+  // Legacy sessions are keyed by WeChat subject rather than customer account ID.
+  // Until customer/merchant session scopes are separated, never perform a
+  // rotation while legacy sessions are active; mass revocation could log out
+  // merchant operators or leave ambiguous permissions behind.
+  const legacy=await client.query(`SELECT 1 FROM auth_sessions s
+    JOIN customer_login_identities i ON i.provider='wechat' AND i.provider_subject=s.external_subject
+    WHERE i.account_id=$1 AND s.revoked_at IS NULL AND s.expires_at>now() LIMIT 1`,[accountId])
+  if(legacy.rows.length){await client.query('ROLLBACK');return 'legacy_sessions_require_migration'}
   const other=await client.query('SELECT account_id FROM customer_verified_phones WHERE phone_e164=$1',[nextNumber])
   if(other.rows.some(row=>row.account_id!==accountId)){await client.query('ROLLBACK');return 'phone_already_bound'}
   const changed=await client.query('UPDATE customer_verified_phones SET phone_e164=$2,verified_at=now() WHERE account_id=$1 AND phone_e164=$3',[accountId,nextNumber,oldNumber])

@@ -4,12 +4,13 @@ import {rotateVerifiedPhone} from '../src/customerPhoneRotation.mjs'
 const accountId='7f08a781-f880-41e6-a088-f6a849c1648a'
 const expectedOldPhone='+8613812345678',newPhone='+8613912345678'
 const input={accountId,expectedOldPhone,newPhone,accountStepUpVerified:true,newPhoneVerified:true}
-function mock({account=true,bound=expectedOldPhone,owner=null,updateError=null,updatedRows=1,auditError=null,sessionError=null}={}){
+function mock({account=true,bound=expectedOldPhone,owner=null,updateError=null,updatedRows=1,auditError=null,sessionError=null,legacySession=false}={}){
  const calls=[]
  const client={async query(sql,params=[]){
   calls.push({sql,params})
   if(sql.startsWith('SELECT id'))return {rows:account?[{id:accountId}]:[]}
   if(sql.startsWith('SELECT phone_e164'))return {rows:bound?[{phone_e164:bound}]:[]}
+  if(sql.includes('FROM auth_sessions s'))return {rows:legacySession?[{exists:1}]:[]}
   if(sql.startsWith('SELECT account_id'))return {rows:owner?[{account_id:owner}]:[]}
   if(sql.startsWith('INSERT INTO customer_phone_rotation_audit')&&auditError)throw Error('audit_write_failed')
   if(sql.startsWith('UPDATE customer_account_sessions')&&sessionError)throw Error('session_revoke_failed')
@@ -92,4 +93,16 @@ test('no phone change means no audit record or session revocation',async()=>{
  assert.equal(await rotateVerifiedPhone(f.pool,{...input,newPhone:expectedOldPhone}),'unchanged')
  assert.equal(f.calls.some(x=>x.sql.startsWith('INSERT INTO customer_phone_rotation_audit')),false)
  assert.equal(f.calls.some(x=>x.sql.startsWith('UPDATE customer_account_sessions')),false)
+})
+
+test('active legacy WeChat sessions fail closed before any phone update',async()=>{
+ const f=mock({legacySession:true})
+ assert.equal(await rotateVerifiedPhone(f.pool,input),'legacy_sessions_require_migration')
+ assert.equal(f.calls.some(x=>x.sql.startsWith('UPDATE')),false)
+ assert.equal(f.calls.some(x=>x.sql.startsWith('INSERT')),false)
+ assert.equal(f.calls.at(-2).sql,'ROLLBACK')
+})
+test('same-number no-op does not require legacy session migration',async()=>{
+ const f=mock({legacySession:true})
+ assert.equal(await rotateVerifiedPhone(f.pool,{...input,newPhone:expectedOldPhone}),'unchanged')
 })
