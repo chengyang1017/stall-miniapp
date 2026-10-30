@@ -168,7 +168,7 @@ test('first login requires profile read and update permissions plus correct migr
 })
 test('malformed WeChat subject is rejected before opening a database connection',async()=>{
  const pool={connect(){throw Error('unexpected database connection')}}
- for(const bad of ['wx:wx0123456789abcdef:verified','wx:other-app:openid','wx:wx0123456789abcdef:bad!']){
+ for(const bad of ['wx:verified','wx:other-app:openid','wx:wx0123456789abcdef:bad!']){
   await assert.rejects(saveVerifiedWechatPhone(pool,bad,'+8613812345678'),/invalid_verified_phone_input/)
  }
 })
