@@ -7,7 +7,7 @@ import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/
 import { CAN_OPEN_MERCHANT,openMerchantWorkspace } from '../../modules/integration/singleAppHost'
 Page({
   data:{accountName:'未登录',avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
-    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
+    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:'',loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
   loginSerial:0,
   serial:0,
   merchantSerial:0,merchantContext:'',
@@ -52,8 +52,48 @@ Page({
       if(serial!==this.loginSerial||!current||current.apiBase!==cfg.apiBase||current.storeSlug!==cfg.storeSlug)return
       this.setData({loginPanel:false,loginStatus:'微信身份已确认；商家入口需服务器另行授权',accountName:cachedCustomerNickname()||'微信用户',accountSubtitle:'微信身份已连接',loggedIn:true})
       await this.checkMerchant()
+      await this.checkFirstLoginPhoneBinding(serial,cfg.apiBase)
     }catch(error){if(serial===this.loginSerial)this.setData({loginStatus:this.loginErrorMessage(error)})}
     finally{if(serial===this.loginSerial)this.setData({loginBusy:false})}
+  },
+  async checkFirstLoginPhoneBinding(serial:number,apiBase:string){
+    const token=getSessionToken()
+    if(!token||serial!==this.loginSerial)return
+    try{
+      const status=await authorizedGet(apiBase,'/v1/customer/phone')
+      if(serial!==this.loginSerial||getSessionToken()!==token)return
+      // No extra consent for existing bound accounts. If the backend isn't ready,
+      // do not trap customers in an onboarding dialog.
+      this.setData({phoneOnboarding:status?.bound===false&&status?.verificationAvailable===true,phoneBindStatus:''})
+    }catch(_){if(serial===this.loginSerial)this.setData({phoneOnboarding:false})}
+  },
+  dismissPhoneOnboarding(){if(!this.data.phoneBindBusy)this.setData({phoneOnboarding:false,phoneBindStatus:''})},
+  bindFirstLoginPhone(e:any){
+    const code=String(e?.detail?.code||'')
+    if(!code){this.setData({phoneBindStatus:'尚未授权手机号。可稍后在个人资料中绑定。'});return}
+    const cfg=getCloudContext(),token=getSessionToken()
+    if(!cfg||!token||this.data.phoneBindBusy)return
+    const serial=this.loginSerial
+    this.setData({phoneBindBusy:true,phoneBindStatus:'正在通过微信验证手机号…'})
+    wx.request({
+      url:cfg.apiBase.replace(/\\/$/,'')+'/v1/customer/phone/wechat-bind',
+      method:'POST',timeout:20000,
+      header:{Authorization:'Bearer '+token,'content-type':'application/json'},
+      data:{code},
+      success:(res:any)=>{
+        if(serial!==this.loginSerial||getSessionToken()!==token)return
+        if(res.statusCode===200&&res.data?.bound===true){
+          this.setData({phoneOnboarding:false,phoneBindStatus:''})
+          wx.showToast({title:'手机号绑定成功',icon:'success'})
+        }else{
+          const err=String(res.data?.error||'')
+          const message=err==='phone_already_bound'?'该号码已关联另一账号，请联系商家处理，不能自动合并':err==='not_enabled'?'手机号绑定暂未开通':err==='wechat_phone_verification_failed'?'微信未能验证该号码，仅支持中国大陆 +86 手机号':'绑定未成功，可以稍后重试'
+          this.setData({phoneBindStatus:message})
+        }
+      },
+      fail:()=>{if(serial===this.loginSerial)this.setData({phoneBindStatus:'网络异常，请稍后重试'})},
+      complete:()=>{if(serial===this.loginSerial)this.setData({phoneBindBusy:false})}
+    })
   },
   logout(){
     if(this.data.logoutBusy)return
@@ -61,7 +101,7 @@ Page({
       if(!r.confirm)return
       const cfg=getCloudContext()
       ++this.loginSerial;++this.serial;++this.merchantSerial
-      this.setData({logoutBusy:true,loggedIn:false,loginPanel:false,loginBusy:false,merchantAuthorized:false,accountName:'未登录',accountSubtitle:'登录后管理订单与配送',supportUnread:null})
+      this.setData({logoutBusy:true,loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,loginBusy:false,merchantAuthorized:false,accountName:'未登录',accountSubtitle:'登录后管理订单与配送',supportUnread:null})
       try{if(cfg)await logoutCurrentSession(cfg.apiBase)}
       finally{
         this.setData({logoutBusy:false})
