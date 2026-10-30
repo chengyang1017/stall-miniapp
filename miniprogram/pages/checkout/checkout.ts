@@ -172,6 +172,7 @@ Page({
   onHide(){this.saveDraft();this.cloudSerial++;this.setData({demoConfirmBusy:false});if(cloudCartConfig())this.setData({selectedAddress:null,hasAddress:false,cloudRules:null,cloudBusy:false})},
   onUnload() { this.cloudSerial++;this.setData({demoConfirmBusy:false});this.saveDraft() },
   openAddresses() { wx.navigateTo({ url: '/pages/addresses/addresses' }) },
+  tapDeliverySlot(e:any){const index=Number(e.currentTarget.dataset.index);const slot=this.data.slots[index];if(!slot)return;if(this.data.cloudMode){this.recheckCloudSelection(this.data.deliveryDate,slot.id);return}this.setData({slotIndex:index,selectedSlotId:slot.id,selectedSlotText:`${slot.label} ${slot.start}–${slot.end}`})},
   chooseSlot(e: any) {
     const index = Number(e.detail.value)
     if(this.data.cloudMode){this.recheckCloudSelection(this.data.deliveryDate,this.data.slots[index]?.id||'');return}
