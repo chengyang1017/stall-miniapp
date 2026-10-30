@@ -10,3 +10,6 @@ CREATE TABLE IF NOT EXISTS customer_sms_challenges (
 REVOKE ALL ON customer_sms_challenges FROM PUBLIC;
 -- Provisioning must atomically enforce phone/IP quotas before writing a new hash.
 -- Never use this table without the external provider and server-side quotas.
+
+-- Grant only the isolated payment application role; no PUBLIC access.
+GRANT SELECT, INSERT, UPDATE ON customer_sms_challenges TO stall_payment_app_limited;

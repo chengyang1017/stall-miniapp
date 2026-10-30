@@ -10,3 +10,6 @@ CREATE INDEX IF NOT EXISTS customer_sms_issue_phone_time ON customer_sms_issue_a
 CREATE INDEX IF NOT EXISTS customer_sms_issue_ip_time ON customer_sms_issue_attempts(ip_hash,created_at DESC);
 REVOKE ALL ON customer_sms_issue_attempts FROM PUBLIC;
 -- Scheduled retention cleanup required before production.
+
+GRANT SELECT, INSERT ON customer_sms_issue_attempts TO stall_payment_app_limited;
+GRANT USAGE, SELECT ON SEQUENCE customer_sms_issue_attempts_id_seq TO stall_payment_app_limited;

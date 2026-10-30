@@ -4,6 +4,8 @@ import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import pg from 'pg'
 import {resolveVerifiedWechatAccount} from '../src/customerIdentity.mjs'
+import {issueCustomerSmsChallenge} from '../src/customerSmsIssue.mjs'
+import {consumeCustomerSmsChallenge} from '../src/customerSmsChallenge.mjs'
 import {saveVerifiedWechatPhone} from '../src/customerWechatPhone.mjs'
 import {resolveExistingVerifiedPhoneAccount} from '../src/customerPhoneAccountLookup.mjs'
 import {createCustomerAccountSession,authenticateCustomerAccountSession,revokeCustomerAccountSession} from '../src/customerAccountSessions.mjs'
@@ -25,6 +27,8 @@ try{
  await pool.query(readFileSync(new URL('../sql/025_customer_avatar_style.sql',import.meta.url),'utf8'))
  await pool.query(readFileSync(new URL('../migrations/proposals/wechat-verified-phone-binding.sql',import.meta.url),'utf8'))
  await pool.query(readFileSync(new URL('../migrations/proposals/024_customer_account_sessions.sql',import.meta.url),'utf8'))
+ await pool.query(readFileSync(new URL('../migrations/proposals/026_customer_sms_challenges.sql',import.meta.url),'utf8'))
+ await pool.query(readFileSync(new URL('../migrations/proposals/027_customer_sms_issue_attempts.sql',import.meta.url),'utf8'))
  test('verified WeChat accounts persist across repeated login and remain distinct',async()=>{
   const a=await resolveVerifiedWechatAccount(runtime,subjectA)
   const again=await resolveVerifiedWechatAccount(runtime,subjectA)
@@ -114,3 +118,28 @@ test('limited role has required registration rights and lacks delete rights',asy
  assert.equal(p.rows[0].can_bind,true)
 })
 test.after(async()=>{await runtime.end();await pool.end()})
+
+test('isolated PostgreSQL SMS issuance, one-time consumption and 60-second rate limit',async()=>{
+ const phone='+8613512345678',secret='ci-only-sms-otp-secret-with-32-plus-bytes'
+ let sent=null
+ const result=await issueCustomerSmsChallenge(runtime,{phone,remoteIp:'127.0.0.1',secret,send:async payload=>{sent=payload}})
+ assert.deepEqual(result,{accepted:true})
+ assert.match(sent.code,/^[0-9]{6}$/)
+ const challenge=await runtime.query('SELECT code_hash,attempts,consumed_at FROM customer_sms_challenges WHERE phone_e164=$1',[phone])
+ assert.equal(challenge.rows.length,1)
+ assert.notEqual(challenge.rows[0].code_hash,sent.code)
+ const repeat=await issueCustomerSmsChallenge(runtime,{phone,remoteIp:'127.0.0.1',secret,send:async()=>{throw Error('should not send')}})
+ assert.deepEqual(repeat,{accepted:false,reason:'rate_limited'})
+ assert.equal(await consumeCustomerSmsChallenge(runtime,{phone,code:'invalid',secret}).catch(e=>e.message),'invalid_otp')
+ assert.equal(await consumeCustomerSmsChallenge(runtime,{phone,code:sent.code,secret}),true)
+ assert.equal(await consumeCustomerSmsChallenge(runtime,{phone,code:sent.code,secret}),false)
+ const state=await runtime.query('SELECT attempts,consumed_at FROM customer_sms_challenges WHERE phone_e164=$1',[phone])
+ assert.equal(state.rows[0].attempts,1)
+ assert.ok(state.rows[0].consumed_at)
+})
+test('isolated SMS database tables deny PUBLIC permissions',async()=>{
+ const x=await pool.query(`SELECT has_table_privilege('PUBLIC','customer_sms_challenges','SELECT') AS challenge_public,
+ has_table_privilege('PUBLIC','customer_sms_issue_attempts','SELECT') AS attempts_public`)
+ assert.equal(x.rows[0].challenge_public,false)
+ assert.equal(x.rows[0].attempts_public,false)
+})
