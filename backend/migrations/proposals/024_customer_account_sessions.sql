@@ -14,5 +14,8 @@ CREATE TABLE IF NOT EXISTS public.customer_account_sessions (
 CREATE INDEX IF NOT EXISTS customer_account_sessions_account_idx ON public.customer_account_sessions(account_id);
 CREATE INDEX IF NOT EXISTS customer_account_sessions_expiry_idx ON public.customer_account_sessions(expires_at) WHERE revoked_at IS NULL;
 REVOKE ALL ON public.customer_account_sessions FROM PUBLIC;
--- DBA must review narrowly scoped SELECT/INSERT/UPDATE grants for actual staging runtime role.
+-- Proposed minimum grants for session lifecycle; review before any shared deployment.
+GRANT INSERT (account_id,token_hash,expires_at) ON public.customer_account_sessions TO stall_payment_app_limited;
+GRANT SELECT (account_id,token_hash,expires_at,revoked_at) ON public.customer_account_sessions TO stall_payment_app_limited;
+GRANT UPDATE (revoked_at) ON public.customer_account_sessions TO stall_payment_app_limited;
 COMMIT;

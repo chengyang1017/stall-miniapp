@@ -81,11 +81,11 @@ test('verified phone resolves original permanent ID without account creation',as
 test('customer account session persists, authenticates and revokes in PostgreSQL',async()=>{
  const account=await pool.query("SELECT account_id FROM customer_login_identities WHERE provider_subject=$1",[subjectA])
  const id=account.rows[0].account_id
- const session=await createCustomerAccountSession(pool,{accountId:id,verifiedLogin:true})
+ const session=await createCustomerAccountSession(runtime,{accountId:id,verifiedLogin:true})
  const req={headers:{authorization:'Bearer '+session.token}}
- assert.equal(await authenticateCustomerAccountSession(pool,req),id)
- assert.equal(await revokeCustomerAccountSession(pool,req),true)
- assert.equal(await authenticateCustomerAccountSession(pool,req),null)
+ assert.equal(await authenticateCustomerAccountSession(runtime,req),id)
+ assert.equal(await revokeCustomerAccountSession(runtime,req),true)
+ assert.equal(await authenticateCustomerAccountSession(runtime,req),null)
 })
 test('limited role can read and update its own cloud profile with scoped SQL',async()=>{
  const owner=await runtime.query("SELECT account_id FROM customer_login_identities WHERE provider='wechat' AND provider_subject=$1",[subjectA])
@@ -102,7 +102,7 @@ test('limited role can read and update its own cloud profile with scoped SQL',as
 })
 test('limited role cannot access merchant membership or grant itself privileges',async()=>{
  await assert.rejects(runtime.query('SELECT * FROM merchant_members'),e=>e.code==='42P01'||e.code==='42501')
- await assert.rejects(runtime.query('SELECT token_hash FROM customer_account_sessions'),e=>e.code==='42P01'||e.code==='42501')
+ await assert.rejects(runtime.query('DELETE FROM customer_account_sessions'),e=>e.code==='42501')
 })
 test('limited role has required registration rights and lacks delete rights',async()=>{
  const p=await runtime.query(`SELECT
