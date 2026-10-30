@@ -7,7 +7,7 @@ import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/c
 type Row = Category & { y: number; iconPath:string; iconActivePath:string; iconLabel:string; resolvedIconKey:string }
 
 Page({
-  revision:'',context:'',serial:0,operationSerial:0,disposed:false,saving:false,saveQueue:[] as Array<{method:'POST'|'PATCH'|'DELETE';id:string;body:Record<string,any>;temporaryId:string}>,confirmed:[] as Category[],moveAt:0,lastMove:null as any,rowIndexes:{} as Record<string,number>,
+  revision:'',context:'',serial:0,operationSerial:0,disposed:false,saving:false,confirmedBeforeIds:[] as string[],saveQueue:[] as Array<{method:'POST'|'PATCH'|'DELETE';id:string;body:Record<string,any>;temporaryId:string}>,confirmed:[] as Category[],moveAt:0,lastMove:null as any,rowIndexes:{} as Record<string,number>,
   data: {
     cloudMode:false,cloudBusy:false,cloudRefreshing:false,cloudError:'',syncState:'confirmed',syncMessage:'',
     categories: [] as Category[], rows: [] as Row[],
@@ -38,8 +38,8 @@ Page({
     return items.map(c=>c.id===id?{...c,name:body.name,...body.iconKey!==undefined?{iconKey:body.iconKey}:{}}:c)
   },
   cloudChange(method:'POST'|'PATCH'|'DELETE',id:string,body:Record<string,any>){
-    if(this.data.cloudError||!this.revision||this.context!==supportIdentity())return
-    if(id.startsWith('pending-')){wx.showToast({title:'新分类保存中，请稍后编辑',icon:'none'});return}
+    if(this.data.cloudError||!this.revision||this.context!==supportIdentity()){wx.showToast({title:'云端同步异常，正在恢复',icon:'none'});if(!this.data.cloudRefreshing)void this.reloadCategories();return}
+    if(id.startsWith('pending-')&&method!=='PATCH'){wx.showToast({title:'该分类还在保存',icon:'none'});return}
     if(Object.prototype.hasOwnProperty.call(body,'iconKey')&&!this.data.categoryIconsSupported){wx.showToast({title:'当前服务未启用图标保存',icon:'none'});return}
     const change={method,id,body:{...body},temporaryId:'pending-'+newId()}
     this.saveQueue.push(change)
@@ -58,13 +58,19 @@ Page({
     try{
       while(this.saveQueue.length){
         const change=this.saveQueue[0]
+        this.confirmedBeforeIds=this.confirmed.map(c=>c.id)
         const result=await writeCloudCategories(change.method,change.id,{...change.body,expectedRevision:this.revision})
         if(this.disposed||operation!==this.operationSerial||context!==supportIdentity())return
         this.revision=result.revision
         this.confirmed=result.items
         this.saveQueue.shift()
-        if(this.data.draggingId){this.lastMove=null;this.setData({draggingId:''})}
-        this.renderCategories(this.saveQueue.reduce((items,next)=>this.applyCloudChange(items,next),result.items))
+        if(change.method==='POST'){
+          const created=result.items.find(c=>!this.confirmedBeforeIds.includes(c.id))
+          if(created){for(const queued of this.saveQueue){if(queued.id===change.temporaryId)queued.id=created.id;if(Array.isArray(queued.body.ids))queued.body.ids=queued.body.ids.map((v:string)=>v===change.temporaryId?created.id:v)}}
+        }
+
+        if(!this.data.draggingId)this.renderCategories(this.saveQueue.reduce((items,next)=>this.applyCloudChange(items,next),result.items))
+        else this.setData({categories:this.saveQueue.reduce((items,next)=>this.applyCloudChange(items,next),result.items)})
         this.setData({categoryIconsSupported:result.categoryIconsSupported===true})
       }
       if(!this.disposed&&context===supportIdentity())this.setData({syncState:'confirmed',syncMessage:'已保存'})
@@ -72,11 +78,15 @@ Page({
       if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity()){
         this.saveQueue=[]
         this.renderCategories(this.confirmed)
-        this.setData({syncState:'failed',syncMessage:'保存结果未确认，待办修改已撤回',cloudError:String(e).includes('category_icons_not_available')?'当前服务未启用分类图标保存':String(e).includes('409')?'分类版本冲突、名称重复或仍有商品，请重新读取后核对':'保存失败或结果未知，请重新读取核对后再操作'})
+        this.setData({syncState:'failed',syncMessage:'保存未确认，正在自动重新读取',cloudError:'云端同步异常，正在自动恢复'})
       }
     }finally{
       this.saving=false
-      if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity())this.setData({cloudBusy:false})
+      if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity()){
+        const recover=this.data.syncState==='failed'
+        this.setData({cloudBusy:false})
+        if(recover)void this.reloadCategories()
+      }
     }
   },
   async reloadCategories() {
@@ -138,7 +148,6 @@ Page({
     if (this.data.draggingId) return
     const id = String(e.currentTarget.dataset.id || '')
     const cat = (getCloudContext()?this.data.categories:loadStore().categories).find(c => c.id === id)
-    if(id.startsWith('pending-'))return
     if (cat) {this.setData({ editingId: id, editingName: cat.name,editingIconKey:validCategoryIconKey(cat.iconKey)?cat.iconKey:'' });this.refreshIconPreviews()}
   },
   onEditingName(e: any) { this.setData({ editingName: e.detail.value });this.refreshIconPreviews() },
@@ -169,13 +178,12 @@ Page({
   selectIcon(e:any){if(!this.data.pickerTarget)return;const key=String(e.currentTarget.dataset.key||'');if(key&&!validCategoryIconKey(key))return;this.setData(this.data.pickerTarget==='new'?{newIconKey:key}:{editingIconKey:key});this.refreshIconPreviews()},
   // Handle-only touch sorting. No movable-view or input remounting.
   handleStart(e: any) {
-    // Dragging is a local UI gesture; do not permanently disable it after a save error.
-    if(this.data.cloudError){wx.showToast({title:'请先重新读取分类后排序',icon:'none'});return}
+    if(this.data.cloudError){if(!this.data.cloudRefreshing)void this.reloadCategories();return}
     const id = String(e.currentTarget.dataset.id || '')
     const idx = this.data.categories.findIndex(c => c.id === id)
     const touch = e.touches && e.touches[0]
     if (idx < 0 || !touch || this.data.draggingId) return
-    if (this.data.categories.some(c=>c.id.startsWith('pending-'))){wx.showToast({title:'新分类正在保存，完成后即可排序',icon:'none'});return}
+
     this.serial++;this.setData({cloudRefreshing:false})
     this.dragOrder = this.data.categories.map(c => c.id)
     this.dragSlot = idx
