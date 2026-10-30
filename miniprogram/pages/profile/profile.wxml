@@ -115,3 +115,18 @@
 </view>
   </view>
 </view>
+
+
+<!-- First WeChat login: separate user-initiated official phone consent. -->
+<view wx:if="{{phoneOnboarding}}" class="login-overlay" catchtap="dismissPhoneOnboarding">
+  <view class="login-sheet" catchtap="keepLoginOpen">
+    <view class="login-dialog">
+      <view class="login-dialog-title">完成手机号绑定</view>
+      <view class="login-dialog-subtitle">微信身份已登录。授权中国大陆 +86 手机号后，会与同一个商家账号关联，下次无需重复绑定。</view>
+      <button class="wechat-login-button" open-type="getPhoneNumber" bindgetphonenumber="bindFirstLoginPhone" loading="{{phoneBindBusy}}" disabled="{{phoneBindBusy}}">授权手机号并完成绑定</button>
+      <view wx:if="{{phoneBindStatus}}" class="notice">{{phoneBindStatus}}</view>
+      <view class="login-hint">仅在你主动同意后获取微信验证的手机号；不会自动合并其他账号。</view>
+      <button class="login-close" disabled="{{phoneBindBusy}}" bindtap="dismissPhoneOnboarding">稍后再绑定</button>
+    </view>
+  </view>
+</view>
