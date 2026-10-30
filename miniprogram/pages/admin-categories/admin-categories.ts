@@ -137,9 +137,13 @@ Page({
           :/categories_changed_refresh|http_409/.test(failure)?'分类已变化，请重试'
           :/category_icons_not_available|category_icon_write_unconfirmed/.test(failure)?'云端暂不支持保存该图标'
           :/http_40[13]|not_logged_in/.test(failure)?'登录或店铺权限已失效'
-          :'保存未确认，请检查网络后重试'
-        wx.showToast({title:readable,icon:'none'})
-        console.warn('[categories] cloud write not confirmed',failure)
+          :/http_503/.test(failure)?'服务端暂不可用 (503)'
+          :/http_500/.test(failure)?'服务端错误 (500)'
+          :/timeout/i.test(failure)?'请求超时，无法确认保存状态'
+          :/http_(\\d{3})/.test(failure)?'保存失败：HTTP '+failure.match(/http_(\\d{3})/)?.[1]
+          :'保存失败：'+failure.replace(/^Error:\\s*/,'').slice(0,90)
+        wx.showToast({title:readable,icon:'none',duration:3500})
+        console.error('[categories] save failed; cause:',failure)
       }
     }finally{
       this.saving=false
