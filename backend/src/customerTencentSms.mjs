@@ -13,7 +13,8 @@ export async function sendTencentSms({phone,code},{config=tencentSmsConfiguratio
  const timestamp=Math.floor(clock()/1000),date=new Date(timestamp*1000).toISOString().slice(0,10)
  const canonical='POST\n/\n\ncontent-type:application/json; charset=utf-8\nhost:sms.tencentcloudapi.com\n\ncontent-type;host\n'+sha(body)
  const scope=date+'/sms/tc3_request',toSign='TC3-HMAC-SHA256\n'+timestamp+'\n'+scope+'\n'+sha(canonical)
- const signature=createHmac('sha256',mac(mac(mac(mac('TC3'+config.key,date),'sms'),'tc3_request'),toSign)).digest('hex')
+ const signingKey=mac(mac(mac('TC3'+config.key,date),'sms'),'tc3_request')
+ const signature=createHmac('sha256',signingKey).update(toSign).digest('hex')
  const auth='TC3-HMAC-SHA256 Credential='+config.id+'/'+scope+', SignedHeaders=content-type;host, Signature='+signature
  const response=await fetcher('https://sms.tencentcloudapi.com/',{method:'POST',headers:{Authorization:auth,'Content-Type':'application/json; charset=utf-8',Host:'sms.tencentcloudapi.com','X-TC-Action':'SendSms','X-TC-Version':'2021-01-11','X-TC-Timestamp':String(timestamp),'X-TC-Region':'ap-guangzhou'},body,signal:AbortSignal.timeout(10000)})
  if(!response.ok)throw Error('tencent_sms_http_failed')
