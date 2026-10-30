@@ -12,7 +12,7 @@ if(!raw||!expectedHost||!expectedDatabase)fail('explicit_target_required')
 const target=new URL(raw)
 if(!['postgres:','postgresql:'].includes(target.protocol)||target.hostname!==expectedHost||decodeURIComponent(target.pathname.slice(1))!==expectedDatabase||!target.password)
  fail('target_mismatch')
-if(target.searchParams.get('sslmode')!=='verify-full')fail('strict_tls_required')
+if(target.searchParams.get('sslmode')!=='verify-full'||[...target.searchParams.keys()].some(k=>k!=='sslmode'))fail('strict_tls_required')
 const pool=new Pool({host:target.hostname,port:Number(target.port||5432),user:decodeURIComponent(target.username),password:decodeURIComponent(target.password),database:expectedDatabase,ssl:{rejectUnauthorized:true},max:1,connectionTimeoutMillis:5000})
 let client
 try{
@@ -32,9 +32,9 @@ try{
  if(!phoneConstraints.some(x=>x.contype==='u'&&x.definition.includes('phone_e164')))fail('phone_unique_constraint_missing')
  if(!phoneConstraints.some(x=>x.contype==='p'&&x.definition.includes('account_id')))fail('account_primary_key_missing')
  const privileges=await client.query(`SELECT
- has_table_privilege(current_user,'public.customer_verified_phones','SELECT') AS can_read,
- has_table_privilege(current_user,'public.customer_verified_phones','INSERT') AS can_insert,
- has_table_privilege(current_user,'public.customer_verified_phones','UPDATE') AS can_update`)
+ has_column_privilege(current_user,'public.customer_verified_phones','phone_e164','SELECT') AS can_read,
+ has_column_privilege(current_user,'public.customer_verified_phones','phone_e164','INSERT') AS can_insert,
+ has_column_privilege(current_user,'public.customer_verified_phones','phone_e164','UPDATE') AS can_update`)
  // Report only object/privilege readiness. Never output customer data or credentials.
  console.log(JSON.stringify({status:'inspected',databaseMatched:true,identityTablesPresent:true,phoneConstraintsPresent:true,runtimePhonePrivileges:privileges.rows[0]}))
  await client.query('ROLLBACK')
