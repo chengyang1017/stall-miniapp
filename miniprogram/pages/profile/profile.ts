@@ -58,10 +58,10 @@ Page({
         const now=wx.getStorageSync('stall_customer_phone_session_v1') as any
         if(now?.token!==token||now?.apiBase!==cfg.apiBase)return
         if(r.statusCode===200&&r.data?.accountId){
-          this.setData({customerPhoneSessionActive:true,customerPhoneLoginStatus:'手机号已验证，账号：'+String(r.data.nickname||'顾客')})
+          this.setData({customerPhoneSessionActive:true,customerPhoneLoginStatus:'手机号已验证，账号：'+String(r.data.nickname||'顾客'),...(!getSessionToken()?{accountName:String(r.data.nickname||'顾客'),accountSubtitle:'手机号顾客身份已连接（订单功能需微信登录）',avatarStyle:['violet','blue','green','peach'].includes(r.data.avatarStyle)?r.data.avatarStyle:'violet'}:{})})
         }else{
           wx.removeStorageSync('stall_customer_phone_session_v1')
-          this.setData({customerPhoneSessionActive:false})
+          this.setData({customerPhoneSessionActive:false,...(!getSessionToken()?{accountName:'未登录',accountSubtitle:'登录后管理订单与配送',avatarStyle:'violet'}:{})})
         }
       },fail:()=>{if(serial===this.loginSerial)this.setData({customerPhoneLoginStatus:'独立顾客会话暂无法验证，请检查网络'})}
     })
@@ -71,7 +71,7 @@ Page({
     const cfg=getCloudContext()
     const saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
     wx.removeStorageSync('stall_customer_phone_session_v1')
-    this.setData({customerPhoneSessionActive:false,customerPhoneLoginStatus:'已清除本机手机号登录状态'})
+    this.setData({customerPhoneSessionActive:false,customerPhoneLoginStatus:'已清除本机手机号登录状态',...(!getSessionToken()?{accountName:'未登录',accountSubtitle:'登录后管理订单与配送',avatarStyle:'violet'}:{})})
     if(!cfg||saved?.apiBase!==cfg.apiBase||typeof saved?.token!=='string')return
     wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/auth/session',method:'DELETE',timeout:15000,
       header:{Authorization:'Bearer '+saved.token}})
