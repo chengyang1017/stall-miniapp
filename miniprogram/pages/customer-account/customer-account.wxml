@@ -11,7 +11,7 @@
      <button class="phone-bind-button" open-type="getPhoneNumber" bindgetphonenumber="bindWechatPhone" loading="{{phoneLoading}}" disabled="{{phoneLoading}}">{{phoneBound ? '重新验证' : '微信授权绑定'}}</button>
    </view>
    <view wx:if="{{phoneStatus}}" class="profile-message">{{phoneStatus}}</view>
-   <view class="editor-help">使用微信官方手机号授权，需小程序账号具备相应权限；若未启用服务，绑定将被拒绝。</view>
+   <view class="editor-help">仅支持中国大陆 +86 手机号；绑定必须由微信官方验证。商家交付时进行真实授权测试。</view>
  </view>
  <view class="footnote">个人资料与账号关联，手机号只有通过身份验证后才能绑定。</view>
 </view>
