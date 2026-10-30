@@ -25,7 +25,11 @@ export async function linkVerifiedPhoneToAccount(pool,{accountId,phone,verifiedB
   if(existing.rows.some(row=>row.account_id!==accountId)){
    await client.query('ROLLBACK');return 'phone_already_bound'
   }
-  await client.query('INSERT INTO customer_verified_phones(account_id,phone_e164,verified_at) VALUES ($1,$2,now()) ON CONFLICT (account_id) DO UPDATE SET phone_e164=EXCLUDED.phone_e164,verified_at=EXCLUDED.verified_at',[accountId,verifiedPhone])
+  const current=await client.query('SELECT phone_e164 FROM customer_verified_phones WHERE account_id=$1',[accountId])
+  if(current.rows.length&&current.rows[0].phone_e164!==verifiedPhone){
+   await client.query('ROLLBACK');return 'phone_change_requires_reverification'
+  }
+  if(!current.rows.length)await client.query('INSERT INTO customer_verified_phones(account_id,phone_e164,verified_at) VALUES ($1,$2,now())',[accountId,verifiedPhone])
   await client.query('COMMIT')
   return 'bound'
  }catch(error){
