@@ -253,3 +253,29 @@ input, .picker { margin-top: 12rpx; background: #f7f7f7; border: 1rpx solid #ddd
 /* Keep existing edit/delete buttons on the right */.admin-product-row-v1{display:flex;align-items:center;gap:16rpx;min-height:126rpx}.admin-product-row-v1>view:last-child{flex-shrink:0}.admin-product-row-v1 button{margin-left:0;margin-right:0}
 
 @import "../../styles/merchant-theme.wxss";
+
+/* Merchant product editor: compact sectional layout */
+page{background:#f7f6fb}
+.product-form-page{padding:24rpx 24rpx 64rpx;box-sizing:border-box;min-height:100vh}
+.product-form-top{padding:14rpx 8rpx 28rpx}
+.product-form-eyebrow{font-size:22rpx;color:#7546cf;letter-spacing:2rpx;font-weight:600;margin-bottom:10rpx}
+.product-form-top .subheading{font-size:40rpx;color:#2c2540;font-weight:700;margin-bottom:10rpx}
+.product-form-intro{font-size:23rpx;color:#938ba2}
+.product-form-section{background:#fff;border:1rpx solid #eeeaf4;border-radius:22rpx;padding:24rpx;margin-bottom:18rpx;box-shadow:0 4rpx 14rpx rgba(54,35,80,.035)}
+.product-form-section-heading{display:flex;align-items:center;justify-content:space-between;padding-bottom:20rpx;margin-bottom:20rpx;border-bottom:1rpx solid #f0edf6;color:#312a43;font-size:29rpx;font-weight:700}
+.product-form-section-heading text:last-child{font-size:22rpx;color:#b1a5c9;font-weight:500}
+.product-form-section .field{margin-bottom:22rpx;font-size:24rpx;color:#615873}
+.product-form-section .field:last-child{margin-bottom:0}
+.product-form-section input,.product-form-section textarea,.product-form-section .picker{box-sizing:border-box;width:100%;background:#faf9fd;border:1rpx solid #e8e3f0;border-radius:14rpx;padding:20rpx 18rpx;color:#302a3e;font-size:27rpx;min-height:76rpx;margin-top:12rpx}
+.product-form-section textarea{min-height:138rpx;line-height:1.5}
+.product-form-section .picker{display:flex;align-items:center}
+.product-form-photo-field image{width:250rpx!important;height:190rpx!important;border-radius:16rpx!important}
+.product-form-photo-field button{margin:12rpx 12rpx 12rpx 0;border-radius:12rpx;font-size:23rpx}
+.product-form-price-grid{display:flex;gap:14rpx}
+.product-form-price-grid .field{flex:1;min-width:0}
+.product-form-section .product-inventory-panel,.product-form-section .product-schedule-panel{margin:0;padding:0;background:transparent;border-radius:0}
+.product-form-section .line{padding:22rpx 0;border-color:#f0edf6;color:#3c344e;font-size:26rpx}
+.product-form-section .product-schedule-hint{font-size:22rpx;color:#8a8297;line-height:1.55}
+.product-form-actions>button{box-sizing:border-box;width:100%;margin:14rpx 0;border-radius:15rpx;font-size:27rpx}
+.product-form-actions>button[type=primary]{background:#6636d2;color:#fff;border:none}
+.product-form-section .product-inventory-actions button{border-radius:12rpx}
