@@ -4,7 +4,7 @@ import {rotateVerifiedPhone} from '../src/customerPhoneRotation.mjs'
 const accountId='7f08a781-f880-41e6-a088-f6a849c1648a'
 const expectedOldPhone='+8613812345678',newPhone='+8613912345678'
 const input={accountId,expectedOldPhone,newPhone,accountStepUpVerified:true,newPhoneVerified:true}
-function mock({account=true,bound=expectedOldPhone,owner=null,updateError=null}={}){
+function mock({account=true,bound=expectedOldPhone,owner=null,updateError=null,updatedRows=1}={}){
  const calls=[]
  const client={async query(sql,params=[]){
   calls.push({sql,params})
@@ -12,6 +12,7 @@ function mock({account=true,bound=expectedOldPhone,owner=null,updateError=null}=
   if(sql.startsWith('SELECT phone_e164'))return {rows:bound?[{phone_e164:bound}]:[]}
   if(sql.startsWith('SELECT account_id'))return {rows:owner?[{account_id:owner}]:[]}
   if(sql.startsWith('UPDATE')&&updateError)throw Object.assign(Error('db_failure'),{code:updateError})
+  if(sql.startsWith('UPDATE'))return {rowCount:updatedRows}
   return {rows:[]}
  },release(){calls.push({sql:'RELEASE'})}}
  return {pool:{async connect(){return client}},calls}
@@ -52,4 +53,20 @@ test('unique conflict rolls back and is not treated as success',async()=>{
 test('missing account fails closed',async()=>{
  const f=mock({account:false})
  assert.equal(await rotateVerifiedPhone(f.pool,input),'account_not_found')
+})
+
+test('same-number operation verifies account and current phone before returning unchanged',async()=>{
+ const f=mock()
+ assert.equal(await rotateVerifiedPhone(f.pool,{...input,newPhone:expectedOldPhone}),'unchanged')
+ assert.equal(f.calls.some(x=>x.sql.startsWith('SELECT phone_e164')),true)
+ assert.equal(f.calls.some(x=>x.sql.startsWith('UPDATE')),false)
+ const missing=mock({account:false})
+ assert.equal(await rotateVerifiedPhone(missing.pool,{...input,newPhone:expectedOldPhone}),'account_not_found')
+ const stale=mock({bound:'+8613712345678'})
+ assert.equal(await rotateVerifiedPhone(stale.pool,{...input,newPhone:expectedOldPhone}),'old_phone_mismatch')
+})
+test('concurrent update with zero affected rows is not reported as a successful rotation',async()=>{
+ const f=mock({updatedRows:0})
+ assert.equal(await rotateVerifiedPhone(f.pool,input),'old_phone_mismatch')
+ assert.equal(f.calls.at(-2).sql,'ROLLBACK')
 })

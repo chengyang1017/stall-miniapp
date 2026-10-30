@@ -11,7 +11,6 @@ export async function rotateVerifiedPhone(pool,{accountId,expectedOldPhone,newPh
  if(typeof accountId!=='string'||!UUID.test(accountId))throw Error('invalid_account_id')
  const oldNumber=canonicalMainlandPhone(expectedOldPhone)
  const nextNumber=canonicalMainlandPhone(newPhone)
- if(oldNumber===nextNumber)return 'unchanged'
  const client=await pool.connect()
  try{
   await client.query('BEGIN')
@@ -19,9 +18,11 @@ export async function rotateVerifiedPhone(pool,{accountId,expectedOldPhone,newPh
   if(account.rows.length!==1){await client.query('ROLLBACK');return 'account_not_found'}
   const bound=await client.query('SELECT phone_e164 FROM customer_verified_phones WHERE account_id=$1 FOR UPDATE',[accountId])
   if(bound.rows.length!==1||bound.rows[0].phone_e164!==oldNumber){await client.query('ROLLBACK');return 'old_phone_mismatch'}
+  if(oldNumber===nextNumber){await client.query('COMMIT');return 'unchanged'}
   const other=await client.query('SELECT account_id FROM customer_verified_phones WHERE phone_e164=$1',[nextNumber])
   if(other.rows.some(row=>row.account_id!==accountId)){await client.query('ROLLBACK');return 'phone_already_bound'}
-  await client.query('UPDATE customer_verified_phones SET phone_e164=$2,verified_at=now() WHERE account_id=$1',[accountId,nextNumber])
+  const changed=await client.query('UPDATE customer_verified_phones SET phone_e164=$2,verified_at=now() WHERE account_id=$1 AND phone_e164=$3',[accountId,nextNumber,oldNumber])
+  if(changed.rowCount!==1){await client.query('ROLLBACK');return 'old_phone_mismatch'}
   await client.query('COMMIT')
   return 'rotated'
  }catch(error){
