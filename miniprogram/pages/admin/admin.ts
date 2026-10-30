@@ -16,7 +16,7 @@ Page({
  // Page-local proof only: bound to API, store and session; shows reuse a short-lived shared proof or recheck the server.
  accessSerial:0,accessContext:'',
  revision:null as string|null, serial:0,pendingSerial:0, loadedContext:'',supportSerial:0,supportTimer:0 as any,
- data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',pendingNewOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
+ data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,pendingNewOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
  async onShow(){
   const cfg=getCloudContext(),serial=++this.accessSerial,identity=supportIdentity()
   const retained=this.accessContext===identity&&this.data.workspaceAuthorized||!!cfg&&hasRecentMerchantPermission(cfg.apiBase,cfg.storeSlug)
@@ -63,7 +63,7 @@ Page({
    if(cfg)this.revision=await patchMerchantBusiness(cfg,this.revision,{minimumOrderCents:Math.round(Number(raw)*100)})
    else saveMinimumOrder(Number(raw))
    if(context!==businessContextKey())throw Error('context_changed')
-   this.setData({minimumOrderInput:Number(raw).toFixed(2)});wx.showToast({title:'起送金额已保存',icon:'success'})
+   this.setData({minimumOrderInput:Number(raw).toFixed(2),minimumEditing:false});wx.showToast({title:'起送金额已保存',icon:'success'})
   }catch(_){this.setData({settingsError:'保存失败，输入已保留；设置可能已变化，请刷新核对后重试',settingsReady:false})}
   finally{this.setData({settingsSaving:false})}
  },
