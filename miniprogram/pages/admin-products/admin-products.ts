@@ -110,6 +110,7 @@ Page({
     this.setData({queryControls:this.data.queryControls.map(c=>c.key===key?{...c,index}:c)})
     this.refresh()
   },
+  toggleProductFilters(){if(!this.data.batchBusy)this.setData({filtersExpanded:!this.data.filtersExpanded})},
   chooseQueryCategory(e:any) {
     if(this.data.batchBusy)return
     const index=Number(e.detail.value),category=this.data.categoryFilters[index]
@@ -192,6 +193,7 @@ Page({
     queryControls: queryChoices.map(c=>({...c,index:0})),
     categoryFilters: [{id:'',name:'全部分类'}] as Category[],
     categoryFilterIndex: 0,
+    filtersExpanded: false,
     entries: [] as any[],
     hasMore: false,
     loadingMore: false,
