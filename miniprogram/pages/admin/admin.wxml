@@ -46,7 +46,6 @@
       <view class="merchant-setting-desc">商品合计达到设定金额才能下单；设为 0 则不限制。</view>
       <view wx:if="{{!minimumEditing}}" class="merchant-minimum-row"><text class="merchant-yen">¥</text><text class="merchant-minimum-current">{{minimumOrderInput || '—'}}</text><button class="merchant-save" size="mini" bindtap="beginMinimumEdit" disabled="{{settingsLoading || settingsSaving || !settingsReady}}">编辑</button></view>
       <view wx:else class="merchant-minimum-row"><text class="merchant-yen">¥</text><input class="merchant-minimum-input" type="digit" value="{{minimumOrderInput}}" bindinput="onMinimumOrderInput" placeholder="0.00" disabled="{{settingsLoading || settingsSaving || !settingsReady}}" /><button class="merchant-save" size="mini" bindtap="saveMinimumOrder" disabled="{{settingsLoading || settingsSaving || !settingsReady}}">{{settingsSaving ? '保存中' : '保存'}}</button><button size="mini" bindtap="cancelMinimumEdit" disabled="{{settingsSaving}}">取消</button></view>
-      <view class="merchant-setting-desc">{{cloudMode ? '云端设置，以服务器校验为准' : '本机演示设置'}}</view>
       <view wx:if="{{settingsError}}" class="merchant-setting-desc">{{settingsError}}<text bindtap="refreshMinimum"> · 点击重新读取</text></view>
     </view>
 
