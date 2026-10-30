@@ -63,6 +63,7 @@ Page({
         this.revision=result.revision
         this.confirmed=result.items
         this.saveQueue.shift()
+        if(this.data.draggingId){this.lastMove=null;this.setData({draggingId:''})}
         this.renderCategories(this.saveQueue.reduce((items,next)=>this.applyCloudChange(items,next),result.items))
         this.setData({categoryIconsSupported:result.categoryIconsSupported===true})
       }
@@ -168,11 +169,13 @@ Page({
   selectIcon(e:any){if(!this.data.pickerTarget)return;const key=String(e.currentTarget.dataset.key||'');if(key&&!validCategoryIconKey(key))return;this.setData(this.data.pickerTarget==='new'?{newIconKey:key}:{editingIconKey:key});this.refreshIconPreviews()},
   // Handle-only touch sorting. No movable-view or input remounting.
   handleStart(e: any) {
-    if(this.data.cloudError)return
+    // Dragging is a local UI gesture; do not permanently disable it after a save error.
+    if(this.data.cloudError){wx.showToast({title:'请先重新读取分类后排序',icon:'none'});return}
     const id = String(e.currentTarget.dataset.id || '')
     const idx = this.data.categories.findIndex(c => c.id === id)
     const touch = e.touches && e.touches[0]
-    if (idx < 0 || !touch || this.data.draggingId || this.data.categories.some(c=>c.id.startsWith('pending-'))) return
+    if (idx < 0 || !touch || this.data.draggingId) return
+    if (this.data.categories.some(c=>c.id.startsWith('pending-'))){wx.showToast({title:'新分类正在保存，完成后即可排序',icon:'none'});return}
     this.serial++;this.setData({cloudRefreshing:false})
     this.dragOrder = this.data.categories.map(c => c.id)
     this.dragSlot = idx
