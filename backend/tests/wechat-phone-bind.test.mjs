@@ -79,3 +79,40 @@ test('invalid phone and untrusted subject never connect to database',async()=>{
  await assert.rejects(saveVerifiedWechatPhone(db.pool,'unverified','+8613812345678'),/invalid_verified_phone_input/)
  assert.equal(db.statements.length,0)
 })
+
+import {verifyWechatPhoneCode} from '../src/customerWechatPhone.mjs'
+const app={appId:'wx0123456789abcdef',secret:'test-secret'}
+function wechatReplies(phoneResult,tokenResult={access_token:'mock-token'}){
+ const calls=[]
+ const request=async(url,options={})=>{
+  calls.push({url:String(url),options})
+  return {ok:true,json:async()=>calls.length===1?tokenResult:phoneResult}
+ }
+ return {request,calls}
+}
+test('official response yields a verified E.164 number without trusting client phone text',async()=>{
+ const w=wechatReplies({errcode:0,phone_info:{countryCode:'86',purePhoneNumber:'13812345678'}})
+ assert.equal(await verifyWechatPhoneCode(app,'test-valid-code',w.request),'+8613812345678')
+ assert.equal(w.calls.length,2)
+ assert.match(w.calls[1].url,/getuserphonenumber/)
+ assert.deepEqual(JSON.parse(w.calls[1].options.body),{code:'test-valid-code'})
+})
+test('invalid or expired phone authorization code is rejected',async()=>{
+ const w=wechatReplies({errcode:40029,errmsg:'invalid code'})
+ await assert.rejects(verifyWechatPhoneCode(app,'expired-code',w.request),/phone_verification_failed/)
+})
+test('invalid regional or malformed phone responses are rejected',async()=>{
+ for(const phone of [{countryCode:'60',purePhoneNumber:'13812345678'},{countryCode:'86',purePhoneNumber:'1234'}]){
+  const w=wechatReplies({errcode:0,phone_info:phone})
+  await assert.rejects(verifyWechatPhoneCode(app,'test-code',w.request),/phone_verification_failed/)
+ }
+})
+test('missing access token stops before the second API call',async()=>{
+ const w=wechatReplies({errcode:0},{errcode:40013})
+ await assert.rejects(verifyWechatPhoneCode(app,'test-code',w.request),/wechat_access_token_unavailable/)
+ assert.equal(w.calls.length,1)
+})
+test('HTTP error from WeChat does not produce a number',async()=>{
+ const request=async()=>({ok:false,status:503})
+ await assert.rejects(verifyWechatPhoneCode(app,'test-code',request),/wechat_unavailable/)
+})
