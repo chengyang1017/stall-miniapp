@@ -81,8 +81,9 @@ const server = http.createServer(async (req, res) => {
     if (await customerSmsLoginRoute(req,res,url,pool)) return
     if (await customerSmsSendRoute(req,res,url,pool,{send:tencentSmsConfiguration()?sendTencentSms:null})) return
     if (await customerSessionRoute(req,res,url,pool)) return
-    if (await customerAccountAddressReadRoute(req,res,url,pool)) return
+    // Mutations must run first: the read route rejects non-GET with 405.
     if (await customerAccountAddressWriteRoute(req,res,url,pool)) return
+    if (await customerAccountAddressReadRoute(req,res,url,pool)) return
     if (await customerAccountOrdersReadRoute(req,res,url,pool)) return
     if (await customerWechatIdentityLinkRoute(req,res,url,pool)) return
     if (await storeEntryRoute(req,res,url,pool)) return

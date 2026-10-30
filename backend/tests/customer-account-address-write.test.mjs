@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
 import {customerAccountAddressWriteRoute} from '../src/customerAccountAddressWrite.mjs'
 const base=new URL('http://localhost/v1/customer/account/stores/demo-shop/addresses')
 const id='7f08a781-f880-41e6-a088-f6a849c1648a',token='x'.repeat(43)
@@ -26,3 +27,10 @@ test('WeChat PUT is translated to legacy PATCH only after session and identity v
  assert.equal(out.body.error,'address_not_found')
  assert.ok(queries.some(x=>x.includes('customer_login_identities')))
 }))
+
+test('server routes account address writes before read-only method guard',()=>{
+ const source=readFileSync(new URL('../src/server.mjs',import.meta.url),'utf8')
+ const write=source.indexOf('if (await customerAccountAddressWriteRoute(req,res,url,pool)) return')
+ const read=source.indexOf('if (await customerAccountAddressReadRoute(req,res,url,pool)) return')
+ assert.ok(write>=0&&read>write,'POST must not be consumed by GET-only route')
+})
