@@ -1,5 +1,15 @@
 # 项目负责人预览交接
 
+## 当前有效预览版本｜FE-06｜2026-10-30
+
+**受测提交：ab809a80b0d2590388dc18eda35af830d1796d1c（zh）**，收藏/浏览记录功能提交b7a2300d4dc0b8775fdd1dcf66c07ab6af9361fb，包含main基线82937167f31c1b8bfe1135beefad141b7854d375。后续纯文档提交不改变受测产品代码。下方FE-04及其他历史回执仅作历史记录。
+
+最终同步后再次运行`npm run verify:frontend`，215通过、0失败、0跳过、三目标构建/边界/产物检查通过。证据：`evidence/20261030-library-synced.txt`。未运行后端新身份功能、微信平台、真机或支付验收。
+
+预览：`pages/index/index`点现有收藏入口；`pages/profile/profile`点我的收藏/浏览记录；`pages/product-detail/product-detail?id=<当前店铺有效商品ID>`打开商品并点击收藏；列表为`pages/product-library/product-library?kind=favorites`和`?kind=history`。沿用本文件下方FE-06的七项操作核验。确认收藏切换、重复浏览去重排序、移除/确认清空、重新进入持久化、切换账号/店铺隔离、售罄/下架与请求失败提示。只在本机保存，不跨设备同步。
+
+**WAITING_FOR_OWNER_PREVIEW**：负责人在另一台电脑完成微信平台构建、iOS/Android预览与上述交互验收，并提供提交号与反馈。当前DEVELOPMENT；不能据此宣布商城正式交付。
+
 ## 最新可预览版本｜FE-04｜2026-10-27
 
 **产品提交：27646b30ab3d9b13d26db93de71e37b853c236db**（zh）。已普通推送并用ls-remote核验远端一致，工作区当时干净。最后的文档回执不改变此受测产品代码。

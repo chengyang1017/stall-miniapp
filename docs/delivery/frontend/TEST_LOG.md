@@ -1,5 +1,7 @@
 # 前端实测记录（追加保留）
 
+2026-10-30最终同步复测：受测提交ab809a80b0d2590388dc18eda35af830d1796d1c（main8293716+FE-06）。实际执行`npm run verify:frontend`退出0：215通过、0失败、0跳过、0取消；全部三目标构建、角色边界、产物检查通过。原始日志`evidence/20261030-library-synced.txt`。与功能提交b7a2300的前端代码无差异；新增main后端内容仅随合并保留，未单独运行后端/DB/平台/真机测试。WAITING_FOR_OWNER_PREVIEW不计作通过或跳过测试。
+
 ## 2026-10-27｜FE-01｜zh｜基线 b308134
 
 环境：Windows / Node v24.11.1 / npm 11.6.2 / Asia/Kuala_Lumpur。执行目录为仓库根目录。以下均非微信平台运行验收。
