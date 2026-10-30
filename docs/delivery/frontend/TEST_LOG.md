@@ -1,5 +1,11 @@
 # 前端实测记录（追加保留）
 
+## 2026-10-30｜FE-07 需求文档回归
+
+受测现有产品源码71ff30e33f7e1482308744c6467613c306f46bbf，当前zh；本轮没有修改产品代码。实际命令`npm run verify:frontend`退出0：215通过、0失败、0跳过、0取消；三目标构建/源码边界/产物检查通过，静态预览每目标0错误及1个既有JS预编译插件警告。证据[evidence/20261030-receipt-requirements.txt](evidence/20261030-receipt-requirements.txt)。这不验证远端main后续新增源码，也不包含电子小票专项。
+
+小票状态/约束/权限仅评审稿；专项测试尚未实施，未运行数量未枚举，不记为0或通过。真实PG并发/回滚、微信V3支付/退款、真实API、平台及iOS/Android均NOT RUN；平台责任为WAITING_FOR_OWNER_PREVIEW。提交前实际运行git diff --check通过；6份文档的25个相对链接均存在，无替换乱码字符或凭据模式匹配；源码目录差异为空。保留所有历史失败证据。
+
 2026-10-30最终同步复测：受测提交ab809a80b0d2590388dc18eda35af830d1796d1c（main8293716+FE-06）。实际执行`npm run verify:frontend`退出0：215通过、0失败、0跳过、0取消；全部三目标构建、角色边界、产物检查通过。原始日志`evidence/20261030-library-synced.txt`。与功能提交b7a2300的前端代码无差异；新增main后端内容仅随合并保留，未单独运行后端/DB/平台/真机测试。WAITING_FOR_OWNER_PREVIEW不计作通过或跳过测试。
 
 ## 2026-10-27｜FE-01｜zh｜基线 b308134
