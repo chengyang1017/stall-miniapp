@@ -219,7 +219,17 @@ const server = http.createServer(async (req, res) => {
     }
     return reply(res, 404, { error: 'not_found' })
   } catch (err) {
-    console.error('API request failed', err?.code || err?.name || 'unknown')
+    // Only structural diagnostics: never log SQL text, parameters, credentials,
+    // request bodies or raw database error messages.
+    const pgCode=typeof err?.code==='string'&&/^[A-Z0-9]{5}$/.test(err.code)?err.code:null
+    const safeIdentifier=value=>typeof value==='string'&&/^[a-zA-Z_][a-zA-Z0-9_]{0,62}$/.test(value)?value:null
+    const route=url.pathname.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi,':id').replace(/\/stores\/[^/]+/g,'/stores/:store')
+    console.error('API request failed',JSON.stringify({
+      code:pgCode||'unknown',method:req.method,route,
+      schema:safeIdentifier(err?.schema),table:safeIdentifier(err?.table),
+      column:safeIdentifier(err?.column),constraint:safeIdentifier(err?.constraint),
+      routine:safeIdentifier(err?.routine)
+    }))
     return reply(res, 503, { error: 'service_unavailable' })
   }
 })
