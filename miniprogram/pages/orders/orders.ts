@@ -1,7 +1,7 @@
 import { paymentLabel } from '../../modules/shared/domain/payment'
 import { customerOrdersConfig, customerOrdersRequest } from '../../modules/customer/api/orders' // PHASE35_CUSTOMER_ORDERS
 import { loadWorkflowOrders, chinaTime, takeCreatedDemoOrder } from '../../modules/customer/demo/orders'
-import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
+import { cloudIdentity as supportIdentity, getCloudContext } from '../../modules/shared/runtime/context'
 
 type OrderTab = 'all' | 'unpaid' | 'active' | 'completed' | 'other'
 const TABS: Array<{key: OrderTab; label: string}> = [
@@ -63,8 +63,9 @@ function normalizeCloudOrder(value: unknown): any {
   return normalize({ ...order, id: order.id.toLowerCase(), totalText: (cents / 100).toFixed(2) })
 }
 Page({
-  serial:0,visible:false,listContext:'',
+  serial:0,phoneOrdersSerial:0,visible:false,listContext:'',
   data: {
+    phoneOrders:[] as any[],phoneOrdersStatus:'',phoneOrdersLoading:false,phoneOrdersHasMore:false,
     cloudMode:false,loading:false,error:'',hasMore:false,nextCursor:'',
     tabs: TABS.map(t => ({ ...t, count: 0 })),
     activeTab: 'all' as OrderTab,
@@ -75,9 +76,36 @@ Page({
   onLoad(options: Record<string, string | undefined>) {
     this.setData({ createdId: options.created || '',activeTab:TABS.some(t=>t.key===options.tab)?options.tab as OrderTab:'all',entryFulfillment:['pending','delivering','refund'].includes(options.fulfillment||'')?options.fulfillment||'':'' })
   },
+  refreshPhoneOrders(){
+    const serial=++this.phoneOrdersSerial,cfg=getCloudContext()
+    const saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+    this.setData({phoneOrders:[],phoneOrdersStatus:'',phoneOrdersLoading:false,phoneOrdersHasMore:false})
+    if(!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'||!/^[A-Za-z0-9_-]{40,100}$/.test(saved.token))return
+    const token=saved.token,apiBase=cfg.apiBase,slug=cfg.storeSlug
+    this.setData({phoneOrdersLoading:true,phoneOrdersStatus:'正在验证手机号顾客身份并读取历史订单…'})
+    wx.request({url:apiBase.replace(/\/$/,'')+'/v1/customer/account/stores/'+slug+'/orders',method:'GET',timeout:15000,
+      header:{Authorization:'Bearer '+token},
+      success:(r:any)=>{
+        const current=wx.getStorageSync('stall_customer_phone_session_v1') as any
+        const now=getCloudContext()
+        if(!this.visible||serial!==this.phoneOrdersSerial||current?.token!==token||current?.apiBase!==apiBase||now?.storeSlug!==slug||now?.apiBase!==apiBase)return
+        if(r.statusCode===200&&Array.isArray(r.data?.orders)){
+          try{
+            const orders=r.data.orders.map(normalizeCloudOrder)
+            this.setData({phoneOrders:orders,phoneOrdersHasMore:r.data.hasMore===true,phoneOrdersStatus:'手机号顾客历史订单（只读，暂不能打开详情或付款）'})
+          }catch(_){this.setData({phoneOrdersStatus:'服务器返回的订单数据无法验证',phoneOrders:[]})}
+        }else{
+          this.setData({phoneOrders:[],phoneOrdersStatus:r.statusCode===404?'手机号订单预览尚未启用':r.statusCode===401?'手机号会话已失效，请重新授权':'手机号历史订单暂时无法读取'})
+        }
+      },
+      fail:()=>{if(this.visible&&serial===this.phoneOrdersSerial)this.setData({phoneOrdersStatus:'手机号订单读取失败，请检查网络'})},
+      complete:()=>{if(serial===this.phoneOrdersSerial)this.setData({phoneOrdersLoading:false})}
+    })
+  },
   entryMatches(o:any){const filter=this.data.entryFulfillment;if(!filter)return true;const status=fulfillment(o);return filter==='pending'?payment(o)==='paid'&&['new','accepted','preparing'].includes(status):filter==='delivering'?status==='delivering':payment(o).includes('refund')||status==='refunded'},
   onShow() {
     this.visible=true
+    this.refreshPhoneOrders()
     this.syncListContext()
     const entry=wx.getStorageSync('stall_order_tab_entry_v1') as any
     if(entry&&typeof entry==='object'){
@@ -90,8 +118,8 @@ Page({
     if(createdId)this.setData({createdId,activeTab:'all',entryFulfillment:''})
     this.refresh()
   },
-  onHide(){this.visible=false;this.serial++;this.setData({createdId:''});if(this.data.cloudMode||customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
-  onUnload(){this.visible=false;this.serial++;this.listContext=''},
+  onHide(){this.visible=false;this.phoneOrdersSerial++;this.serial++;this.setData({createdId:''});if(this.data.cloudMode||customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
+  onUnload(){this.visible=false;this.phoneOrdersSerial++;this.serial++;this.listContext=''},
   onPullDownRefresh(){this.refresh().finally(()=>wx.stopPullDownRefresh())},
   onReachBottom(){this.loadMore()},
   syncListContext(): boolean {
