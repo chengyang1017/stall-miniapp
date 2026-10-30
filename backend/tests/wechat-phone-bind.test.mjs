@@ -142,10 +142,19 @@ test('identity schema and phone grants are present in reviewed migrations',()=>{
  assert.match(schema,/account_id uuid PRIMARY KEY/)
  assert.match(schema,/REVOKE ALL ON customer_accounts,customer_login_identities,customer_verified_phones FROM PUBLIC/)
  for(const fragment of [
+  'GRANT INSERT ON public.customer_accounts',
   'GRANT SELECT (id) ON public.customer_accounts',
+  'GRANT INSERT (account_id,provider,provider_subject,verified_at) ON public.customer_login_identities',
   'GRANT SELECT (account_id,provider,provider_subject) ON public.customer_login_identities',
   'GRANT SELECT (account_id,phone_e164,verified_at) ON public.customer_verified_phones',
   'GRANT INSERT (account_id,phone_e164,verified_at) ON public.customer_verified_phones',
   'GRANT UPDATE (phone_e164,verified_at) ON public.customer_verified_phones'
  ])assert.ok(grants.includes(fragment),'missing permission: '+fragment)
+})
+
+test('first verified WeChat login privilege preflight is not phone-write-only',()=>{
+ const root=new URL('../',import.meta.url)
+ const preflight=readFileSync(new URL('scripts/check-phone-binding-readiness.mjs',root),'utf8')
+ for(const flag of ['account_create','account_id_read','login_account_insert','login_provider_insert','login_subject_insert','login_verified_insert','insufficient_first_wechat_login_privileges'])
+  assert.ok(preflight.includes(flag),'missing first-login preflight check: '+flag)
 })

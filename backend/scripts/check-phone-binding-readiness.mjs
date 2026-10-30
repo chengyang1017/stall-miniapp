@@ -35,13 +35,24 @@ try{
  if(!phoneConstraints.some(x=>x.contype==='u'&&x.definition.includes('phone_e164')))fail('phone_unique_constraint_missing')
  if(!phoneConstraints.some(x=>x.contype==='p'&&x.definition.includes('account_id')))fail('account_primary_key_missing')
  if(!loginConstraints.some(x=>x.contype==='u'&&x.definition.includes('provider')&&x.definition.includes('provider_subject')))fail('login_identity_unique_constraint_missing')
+ const onboardingPrivileges=await client.query(`SELECT
+ has_table_privilege(current_user,'public.customer_accounts','INSERT') AS account_create,
+ has_column_privilege(current_user,'public.customer_accounts','id','SELECT') AS account_id_read,
+ has_column_privilege(current_user,'public.customer_login_identities','account_id','SELECT') AS login_account_read,
+ has_column_privilege(current_user,'public.customer_login_identities','provider','SELECT') AS login_provider_read,
+ has_column_privilege(current_user,'public.customer_login_identities','provider_subject','SELECT') AS login_subject_read,
+ has_column_privilege(current_user,'public.customer_login_identities','account_id','INSERT') AS login_account_insert,
+ has_column_privilege(current_user,'public.customer_login_identities','provider','INSERT') AS login_provider_insert,
+ has_column_privilege(current_user,'public.customer_login_identities','provider_subject','INSERT') AS login_subject_insert,
+ has_column_privilege(current_user,'public.customer_login_identities','verified_at','INSERT') AS login_verified_insert`)
+ if(Object.values(onboardingPrivileges.rows[0]||{}).some(value=>value!==true))fail('insufficient_first_wechat_login_privileges')
  const privileges=await client.query(`SELECT
  has_column_privilege(current_user,'public.customer_verified_phones','phone_e164','SELECT') AS can_read,
  has_column_privilege(current_user,'public.customer_verified_phones','phone_e164','INSERT') AS can_insert,
  has_column_privilege(current_user,'public.customer_verified_phones','phone_e164','UPDATE') AS can_update`)
  if(!privileges.rows[0]?.can_read||!privileges.rows[0]?.can_insert||!privileges.rows[0]?.can_update)fail('insufficient_phone_column_privileges')
  // Report only object/privilege readiness. Never output customer data or credentials.
- console.log(JSON.stringify({status:'inspected',databaseMatched:true,identityTablesPresent:true,phoneConstraintsPresent:true,loginIdentityConstraintPresent:true,runtimePhonePrivileges:privileges.rows[0]}))
+ console.log(JSON.stringify({status:'inspected',databaseMatched:true,identityTablesPresent:true,phoneConstraintsPresent:true,loginIdentityConstraintPresent:true,firstWechatLoginPrivileges:onboardingPrivileges.rows[0],runtimePhonePrivileges:privileges.rows[0]}))
  await client.query('ROLLBACK')
 }catch(error){
  if(client)try{await client.query('ROLLBACK')}catch{}
