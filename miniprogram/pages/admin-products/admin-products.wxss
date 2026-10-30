@@ -677,3 +677,13 @@ page { background: #f5f6f8; }
 .product-query-actions{padding-top:12rpx;gap:10rpx}
 .product-query-actions button{font-size:23rpx;line-height:56rpx;min-height:56rpx}
 .product-list-heading{margin:14rpx 4rpx 12rpx}
+
+/* Flat, single-line search bar: no nested framed input or large clear button */
+.product-query-panel{border:0;background:transparent;box-shadow:none;padding:0;margin-bottom:16rpx}
+.product-query-search{display:flex;align-items:center;box-sizing:border-box;width:100%;min-height:76rpx;border:1rpx solid #e7e0f1;border-radius:16rpx;background:#fff;padding:0 10rpx 0 20rpx;gap:10rpx;box-shadow:none}
+.product-query-search input{flex:1;min-width:0;box-sizing:border-box;height:68rpx;min-height:0;margin:0;padding:0!important;border:0!important;background:transparent!important;font-size:25rpx;line-height:68rpx}
+.product-search-icon{font-size:39rpx;line-height:1;color:#8161bd;width:36rpx;text-align:center}
+.product-search-clear{font-size:34rpx;color:#9d96a8;min-width:40rpx;text-align:center}
+.product-search-submit{font-size:24rpx;font-weight:600;color:#6839d1;padding:15rpx 14rpx}
+.product-filter-toggle{background:transparent;border-bottom:1rpx solid #eee8f5;margin-top:2rpx;padding:19rpx 5rpx}
+.product-query-actions{padding-top:10rpx}
