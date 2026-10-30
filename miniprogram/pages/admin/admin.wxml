@@ -17,9 +17,9 @@
       <view class="merchant-pending-mark">!</view>
       <view class="merchant-pending-info">
         <view class="merchant-pending-title">待处理订单</view>
-      <view class="merchant-pending-sub">{{pendingError || (pendingLoading ? '正在同步待接单数量…' : '查看新订单并及时接单')}}</view>
+      <view class="merchant-pending-sub">{{pendingError || (pendingLoading ? '正在同步订单数量…' : '待支付 ' + (unpaidOrderCount === null ? '—' : unpaidOrderCount) + ' 单 · 待接单 ' + (pendingNewOrderCount === null ? '—' : pendingNewOrderCount) + ' 单')}}</view>
       </view>
-      <view wx:if="{{pendingNewOrderCount > 0}}" class="merchant-count">{{pendingNewOrderCount}}</view>
+      <view wx:if="{{(pendingNewOrderCount || 0) + (unpaidOrderCount || 0) > 0}}" class="merchant-count">{{(pendingNewOrderCount || 0) + (unpaidOrderCount || 0)}}</view>
       <view wx:else class="merchant-count merchant-count-empty">{{pendingNewOrderCount === null ? '—' : '0'}}</view>
       <text class="merchant-arrow">›</text>
     </navigator>
