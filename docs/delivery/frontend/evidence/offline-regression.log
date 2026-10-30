@@ -1,0 +1,38 @@
+✔ Combined homepage resumes a freshly authorized merchant workspace (38.4368ms)
+✔ Customer homepage ignores a saved Combined merchant preference (32.3845ms)
+✔ Customer profile never requests merchant permissions or opens workspace (9.2878ms)
+✔ Combined profile still authorizes before explicitly opening workspace (10.2587ms)
+✔ Combined profile does not navigate after a rejected permission request (11.3928ms)
+✔ Combined workbench can explicitly switch back to customer tab (19.1738ms)
+✔ Merchant workbench hides and rejects an unavailable customer tab (22.7087ms)
+✔ customer and merchant pages each have a declared owner (1.5494ms)
+✔ GPS and review pages remain role-specific (0.441ms)
+✔ checkout and basket are customer-only, administration merchant-only (0.1698ms)
+✔ order detail: pending response is ignored after page hide (7.5186ms)
+✔ order detail: pending response is ignored after unload (3.1833ms)
+✔ order detail: old request cannot overwrite newer onShow (2.9735ms)
+✔ order detail: identity change discards pending order response (3.0462ms)
+✔ order detail: obsolete fetch failure does not show toast (3.5892ms)
+✔ order detail: current fetch failure shows error, not fabricated order (4.401ms)
+✔ proof: concurrent refreshes make one request and show latest URL (2.6081ms)
+✔ proof: hiding page discards a late signed URL (2.7421ms)
+✔ proof: identity change discards a late signed URL (3.3676ms)
+✔ proof: current URL failure is reported without image (3.699ms)
+✔ proof: preview with no image does not open image viewer (2.4233ms)
+✔ preview scanner detects optional chaining in generated JS with exact location (2.7781ms)
+✔ preview scanner detects nullish coalescing and assignment (1.2261ms)
+✔ preview scanner does not flag simple strings and comments (0.2396ms)
+✔ preview scanner rejects known broken checkbox-group opening tag (0.316ms)
+✔ preview scanner does not reject a valid checkbox-group (0.1735ms)
+✔ preview configuration warns about ES2020/es6=false mismatch without calling it a definite compiler failure (0.3351ms)
+✔ end-to-end audit of disposable fixture detects both real preview blockers (28.0314ms)
+✔ missing generated JS is reported as unverified, not as full preview success (4.3059ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 262.4533
+EXIT_CODE=0

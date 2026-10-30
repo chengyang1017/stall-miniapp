@@ -39,7 +39,8 @@
     "pages/customer-reviews/customer-reviews": "customer",
     "pages/merchant-reviews/merchant-reviews": "merchant",
     "pages/category/category": "customer",
-    "pages/customer-account/customer-account": "customer"
+    "pages/customer-account/customer-account": "customer",
+    "pages/product-library/product-library": "customer"
   },
   "utils": {
     "addresses": "customer",
@@ -121,7 +122,8 @@
         "pages/customer-tracking/customer-tracking",
         "pages/merchant-tracking/merchant-tracking",
         "pages/customer-reviews/customer-reviews",
-        "pages/merchant-reviews/merchant-reviews"
+        "pages/merchant-reviews/merchant-reviews",
+        "pages/product-library/product-library"
       ],
       "bootstrap": "miniprogram/app.ts",
       "aliases": {}
@@ -142,7 +144,8 @@
         "pages/customer-support-chat/customer-support-chat",
         "pages/customer-delivery-proof/customer-delivery-proof",
         "pages/customer-tracking/customer-tracking",
-        "pages/customer-reviews/customer-reviews"
+        "pages/customer-reviews/customer-reviews",
+        "pages/product-library/product-library"
       ],
       "bootstrap": "apps/customer/app.ts",
       "aliases": {

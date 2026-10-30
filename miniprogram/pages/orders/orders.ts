@@ -1,6 +1,6 @@
 import { paymentLabel } from '../../modules/shared/domain/payment'
 import { customerOrdersConfig, customerOrdersRequest } from '../../modules/customer/api/orders' // PHASE35_CUSTOMER_ORDERS
-import { loadWorkflowOrders, chinaTime } from '../../modules/customer/demo/orders'
+import { loadWorkflowOrders, chinaTime, takeCreatedDemoOrder } from '../../modules/customer/demo/orders'
 import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 
 type OrderTab = 'all' | 'unpaid' | 'active' | 'completed' | 'other'
@@ -78,6 +78,7 @@ Page({
   entryMatches(o:any){const filter=this.data.entryFulfillment;if(!filter)return true;const status=fulfillment(o);return filter==='pending'?payment(o)==='paid'&&['new','accepted','preparing'].includes(status):filter==='delivering'?status==='delivering':payment(o).includes('refund')||status==='refunded'},
   onShow() {
     this.visible=true
+    this.syncListContext()
     const entry=wx.getStorageSync('stall_order_tab_entry_v1') as any
     if(entry&&typeof entry==='object'){
       wx.removeStorageSync('stall_order_tab_entry_v1')
@@ -85,9 +86,11 @@ Page({
       const fulfillment=['pending','delivering','refund'].includes(entry.fulfillment)?entry.fulfillment:''
       this.setData({activeTab:tab,entryFulfillment:fulfillment,createdId:typeof entry.created==='string'?entry.created:''})
     }
+    const createdId=takeCreatedDemoOrder()
+    if(createdId)this.setData({createdId,activeTab:'all',entryFulfillment:''})
     this.refresh()
   },
-  onHide(){this.visible=false;this.serial++;if(this.data.cloudMode||customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
+  onHide(){this.visible=false;this.serial++;this.setData({createdId:''});if(this.data.cloudMode||customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
   onUnload(){this.visible=false;this.serial++;this.listContext=''},
   onPullDownRefresh(){this.refresh().finally(()=>wx.stopPullDownRefresh())},
   onReachBottom(){this.loadMore()},

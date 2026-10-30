@@ -1,0 +1,4 @@
+Preview preflight: scanned 84 JS and 22 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+EXIT_CODE=0

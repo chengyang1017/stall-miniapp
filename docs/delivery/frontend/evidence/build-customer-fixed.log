@@ -1,0 +1,7 @@
+
+> miniprogram-ts-quickstart@1.0.0 build:customer
+> node scripts/build-miniapp.mjs customer
+
+customer: emitted modules, page ownership and resource inventory checked
+customer: compiled 72 source modules, 13 pages, 136 artifacts -> dist/customer
+EXIT_CODE=0

@@ -64,6 +64,7 @@ export function createCatalogPage(isCategory = false) { return catalogOptions({
   },
 
   onLoad(options:Record<string,string|undefined>){captureStoreEntry(options)},
+  openFavorites(){wx.navigateTo({url:"/pages/product-library/product-library?kind=favorites"})},
   goCategories(){wx.switchTab({url:"/pages/category/category"})},
   showDelivery(){wx.showModal({title:"配送说明",content:this.data.deliverySummary||"配送区域、费用与时段将在结算时按收货地址核对。",showCancel:false})},
   unavailable(){wx.showToast({title:"该服务暂未开通",icon:"none"})},

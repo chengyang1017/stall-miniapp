@@ -22,24 +22,27 @@ export function setLocalDevToken(apiBase: string, token: string): void {
 }
 export function localDevAllowed(apiBase: string): boolean { return isLocalDevApi(apiBase) }
 
-export function loginWithWechat(apiBase: string): Promise<void> {
+let loginSerial = 0
+export function loginWithWechat(apiBase: string, isActive: () => boolean = () => true): Promise<void> {
   try { if (!previewApiAllowed(apiBase)) throw Error('untrusted_preview_endpoint'); assertPreviewWechatApp() }
   catch (error) { return Promise.reject(error) }
-  const identity = requestIdentity()
+  const serial = ++loginSerial, identity = requestIdentity()
+  const current = () => serial === loginSerial && identity === requestIdentity() && isActive()
   return new Promise((resolve, reject) => {
     wx.login({ success: login => {
       if (!login.code) return reject(new Error('wx_login_failed'))
-      if (identity !== requestIdentity()) return reject(new Error('session_or_store_changed'))
+      if (!current()) return reject(new Error('session_or_store_changed'))
       wx.request({
         url: `${apiBase.replace(/\/$/, '')}/v1/auth/wechat`,
         method: 'POST', data: { code: login.code }, timeout: 15000,
         success: (res: any) => {
-          if (identity !== requestIdentity()) return reject(new Error('session_or_store_changed'))
+          if (!current()) return reject(new Error('session_or_store_changed'))
           if (res.statusCode !== 200 || !res.data || typeof res.data.token !== 'string') {
             const code = typeof res.data?.error === 'string' ? res.data.error : 'unknown'
             const allowed = ['auth_not_configured','wechat_auth_failed','invalid_code','service_unavailable','too_large','invalid_json','unknown']
             return reject(new Error('login_http_'+String(res.statusCode)+'_'+(allowed.includes(code)?code:'unknown')))
           }
+          if (!/^[A-Za-z0-9_-]{40,100}$/.test(res.data.token)) return reject(new Error('server_login_failed'))
           wx.setStorageSync(TOKEN_KEY, res.data.token)
           rememberSessionScope(res.data.token,res.data.cacheScope)
           resolve()

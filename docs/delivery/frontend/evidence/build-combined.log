@@ -1,0 +1,7 @@
+
+> miniprogram-ts-quickstart@1.0.0 build:combined
+> node scripts/build-miniapp.mjs combined
+
+combined: emitted modules, page ownership and resource inventory checked
+combined: compiled 125 source modules, 36 pages, 258 artifacts -> dist/combined
+EXIT_CODE=0

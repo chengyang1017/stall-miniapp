@@ -1,0 +1,35 @@
+✔ Combined homepage resumes a freshly authorized merchant workspace (22.3931ms)
+✖ Customer homepage ignores a saved Combined merchant preference (19.2379ms)
+✔ Customer profile never requests merchant permissions or opens workspace (6.5738ms)
+✔ Combined profile still authorizes before explicitly opening workspace (5.7206ms)
+✔ Combined profile does not navigate after a rejected permission request (6.9139ms)
+✔ Combined workbench can explicitly switch back to customer tab (17.6415ms)
+✔ Merchant workbench hides and rejects an unavailable customer tab (18.5004ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 187.1063
+
+✖ failing tests:
+
+test at apps\tests\navigation.test.cjs:45:1
+✖ Customer homepage ignores a saved Combined merchant preference (19.2379ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\navigation.test.cjs:49:10)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+EXIT_CODE=1

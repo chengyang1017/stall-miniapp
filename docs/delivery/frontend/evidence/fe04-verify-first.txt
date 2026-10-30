@@ -1,0 +1,827 @@
+
+> miniprogram-ts-quickstart@1.0.0 verify:frontend
+> node scripts/verify-frontend.mjs
+
+
+> node scripts/check-boundaries.mjs
+combined: 125 source files; dependency boundaries and cycles checked
+customer: 72 source files; dependency boundaries and cycles checked
+merchant: 84 source files; dependency boundaries and cycles checked
+
+> node scripts/build-miniapp.mjs combined
+combined: emitted modules, page ownership and resource inventory checked
+combined: compiled 125 source modules, 36 pages, 258 artifacts -> dist/combined
+
+> node scripts/build-miniapp.mjs customer
+customer: emitted modules, page ownership and resource inventory checked
+customer: compiled 72 source modules, 13 pages, 136 artifacts -> dist/customer
+
+> node scripts/build-miniapp.mjs merchant
+merchant: emitted modules, page ownership and resource inventory checked
+merchant: compiled 84 source modules, 19 pages, 153 artifacts -> dist/merchant
+
+> node scripts/check-build-output.mjs
+combined: emitted modules, page ownership and resource inventory checked
+customer: emitted modules, page ownership and resource inventory checked
+merchant: emitted modules, page ownership and resource inventory checked
+
+> node scripts/miniapp-preview-audit.mjs dist/combined
+Preview preflight: scanned 125 JS and 41 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node scripts/miniapp-preview-audit.mjs dist/customer
+Preview preflight: scanned 72 JS and 18 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node scripts/miniapp-preview-audit.mjs dist/merchant
+Preview preflight: scanned 84 JS and 22 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node --test apps/tests/navigation.test.cjs apps/tests/auth-session.test.cjs apps/tests/demo-checkout.test.cjs backend/tests/build-role-contracts.test.mjs backend/tests/frontend-navigation.test.mjs backend/tests/frontend-navigation-flows.test.mjs backend/tests/frontend-navigation-guards.test.mjs backend/tests/frontend-navigation-lifecycle.test.mjs backend/tests/frontend-navigation-orders-phase6.test.mjs backend/tests/frontend-navigation-runtime.test.mjs backend/tests/merchant-entry-contract.test.mjs backend/tests/miniapp-preview-audit.test.mjs backend/tests/miniapp-preview-build-guard.test.mjs
+✔ current WeChat login saves the verified response and cache scope (9.3759ms)
+✔ store switch during wx.login prevents sending the old code (10.7534ms)
+✔ backend switch during exchange cannot overwrite session or scope (3.4147ms)
+✔ logout during exchange cannot be undone by a late login response (3.5825ms)
+✔ replacement session cannot be overwritten by a late exchange (4.7451ms)
+✔ newer login supersedes an earlier exchange even if the earlier one returns first (6.3493ms)
+✔ inactive requesting page cannot start a backend exchange (3.6173ms)
+✔ inactive requesting page cannot save an in-flight exchange (3.6766ms)
+✔ malformed server token is rejected without overwriting the session (22.2475ms)
+✔ HTTP and network failures preserve the previous session (16.0078ms)
+✔ combined merchant logout: old response cannot release a newer identity verification (10.1671ms)
+✔ combined merchant login: hidden page cannot authenticate or navigate after permission response (10.6419ms)
+✔ combined merchant login: current explicit verification opens workspace only after authorization (27.2255ms)
+✔ combined merchant login: old finally cannot release a newer page verification (8.4868ms)
+✔ combined merchant login: busy inputs and repeat verification cannot switch the request context (7.4517ms)
+✔ combined merchant login: leaving during code exchange prevents session resurrection (10.5537ms)
+✔ merchant merchant logout: old response cannot release a newer identity verification (10.996ms)
+✔ merchant merchant login: hidden page cannot authenticate or navigate after permission response (7.3514ms)
+✔ merchant merchant login: current explicit verification opens workspace only after authorization (16.8544ms)
+✔ merchant merchant login: old finally cannot release a newer page verification (20.5183ms)
+✔ merchant merchant login: busy inputs and repeat verification cannot switch the request context (10.2814ms)
+✔ merchant merchant login: leaving during code exchange prevents session resurrection (16.183ms)
+✔ combined DEMO checkout saves one unpaid order and opens the orders Tab (127.363ms)
+✔ combined DEMO checkout allows only one pending confirmation (102.1925ms)
+✔ combined cancelled or failed confirmation preserves cart and allows retry (197.9417ms)
+✔ combined confirmation after onHide cannot create an order (138.5123ms)
+✔ combined confirmation after onUnload cannot create an order (126.6292ms)
+✔ combined switching to CLOUD while DEMO confirmation is pending does not create local data (101.4991ms)
+✔ combined business pause during confirmation is revalidated (67.7244ms)
+✔ combined delivery pause during confirmation is revalidated (170.7342ms)
+✔ combined changed price is shown again instead of silently accepting a new total (79.1412ms)
+✔ combined route failure is reported as saved unpaid order and does not resubmit (54.0578ms)
+✔ combined direct purchase only clears its own selection (100.9262ms)
+✔ combined existing orders Tab selects all once and does not replay creation notice (191.7404ms)
+✔ combined a DEMO order notice cannot cross an identity or cloud context (81.6196ms)
+✔ customer DEMO checkout saves one unpaid order and opens the orders Tab (157.9343ms)
+✔ customer DEMO checkout allows only one pending confirmation (60.8333ms)
+✔ customer cancelled or failed confirmation preserves cart and allows retry (187.0846ms)
+✔ customer confirmation after onHide cannot create an order (56.5589ms)
+✔ customer confirmation after onUnload cannot create an order (34.2599ms)
+✔ customer switching to CLOUD while DEMO confirmation is pending does not create local data (64.3261ms)
+✔ customer business pause during confirmation is revalidated (68.7051ms)
+✔ customer delivery pause during confirmation is revalidated (81.1078ms)
+✔ customer changed price is shown again instead of silently accepting a new total (108.9514ms)
+✔ customer route failure is reported as saved unpaid order and does not resubmit (33.3339ms)
+✔ customer direct purchase only clears its own selection (32.3129ms)
+✔ customer existing orders Tab selects all once and does not replay creation notice (38.6213ms)
+✔ customer a DEMO order notice cannot cross an identity or cloud context (36.6685ms)
+✔ Combined homepage resumes a freshly authorized merchant workspace (108.7559ms)
+✔ Customer homepage ignores a saved Combined merchant preference (125.143ms)
+✔ Customer profile never requests merchant permissions or opens workspace (26.7145ms)
+✔ Combined profile still authorizes before explicitly opening workspace (20.1589ms)
+✔ Combined profile does not navigate after a rejected permission request (13.1291ms)
+✔ Combined workbench can explicitly switch back to customer tab (121.5402ms)
+✔ Merchant workbench hides and rejects an unavailable customer tab (84.3483ms)
+✔ Combined profile suppresses repeated taps while permission is pending (14.5819ms)
+✔ Combined profile ignores permission response after hiding (51.1611ms)
+✔ Combined profile ignores permission response after identity replacement (18.1038ms)
+✔ Combined homepage does not resume workspace after denied permission (62.8155ms)
+✔ customer and merchant pages each have a declared owner (3.9994ms)
+✔ GPS and review pages remain role-specific (0.475ms)
+✔ checkout and basket are customer-only, administration merchant-only (0.5225ms)
+✔ customer product and order destinations are registered (8.1258ms)
+✔ product-card tap encodes reserved characters in product IDs (98.5574ms)
+✔ empty product ID never opens an arbitrary detail (145.9642ms)
+✔ order-card tap encodes reserved characters in order IDs (12.6231ms)
+✔ empty order ID is rejected before navigation (5.5271ms)
+✔ product detail decodes ID on load and checkout is the direct-purchase destination (41.245ms)
+✔ cart checkout navigation remains gated by cart/amount validation (3.6016ms)
+✔ checkout address selector opens registered customer address page (26.6686ms)
+✖ successful local checkout includes encoded created order ID when opening orders (7.5006ms)
+✔ order details preserve the supplied order ID for subsequent data retrieval (2.6953ms)
+✔ role-specific customer tracking, proof and review destinations stay out of merchant build (0.3376ms)
+✔ cloud cart: minimum-order shortfall prevents checkout (104.5528ms)
+✔ cloud cart: catalog/delivery load error prevents checkout (18.8585ms)
+✔ cloud cart: empty cart prevents checkout (69.5628ms)
+✔ cloud cart: valid cart opens checkout exactly once (40.6298ms)
+✔ local cart: minimum-order shortfall blocks checkout (32.5249ms)
+✔ local cart: empty cart blocks checkout (25.9368ms)
+✔ local cart: valid cart opens checkout exactly once (22.9099ms)
+✔ local cart: a positive shortfall with an empty cart never navigates (43.4105ms)
+✔ order detail: pending response is ignored after page hide (296.7907ms)
+✔ order detail: pending response is ignored after unload (124.4092ms)
+✔ order detail: old request cannot overwrite newer onShow (41.6324ms)
+✔ order detail: identity change discards pending order response (293.9421ms)
+✔ order detail: obsolete fetch failure does not show toast (107.2593ms)
+✔ order detail: current fetch failure shows error, not fabricated order (47.6506ms)
+✔ proof: concurrent refreshes make one request and show latest URL (3.2805ms)
+✔ proof: hiding page discards a late signed URL (8.9568ms)
+✔ proof: identity change discards a late signed URL (3.0262ms)
+✔ proof: current URL failure is reported without image (29.9741ms)
+✔ proof: preview with no image does not open image viewer (35.5119ms)
+(node:13768) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ phase6: initial load sends scoped authenticated parameters and normalizes real page state (97.0201ms)
+✖ phase6: empty successful response clears pagination without inventing orders (16.6968ms)
+✖ phase6: next page appends orders and forwards the opaque cursor unchanged (7.7499ms)
+✖ phase6: overlapping IDs across pages are not displayed twice (4.0607ms)
+✖ phase6: duplicate IDs inside a single returned page are displayed once (19.8346ms)
+✖ phase6: repeated reach-bottom events share one in-flight pagination request (14.9577ms)
+✖ phase6: unknown filter leaves tab, rows and request count unchanged (18.0882ms)
+✖ phase6: rapid filter requests completing in reverse order retain only the newest result (10.371ms)
+✖ phase6: stale failure cannot clear the newer filter loading indicator or set its error (22.4825ms)
+✖ phase6: pull refresh clears cursor and rejects a late pre-refresh page (12.3696ms)
+✖ phase6: onHide invalidates late resolve without additional setData (31.8258ms)
+✖ phase6: onHide invalidates late reject without additional setData (34.5689ms)
+✖ phase6: onUnload invalidates late resolve without additional setData (19.4123ms)
+✖ phase6: onUnload invalidates late reject without additional setData (11.711ms)
+✖ phase6: changed identity rejects a pending response before orders reach the page (2.9482ms)
+✖ phase6: identity change before pagination cannot retain or append the previous user orders (1.8977ms)
+✖ phase6: store change before pagination cannot reuse the previous store rows or cursor (1.9381ms)
+✖ phase6: onShow after identity change resets old rows and makes a fresh first-page request (1.9978ms)
+✖ phase6: malformed null page is rejected without exposing invalid rows (2.2106ms)
+✖ phase6: malformed non-array orders is rejected without exposing invalid rows (3.0664ms)
+✖ phase6: malformed non-boolean hasMore is rejected without exposing invalid rows (19.876ms)
+✖ phase6: malformed non-string next cursor is rejected without exposing invalid rows (4.9662ms)
+✖ phase6: malformed empty next cursor is rejected without exposing invalid rows (8.7072ms)
+✖ phase6: malformed order with no stable ID is rejected without exposing invalid rows (2.4545ms)
+✖ phase6: malformed order with non-numeric total is rejected without exposing invalid rows (2.6132ms)
+✖ phase6: first-page network failure never falls back to local demo orders (2.8624ms)
+✖ phase6: failed next page retains loaded rows and cursor and can be retried successfully (3.4808ms)
+✖ phase6: exhausted pagination never makes another request on button or reach-bottom (29.2134ms)
+✔ phase6: local mode sorts, filters and counts local orders without any cloud requests (5.778ms)
+✖ phase6: switching cloud to local invalidates an outstanding cloud result (2.918ms)
+✔ phase6: switching local to cloud clears demo rows and stale errors before awaiting cloud (11.0852ms)
+✖ phase6: pull refresh always stops its spinner after a current request failure (7.3591ms)
+✔ phase6 API: no session token rejects without invoking wx.request (11.3486ms)
+✔ phase6 API: non-200 response rejects instead of returning its payload (5.6313ms)
+✔ phase6 API: invalid detail ID is rejected without network activity (3.086ms)
+✖ phase6: identity switch keeps new loading and list isolated when old pagination resolve runs finally (2.4087ms)
+✖ phase6: identity switch keeps new loading and list isolated when old pagination reject runs finally (2.9746ms)
+✖ phase6: store switch keeps new loading and list isolated when old pagination resolve runs finally (5.6082ms)
+✖ phase6: store switch keeps new loading and list isolated when old pagination reject runs finally (2.9074ms)
+✔ profile: a verified merchant explicitly enters workspace and saves preference (56.2845ms)
+✔ profile: rejected permission never navigates or stores merchant preference (147.2389ms)
+✔ profile: simultaneous taps make only one authorization request (90.1718ms)
+✔ profile: hiding while permission is pending prevents late navigation (17.4325ms)
+✔ profile: session identity changes invalidate a pending authorization (7.5389ms)
+✔ merchant login: passive session verification must not navigate (3.962ms)
+✔ merchant login: explicit verified action can navigate (2.2155ms)
+✔ merchant login: invalid permission response never navigates (1.9183ms)
+✔ merchant workbench: customer switch navigates to home tab (5.1005ms)
+✔ combined registration and three build target page sets agree (3.7495ms)
+✔ all tabBar targets are registered and present in customer build (0.2644ms)
+✔ every literal navigator URL on registered pages has a valid page target (236.7028ms)
+✔ customer profile static links stay in customer build (64.0879ms)
+✔ merchant workbench static links stay in merchant build (10.5837ms)
+✔ switching from merchant workspace to customer uses the home tab (3.1043ms)
+✔ profile merchant shortcut is gated by verified authorization (2.8581ms)
+✔ passive merchant session check cannot automatically navigate (1.1309ms)
+✔ customer-only build disables merchant workspace navigation (2.1848ms)
+✔ role-specific chat, proof, reviews and tracking destinations are registered (5.0051ms)
+✔ one AppID contains merchant-login and admin plus customer landing page (1.6984ms)
+✔ shop homepage does not display a merchant administration entry (0.5558ms)
+✔ merchant preference is set only after server-backed permission check (0.3252ms)
+✔ app opening cannot route to merchant without fresh authorized request (0.7069ms)
+✔ merchant logout clears saved merchant-first preference (0.2789ms)
+✔ merchant can choose the customer shop without creating another AppID (4.2141ms)
+✔ customer profile shows merchant navigation only after a server check (2.3482ms)
+✔ preview scanner detects optional chaining in generated JS with exact location (2.5507ms)
+✔ preview scanner detects nullish coalescing and assignment (1.2605ms)
+✔ preview scanner does not flag simple strings and comments (0.2201ms)
+✔ preview scanner rejects known broken checkbox-group opening tag (0.3567ms)
+✔ preview scanner does not reject a valid checkbox-group (0.1834ms)
+✔ preview configuration warns about ES2020/es6=false mismatch without calling it a definite compiler failure (0.2647ms)
+✔ end-to-end audit of disposable fixture detects both real preview blockers (184.8212ms)
+✔ missing generated JS is reported as unverified, not as full preview success (5.0655ms)
+✔ real TypeScript ES2019 emission removes optional chaining and nullish coalescing (1338.7602ms)
+✔ mutation: emitted ES2020 optional chaining is rejected by build guard (420.4567ms)
+✔ mutation: injected nullish syntax is rejected by build guard (0.2398ms)
+✔ string literals mentioning optional chaining do not fail the build (0.2259ms)
+ℹ tests 169
+ℹ suites 0
+ℹ pass 134
+ℹ fail 35
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4033.7781
+
+✖ failing tests:
+
+test at backend\tests\frontend-navigation-flows.test.mjs:82:1
+✖ successful local checkout includes encoded created order ID when opening orders (7.5006ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /wx\.redirectTo\(\{\s*url:\s*`\/pages\/orders\/orders\?created=\$\{encodeURIComponent\(order\.id\)\}`\s*\}\)/. Input:
+  
+  "import { cloudCartConfig, loadCloudCheckout, localDate, availableCloudSlots, cloudDeliveryReason, createCloudOrder } from '../../utils/cloudCheckout' // PHASE34_CLOUD_CHECKOUT\r\n" +
+    "import { businessState } from '../../modules/customer/demo/settings' // STALL_HOURS_V1\r\n" +
+    "import { getMinimumOrder, minimumOrderShortfall } from '../../modules/customer/demo/settings'\r\n" +
+    "import { isPointDeliverable } from '../../modules/customer/demo/settings'\r\n" +
+    "import { getPurchaseDetails, clearDirectPurchase, hasDirectPurchase } from '../../utils/directPurchase'\r\n" +
+    "import { getSelectedAddress, SavedAddress } from '../../utils/addresses'\r\n" +
+    "import { availableAreas, availableSlots, loadDelivery } from '../../modules/customer/demo/settings'\r\n" +
+    "import { CartDisplayItem, saveCart } from '../../utils/cart'\r\n" +
+    "import { createDemoOrder, openCreatedDemoOrder } from '../../modules/customer/demo/orders'\r\n" +
+    "import { formatPublishTime } from '../../utils/productPublishing'\r\n" +
+    "import { minimumDisplay } from '../../modules/shared/api/business'\r\n" +
+    "import { deliveryStoreKey, resolveDeliveryArea, deliveryAddressReason } from '../../modules/customer/api/delivery'\r\n" +
+    "import { refreshCloudAddresses } from '../../modules/customer/api/addresses'\r\n" +
+    "import { cloudCacheSuffix } from '../../utils/cloudCart'\r\n" +
+    "import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'\r\n" +
+    "import { getSessionToken } from '../../modules/shared/runtime/context'\r\n" +
+    '\r\n' +
+    "const DRAFT_KEY = 'stall_checkout_draft_v1'\r\n" +
+    '\r\n' +
+    'Page({\r\n' +
+    "  checkoutContext:'',\r\n" +
+    "  draftStorageKey(){const cfg=cloudCartConfig();return cfg?(getSessionToken()?DRAFT_KEY+':'+cloudCacheSuffix(cfg.storeSlug):''):DRAFT_KEY+':demo'},\r\n" +
+    "  restoreDraft(){this.checkoutContext=supportIdentity();const key=this.draftStorageKey(),draft=key?wx.getStorageSync(key):null;this.setData({note:draft&&typeof draft.note==='string'?draft.note:'',selectedAddress:null,hasAddress:false,selectedSlotId:'',noteShortcuts:[]})},\r\n" +
+    '  cloudSerial:0,\r\n' +
+    '  // CHECKOUT_NOTE_SHORTCUTS_V1\r\n' +
+    '  toggleNoteShortcut(e: any) {\r\n' +
+    "    const label = String(e.currentTarget.dataset.label || '')\r\n" +
+    '    if (!label) return\r\n' +
+    "    const current = String(this.data.note || '')\r\n" +
+    '    const parts = current.split(/[\\n,\\uFF0C\\u3001;]/).map(s => s.trim()).filter(Boolean)\r\n' +
+    '    const at = parts.indexOf(label)\r\n' +
+    '    if (at >= 0) parts.splice(at, 1)\r\n' +
+    '    else parts.push(label)\r\n' +
+    "    const next = parts.join('\\uFF0C')\r\n" +
+    '    if (next.length > 200) {\r\n' +
+    "      wx.showToast({ title: '\\u5907\\u6CE8\\u4E0D\\u80FD\\u8D85\\u8FC7200\\u5B57', icon: 'none' })\r\n" +
+    '      return\r\n' +
+    '    }\r\n' +
+    '    this.setData({ note: next })\r\n' +
+    '    this.saveDraft()\r\n' +
+    '  },\r\n' +
+    '  data: {\r\n' +
+    '    demoConfirmBusy:false,\r\n' +
+    '    orderSubmitting:false,\r\n' +
+    "    cloudMode: false, cloudBusy: false, cloudError: '',deliveryError:'',selectionNotice:'',cloudAreaName:'', deliveryDate: '', deliveryDateMin: '', deliveryDateMax: '', cloudRules: null as any, cloudAreas: [] as Array<{id:string;name:string}>,\r\n" +
+    '    items: [] as CartDisplayItem[],\r\n' +
+    "    totalText: '0.00',\r\n" +
+    '    totalCount: 0,\r\n' +
+    "    minimumOrderText: '0.00',\r\n" +
+    "    minimumRemainingText: '0.00',\r\n" +
+    '    minimumReached: true,\r\n' +
+    '    selectedAddress: null as SavedAddress | null,\r\n' +
+    '    hasAddress: false,\r\n' +
+    '    slots: [] as Array<{ id: string; label: string; start: string; end: string;displayLabel?:string }>,\r\n' +
+    '    slotIndex: -1,\r\n' +
+    "    selectedSlotId: '',\r\n" +
+    "    selectedSlotText: '',\r\n" +
+    "    note: ''\r\n" +
+    '  ,\r\n' +
+    '    noteShortcuts: [] as Array<{label: string}>,},\r\n' +
+    '  onLoad() {\r\n' +
+    '    this.restoreDraft()\r\n' +
+    '  },\r\n' +
+    '  onShow() {\r\n' +
+    '    this.setData({demoConfirmBusy:false})\r\n' +
+    '    if(this.checkoutContext!==supportIdentity())this.restoreDraft()\r\n' +
+    '    if (cloudCartConfig()) { this.refreshCloudCheckout(); return }\r\n' +
+    '    this.cloudSerial++\r\n' +
+    "    this.setData({cloudMode:false,cloudError:'',cloudBusy:false})\r\n" +
+    '    // MERCHANT_NOTE_TAGS_V1\r\n' +
+    "    const merchantTags = wx.getStorageSync('stall_note_tags_v1')\r\n" +
+    '    this.setData({ noteShortcuts: Array.isArray(merchantTags) ? merchantTags.map((label: string) => ({ label })) : [] })\r\n' +
+    '    const cart = getPurchaseDetails()\r\n' +
+    '    const selected = getSelectedAddress() || null\r\n' +
+    "    const slots = availableSlots(availableAreas().find(a=>a.name===selected?.area)?.id).map(s=>({...s,displayLabel:s.label+' '+s.start+'–'+s.end}))\r\n" +
+    '    const slotIndex = slots.findIndex(s => s.id === this.data.selectedSlotId)\r\n' +
+    '    this.setData({\r\n' +
+    '      items: cart.items,\r\n' +
+    '      totalText: cart.totalText,\r\n' +
+    '      totalCount: cart.totalCount,\r\n' +
+    '      minimumOrderText: getMinimumOrder().toFixed(2),\r\n' +
+    '      minimumRemainingText: minimumOrderShortfall(cart.totalText).toFixed(2),\r\n' +
+    '      minimumReached: minimumOrderShortfall(cart.totalText) === 0,\r\n' +
+    '      selectedAddress: selected,\r\n' +
+    '      hasAddress: !!selected,\r\n' +
+    '      slots,\r\n' +
+    '      slotIndex,\r\n' +
+    "      selectedSlotId: slotIndex >= 0 ? slots[slotIndex].id : '',\r\n" +
+    "      selectedSlotText: slotIndex >= 0 ? `${slots[slotIndex].label} ${slots[slotIndex].start}–${slots[slotIndex].end}` : ''\r\n" +
+    '    })\r\n' +
+    '  },\r\n' +
+    '  async refreshCloudCheckout() {\r\n' +
+    '    const cfg=cloudCartConfig()\r\n' +
+    '    if (!cfg) return\r\n' +
+    '    const serial=++this.cloudSerial,key=supportIdentity()\r\n' +
+    '    const date=this.data.deliveryDate || localDate()\r\n' +
+    "    this.setData({cloudMode:true,cloudBusy:true,cloudError:'',deliveryError:'',selectionNotice:'',cloudAreaName:'',items:[],totalText:'0.00',totalCount:0,cloudRules:null,minimumReached:false,minimumOrderText:'读取中',\r\n" +
+    '      selectedAddress:null,hasAddress:false,noteShortcuts:[],deliveryDate:date,deliveryDateMin:localDate(),deliveryDateMax:localDate(7)})\r\n' +
+    '    try {\r\n' +
+    '      const [{cart,rules,business}]=await Promise.all([loadCloudCheckout(),refreshCloudAddresses()])\r\n' +
+    '      const current=cloudCartConfig();if(serial!==this.cloudSerial||!current||supportIdentity()!==key)return\r\n' +
+    '      const min=localDate(0,rules),max=localDate(7,rules),validDate=date<min||date>max?min:date\r\n' +
+    '      this.setData({items:cart.items,totalText:cart.totalText,totalCount:cart.totalCount,cloudRules:rules,noteShortcuts:(business.noteTags||[]).map(label=>({label})),\r\n' +
+    '        cloudAreas:rules.areas.filter(a=>a.enabled),deliveryDate:validDate,deliveryDateMin:min,deliveryDateMax:max,\r\n' +
+    "        ...minimumDisplay(business.minimumOrderCents,cart.totalText),cloudBusy:false,cloudError:''})\r\n" +
+    '      this.recheckCloudSelection(validDate,this.data.selectedSlotId)\r\n' +
+    "    } catch(e:any){if(serial===this.cloudSerial)this.setData({cloudBusy:false,cloudError:'配送、营业或商品信息加载失败：'+String(e&&e.message||e)})}\r\n" +
+    '  },\r\n' +
+    "  recheckCloudSelection(date:string,preferred='') {\r\n" +
+    '    const cfg=cloudCartConfig(),rules=this.data.cloudRules,address=getSelectedAddress()||null\r\n' +
+    '    if(!cfg||!rules)return\r\n' +
+    '    const key=deliveryStoreKey(cfg),area=address?resolveDeliveryArea(address,rules.areas,key):undefined\r\n' +
+    "    const addressIssue=address?deliveryAddressReason(address,rules.areas,key):'请选择收货地址'\r\n" +
+    '    const policyIssue=cloudDeliveryReason(rules,date,area?.id)\r\n' +
+    "    const issue=policyIssue&&policyIssue!=='请先选择可配送的收货区域'?policyIssue:addressIssue||policyIssue\r\n" +
+    "    const slots=addressIssue?[]:availableCloudSlots(rules,date,area?.id).map(s=>({...s,displayLabel:s.label+' '+s.start+'–'+s.end})),index=slots.findIndex(s=>s.id===preferred)\r\n" +
+    "    this.setData({selectedAddress:address?{...address,area:area?.name||address.area}:null,hasAddress:!!address,cloudAreaName:area?.name||'',deliveryError:addressIssue&&policyIssue&&addressIssue!==policyIssue?addressIssue+'；'+policyIssue:issue,\r\n" +
+    "      deliveryDate:date,slots,slotIndex:index,selectionNotice:preferred&&index<0?'原配送时段已暂停、删除或不适用，请重新选择。':'',selectedSlotId:index>=0?slots[index].id:'',selectedSlotText:index>=0?slots[index].label+' '+slots[index].start+'–'+slots[index].end:''})\r\n" +
+    '  },\r\n' +
+    '  chooseDeliveryDate(e:any) {\r\n' +
+    "    const date=String(e.detail.value||''),rules=this.data.cloudRules\r\n" +
+    '    if(!rules||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||date<localDate(0,rules)||date>localDate(7,rules))return\r\n' +
+    '    this.recheckCloudSelection(date)\r\n' +
+    '  },\r\n' +
+    '  async submitCloudOrder() {\r\n' +
+    '    if(this.data.orderSubmitting)return\r\n' +
+    '    if(this.checkoutContext!==supportIdentity()){this.restoreDraft();await this.refreshCloudCheckout();return}\r\n' +
+    '    if(this.data.cloudBusy||this.data.cloudError||this.data.deliveryError)return\r\n' +
+    "    if(!this.data.minimumReached){wx.showToast({title:'未达到起送金额，请刷新核对',icon:'none'});return}\r\n" +
+    '    const address=getSelectedAddress()\r\n' +
+    '    const rules=this.data.cloudRules\r\n' +
+    "    if(!rules||!rules.accepting){ wx.showToast({title:'店铺暂不接单',icon:'none'}); return }\r\n" +
+    "    if(!address){ wx.showToast({title:'请选择收货地址',icon:'none'}); return }\r\n" +
+    '    const cfg=cloudCartConfig()!\r\n' +
+    '    const area=resolveDeliveryArea(address,rules.areas,deliveryStoreKey(cfg))\r\n' +
+    "    if(!area||deliveryAddressReason(address,rules.areas,deliveryStoreKey(cfg))){wx.showToast({title:'地址区域不可配送，请重新选择',icon:'none'});return}\r\n" +
+    '    const date=this.data.deliveryDate\r\n' +
+    "    if(date<localDate(0,rules)||date>localDate(7,rules)){ wx.showToast({title:'请选择配送日期',icon:'none'}); return }\r\n" +
+    '    const policyIssue=cloudDeliveryReason(rules,date,area.id)\r\n' +
+    "    if(policyIssue){wx.showModal({title:'当前不可配送',content:policyIssue,showCancel:false});return}\r\n" +
+    '    const slots=availableCloudSlots(rules,date,area.id)\r\n' +
+    '    const slot=slots.find(s=>s.id===this.data.selectedSlotId)\r\n' +
+    "    if(!slot){ wx.showToast({title:'请选择有效配送时段',icon:'none'}); return }\r\n" +
+    "    if(!address.receiverName.trim()||!address.phone.trim()||!address.detail.trim()){ wx.showToast({title:'请补全收货地址',icon:'none'}); return }\r\n" +
+    "    if(!this.data.totalCount){ wx.showToast({title:'购物车为空',icon:'none'}); return }\r\n" +
+    '    const submittedContext=supportIdentity();this.setData({cloudBusy:true,orderSubmitting:true})\r\n' +
+    '    try {\r\n' +
+    '      const result=await createCloudOrder({address:{receiverName:address.receiverName,phone:address.phone,areaId:area.id,\r\n' +
+    "        detail:address.detail,latitude:address.latitude,longitude:address.longitude},slot:{id:slot.id,date},note:String(this.data.note||'')})\r\n" +
+    '      if(submittedContext!==supportIdentity())return\r\n' +
+    "      wx.showModal({title:'订单已创建（待支付）',content:'订单号：'+result.orderId+'\\n服务端金额：¥'+(Number(result.totalCents)/100).toFixed(2)+(result.inventoryExpiresAt?'\\n有限库存预留至：'+formatPublishTime(resu"... 6037 more characters
+  
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-flows.test.mjs:84:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "import { cloudCartConfig, loadCloudCheckout, localDate, availableCloudSlots, cloudDeliveryReason, createCloudOrder } from '../../utils/cloudCheckout' // PHASE34_CLOUD_CHECKOUT\r\nimport { businessState } from '../../modules/customer/demo/settings' // STALL_HOURS_V1\r\nimport { getMinimumOrder, minimumOrderShortfall } from '../../modules/customer/demo/settings'\r\nimport { isPointDeliverable } from '../../modules/customer/demo/settings'\r\nimport { getPurchaseDetails, clearDirectPurchase, hasDirectPurchase } from '../../utils/directPurchase'\r\nimport { getSelectedAddress, SavedAddress } from '../../utils/addresses'\r\nimport { availableAreas, availableSlots, loadDelivery } from '../../modules/customer/demo/settings'\r\nimport { CartDisplayItem, saveCart } from '../../utils/cart'\r\nimport { createDemoOrder, openCreatedDemoOrder } from '../../modules/customer/demo/orders'\r\nimport { formatPublishTime } from '../../utils/productPublishing'\r\nimport { minimumDisplay } from '../../modules/shared/api/business'\r\nimport { deliveryStoreKey, resolveDeliveryArea, deliveryAddressReason } from '../../modules/customer/api/delivery'\r\nimport { refreshCloudAddresses } from '../../modules/customer/api/addresses'\r\nimport { cloudCacheSuffix } from '../../utils/cloudCart'\r\nimport { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'\r\nimport { getSessionToken } from '../../modules/shared/runtime/context'\r\n\r\nconst DRAFT_KEY = 'stall_checkout_draft_v1'\r\n\r\nPage({\r\n  checkoutContext:'',\r\n  draftStorageKey(){const cfg=cloudCartConfig();return cfg?(getSessionToken()?DRAFT_KEY+':'+cloudCacheSuffix(cfg.storeSlug):''):DRAFT_KEY+':demo'},\r\n  restoreDraft(){this.checkoutContext=supportIdentity();const key=this.draftStorageKey(),draft=key?wx.getStorageSync(key):null;this.setData({note:draft&&typeof draft.note==='string'?draft.note:'',selectedAddress:null,hasAddress:false,selectedSlotId:'',noteShortcuts:[]})},\r\n  cloudSerial:0,\r\n  // CHECKOUT_NOTE_SHORTCUTS_V1\r\n  toggleNoteShortcut(e: any) {\r\n    const label = String(e.currentTarget.dataset.label || '')\r\n    if (!label) return\r\n    const current = String(this.data.note || '')\r\n    const parts = current.split(/[\\n,\\uFF0C\\u3001;]/).map(s => s.trim()).filter(Boolean)\r\n    const at = parts.indexOf(label)\r\n    if (at >= 0) parts.splice(at, 1)\r\n    else parts.push(label)\r\n    const next = parts.join('\\uFF0C')\r\n    if (next.length > 200) {\r\n      wx.showToast({ title: '\\u5907\\u6CE8\\u4E0D\\u80FD\\u8D85\\u8FC7200\\u5B57', icon: 'none' })\r\n      return\r\n    }\r\n    this.setData({ note: next })\r\n    this.saveDraft()\r\n  },\r\n  data: {\r\n    demoConfirmBusy:false,\r\n    orderSubmitting:false,\r\n    cloudMode: false, cloudBusy: false, cloudError: '',deliveryError:'',selectionNotice:'',cloudAreaName:'', deliveryDate: '', deliveryDateMin: '', deliveryDateMax: '', cloudRules: null as any, cloudAreas: [] as Array<{id:string;name:string}>,\r\n    items: [] as CartDisplayItem[],\r\n    totalText: '0.00',\r\n    totalCount: 0,\r\n    minimumOrderText: '0.00',\r\n    minimumRemainingText: '0.00',\r\n    minimumReached: true,\r\n    selectedAddress: null as SavedAddress | null,\r\n    hasAddress: false,\r\n    slots: [] as Array<{ id: string; label: string; start: string; end: string;displayLabel?:string }>,\r\n    slotIndex: -1,\r\n    selectedSlotId: '',\r\n    selectedSlotText: '',\r\n    note: ''\r\n  ,\r\n    noteShortcuts: [] as Array<{label: string}>,},\r\n  onLoad() {\r\n    this.restoreDraft()\r\n  },\r\n  onShow() {\r\n    this.setData({demoConfirmBusy:false})\r\n    if(this.checkoutContext!==supportIdentity())this.restoreDraft()\r\n    if (cloudCartConfig()) { this.refreshCloudCheckout(); return }\r\n    this.cloudSerial++\r\n    this.setData({cloudMode:false,cloudError:'',cloudBusy:false})\r\n    // MERCHANT_NOTE_TAGS_V1\r\n    const merchantTags = wx.getStorageSync('stall_note_tags_v1')\r\n    this.setData({ noteShortcuts: Array.isArray(merchantTags) ? merchantTags.map((label: string) => ({ label })) : [] })\r\n    const cart = getPurchaseDetails()\r\n    const selected = getSelectedAddress() || null\r\n    const slots = availableSlots(availableAreas().find(a=>a.name===selected?.area)?.id).map(s=>({...s,displayLabel:s.label+' '+s.start+'–'+s.end}))\r\n    const slotIndex = slots.findIndex(s => s.id === this.data.selectedSlotId)\r\n    this.setData({\r\n      items: cart.items,\r\n      totalText: cart.totalText,\r\n      totalCount: cart.totalCount,\r\n      minimumOrderText: getMinimumOrder().toFixed(2),\r\n      minimumRemainingText: minimumOrderShortfall(cart.totalText).toFixed(2),\r\n      minimumReached: minimumOrderShortfall(cart.totalText) === 0,\r\n      selectedAddress: selected,\r\n      hasAddress: !!selected,\r\n      slots,\r\n      slotIndex,\r\n      selectedSlotId: slotIndex >= 0 ? slots[slotIndex].id : '',\r\n      selectedSlotText: slotIndex >= 0 ? `${slots[slotIndex].label} ${slots[slotIndex].start}–${slots[slotIndex].end}` : ''\r\n    })\r\n  },\r\n  async refreshCloudCheckout() {\r\n    const cfg=cloudCartConfig()\r\n    if (!cfg) return\r\n    const serial=++this.cloudSerial,key=supportIdentity()\r\n    const date=this.data.deliveryDate || localDate()\r\n    this.setData({cloudMode:true,cloudBusy:true,cloudError:'',deliveryError:'',selectionNotice:'',cloudAreaName:'',items:[],totalText:'0.00',totalCount:0,cloudRules:null,minimumReached:false,minimumOrderText:'读取中',\r\n      selectedAddress:null,hasAddress:false,noteShortcuts:[],deliveryDate:date,deliveryDateMin:localDate(),deliveryDateMax:localDate(7)})\r\n    try {\r\n      const [{cart,rules,business}]=await Promise.all([loadCloudCheckout(),refreshCloudAddresses()])\r\n      const current=cloudCartConfig();if(serial!==this.cloudSerial||!current||supportIdentity()!==key)return\r\n      const min=localDate(0,rules),max=localDate(7,rules),validDate=date<min||date>max?min:date\r\n      this.setData({items:cart.items,totalText:cart.totalText,totalCount:cart.totalCount,cloudRules:rules,noteShortcuts:(business.noteTags||[]).map(label=>({label})),\r\n        cloudAreas:rules.areas.filter(a=>a.enabled),deliveryDate:validDate,deliveryDateMin:min,deliveryDateMax:max,\r\n        ...minimumDisplay(business.minimumOrderCents,cart.totalText),cloudBusy:false,cloudError:''})\r\n      this.recheckCloudSelection(validDate,this.data.selectedSlotId)\r\n    } catch(e:any){if(serial===this.cloudSerial)this.setData({cloudBusy:false,cloudError:'配送、营业或商品信息加载失败：'+String(e&&e.message||e)})}\r\n  },\r\n  recheckCloudSelection(date:string,preferred='') {\r\n    const cfg=cloudCartConfig(),rules=this.data.cloudRules,address=getSelectedAddress()||null\r\n    if(!cfg||!rules)return\r\n    const key=deliveryStoreKey(cfg),area=address?resolveDeliveryArea(address,rules.areas,key):undefined\r\n    const addressIssue=address?deliveryAddressReason(address,rules.areas,key):'请选择收货地址'\r\n    const policyIssue=cloudDeliveryReason(rules,date,area?.id)\r\n    const issue=policyIssue&&policyIssue!=='请先选择可配送的收货区域'?policyIssue:addressIssue||policyIssue\r\n    const slots=addressIssue?[]:availableCloudSlots(rules,date,area?.id).map(s=>({...s,displayLabel:s.label+' '+s.start+'–'+s.end})),index=slots.findIndex(s=>s.id===preferred)\r\n    this.setData({selectedAddress:address?{...address,area:area?.name||address.area}:null,hasAddress:!!address,cloudAreaName:area?.name||'',deliveryError:addressIssue&&policyIssue&&addressIssue!==policyIssue?addressIssue+'；'+policyIssue:issue,\r\n      deliveryDate:date,slots,slotIndex:index,selectionNotice:preferred&&index<0?'原配送时段已暂停、删除或不适用，请重新选择。':'',selectedSlotId:index>=0?slots[index].id:'',selectedSlotText:index>=0?slots[index].label+' '+slots[index].start+'–'+slots[index].end:''})\r\n  },\r\n  chooseDeliveryDate(e:any) {\r\n    const date=String(e.detail.value||''),rules=this.data.cloudRules\r\n    if(!rules||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||date<localDate(0,rules)||date>localDate(7,rules))return\r\n    this.recheckCloudSelection(date)\r\n  },\r\n  async submitCloudOrder() {\r\n    if(this.data.orderSubmitting)return\r\n    if(this.checkoutContext!==supportIdentity()){this.restoreDraft();await this.refreshCloudCheckout();return}\r\n    if(this.data.cloudBusy||this.data.cloudError||this.data.deliveryError)return\r\n    if(!this.data.minimumReached){wx.showToast({title:'未达到起送金额，请刷新核对',icon:'none'});return}\r\n    const address=getSelectedAddress()\r\n    const rules=this.data.cloudRules\r\n    if(!rules||!rules.accepting){ wx.showToast({title:'店铺暂不接单',icon:'none'}); return }\r\n    if(!address){ wx.showToast({title:'请选择收货地址',icon:'none'}); return }\r\n    const cfg=cloudCartConfig()!\r\n    const area=resolveDeliveryArea(address,rules.areas,deliveryStoreKey(cfg))\r\n    if(!area||deliveryAddressReason(address,rules.areas,deliveryStoreKey(cfg))){wx.showToast({title:'地址区域不可配送，请重新选择',icon:'none'});return}\r\n    const date=this.data.deliveryDate\r\n    if(date<localDate(0,rules)||date>localDate(7,rules)){ wx.showToast({title:'请选择配送日期',icon:'none'}); return }\r\n    const policyIssue=cloudDeliveryReason(rules,date,area.id)\r\n    if(policyIssue){wx.showModal({title:'当前不可配送',content:policyIssue,showCancel:false});return}\r\n    const slots=availableCloudSlots(rules,date,area.id)\r\n    const slot=slots.find(s=>s.id===this.data.selectedSlotId)\r\n    if(!slot){ wx.showToast({title:'请选择有效配送时段',icon:'none'}); return }\r\n    if(!address.receiverName.trim()||!address.phone.trim()||!address.detail.trim()){ wx.showToast({title:'请补全收货地址',icon:'none'}); return }\r\n    if(!this.data.totalCount){ wx.showToast({title:'购物车为空',icon:'none'}); return }\r\n    const submittedContext=supportIdentity();this.setData({cloudBusy:true,orderSubmitting:true})\r\n    try {\r\n      const result=await createCloudOrder({address:{receiverName:address.receiverName,phone:address.phone,areaId:area.id,\r\n        detail:address.detail,latitude:address.latitude,longitude:address.longitude},slot:{id:slot.id,date},note:String(this.data.note||'')})\r\n      if(submittedContext!==supportIdentity())return\r\n      wx.showModal({title:'订单已创建（待支付）',content:'订单号：'+result.orderId+'\\n服务端金额：¥'+(Number(result.totalCents)/100).toFixed(2)+(result.inventoryExpiresAt?'\\n有限库存预留至：'+formatPublishTime(resu"... 6037 more characters,
+    expected: /wx\.redirectTo\(\{\s*url:\s*`\/pages\/orders\/orders\?created=\$\{encodeURIComponent\(order\.id\)\}`\s*\}\)/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:75:1
+✖ phase6: initial load sends scoped authenticated parameters and normalizes real page state (97.0201ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:76:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.start (node:internal/test_runner/test:1003:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:92:1
+✖ phase6: empty successful response clears pagination without inventing orders (16.6968ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:93:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:97:1
+✖ phase6: next page appends orders and forwards the opaque cursor unchanged (7.7499ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:98:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:106:1
+✖ phase6: overlapping IDs across pages are not displayed twice (4.0607ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:107:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:112:1
+✖ phase6: duplicate IDs inside a single returned page are displayed once (19.8346ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:113:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:117:1
+✖ phase6: repeated reach-bottom events share one in-flight pagination request (14.9577ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:118:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:125:1
+✖ phase6: unknown filter leaves tab, rows and request count unchanged (18.0882ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:126:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:130:1
+✖ phase6: rapid filter requests completing in reverse order retain only the newest result (10.371ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:131:25)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:142:1
+✖ phase6: stale failure cannot clear the newer filter loading indicator or set its error (22.4825ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:143:25)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:149:1
+✖ phase6: pull refresh clears cursor and rejects a late pre-refresh page (12.3696ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:150:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:158:3
+✖ phase6: onHide invalidates late resolve without additional setData (31.8258ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:159:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:158:3
+✖ phase6: onHide invalidates late reject without additional setData (34.5689ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:159:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:158:3
+✖ phase6: onUnload invalidates late resolve without additional setData (19.4123ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:159:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:158:3
+✖ phase6: onUnload invalidates late reject without additional setData (11.711ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:159:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:167:1
+✖ phase6: changed identity rejects a pending response before orders reach the page (2.9482ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:168:25)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:173:1
+✖ phase6: identity change before pagination cannot retain or append the previous user orders (1.8977ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:174:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:183:1
+✖ phase6: store change before pagination cannot reuse the previous store rows or cursor (1.9381ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:184:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:192:1
+✖ phase6: onShow after identity change resets old rows and makes a fresh first-page request (1.9978ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:193:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:205:3
+✖ phase6: malformed null page is rejected without exposing invalid rows (2.2106ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:206:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:205:3
+✖ phase6: malformed non-array orders is rejected without exposing invalid rows (3.0664ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:206:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:205:3
+✖ phase6: malformed non-boolean hasMore is rejected without exposing invalid rows (19.876ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:206:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:205:3
+✖ phase6: malformed non-string next cursor is rejected without exposing invalid rows (4.9662ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:206:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:205:3
+✖ phase6: malformed empty next cursor is rejected without exposing invalid rows (8.7072ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:206:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:205:3
+✖ phase6: malformed order with no stable ID is rejected without exposing invalid rows (2.4545ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:206:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:205:3
+✖ phase6: malformed order with non-numeric total is rejected without exposing invalid rows (2.6132ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:206:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:212:1
+✖ phase6: first-page network failure never falls back to local demo orders (2.8624ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:213:44)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:218:1
+✖ phase6: failed next page retains loaded rows and cursor and can be retried successfully (3.4808ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:219:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:227:1
+✖ phase6: exhausted pagination never makes another request on button or reach-bottom (29.2134ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:228:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:241:1
+✖ phase6: switching cloud to local invalidates an outstanding cloud result (2.918ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:242:44)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:256:1
+✖ phase6: pull refresh always stops its spinner after a current request failure (7.3591ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:257:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:280:3
+✖ phase6: identity switch keeps new loading and list isolated when old pagination resolve runs finally (2.4087ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:281:19)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:280:3
+✖ phase6: identity switch keeps new loading and list isolated when old pagination reject runs finally (2.9746ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:281:19)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:280:3
+✖ phase6: store switch keeps new loading and list isolated when old pagination resolve runs finally (5.6082ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:281:19)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:280:3
+✖ phase6: store switch keeps new loading and list isolated when old pagination reject runs finally (2.9074ms)
+  ReferenceError: takeCreatedDemoOrder is not defined
+      at Object.onShow (miniprogram/pages/orders/orders.ts:77:70)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:69:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:281:19)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+EXIT_CODE=1

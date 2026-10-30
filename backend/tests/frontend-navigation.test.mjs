@@ -31,7 +31,7 @@ test('combined registration and three build target page sets agree', () => {
 })
 
 test('all tabBar targets are registered and present in customer build', () => {
-  assert.equal(tabs.size, 4)
+  assert.equal(tabs.size, 5)
   for (const page of tabs) {
     assert.ok(registered.has(page), `missing tab ${page}`)
     assert.ok(customer.has(page), `customer tab missing ${page}`)
@@ -57,8 +57,8 @@ test('customer profile static links stay in customer build', () => {
     assert.ok(customer.has(target(match[1])), match[1])
   }
   assert.match(wxml, /bindtap="openOrders"/)
-  assert.match(ts, /wx\.navigateTo\(\{\s*url:\s*'\/pages\/orders\/orders\?tab='/)
-  assert.equal(tabs.has('pages/orders/orders'),false);assert.ok(tabs.has('pages/category/category'))
+  assert.match(ts, /wx\.switchTab\(\{\s*url:\s*'\/pages\/orders\/orders'/)
+  assert.equal(tabs.has('pages/orders/orders'),true);assert.ok(tabs.has('pages/category/category'))
 })
 
 test('merchant workbench static links stay in merchant build', () => {

@@ -1,3 +1,4 @@
+import { savedProducts } from '../../modules/customer/domain/productLibrary'
 import { cachedCustomerNickname,cacheCustomerNickname } from '../../modules/shared/runtime/customerNicknameCache'
 import { getSessionToken } from '../../modules/shared/runtime/context'
 import { getCloudContext } from '../../modules/shared/runtime/context'
@@ -6,7 +7,7 @@ import { CLOUD_ONLY,PUBLIC_API_BASE } from '../../config/cloud'
 import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/customer/api/support'
 import { CAN_OPEN_MERCHANT,openMerchantWorkspace } from '../../modules/integration/singleAppHost'
 Page({
-  data:{accountName:'未登录',avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
+  data:{favoriteCount:0 as number|null,historyCount:0 as number|null,libraryError:'',accountName:'未登录',avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
     loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:'',loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
   loginSerial:0,
   serial:0,
@@ -156,7 +157,7 @@ Page({
       }
     })
   },
-  async onShow(){const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){const token=getSessionToken();if(token)this.loadAvatarForHeader(token,cfg.apiBase,serial);authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
+  async onShow(){this.refreshLibraryCounts();const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){const token=getSessionToken();if(token)this.loadAvatarForHeader(token,cfg.apiBase,serial);authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
   onHide(){this.serial++;this.merchantSerial++;this.loginSerial++;this.setData({loginBusy:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:''})},
   onUnload(){this.serial++;this.merchantSerial++;this.loginSerial++},
   openOrders(e:any) {
@@ -164,6 +165,9 @@ Page({
     wx.setStorageSync('stall_order_tab_entry_v1',{tab,fulfillment})
     wx.switchTab({url:'/pages/orders/orders'})
   },
+  refreshLibraryCounts(){try{this.setData({favoriteCount:savedProducts('favorites').length,historyCount:savedProducts('history').length,libraryError:''})}catch(_){this.setData({favoriteCount:null,historyCount:null,libraryError:'本机收藏与浏览记录暂无法读取'})}},
+  openFavorites(){wx.navigateTo({url:'/pages/product-library/product-library?kind=favorites'})},
+  openHistory(){wx.navigateTo({url:'/pages/product-library/product-library?kind=history'})},
   unavailable(){wx.showToast({title:'该服务暂未开通',icon:'none'})},
   serviceInfo(e:any){const kind=String(e.currentTarget.dataset.kind);const content:Record<string,string>={faq:'在商品页或分类页加入购物车，选择商品后进入结算。配送区域、费用、库存和营业时间以店铺实时规则为准。订单进度可在「我的订单」中查看。',about:'本小程序提供店铺商品浏览、购物车、订单与配送服务。订单及配送信息由当前店铺管理。'};wx.showModal({title:kind==='faq'?'常见问题':'关于我们',content:content[kind]||'',showCancel:false})}
 

@@ -1,0 +1,1533 @@
+
+> miniprogram-ts-quickstart@1.0.0 verify:frontend
+> node scripts/verify-frontend.mjs
+
+
+> node scripts/check-boundaries.mjs
+combined: 137 source files; dependency boundaries and cycles checked
+customer: 83 source files; dependency boundaries and cycles checked
+merchant: 90 source files; dependency boundaries and cycles checked
+
+> node scripts/build-miniapp.mjs combined
+combined: emitted modules, page ownership and resource inventory checked
+combined: compiled 137 source modules, 38 pages, 372 artifacts -> dist/combined
+
+> node scripts/build-miniapp.mjs customer
+customer: emitted modules, page ownership and resource inventory checked
+customer: compiled 83 source modules, 15 pages, 248 artifacts -> dist/customer
+
+> node scripts/build-miniapp.mjs merchant
+merchant: emitted modules, page ownership and resource inventory checked
+merchant: compiled 90 source modules, 19 pages, 249 artifacts -> dist/merchant
+
+> node scripts/check-build-output.mjs
+combined: emitted modules, page ownership and resource inventory checked
+customer: emitted modules, page ownership and resource inventory checked
+merchant: emitted modules, page ownership and resource inventory checked
+
+> node scripts/miniapp-preview-audit.mjs dist/combined
+Preview preflight: scanned 137 JS and 45 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node scripts/miniapp-preview-audit.mjs dist/customer
+Preview preflight: scanned 83 JS and 22 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node scripts/miniapp-preview-audit.mjs dist/merchant
+Preview preflight: scanned 90 JS and 22 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node --test apps/tests/navigation.test.cjs apps/tests/auth-session.test.cjs apps/tests/demo-checkout.test.cjs backend/tests/build-role-contracts.test.mjs backend/tests/frontend-navigation.test.mjs backend/tests/frontend-navigation-flows.test.mjs backend/tests/frontend-navigation-guards.test.mjs backend/tests/frontend-navigation-lifecycle.test.mjs backend/tests/frontend-navigation-orders-phase6.test.mjs backend/tests/frontend-navigation-runtime.test.mjs backend/tests/merchant-entry-contract.test.mjs backend/tests/miniapp-preview-audit.test.mjs backend/tests/miniapp-preview-build-guard.test.mjs
+✔ current WeChat login saves the verified response and cache scope (52.2454ms)
+✔ store switch during wx.login prevents sending the old code (126.2235ms)
+✔ backend switch during exchange cannot overwrite session or scope (6.8922ms)
+✔ logout during exchange cannot be undone by a late login response (5.5613ms)
+✔ replacement session cannot be overwritten by a late exchange (63.4037ms)
+✔ newer login supersedes an earlier exchange even if the earlier one returns first (7.3168ms)
+✔ inactive requesting page cannot start a backend exchange (6.2358ms)
+✔ inactive requesting page cannot save an in-flight exchange (6.4397ms)
+✔ malformed server token is rejected without overwriting the session (19.9172ms)
+✔ HTTP and network failures preserve the previous session (10.4474ms)
+✖ combined merchant logout: old response cannot release a newer identity verification (10.1131ms)
+✔ combined merchant login: hidden page cannot authenticate or navigate after permission response (7.7903ms)
+✔ combined merchant login: current explicit verification opens workspace only after authorization (21.7958ms)
+✖ combined merchant login: old finally cannot release a newer page verification (13.2481ms)
+✔ combined merchant login: busy inputs and repeat verification cannot switch the request context (7.0333ms)
+✔ combined merchant login: leaving during code exchange prevents session resurrection (5.0339ms)
+✖ merchant merchant logout: old response cannot release a newer identity verification (7.0662ms)
+✔ merchant merchant login: hidden page cannot authenticate or navigate after permission response (8.6113ms)
+✔ merchant merchant login: current explicit verification opens workspace only after authorization (7.2634ms)
+✖ merchant merchant login: old finally cannot release a newer page verification (8.6943ms)
+✔ merchant merchant login: busy inputs and repeat verification cannot switch the request context (7.2136ms)
+✔ merchant merchant login: leaving during code exchange prevents session resurrection (8.997ms)
+✖ combined DEMO checkout saves one unpaid order and opens the orders Tab (354.5644ms)
+✔ combined DEMO checkout allows only one pending confirmation (63.7741ms)
+✔ combined cancelled or failed confirmation preserves cart and allows retry (105.3123ms)
+✔ combined confirmation after onHide cannot create an order (55.898ms)
+✔ combined confirmation after onUnload cannot create an order (88.3945ms)
+✔ combined switching to CLOUD while DEMO confirmation is pending does not create local data (47.6176ms)
+✔ combined business pause during confirmation is revalidated (84.6827ms)
+✔ combined delivery pause during confirmation is revalidated (72.8532ms)
+✔ combined changed price is shown again instead of silently accepting a new total (28.5354ms)
+✔ combined route failure is reported as saved unpaid order and does not resubmit (40.2899ms)
+✔ combined direct purchase only clears its own selection (50.3836ms)
+✔ combined existing orders Tab selects all once and does not replay creation notice (75.4552ms)
+✔ combined a DEMO order notice cannot cross an identity or cloud context (40.1171ms)
+✖ customer DEMO checkout saves one unpaid order and opens the orders Tab (42.8767ms)
+✔ customer DEMO checkout allows only one pending confirmation (70.1684ms)
+✔ customer cancelled or failed confirmation preserves cart and allows retry (111.7195ms)
+✔ customer confirmation after onHide cannot create an order (45.5625ms)
+✔ customer confirmation after onUnload cannot create an order (31.8461ms)
+✔ customer switching to CLOUD while DEMO confirmation is pending does not create local data (47.0549ms)
+✔ customer business pause during confirmation is revalidated (57.4426ms)
+✔ customer delivery pause during confirmation is revalidated (54.6961ms)
+✔ customer changed price is shown again instead of silently accepting a new total (46.7767ms)
+✔ customer route failure is reported as saved unpaid order and does not resubmit (56.5419ms)
+✔ customer direct purchase only clears its own selection (40.5226ms)
+✔ customer existing orders Tab selects all once and does not replay creation notice (45.4599ms)
+✔ customer a DEMO order notice cannot cross an identity or cloud context (33.8403ms)
+✖ Combined homepage resumes a freshly authorized merchant workspace (154.2341ms)
+✔ Customer homepage ignores a saved Combined merchant preference (38.4611ms)
+✔ Customer profile never requests merchant permissions or opens workspace (9.9525ms)
+✔ Combined profile still authorizes before explicitly opening workspace (10.2004ms)
+✔ Combined profile does not navigate after a rejected permission request (56.2218ms)
+✔ Combined workbench can explicitly switch back to customer tab (76.6495ms)
+✔ Merchant workbench hides and rejects an unavailable customer tab (69.5999ms)
+✔ Combined profile suppresses repeated taps while permission is pending (12.538ms)
+✔ Combined profile ignores permission response after hiding (10.5436ms)
+✔ Combined profile ignores permission response after identity replacement (14.1852ms)
+✔ Combined homepage does not resume workspace after denied permission (26.2137ms)
+✔ customer and merchant pages each have a declared owner (2.1333ms)
+✔ GPS and review pages remain role-specific (0.3162ms)
+✔ checkout and basket are customer-only, administration merchant-only (0.2756ms)
+✔ customer product and order destinations are registered (2.0455ms)
+✔ product-card tap encodes reserved characters in product IDs (36.8339ms)
+✔ empty product ID never opens an arbitrary detail (1.4477ms)
+✔ order-card tap encodes reserved characters in order IDs (23.982ms)
+✔ empty order ID is rejected before navigation (33.0033ms)
+✔ product detail decodes ID on load and checkout is the direct-purchase destination (30.3666ms)
+✔ cart checkout navigation remains gated by cart/amount validation (34.8495ms)
+✔ checkout address selector opens registered customer address page (4.7834ms)
+✔ successful local checkout uses the orders Tab and transfers its creation notice without URL parameters (4.5475ms)
+✔ order details preserve the supplied order ID for subsequent data retrieval (1.7842ms)
+✔ role-specific customer tracking, proof and review destinations stay out of merchant build (0.2556ms)
+(node:9424) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ cloud cart: minimum-order shortfall prevents checkout (1057.4976ms)
+✔ cloud cart: catalog/delivery load error prevents checkout (6.5147ms)
+✔ cloud cart: empty cart prevents checkout (8.9818ms)
+✔ cloud cart: valid cart opens checkout exactly once (23.2389ms)
+✔ cloud cart: last confirmed display amount cannot bypass an unconfirmed current quote (10.8571ms)
+✔ local cart: minimum-order shortfall blocks checkout (3.6217ms)
+✔ local cart: empty cart blocks checkout (3.4165ms)
+✔ local cart: valid cart opens checkout exactly once (2.1985ms)
+✔ local cart: a positive shortfall with an empty cart never navigates (9.643ms)
+✔ order detail: pending response is ignored after page hide (4.5851ms)
+✔ order detail: pending response is ignored after unload (2.1704ms)
+✔ order detail: old request cannot overwrite newer onShow (2.0437ms)
+✔ order detail: identity change discards pending order response (1.7985ms)
+✔ order detail: obsolete fetch failure does not show toast (1.5992ms)
+✔ order detail: current fetch failure shows error, not fabricated order (2.8825ms)
+✔ proof: concurrent refreshes make one request and show latest URL (1.6608ms)
+✔ proof: hiding page discards a late signed URL (1.5265ms)
+✔ proof: identity change discards a late signed URL (1.4976ms)
+✔ proof: current URL failure is reported without image (1.9057ms)
+✔ proof: preview with no image does not open image viewer (1.8091ms)
+(node:19780) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ phase6: initial load sends scoped authenticated parameters and normalizes real page state (16.471ms)
+✖ phase6: empty successful response clears pagination without inventing orders (6.2742ms)
+✖ phase6: next page appends orders and forwards the opaque cursor unchanged (6.7615ms)
+✖ phase6: overlapping IDs across pages are not displayed twice (8.3653ms)
+✖ phase6: duplicate IDs inside a single returned page are displayed once (3.6612ms)
+✖ phase6: repeated reach-bottom events share one in-flight pagination request (16.6139ms)
+✖ phase6: unknown filter leaves tab, rows and request count unchanged (3.932ms)
+✖ phase6: rapid filter requests completing in reverse order retain only the newest result (4.2474ms)
+✖ phase6: stale failure cannot clear the newer filter loading indicator or set its error (5.5842ms)
+✖ phase6: pull refresh clears cursor and rejects a late pre-refresh page (6.0632ms)
+✖ phase6: onHide invalidates late resolve without additional setData (3.0416ms)
+✖ phase6: onHide invalidates late reject without additional setData (2.8518ms)
+✖ phase6: onUnload invalidates late resolve without additional setData (2.9036ms)
+✖ phase6: onUnload invalidates late reject without additional setData (5.079ms)
+✖ phase6: changed identity rejects a pending response before orders reach the page (4.4625ms)
+✖ phase6: identity change before pagination cannot retain or append the previous user orders (12.5981ms)
+✖ phase6: store change before pagination cannot reuse the previous store rows or cursor (3.8983ms)
+✖ phase6: onShow after identity change resets old rows and makes a fresh first-page request (7.7029ms)
+✖ phase6: malformed null page is rejected without exposing invalid rows (4.3382ms)
+✖ phase6: malformed non-array orders is rejected without exposing invalid rows (2.7623ms)
+✖ phase6: malformed non-boolean hasMore is rejected without exposing invalid rows (4.279ms)
+✖ phase6: malformed non-string next cursor is rejected without exposing invalid rows (6.2254ms)
+✖ phase6: malformed empty next cursor is rejected without exposing invalid rows (3.0699ms)
+✖ phase6: malformed order with no stable ID is rejected without exposing invalid rows (2.7646ms)
+✖ phase6: malformed order with non-numeric total is rejected without exposing invalid rows (7.2037ms)
+✖ phase6: first-page network failure never falls back to local demo orders (3.0935ms)
+✖ phase6: failed next page retains loaded rows and cursor and can be retried successfully (4.5422ms)
+✖ phase6: exhausted pagination never makes another request on button or reach-bottom (2.7971ms)
+✔ phase6: local mode sorts, filters and counts local orders without any cloud requests (5.2053ms)
+✖ phase6: switching cloud to local invalidates an outstanding cloud result (3.0455ms)
+✔ phase6: switching local to cloud clears demo rows and stale errors before awaiting cloud (4.7426ms)
+✖ phase6: pull refresh always stops its spinner after a current request failure (3.7127ms)
+✔ phase6 API: no session token rejects without invoking wx.request (2.9411ms)
+✔ phase6 API: non-200 response rejects instead of returning its payload (2.7378ms)
+✔ phase6 API: invalid detail ID is rejected without network activity (2.2326ms)
+✖ phase6: identity switch keeps new loading and list isolated when old pagination resolve runs finally (2.8594ms)
+✖ phase6: identity switch keeps new loading and list isolated when old pagination reject runs finally (2.4731ms)
+✖ phase6: store switch keeps new loading and list isolated when old pagination resolve runs finally (2.5403ms)
+✖ phase6: store switch keeps new loading and list isolated when old pagination reject runs finally (2.7454ms)
+✖ profile: a verified merchant explicitly enters workspace and saves preference (195.1905ms)
+✖ profile: rejected permission never navigates or stores merchant preference (77.5287ms)
+✖ profile: simultaneous taps make only one authorization request (37.2553ms)
+✖ profile: hiding while permission is pending prevents late navigation (77.5333ms)
+✖ profile: session identity changes invalidate a pending authorization (83.5413ms)
+✔ merchant login: passive session verification must not navigate (5.2048ms)
+✔ merchant login: explicit verified action can navigate (5.4631ms)
+✔ merchant login: invalid permission response never navigates (11.7237ms)
+✖ merchant workbench: customer switch navigates to home tab (12.2067ms)
+✔ combined registration and three build target page sets agree (1.5784ms)
+✖ all tabBar targets are registered and present in customer build (0.8244ms)
+✔ every literal navigator URL on registered pages has a valid page target (246.7562ms)
+✖ customer profile static links stay in customer build (6.3733ms)
+✔ merchant workbench static links stay in merchant build (2.8453ms)
+✔ switching from merchant workspace to customer uses the home tab (5.9702ms)
+✔ profile merchant shortcut is gated by verified authorization (8.2606ms)
+✔ passive merchant session check cannot automatically navigate (7.3599ms)
+✔ customer-only build disables merchant workspace navigation (4.1461ms)
+✔ role-specific chat, proof, reviews and tracking destinations are registered (4.4803ms)
+✔ one AppID contains merchant-login and admin plus customer landing page (4.5856ms)
+✔ shop homepage does not display a merchant administration entry (0.9384ms)
+✔ merchant preference is set only after server-backed permission check (0.3252ms)
+✔ customer onShow never routes from a saved merchant preference (3.468ms)
+✔ merchant logout clears saved merchant-first preference (0.5188ms)
+✔ merchant can choose the customer shop without creating another AppID (8.8116ms)
+✔ customer profile shows merchant navigation only after a server check (9.956ms)
+✔ preview scanner detects optional chaining in generated JS with exact location (3.3279ms)
+✔ preview scanner detects nullish coalescing and assignment (1.3553ms)
+✔ preview scanner does not flag simple strings and comments (0.892ms)
+✔ preview scanner rejects known broken checkbox-group opening tag (0.4383ms)
+✔ preview scanner does not reject a valid checkbox-group (0.2175ms)
+✔ preview configuration warns about ES2020/es6=false mismatch without calling it a definite compiler failure (0.327ms)
+✔ end-to-end audit of disposable fixture detects both real preview blockers (23.9082ms)
+✔ missing generated JS is reported as unverified, not as full preview success (9.1808ms)
+✔ real TypeScript ES2019 emission removes optional chaining and nullish coalescing (255.1299ms)
+✔ mutation: emitted ES2020 optional chaining is rejected by build guard (221.5074ms)
+✔ mutation: injected nullish syntax is rejected by build guard (0.3971ms)
+✔ string literals mentioning optional chaining do not fail the build (0.4232ms)
+ℹ tests 170
+ℹ suites 0
+ℹ pass 121
+ℹ fail 49
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2645.6323
+
+✖ failing tests:
+
+test at apps\tests\auth-session.test.cjs:101:3
+✖ combined merchant logout: old response cannot release a newer identity verification (10.1131ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:108:12)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:124:3
+✖ combined merchant login: old finally cannot release a newer page verification (13.2481ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:131:12)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:101:3
+✖ merchant merchant logout: old response cannot release a newer identity verification (7.0662ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:108:12)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:124:3
+✖ merchant merchant login: old finally cannot release a newer page verification (8.6943ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:131:12)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:59:3
+✖ combined DEMO checkout saves one unpaid order and opens the orders Tab (354.5644ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '待支付' !== '待付款'
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:66:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.start (node:internal/test_runner/test:1003:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '待支付',
+    expected: '待付款',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\demo-checkout.test.cjs:59:3
+✖ customer DEMO checkout saves one unpaid order and opens the orders Tab (42.8767ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '待支付' !== '待付款'
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\demo-checkout.test.cjs:66:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '待支付',
+    expected: '待付款',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\navigation.test.cjs:40:1
+✖ Combined homepage resumes a freshly authorized merchant workspace (154.2341ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  4 !== 1
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\navigation.test.cjs:42:10)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 4,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:77:1
+✖ phase6: initial load sends scoped authenticated parameters and normalizes real page state (16.471ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:78:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.start (node:internal/test_runner/test:1003:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:94:1
+✖ phase6: empty successful response clears pagination without inventing orders (6.2742ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:95:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:99:1
+✖ phase6: next page appends orders and forwards the opaque cursor unchanged (6.7615ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:100:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:108:1
+✖ phase6: overlapping IDs across pages are not displayed twice (8.3653ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:109:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:114:1
+✖ phase6: duplicate IDs inside a single returned page are displayed once (3.6612ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:115:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:119:1
+✖ phase6: repeated reach-bottom events share one in-flight pagination request (16.6139ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:120:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:127:1
+✖ phase6: unknown filter leaves tab, rows and request count unchanged (3.932ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:128:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:132:1
+✖ phase6: rapid filter requests completing in reverse order retain only the newest result (4.2474ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:133:25)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:144:1
+✖ phase6: stale failure cannot clear the newer filter loading indicator or set its error (5.5842ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:145:25)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:151:1
+✖ phase6: pull refresh clears cursor and rejects a late pre-refresh page (6.0632ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:152:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:160:3
+✖ phase6: onHide invalidates late resolve without additional setData (3.0416ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:161:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:160:3
+✖ phase6: onHide invalidates late reject without additional setData (2.8518ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:161:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:160:3
+✖ phase6: onUnload invalidates late resolve without additional setData (2.9036ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:161:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:160:3
+✖ phase6: onUnload invalidates late reject without additional setData (5.079ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:161:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:169:1
+✖ phase6: changed identity rejects a pending response before orders reach the page (4.4625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:170:25)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:175:1
+✖ phase6: identity change before pagination cannot retain or append the previous user orders (12.5981ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:176:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:185:1
+✖ phase6: store change before pagination cannot reuse the previous store rows or cursor (3.8983ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:186:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:194:1
+✖ phase6: onShow after identity change resets old rows and makes a fresh first-page request (7.7029ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:195:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed null page is rejected without exposing invalid rows (4.3382ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed non-array orders is rejected without exposing invalid rows (2.7623ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed non-boolean hasMore is rejected without exposing invalid rows (4.279ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed non-string next cursor is rejected without exposing invalid rows (6.2254ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed empty next cursor is rejected without exposing invalid rows (3.0699ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed order with no stable ID is rejected without exposing invalid rows (2.7646ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed order with non-numeric total is rejected without exposing invalid rows (7.2037ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:214:1
+✖ phase6: first-page network failure never falls back to local demo orders (3.0935ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:215:44)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:220:1
+✖ phase6: failed next page retains loaded rows and cursor and can be retried successfully (4.5422ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:221:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:229:1
+✖ phase6: exhausted pagination never makes another request on button or reach-bottom (2.7971ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:230:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:243:1
+✖ phase6: switching cloud to local invalidates an outstanding cloud result (3.0455ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:244:44)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:258:1
+✖ phase6: pull refresh always stops its spinner after a current request failure (3.7127ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:259:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:282:3
+✖ phase6: identity switch keeps new loading and list isolated when old pagination resolve runs finally (2.8594ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:283:19)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:282:3
+✖ phase6: identity switch keeps new loading and list isolated when old pagination reject runs finally (2.4731ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:283:19)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:282:3
+✖ phase6: store switch keeps new loading and list isolated when old pagination resolve runs finally (2.5403ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:283:19)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:282:3
+✖ phase6: store switch keeps new loading and list isolated when old pagination reject runs finally (2.7454ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_order_tab_entry_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:32)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:89:20)
+      at loaded (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-orders-phase6.test.mjs:283:19)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_order_tab_entry_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-runtime.test.mjs:52:1
+✖ profile: a verified merchant explicitly enters workspace and saves preference (195.1905ms)
+  miniprogram/pages/profile/profile.ts:20
+    loadAvatarForHeader(token:string,apiBase:string,serial:number){
+                             ^
+  
+  SyntaxError: Unexpected token ':'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at handler (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:23:13)
+      at makeProfile (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:47:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:53:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.start (node:internal/test_runner/test:1003:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17)
+
+test at backend\tests\frontend-navigation-runtime.test.mjs:59:1
+✖ profile: rejected permission never navigates or stores merchant preference (77.5287ms)
+  miniprogram/pages/profile/profile.ts:20
+    loadAvatarForHeader(token:string,apiBase:string,serial:number){
+                             ^
+  
+  SyntaxError: Unexpected token ':'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at handler (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:23:13)
+      at makeProfile (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:47:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:60:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+
+test at backend\tests\frontend-navigation-runtime.test.mjs:67:1
+✖ profile: simultaneous taps make only one authorization request (37.2553ms)
+  miniprogram/pages/profile/profile.ts:20
+    loadAvatarForHeader(token:string,apiBase:string,serial:number){
+                             ^
+  
+  SyntaxError: Unexpected token ':'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at handler (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:23:13)
+      at makeProfile (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:47:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:69:19)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+
+test at backend\tests\frontend-navigation-runtime.test.mjs:77:1
+✖ profile: hiding while permission is pending prevents late navigation (77.5333ms)
+  miniprogram/pages/profile/profile.ts:20
+    loadAvatarForHeader(token:string,apiBase:string,serial:number){
+                             ^
+  
+  SyntaxError: Unexpected token ':'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at handler (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:23:13)
+      at makeProfile (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:47:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:79:27)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+
+test at backend\tests\frontend-navigation-runtime.test.mjs:88:1
+✖ profile: session identity changes invalidate a pending authorization (83.5413ms)
+  miniprogram/pages/profile/profile.ts:20
+    loadAvatarForHeader(token:string,apiBase:string,serial:number){
+                             ^
+  
+  SyntaxError: Unexpected token ':'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at handler (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:23:13)
+      at makeProfile (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:47:20)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:90:39)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+
+test at backend\tests\frontend-navigation-runtime.test.mjs:130:1
+✖ merchant workbench: customer switch navigates to home tab (12.2067ms)
+  ReferenceError: openCustomerShop is not defined
+      at Object.openCustomerShop (miniprogram/pages/admin/admin.ts:5:5)
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation-runtime.test.mjs:139:6)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+
+test at backend\tests\frontend-navigation.test.mjs:33:1
+✖ all tabBar targets are registered and present in customer build (0.8244ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  5 !== 4
+  
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation.test.mjs:34:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 5,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation.test.mjs:54:1
+✖ customer profile static links stay in customer build (6.3733ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /wx\.navigateTo\(\{\s*url:\s*'\/pages\/orders\/orders\?tab='/. Input:
+  
+  "import { cachedCustomerNickname,cacheCustomerNickname } from '../../modules/shared/runtime/customerNicknameCache'\n" +
+    "import { getSessionToken } from '../../modules/shared/runtime/context'\n" +
+    "import { getCloudContext } from '../../modules/shared/runtime/context'\n" +
+    "import { authorizedGet,loginWithWechat,logoutCurrentSession,hasRecentMerchantPermission } from '../../modules/shared/runtime/auth'\n" +
+    "import { CLOUD_ONLY,PUBLIC_API_BASE } from '../../config/cloud'\n" +
+    "import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/customer/api/support'\n" +
+    "import { CAN_OPEN_MERCHANT,openMerchantWorkspace } from '../../modules/integration/singleAppHost'\n" +
+    'Page({\n' +
+    "  data:{accountName:'未登录',avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,\n" +
+    "    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},\n" +
+    '  loginSerial:0,\n' +
+    '  serial:0,\n' +
+    "  merchantSerial:0,merchantContext:'',\n" +
+    '  merchantOpening:false,\n' +
+    '  keepLoginOpen(){},\n' +
+    "  showLogin(){if(getSessionToken()){wx.navigateTo({url:'/pages/customer-account/customer-account'});return}this.setData({loginPanel:true,loginStatus:''})},\n" +
+    "  closeLogin(){if(!this.data.loginBusy)this.setData({loginPanel:false,loginStatus:''})},\n" +
+    '  selectLoginMethod(e:any){\n' +
+    "    const method=String(e?.currentTarget?.dataset?.method||'wechat')\n" +
+    "    if(method==='wechat'||method==='phone')this.setData({loginMethod:method,loginStatus:''})\n" +
+    '  },\n' +
+    "  onPhoneInput(e:any){this.setData({phoneNumber:String(e?.detail?.value||'').replace(/\\D/g,'').slice(0,11)})},\n" +
+    '  requestSmsCode(){\n' +
+    '    if(!/^1[3-9]\\d{9}$/.test(this.data.phoneNumber)){\n' +
+    "      this.setData({loginStatus:'请输入正确的中国大陆11位手机号'});return\n" +
+    '    }\n' +
+    "    this.setData({loginStatus:'短信验证码服务尚未接入，暂不能使用手机号登录。请先选择微信快捷登录。'})\n" +
+    '  },\n' +
+    '  loginErrorMessage(error:any):string{\n' +
+    "    const code=String(error?.message||error||'')\n" +
+    "    if(code==='login_http_503_auth_not_configured')return '服务器未配置微信登录 AppID 或密钥，请管理员检查 Render 环境变量。'\n" +
+    "    if(code==='login_http_401_wechat_auth_failed')return '微信凭证验证失败。可能是小程序 AppID 与服务器配置不匹配。'\n" +
+    "    if(code==='login_http_400_invalid_code')return '微信临时登录凭证无效，请重新尝试。'\n" +
+    "    if(code==='login_http_503_service_unavailable')return '服务器数据库或内部服务暂不可用（503）。'\n" +
+    "    if(code==='login_network_domain')return '请求域名未通过微信校验，请检查小程序合法 request 域名。'\n" +
+    "    if(code==='login_network_unavailable')return '无法连接测试服务器，请检查网络或服务器状态。'\n" +
+    "    if(code==='wx_login_api_failed'||code==='wx_login_failed')return '微信未能生成小程序登录凭证，请确认正在使用真实 AppID。'\n" +
+    "    if(code==='untrusted_preview_endpoint')return '当前测试服务器地址未获允许。'\n" +
+    "    if(code==='session_or_store_changed')return '登录期间账号或店铺发生变化，请重新登录。'\n" +
+    "    if(code==='server_login_failed')return '服务器登录响应不完整。'\n" +
+    "    if(code.startsWith('login_http_'))return '登录接口返回错误：'+code.slice(11).replace(/_/g,' / ').slice(0,60)\n" +
+    "    return '微信登录失败，原因暂未识别；请联系管理员检查登录配置。'\n" +
+    '  },\n' +
+    '  async loginWechat(){\n' +
+    '    const cfg=getCloudContext()\n' +
+    '    if(!cfg||this.data.loginBusy)return\n' +
+    '    const serial=++this.loginSerial\n' +
+    "    this.setData({loginBusy:true,loginStatus:'正在通过微信验证身份…',merchantAuthorized:false})\n" +
+    '    try{\n' +
+    '      await loginWithWechat(cfg.apiBase)\n' +
+    '      const current=getCloudContext()\n' +
+    '      if(serial!==this.loginSerial||!current||current.apiBase!==cfg.apiBase||current.storeSlug!==cfg.storeSlug)return\n' +
+    "      this.setData({loginPanel:false,loginStatus:'微信身份已确认；商家入口需服务器另行授权',accountName:cachedCustomerNickname()||'微信用户',accountSubtitle:'微信身份已连接',loggedIn:true})\n" +
+    '      await this.checkMerchant()\n' +
+    '    }catch(error){if(serial===this.loginSerial)this.setData({loginStatus:this.loginErrorMessage(error)})}\n' +
+    '    finally{if(serial===this.loginSerial)this.setData({loginBusy:false})}\n' +
+    '  },\n' +
+    '  logout(){\n' +
+    '    if(this.data.logoutBusy)return\n' +
+    "    wx.showModal({title:'退出登录',content:'退出当前账号？本机登录状态将立即清除。',confirmText:'退出登录',success:async r=>{\n" +
+    '      if(!r.confirm)return\n' +
+    '      const cfg=getCloudContext()\n' +
+    '      ++this.loginSerial;++this.serial;++this.merchantSerial\n' +
+    "      this.setData({logoutBusy:true,loggedIn:false,loginPanel:false,loginBusy:false,merchantAuthorized:false,accountName:'未登录',accountSubtitle:'登录后管理订单与配送',supportUnread:null})\n" +
+    '      try{if(cfg)await logoutCurrentSession(cfg.apiBase)}\n' +
+    '      finally{\n' +
+    '        this.setData({logoutBusy:false})\n' +
+    "        wx.showToast({title:'已退出当前设备',icon:'success'})\n" +
+    '      }\n' +
+    '    }})\n' +
+    '  },\n' +
+    '  async checkMerchant(){\n' +
+    '    const serial=++this.merchantSerial,cfg=getCloudContext(),identity=supportIdentity()\n' +
+    '    if(this.merchantContext!==identity||!CAN_OPEN_MERCHANT||!cfg)this.setData({merchantAuthorized:false})\n' +
+    '    if(CAN_OPEN_MERCHANT&&cfg&&hasRecentMerchantPermission(cfg.apiBase,cfg.storeSlug))this.setData({merchantAuthorized:true})\n' +
+    '    this.merchantContext=identity\n' +
+    '    if(!CAN_OPEN_MERCHANT||!cfg)return\n' +
+    '    try{\n' +
+    "      const result=await authorizedGet(cfg.apiBase,'/v1/merchant/stores/'+cfg.storeSlug+'/categories',undefined,true)\n" +
+    '      if(serial===this.merchantSerial&&identity===supportIdentity()&&result&&Array.isArray(result.items))this.setData({merchantAuthorized:true})\n' +
+    '    }catch(error){\n' +
+    '      if(serial!==this.merchantSerial||identity!==supportIdentity())return\n' +
+    '      if(/^(?:Error: )?(?:http_40[13](?:_|$)|not_logged_in$)/.test(String(error)))this.setData({merchantAuthorized:false})\n' +
+    "      if(/^(?:Error: )?http_401(?:_|$)/.test(String(error))){wx.removeStorageSync('stall_server_session_v1');wx.removeStorageSync('stall_server_cache_scope_v1');wx.removeStorageSync('stall_merchant_home_preference_v1')}\n" +
+    '    }\n' +
+    '  },\n' +
+    '  async openMerchant(){\n' +
+    '    if(!CAN_OPEN_MERCHANT)return\n' +
+    '    if(!this.data.merchantAuthorized||this.merchantOpening)return\n' +
+    '    const cfg=getCloudContext(),identity=supportIdentity(),serial=this.merchantSerial\n' +
+    '    if(!cfg)return\n' +
+    '    this.merchantOpening=true\n' +
+    '    try{\n' +
+    "      const result=await authorizedGet(cfg.apiBase,'/v1/merchant/stores/'+cfg.storeSlug+'/categories')\n" +
+    '      if(serial!==this.merchantSerial||identity!==supportIdentity()||!result||!Array.isArray(result.items))return\n' +
+    "      wx.setStorageSync('stall_merchant_home_preference_v1',cfg.apiBase+'|'+cfg.storeSlug)\n" +
+    '      openMerchantWorkspace()\n' +
+    '    }catch(error){\n' +
+    '      if(serial!==this.merchantSerial||identity!==supportIdentity())return\n' +
+    '      if(/^(?:Error: )?(?:http_40[13](?:_|$)|not_logged_in$)/.test(String(error)))this.setData({merchantAuthorized:false})\n' +
+    "      if(/^(?:Error: )?http_401(?:_|$)/.test(String(error))){wx.removeStorageSync('stall_server_session_v1');wx.removeStorageSync('stall_server_cache_scope_v1');wx.removeStorageSync('stall_merchant_home_preference_v1')}\n" +
+    "      wx.showToast({title:'商家权限验证失败',icon:'none'})\n" +
+    '    }\n' +
+    '    finally{this.merchantOpening=false}\n' +
+    '  },\n' +
+    '  loadAvatarForHeader(token:string,apiBase:string,serial:number){\n' +
+    "    wx.request({url:apiBase.replace(/\\/$/,'')+'/v1/customer/avatar-photo',method:'GET',timeout:15000,\n" +
+    "      header:{Authorization:'Bearer '+token},\n" +
+    '      success:(response:any)=>{\n' +
+    '        if(serial!==this.serial||getSessionToken()!==token||response.statusCode!==200)return\n' +
+    "        if(!response.data||typeof response.data.dataBase64!=='string'||!['image/jpeg','image/png'].includes(response.data.mimeType))return\n" +
+    "        const extension=response.data.mimeType==='image/png'?'png':'jpg'\n" +
+    "        const file=wx.env.USER_DATA_PATH+'/customer-profile-header-'+Date.now()+'.'+extension\n" +
+    "        wx.getFileSystemManager().writeFile({filePath:file,data:response.data.dataBase64,encoding:'base64',\n" +
+    '          success:()=>{if(serial===this.serial&&getSessionToken()===token)this.setData({avatarPhotoPath:file})}})\n' +
+    '      }\n' +
+    '    })\n' +
+    '  },\n' +
+    "  async onShow(){const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){const token=getSessionToken();if(token)this.loadAvatarForHeader(token,cfg.apiBase,serial);authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},\n" +
+    '  onHide(){this.serial++;this.merchantSerial++;this.loginSerial++;this.setData({loginBusy:false})},\n' +
+    '  onUnload(){this.serial++;this.merchantSerial++;this.loginSerial++},\n' +
+    '  openOrders(e:any) {\n' +
+    "    const tab=String(e?.currentTarget?.dataset?.tab||'all'),fulfillment=String(e?.currentTarget?.dataset?.fulfillment||'')\n" +
+    "    wx.setStorageSync('stall_order_tab_entry_v1',{tab,fulfillment})\n" +
+    "    wx.switchTab({url:'/pages/orders/orders'})\n" +
+    '  },\n' +
+    "  unavailable(){wx.showToast({title:'该服务暂未开通',icon:'none'})},\n" +
+    "  serviceInfo(e:any){const kind=String(e.currentTarget.dataset.kind);const content:Record<string,string>={faq:'在商品页或分类页加入购物车，选择商品后进入结算。配送区域、费用、库存和营业时间以店铺实时规则为准。订单进度可在「我的订单」中查看。',about:'本小程序提供店铺商品浏览、购物车、订单与配送服务。订单及配送信息由当前店铺管理。'};wx.showModal({title:kind==='faq'?'常见问题':'关于我们',content:content[kind]||'',showCancel:false})}\n" +
+    '\n' +
+    '})\n'
+  
+      at TestContext.<anonymous> (file:///C:/project%20development/stall-miniapp/backend/tests/frontend-navigation.test.mjs:60:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "import { cachedCustomerNickname,cacheCustomerNickname } from '../../modules/shared/runtime/customerNicknameCache'\nimport { getSessionToken } from '../../modules/shared/runtime/context'\nimport { getCloudContext } from '../../modules/shared/runtime/context'\nimport { authorizedGet,loginWithWechat,logoutCurrentSession,hasRecentMerchantPermission } from '../../modules/shared/runtime/auth'\nimport { CLOUD_ONLY,PUBLIC_API_BASE } from '../../config/cloud'\nimport { supportConfig,customerSupportGet,supportIdentity } from '../../modules/customer/api/support'\nimport { CAN_OPEN_MERCHANT,openMerchantWorkspace } from '../../modules/integration/singleAppHost'\nPage({\n  data:{accountName:'未登录',avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,\n    loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,loginMethod:'wechat',phoneNumber:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},\n  loginSerial:0,\n  serial:0,\n  merchantSerial:0,merchantContext:'',\n  merchantOpening:false,\n  keepLoginOpen(){},\n  showLogin(){if(getSessionToken()){wx.navigateTo({url:'/pages/customer-account/customer-account'});return}this.setData({loginPanel:true,loginStatus:''})},\n  closeLogin(){if(!this.data.loginBusy)this.setData({loginPanel:false,loginStatus:''})},\n  selectLoginMethod(e:any){\n    const method=String(e?.currentTarget?.dataset?.method||'wechat')\n    if(method==='wechat'||method==='phone')this.setData({loginMethod:method,loginStatus:''})\n  },\n  onPhoneInput(e:any){this.setData({phoneNumber:String(e?.detail?.value||'').replace(/\\D/g,'').slice(0,11)})},\n  requestSmsCode(){\n    if(!/^1[3-9]\\d{9}$/.test(this.data.phoneNumber)){\n      this.setData({loginStatus:'请输入正确的中国大陆11位手机号'});return\n    }\n    this.setData({loginStatus:'短信验证码服务尚未接入，暂不能使用手机号登录。请先选择微信快捷登录。'})\n  },\n  loginErrorMessage(error:any):string{\n    const code=String(error?.message||error||'')\n    if(code==='login_http_503_auth_not_configured')return '服务器未配置微信登录 AppID 或密钥，请管理员检查 Render 环境变量。'\n    if(code==='login_http_401_wechat_auth_failed')return '微信凭证验证失败。可能是小程序 AppID 与服务器配置不匹配。'\n    if(code==='login_http_400_invalid_code')return '微信临时登录凭证无效，请重新尝试。'\n    if(code==='login_http_503_service_unavailable')return '服务器数据库或内部服务暂不可用（503）。'\n    if(code==='login_network_domain')return '请求域名未通过微信校验，请检查小程序合法 request 域名。'\n    if(code==='login_network_unavailable')return '无法连接测试服务器，请检查网络或服务器状态。'\n    if(code==='wx_login_api_failed'||code==='wx_login_failed')return '微信未能生成小程序登录凭证，请确认正在使用真实 AppID。'\n    if(code==='untrusted_preview_endpoint')return '当前测试服务器地址未获允许。'\n    if(code==='session_or_store_changed')return '登录期间账号或店铺发生变化，请重新登录。'\n    if(code==='server_login_failed')return '服务器登录响应不完整。'\n    if(code.startsWith('login_http_'))return '登录接口返回错误：'+code.slice(11).replace(/_/g,' / ').slice(0,60)\n    return '微信登录失败，原因暂未识别；请联系管理员检查登录配置。'\n  },\n  async loginWechat(){\n    const cfg=getCloudContext()\n    if(!cfg||this.data.loginBusy)return\n    const serial=++this.loginSerial\n    this.setData({loginBusy:true,loginStatus:'正在通过微信验证身份…',merchantAuthorized:false})\n    try{\n      await loginWithWechat(cfg.apiBase)\n      const current=getCloudContext()\n      if(serial!==this.loginSerial||!current||current.apiBase!==cfg.apiBase||current.storeSlug!==cfg.storeSlug)return\n      this.setData({loginPanel:false,loginStatus:'微信身份已确认；商家入口需服务器另行授权',accountName:cachedCustomerNickname()||'微信用户',accountSubtitle:'微信身份已连接',loggedIn:true})\n      await this.checkMerchant()\n    }catch(error){if(serial===this.loginSerial)this.setData({loginStatus:this.loginErrorMessage(error)})}\n    finally{if(serial===this.loginSerial)this.setData({loginBusy:false})}\n  },\n  logout(){\n    if(this.data.logoutBusy)return\n    wx.showModal({title:'退出登录',content:'退出当前账号？本机登录状态将立即清除。',confirmText:'退出登录',success:async r=>{\n      if(!r.confirm)return\n      const cfg=getCloudContext()\n      ++this.loginSerial;++this.serial;++this.merchantSerial\n      this.setData({logoutBusy:true,loggedIn:false,loginPanel:false,loginBusy:false,merchantAuthorized:false,accountName:'未登录',accountSubtitle:'登录后管理订单与配送',supportUnread:null})\n      try{if(cfg)await logoutCurrentSession(cfg.apiBase)}\n      finally{\n        this.setData({logoutBusy:false})\n        wx.showToast({title:'已退出当前设备',icon:'success'})\n      }\n    }})\n  },\n  async checkMerchant(){\n    const serial=++this.merchantSerial,cfg=getCloudContext(),identity=supportIdentity()\n    if(this.merchantContext!==identity||!CAN_OPEN_MERCHANT||!cfg)this.setData({merchantAuthorized:false})\n    if(CAN_OPEN_MERCHANT&&cfg&&hasRecentMerchantPermission(cfg.apiBase,cfg.storeSlug))this.setData({merchantAuthorized:true})\n    this.merchantContext=identity\n    if(!CAN_OPEN_MERCHANT||!cfg)return\n    try{\n      const result=await authorizedGet(cfg.apiBase,'/v1/merchant/stores/'+cfg.storeSlug+'/categories',undefined,true)\n      if(serial===this.merchantSerial&&identity===supportIdentity()&&result&&Array.isArray(result.items))this.setData({merchantAuthorized:true})\n    }catch(error){\n      if(serial!==this.merchantSerial||identity!==supportIdentity())return\n      if(/^(?:Error: )?(?:http_40[13](?:_|$)|not_logged_in$)/.test(String(error)))this.setData({merchantAuthorized:false})\n      if(/^(?:Error: )?http_401(?:_|$)/.test(String(error))){wx.removeStorageSync('stall_server_session_v1');wx.removeStorageSync('stall_server_cache_scope_v1');wx.removeStorageSync('stall_merchant_home_preference_v1')}\n    }\n  },\n  async openMerchant(){\n    if(!CAN_OPEN_MERCHANT)return\n    if(!this.data.merchantAuthorized||this.merchantOpening)return\n    const cfg=getCloudContext(),identity=supportIdentity(),serial=this.merchantSerial\n    if(!cfg)return\n    this.merchantOpening=true\n    try{\n      const result=await authorizedGet(cfg.apiBase,'/v1/merchant/stores/'+cfg.storeSlug+'/categories')\n      if(serial!==this.merchantSerial||identity!==supportIdentity()||!result||!Array.isArray(result.items))return\n      wx.setStorageSync('stall_merchant_home_preference_v1',cfg.apiBase+'|'+cfg.storeSlug)\n      openMerchantWorkspace()\n    }catch(error){\n      if(serial!==this.merchantSerial||identity!==supportIdentity())return\n      if(/^(?:Error: )?(?:http_40[13](?:_|$)|not_logged_in$)/.test(String(error)))this.setData({merchantAuthorized:false})\n      if(/^(?:Error: )?http_401(?:_|$)/.test(String(error))){wx.removeStorageSync('stall_server_session_v1');wx.removeStorageSync('stall_server_cache_scope_v1');wx.removeStorageSync('stall_merchant_home_preference_v1')}\n      wx.showToast({title:'商家权限验证失败',icon:'none'})\n    }\n    finally{this.merchantOpening=false}\n  },\n  loadAvatarForHeader(token:string,apiBase:string,serial:number){\n    wx.request({url:apiBase.replace(/\\/$/,'')+'/v1/customer/avatar-photo',method:'GET',timeout:15000,\n      header:{Authorization:'Bearer '+token},\n      success:(response:any)=>{\n        if(serial!==this.serial||getSessionToken()!==token||response.statusCode!==200)return\n        if(!response.data||typeof response.data.dataBase64!=='string'||!['image/jpeg','image/png'].includes(response.data.mimeType))return\n        const extension=response.data.mimeType==='image/png'?'png':'jpg'\n        const file=wx.env.USER_DATA_PATH+'/customer-profile-header-'+Date.now()+'.'+extension\n        wx.getFileSystemManager().writeFile({filePath:file,data:response.data.dataBase64,encoding:'base64',\n          success:()=>{if(serial===this.serial&&getSessionToken()===token)this.setData({avatarPhotoPath:file})}})\n      }\n    })\n  },\n  async onShow(){const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){const token=getSessionToken();if(token)this.loadAvatarForHeader(token,cfg.apiBase,serial);authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},\n  onHide(){this.serial++;this.merchantSerial++;this.loginSerial++;this.setData({loginBusy:false})},\n  onUnload(){this.serial++;this.merchantSerial++;this.loginSerial++},\n  openOrders(e:any) {\n    const tab=String(e?.currentTarget?.dataset?.tab||'all'),fulfillment=String(e?.currentTarget?.dataset?.fulfillment||'')\n    wx.setStorageSync('stall_order_tab_entry_v1',{tab,fulfillment})\n    wx.switchTab({url:'/pages/orders/orders'})\n  },\n  unavailable(){wx.showToast({title:'该服务暂未开通',icon:'none'})},\n  serviceInfo(e:any){const kind=String(e.currentTarget.dataset.kind);const content:Record<string,string>={faq:'在商品页或分类页加入购物车，选择商品后进入结算。配送区域、费用、库存和营业时间以店铺实时规则为准。订单进度可在「我的订单」中查看。',about:'本小程序提供店铺商品浏览、购物车、订单与配送服务。订单及配送信息由当前店铺管理。'};wx.showModal({title:kind==='faq'?'常见问题':'关于我们',content:content[kind]||'',showCancel:false})}\n\n})\n",
+    expected: /wx\.navigateTo\(\{\s*url:\s*'\/pages\/orders\/orders\?tab='/,
+    operator: 'match',
+    diff: 'simple'
+  }
+EXIT_CODE=1

@@ -1,0 +1,24 @@
+
+> miniprogram-ts-quickstart@1.0.0 check:build-output
+> node scripts/check-build-output.mjs
+
+combined: emitted modules, page ownership and resource inventory checked
+node:fs:440
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open 'C:\project development\stall-miniapp\dist\customer\build-manifest.json'
+    at Object.readFileSync (node:fs:440:20)
+    at checkOutput (file:///C:/project%20development/stall-miniapp/scripts/miniapp-output.mjs:19:31)
+    at file:///C:/project%20development/stall-miniapp/scripts/check-build-output.mjs:3:70
+    at ModuleJob.run (node:internal/modules/esm/module_job:377:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:671:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\project development\\stall-miniapp\\dist\\customer\\build-manifest.json'
+}
+
+Node.js v24.11.1
+EXIT_CODE=1

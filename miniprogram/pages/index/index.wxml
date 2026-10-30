@@ -67,7 +67,7 @@
 <text>♢</text>优惠</view>
 <view bindtap="showDelivery">
 <text>♧</text>配送</view>
-<view bindtap="unavailable">
+<view bindtap="openFavorites">
 <text>♡</text>收藏</view>
 </view>
 <view class="section-heading">

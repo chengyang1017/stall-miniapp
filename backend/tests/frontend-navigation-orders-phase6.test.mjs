@@ -39,7 +39,7 @@ function fixture({cloud=true,local=[]}={}){
   const requests=[],writes=[],calls=[],jobs=[]
   const identity=()=>JSON.stringify([cfg?.apiBase??null,cfg?.storeSlug??null,token])
   const wx=new Proxy({
-    getStorageSync(key){assert.equal(key,'stall_server_session_v1');return token},
+    getStorageSync(key){if(key==='stall_order_tab_entry_v1')return undefined;assert.equal(key,'stall_server_session_v1');return token},
     request(options){
       let settled=false
       requests.push({options,
@@ -55,7 +55,8 @@ function fixture({cloud=true,local=[]}={}){
     {filename:'customer/api/orders.ts',timeout:1000})
   vm.runInNewContext(paymentJS+'\n'+pageJS,{...globals,...api,
     Page(value){definition=value},
-    loadWorkflowOrders(){localReads++;return clone(local)},chinaTime:value=>'北京时间:'+value
+    loadWorkflowOrders(){localReads++;return clone(local)},chinaTime:value=>'北京时间:'+value,
+    takeCreatedDemoOrder:()=>''
   },{filename:'pages/orders/orders.ts',timeout:1000})
   assert.ok(definition?.loadCloudPage,'actual orders Page was not registered')
   const p={...definition,data:clone(definition.data),setData(patch){writes.push(clone(patch));Object.assign(this.data,patch)}}

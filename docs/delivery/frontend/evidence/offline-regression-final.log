@@ -1,0 +1,42 @@
+✔ Combined homepage resumes a freshly authorized merchant workspace (54.7352ms)
+✔ Customer homepage ignores a saved Combined merchant preference (70.1873ms)
+✔ Customer profile never requests merchant permissions or opens workspace (14.3933ms)
+✔ Combined profile still authorizes before explicitly opening workspace (13.2967ms)
+✔ Combined profile does not navigate after a rejected permission request (11.55ms)
+✔ Combined workbench can explicitly switch back to customer tab (33.106ms)
+✔ Merchant workbench hides and rejects an unavailable customer tab (42.8277ms)
+✔ Combined profile suppresses repeated taps while permission is pending (8.8768ms)
+✔ Combined profile ignores permission response after hiding (8.7087ms)
+✔ Combined profile ignores permission response after identity replacement (10.0357ms)
+✔ Combined homepage does not resume workspace after denied permission (34.5318ms)
+✔ customer and merchant pages each have a declared owner (1.7202ms)
+✔ GPS and review pages remain role-specific (0.3233ms)
+✔ checkout and basket are customer-only, administration merchant-only (0.2143ms)
+✔ order detail: pending response is ignored after page hide (24.7157ms)
+✔ order detail: pending response is ignored after unload (3.7349ms)
+✔ order detail: old request cannot overwrite newer onShow (3.7192ms)
+✔ order detail: identity change discards pending order response (17.4539ms)
+✔ order detail: obsolete fetch failure does not show toast (16.9208ms)
+✔ order detail: current fetch failure shows error, not fabricated order (40.8811ms)
+✔ proof: concurrent refreshes make one request and show latest URL (7.9658ms)
+✔ proof: hiding page discards a late signed URL (6.2963ms)
+✔ proof: identity change discards a late signed URL (5.5626ms)
+✔ proof: current URL failure is reported without image (4.5457ms)
+✔ proof: preview with no image does not open image viewer (6.8245ms)
+✔ preview scanner detects optional chaining in generated JS with exact location (3.2265ms)
+✔ preview scanner detects nullish coalescing and assignment (2.7757ms)
+✔ preview scanner does not flag simple strings and comments (0.3ms)
+✔ preview scanner rejects known broken checkbox-group opening tag (0.8399ms)
+✔ preview scanner does not reject a valid checkbox-group (0.3288ms)
+✔ preview configuration warns about ES2020/es6=false mismatch without calling it a definite compiler failure (0.4108ms)
+✔ end-to-end audit of disposable fixture detects both real preview blockers (40.0286ms)
+✔ missing generated JS is reported as unverified, not as full preview success (8.9107ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 542.7076
+EXIT_CODE=0

@@ -1,0 +1,152 @@
+✖ current WeChat login saves the verified response and cache scope (4.4577ms)
+✖ store switch during wx.login prevents sending the old code (3.3825ms)
+✖ backend switch during exchange cannot overwrite session or scope (1.94ms)
+✖ logout during exchange cannot be undone by a late login response (2.4632ms)
+✖ replacement session cannot be overwritten by a late exchange (2.8704ms)
+✖ newer login supersedes an earlier exchange even if the earlier one returns first (1.8713ms)
+✖ inactive requesting page cannot start a backend exchange (3.3794ms)
+✖ inactive requesting page cannot save an in-flight exchange (2.2426ms)
+✖ malformed server token is rejected without overwriting the session (1.7885ms)
+✔ HTTP and network failures preserve the previous session (4.3207ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 1
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 142.6834
+
+✖ failing tests:
+
+test at apps\tests\auth-session.test.cjs:35:1
+✖ current WeChat login saves the verified response and cache scope (4.4577ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 15000
+  
+      at TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:38:10)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 15000,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:40:1
+✖ store switch during wx.login prevents sending the old code (3.3825ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:44:3)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /session_or_store_changed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:47:1
+✖ backend switch during exchange cannot overwrite session or scope (1.94ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:50:3)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /session_or_store_changed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:53:1
+✖ logout during exchange cannot be undone by a late login response (2.4632ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:55:26)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /session_or_store_changed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:57:1
+✖ replacement session cannot be overwritten by a late exchange (2.8704ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:59:26)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /session_or_store_changed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:61:1
+✖ newer login supersedes an earlier exchange even if the earlier one returns first (1.8713ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:64:26)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /session_or_store_changed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:67:1
+✖ inactive requesting page cannot start a backend exchange (3.3794ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:70:3)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /session_or_store_changed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:73:1
+✖ inactive requesting page cannot save an in-flight exchange (2.2426ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:76:3)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /session_or_store_changed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at apps\tests\auth-session.test.cjs:78:1
+✖ malformed server token is rejected without overwriting the session (1.7885ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\project development\stall-miniapp\apps\tests\auth-session.test.cjs:82:5)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /server_login_failed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+EXIT_CODE=1

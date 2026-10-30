@@ -28,3 +28,5 @@
 .detail-footer-link{flex:0 0 66rpx;text-align:center;color:#74638b;font-size:20rpx}.detail-footer-link>text,.cart-symbol{display:block;font-size:38rpx;line-height:43rpx;position:relative}.favorite-disabled{color:#ad9ebe}.detail-cart-badge{position:absolute;right:-6rpx;top:-4rpx;background:#ff4674;color:#fff;border-radius:25rpx;padding:0 8rpx;min-width:17rpx;font-size:18rpx;line-height:28rpx}.detail-footer button{flex:1;min-width:0;margin:0;padding:0 8rpx;border-radius:48rpx;font-size:26rpx;line-height:72rpx;height:72rpx;white-space:nowrap}.detail-add{background:#f3ebff;color:#7836dc}.detail-buy{background:linear-gradient(130deg,#9747fa,#4c25ce);color:#fff}.detail-footer button[disabled]{opacity:.45}
 
 .detail-cart-icon{width:42rpx;height:42rpx;display:block;margin:0 auto}
+
+.favorite-active{color:#7137db}

@@ -10,7 +10,8 @@
     "build:merchant": "node scripts/build-miniapp.mjs merchant",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "check:build-output": "node scripts/check-build-output.mjs",
-    "preview:phone:update": "node scripts/update-phone-preview.mjs"
+    "preview:phone:update": "node scripts/update-phone-preview.mjs",
+    "verify:frontend": "node scripts/verify-frontend.mjs"
   },
   "keywords": [],
   "author": "",

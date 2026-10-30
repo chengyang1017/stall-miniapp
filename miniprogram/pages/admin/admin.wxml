@@ -8,7 +8,7 @@
         <view class="merchant-title">商家工作台</view>
         <view class="merchant-subtitle">日常经营，一处管理</view>
       </view>
-      <view style="display:flex;gap:12rpx;align-items:center"><button wx:if="{{canOpenCustomer}}" size="mini" bindtap="openCustomerShop">进入顾客端</button><navigator class="merchant-account" url="/pages/merchant-login/merchant-login">账号与权限 <text>›</text></navigator></view>
+      <view style="display:flex;gap:12px;align-items:center"><button wx:if="{{canOpenCustomer}}" size="mini" bindtap="openCustomerShop">进入顾客端</button><navigator class="merchant-account" url="/pages/merchant-login/merchant-login">账号与权限 <text>›</text></navigator></view>
     </view>
   </view>
 

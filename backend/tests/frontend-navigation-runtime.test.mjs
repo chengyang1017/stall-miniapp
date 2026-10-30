@@ -6,6 +6,11 @@ import {readFileSync} from 'node:fs'
 import vm from 'node:vm'
 
 const source = path => readFileSync(new URL('../../'+path, import.meta.url), 'utf8')
+// Load the real Combined adapter so extracted page handlers exercise its wx calls.
+function combinedNavigation(wx) {
+  const code = source('miniprogram/modules/integration/singleAppHost.ts').replace(/^export /gm, '')
+  return vm.runInNewContext(`${code}\n;({CAN_OPEN_MERCHANT,openMerchantWorkspace,CAN_OPEN_CUSTOMER,openCustomerShop})`, {wx})
+}
 function handler(file, method, following, context) {
   const code = source(file)
   const marker = new RegExp(`(?:^|\\n)\\s*(?:async\\s+)?${method}\\(`, 'm')
@@ -34,13 +39,12 @@ function makeProfile(authorizedGet) {
     setStorageSync: (key,value) => storage.set(key,value),
     showToast: args => calls.push(['showToast',args.title])
   }
-  const globals = {wx,authorizedGet,
-    CAN_OPEN_MERCHANT:true,openMerchantWorkspace:()=>wx.navigateTo({url:'/pages/admin/admin'}),
+  const globals = {wx,authorizedGet,...combinedNavigation(wx),
     getCloudContext:()=>({apiBase:'https://test.example',storeSlug:'demo'}),
     supportIdentity:()=>identity}
   const p = {data:{merchantAuthorized:true,supportUnread:0},merchantSerial:0,merchantOpening:false,serial:0,
     setData(v){Object.assign(this.data,v)}}
-  p.openMerchant = handler(profile,'openMerchant','async onShow()',globals)
+  p.openMerchant = handler(profile,'openMerchant','loadAvatarForHeader(',globals)
   p.onHide = handler(profile,'onHide','  onUnload',globals)
   return {p,calls,storage,setIdentity:x=>{identity=x}}
 }
@@ -95,8 +99,8 @@ test('profile: session identity changes invalidate a pending authorization',asyn
 function makeLogin(authorizedGet){
   const calls=[], storage=new Map()
   const wx={setStorageSync:(k,v)=>storage.set(k,v),navigateTo:args=>calls.push(args.url)}
-  const p={data:{apiBase:'https://test.example',storeSlug:'demo',busy:false},setData(v){Object.assign(this.data,v)},config:()=>true}
-  p.verifyExisting=handler(login,'verifyExisting','async loginWechat()', {wx,authorizedGet})
+  const p={pageVisible:true,operationSerial:0,data:{apiBase:'https://test.example',storeSlug:'demo',busy:false},setData(v){Object.assign(this.data,v)},config:()=>true}
+  p.verifyExisting=handler(login,'verifyExisting','async loginWechat()', {wx,authorizedGet,requestIdentity:()=> 'same-test-identity'})
   return {p,calls,storage}
 }
 
@@ -125,10 +129,13 @@ test('merchant login: invalid permission response never navigates',async()=>{
 
 test('merchant workbench: customer switch navigates to home tab',()=>{
   const calls=[],storage=new Map()
+  const wx={switchTab:args=>calls.push(args.url),setStorageSync:(k,v)=>storage.set(k,v)}
+  const navigation=combinedNavigation(wx)
   const fn=handler(admin,'openCustomerShop','revision:',{
-    CAN_OPEN_CUSTOMER:true,openCustomerShop:()=>calls.push('/pages/index/index'),
+    CAN_OPEN_CUSTOMER:navigation.CAN_OPEN_CUSTOMER,
+    openCustomerShop:navigation.openCustomerShop,
     getCloudContext:()=>({apiBase:'https://test.example',storeSlug:'demo'}),
-    wx:{switchTab:args=>calls.push(args.url),setStorageSync:(k,v)=>storage.set(k,v)}})
+    wx})
   fn.call({})
   assert.deepEqual(calls,['/pages/index/index'])
   assert.equal(storage.get('stall_merchant_home_preference_v1'),'customer|https://test.example|demo')

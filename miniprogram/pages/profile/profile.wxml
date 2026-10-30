@@ -12,10 +12,11 @@
 </view>
 </view>
 <view class="profile-body">
+<view wx:if="{{libraryError}}" class="notice">{{libraryError}}</view>
 <view class="surface profile-stats">
-<view bindtap="unavailable">
+<view bindtap="openFavorites">
 <text>♡</text>
-<view>—</view>
+<view>{{favoriteCount === null ? '—' : favoriteCount}}</view>
 <text class="muted">我的收藏</text>
 </view>
 <view bindtap="unavailable">
@@ -51,11 +52,11 @@
 <view class="service-row" bindtap="unavailable">
 <text class="service-icon">◎</text>积分中心<text class="value">暂未开通 ›</text>
 </view>
-<view class="service-row" bindtap="unavailable">
-<text class="service-icon">♡</text>我的收藏<text class="value">暂未开通 ›</text>
+<view class="service-row" bindtap="openFavorites">
+<text class="service-icon">♡</text>我的收藏<text class="value">{{favoriteCount === null ? '—' : favoriteCount}} ›</text>
 </view>
-<view class="service-row" bindtap="unavailable">
-<text class="service-icon">◷</text>浏览记录<text class="value">暂未开通 ›</text>
+<view class="service-row" bindtap="openHistory">
+<text class="service-icon">◷</text>浏览记录<text class="value">{{historyCount === null ? '—' : historyCount}} ›</text>
 </view>
 <navigator class="service-row" url="/pages/customer-reviews/customer-reviews">
 <text class="service-icon">☆</text>我的商品评价<text class="value">›</text>
