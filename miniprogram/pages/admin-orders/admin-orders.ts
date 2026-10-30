@@ -1,11 +1,13 @@
+import { paymentLabel,fulfillmentPaymentReady } from '../../modules/shared/domain/payment'
+import { stableRowsPatch } from '../../modules/shared/runtime/stableRows'
 import {loadWorkflowOrders,updateWorkflowOrder,chinaTime} from '../../modules/merchant/demo/orders'
 import {saveDemoOrders} from '../../modules/merchant/demo/orders'
 import { merchantOrderConfig, merchantOrderContextKey, fetchMerchantOrderPage, updateMerchantOrder, saveMerchantOrderNote, MerchantOrderCounts, MerchantOrderQuery } from '../../modules/merchant/api/orders'
 import {saveMerchantEta} from '../../utils/merchantEtaCloud'
-const tabs=[{key:'latest',label:'全部订单'},{key:'new',label:'待接单'},{key:'accepted',label:'已接单'},{key:'preparing',label:'备货中'},{key:'delivering',label:'配送中'},{key:'delivered',label:'已送达'},{key:'cancelled',label:'已取消'},{key:'abnormal',label:'配送异常'},{key:'other',label:'取消 / 异常'}]
+const tabs=[{key:'latest',label:'全部订单'},{key:'unpaid',label:'待支付'},{key:'new',label:'待接单'},{key:'accepted',label:'已接单'},{key:'preparing',label:'备货中'},{key:'delivering',label:'配送中'},{key:'delivered',label:'已送达'},{key:'cancelled',label:'已取消'},{key:'abnormal',label:'配送异常'},{key:'other',label:'取消 / 异常'}]
 const labels:Record<string,string>={new:'新订单',accepted:'已接单',preparing:'备货中',delivering:'配送中',delivered:'已送达',cancelled:'已取消',abnormal:'配送异常'}
 function state(o:any):string{const s=String(o.fulfillmentStatus||'new');return ['canceled','refunded'].includes(s)?'cancelled':s==='exception'?'abnormal':s}
-function matches(o:any,tab:string):boolean{return tab==='latest'||(tab==='other'?['cancelled','abnormal'].includes(state(o)):state(o)===tab)}
+function matches(o:any,tab:string):boolean{return tab==='latest'||(tab==='other'?['cancelled','abnormal'].includes(state(o)):(tab==='unpaid'?state(o)==='new'&&o.paymentStatus==='unpaid':state(o)===tab&&(tab!=='new'||fulfillmentPaymentReady(o))))}
 function beijingDay(iso:string):string{const t=Date.parse(iso);return Number.isFinite(t)?new Date(t+8*3600000).toISOString().slice(0,10):''}
 function validRange(from:string,to:string):boolean{if(!from&&!to)return true;const ok=(s:string)=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+'T00:00:00Z'))&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s&&s>='2000-01-01'&&s<='2100-12-31';return ok(from)&&ok(to)&&from<=to&&Date.parse(to)-Date.parse(from)<366*86400000}
 function emptyCounts():MerchantOrderCounts{return {all:0,new:0,accepted:0,preparing:0,delivering:0,delivered:0,cancelled:0,abnormal:0,other:0}}
@@ -16,15 +18,15 @@ Page({
   orderTabs:tabs.map(t=>({...t,count:0})),countsKnown:false,globalTotal:0,globalPending:0,matchingCount:0,
   noteInputs:{} as Record<string,string>,etaInputs:{} as Record<string,string>,cloudMode:false,cloudBusy:false,loadingMore:false,cloudError:'',moreError:'',hasMore:false,refreshRequired:false,canManage:true,
   batchMode:false,selectedIds:[] as string[],selectedMap:{} as Record<string,boolean>,selectedCount:0,allSelected:false,operationBusy:false,operationProgress:'',batchResult:'',batchFailures:[] as Array<{id:string;reason:string}>},
- onShow(){this.visible=true;this.syncContext();if(!this.data.operationBusy)this.refresh()},
- onHide(){this.visible=false;this.serial++;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.setSelection([]);this.setData({dateResults:[],batchMode:false,countsKnown:false,hasMore:false,cloudBusy:false,loadingMore:false,etaInputs:{},noteInputs:{},batchFailures:[]})},
+ onShow(){this.visible=true;this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
+ onHide(){this.visible=false;this.serial++;this.setData({cloudBusy:false,loadingMore:false})},
  onUnload(){this.visible=false;this.serial++;this.loaded=[];this.localRows=[];this.localFiltered=[]},
  async onPullDownRefresh(){try{if(!this.data.operationBusy)await this.refresh()}finally{wx.stopPullDownRefresh()}},
  onReachBottom(){this.loadMore()},
  query():MerchantOrderQuery{return {q:this.data.orderSearchText.trim(),state:this.data.currentTab,from:this.data.dateFrom,to:this.data.dateTo}},
  syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
- setCounts(counts:MerchantOrderCounts){this.counts=counts;this.setData({countsKnown:true,globalTotal:counts.all,globalPending:counts.new,orderTabs:tabs.map(t=>({...t,count:Number((counts as any)[t.key==='latest'?'all':t.key])}))})},
- setSelection(ids:string[]){const map:Record<string,boolean>={};ids.forEach(id=>{map[id]=true});const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o)));this.setData({selectedIds:ids,selectedMap:map,selectedCount:ids.length,allSelected:!!eligible.length&&ids.length===eligible.length})},
+ setCounts(counts:MerchantOrderCounts){this.counts=counts;this.setData({countsKnown:true,globalTotal:counts.all,globalPending:counts.new,orderTabs:tabs.map(t=>({...t,count:Number((counts as any)[t.key==='latest'?'all':t.key]||0)}))})},
+ setSelection(ids:string[]){const map:Record<string,boolean>={};ids.forEach(id=>{map[id]=true});const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o))&&(!this.data.cloudMode||fulfillmentPaymentReady(o)));this.setData({selectedIds:ids,selectedMap:map,selectedCount:ids.length,allSelected:!!eligible.length&&ids.length===eligible.length})},
  changedQuery(){this.serial++;this.setSelection([]);this.setData({batchMode:false,queryDirty:true,cloudBusy:false,loadingMore:false,refreshRequired:false,batchResult:'',batchFailures:[],moreError:''})},
  orderSearchInput(e:any){if(this.data.operationBusy)return;this.changedQuery();this.setData({orderSearchText:String(e.detail.value||'').slice(0,100)})},
  searchOrders(){if(!this.data.operationBusy&&!this.data.cloudBusy&&!this.data.loadingMore)this.refresh()},
@@ -42,13 +44,13 @@ Page({
     issueReason:o.issueReason||'',issueTimeText:o.issueTime?chinaTime(o.issueTime):'',nextStatus:next,nextLabel:({accepted:'接单',preparing:'开始备货',delivering:'开始配送'} as Record<string,string>)[next]||'',
     allowCancel:cloud?['new','accepted','preparing'].includes(s):!['delivered','cancelled','abnormal'].includes(s),allowAbnormal:s==='delivering',allowEta:['accepted','preparing','delivering'].includes(s),
     merchantNote:o.merchantNote||'',merchantNoteVersion:o.merchantNoteVersion||1,noteDraft:this.data.noteInputs[o.id]!==undefined?this.data.noteInputs[o.id]:o.merchantNote||'',
-    etaValue:o.estimatedArrival||'',etaDraft:this.data.etaInputs[o.id]!==undefined?this.data.etaInputs[o.id]:o.estimatedArrival||'',batchEligible:['new','accepted'].includes(s),
-    paymentLabel:o.paymentStatus==='unpaid'?'待支付':o.paymentStatus==='paid'?'后台标记已支付（未独立核验）':'支付状态未核验'}
+    etaValue:o.estimatedArrival||'',etaDraft:this.data.etaInputs[o.id]!==undefined?this.data.etaInputs[o.id]:o.estimatedArrival||'',batchEligible:['new','accepted'].includes(s)&&(!cloud||fulfillmentPaymentReady(o)),paymentBlocked:cloud&&!fulfillmentPaymentReady(o),
+    paymentLabel:paymentLabel(o)}
   })
-  if(append){const update:Record<string,any>={};views.slice(this.data.dateResults.length).forEach((v,i)=>{update['dateResults['+(this.data.dateResults.length+i)+']']=v});this.setData(update)}else this.setData({dateResults:views})
-  this.setSelection(this.data.selectedIds.filter(id=>this.loaded.some(o=>o.id===id&&['new','accepted'].includes(state(o)))))
+  if(append){const update:Record<string,any>={};views.slice(this.data.dateResults.length).forEach((v,i)=>{update['dateResults['+(this.data.dateResults.length+i)+']']=v});this.setData(update)}else this.setData(stableRowsPatch('dateResults',this.data.dateResults,views,'id'))
+  this.setSelection(this.data.selectedIds.filter(id=>this.loaded.some(o=>o.id===id&&['new','accepted'].includes(state(o))&&(!this.data.cloudMode||fulfillmentPaymentReady(o)))))
  },
- async refresh(){if(this.data.operationBusy)return false;return this.fetchPage(true)},
+ async refresh(){if(this.data.operationBusy)return false;return this.fetchPage(true,this.loaded.length>0)},
  async loadMore(){if(this.data.operationBusy||this.data.cloudBusy||this.data.loadingMore||this.data.queryDirty||this.data.refreshRequired||!this.data.hasMore)return;if(this.context!==merchantOrderContextKey()){await this.refresh();return}await this.fetchPage(false)},
  async fetchPage(reset:boolean,keepRows=false):Promise<boolean>{
   const context=merchantOrderContextKey(),cfg=merchantOrderConfig()
@@ -77,14 +79,15 @@ Page({
   finally{if(serial===this.serial){this.setData({cloudBusy:false,loadingMore:false});if(context!==merchantOrderContextKey()){this.syncContext();this.setData({cloudError:'商家会话或店铺已变化，请重新读取'})}}}
  },
  toggleBatchMode(){if(this.data.operationBusy||this.data.cloudBusy||this.data.queryDirty||!this.data.canManage)return;this.setSelection([]);this.setData({batchMode:!this.data.batchMode,batchResult:''})},
- toggleOrder(e:any){if(!this.data.batchMode||this.data.operationBusy||this.data.queryDirty)return;const id=String(e.currentTarget.dataset.id),o=this.loaded.find(o=>o.id===id);if(!o||!['new','accepted'].includes(state(o)))return;const ids=this.data.selectedIds.includes(id)?this.data.selectedIds.filter(x=>x!==id):this.data.selectedIds.concat(id);if(ids.length>50){wx.showToast({title:'一次最多选择50单',icon:'none'});return}this.setSelection(ids)},
- selectAll(){if(!this.data.batchMode||this.data.operationBusy||this.data.queryDirty)return;const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o)));if(!this.data.allSelected&&eligible.length>50){wx.showToast({title:'超过50单，请手动选择',icon:'none'});return}this.setSelection(this.data.allSelected?[]:eligible.map(o=>o.id))},
+ toggleOrder(e:any){if(!this.data.batchMode||this.data.operationBusy||this.data.queryDirty)return;const id=String(e.currentTarget.dataset.id),o=this.loaded.find(o=>o.id===id);if(!o||!['new','accepted'].includes(state(o))||this.data.cloudMode&&!fulfillmentPaymentReady(o))return;const ids=this.data.selectedIds.includes(id)?this.data.selectedIds.filter(x=>x!==id):this.data.selectedIds.concat(id);if(ids.length>50){wx.showToast({title:'一次最多选择50单',icon:'none'});return}this.setSelection(ids)},
+ selectAll(){if(!this.data.batchMode||this.data.operationBusy||this.data.queryDirty)return;const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o))&&(!this.data.cloudMode||fulfillmentPaymentReady(o)));if(!this.data.allSelected&&eligible.length>50){wx.showToast({title:'超过50单，请手动选择',icon:'none'});return}this.setSelection(this.data.allSelected?[]:eligible.map(o=>o.id))},
  clearBatchSelection(){if(this.data.batchMode&&!this.data.operationBusy)this.setSelection([])},
  canAct(id:string):boolean{return this.visible&&!this.data.operationBusy&&!this.data.batchMode&&!this.data.queryDirty&&!this.data.cloudBusy&&!this.data.loadingMore&&!this.data.refreshRequired&&this.data.canManage&&this.context===merchantOrderContextKey()&&this.loaded.some(o=>o.id===id)},
  applyState(id:string,next:string){const o=this.loaded.find(o=>o.id===id);if(!o)return;o.fulfillmentStatus=next;this.setData({countsKnown:false});if(!matches(o,this.data.currentTab)){this.loaded=this.loaded.filter(o=>o.id!==id);this.setData({matchingCount:Math.max(0,this.data.matchingCount-1)})}this.render()},
  async afterAction(context:string){if(this.visible)await this.fetchPage(true,context===merchantOrderContextKey())},
  async next(e:any){
   const id=String(e.currentTarget.dataset.id||''),next=String(e.currentTarget.dataset.status||'');if(!this.canAct(id)||!['accepted','preparing','delivering'].includes(next))return
+  if(this.data.cloudMode&&!fulfillmentPaymentReady(this.loaded.find(o=>o.id===id)))return
   const context=this.context,cfg=merchantOrderConfig();this.setData({operationBusy:true,operationProgress:'正在更新订单'})
   try{if(cfg)await updateMerchantOrder(cfg,id,next);else if(!updateWorkflowOrder(id,next as any))throw Error('invalid_transition_or_payment_not_confirmed');if(context!==merchantOrderContextKey())throw Error('context_changed');this.applyState(id,next)}
   catch(error){if(this.visible)wx.showModal({title:'操作失败或未确认',content:errorMessage(error),showCancel:false})}
@@ -149,7 +152,7 @@ Page({
     const id=ids[i];this.setData({operationProgress:'正在处理 '+(i+1)+' / '+ids.length+' 单'})
     try{
      if(!this.visible||context!==merchantOrderContextKey())throw Error('session_changed_not_executed')
-     const o=source.find(o=>o.id===id);if(!o||state(o)!==expected)throw Error('invalid_transition')
+     const o=source.find(o=>o.id===id);if(!o||state(o)!==expected)throw Error('invalid_transition');if(cfg&&!fulfillmentPaymentReady(o))throw Error('payment_not_confirmed')
      if(cfg)await updateMerchantOrder(cfg,id,next);else if(!updateWorkflowOrder(id,next as any))throw Error('invalid_transition_or_payment_not_confirmed')
      succeeded++;if(context===merchantOrderContextKey()&&this.visible)this.applyState(id,next)
     }catch(error){failures.push({id,reason:String(error).includes('session_changed')?'未执行：页面或会话已变化':errorMessage(error)})}
@@ -157,6 +160,6 @@ Page({
    const result='已选 '+ids.length+' 单：成功 '+succeeded+' 单，失败或未确认 '+failures.length+' 单。'+(failures.length?'不符合状态、网络未确认或未执行均计入失败；刷新核对后重试。':'')
    this.setData({batchResult:result,...this.visible&&context===merchantOrderContextKey()?{batchFailures:failures}:{}})
    if(this.visible&&context===merchantOrderContextKey())wx.showModal({title:failures.length?'批量操作有失败':'批量操作完成',content:result,showCancel:false})
-  }finally{if(confirmed||!this.loaded.length)await this.afterAction(context);if(confirmed&&context===merchantOrderContextKey()&&this.visible)this.setSelection(failures.map(f=>f.id).filter(id=>this.loaded.some(o=>o.id===id&&['new','accepted'].includes(state(o)))));this.setData({operationBusy:false,operationProgress:''})}
+  }finally{if(confirmed||!this.loaded.length)await this.afterAction(context);if(confirmed&&context===merchantOrderContextKey()&&this.visible)this.setSelection(failures.map(f=>f.id).filter(id=>this.loaded.some(o=>o.id===id&&['new','accepted'].includes(state(o))&&(!this.data.cloudMode||fulfillmentPaymentReady(o)))));this.setData({operationBusy:false,operationProgress:''})}
  }
 })

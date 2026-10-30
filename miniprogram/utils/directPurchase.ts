@@ -1,3 +1,4 @@
+import { selectedCartDetails } from '../modules/customer/domain/cartSelection'
 import { loadStore, effectivePrice, productIsPublished, stockAllows } from '../modules/customer/demo/catalog'
 import { getCartDetails, CartDisplayItem } from './cart'
 
@@ -12,7 +13,7 @@ export function clearDirectPurchase(): void { wx.removeStorageSync(KEY) }
 export function hasDirectPurchase(): boolean { return !!wx.getStorageSync(KEY) }
 export function getPurchaseDetails(): { items: CartDisplayItem[]; totalText: string; totalCount: number } {
   const selection = wx.getStorageSync(KEY) as DirectSelection | undefined
-  if (!selection || !selection.productId) return getCartDetails()
+  if (!selection || !selection.productId) return selectedCartDetails(getCartDetails())
   const quantity = selection.quantity
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) return { items: [], totalText: '0.00', totalCount: 0 }
   const product = loadStore().products.find(p => p.id === selection.productId)

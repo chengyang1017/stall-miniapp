@@ -37,7 +37,9 @@
     "pages/customer-tracking/customer-tracking": "customer",
     "pages/merchant-tracking/merchant-tracking": "merchant",
     "pages/customer-reviews/customer-reviews": "customer",
-    "pages/merchant-reviews/merchant-reviews": "merchant"
+    "pages/merchant-reviews/merchant-reviews": "merchant",
+    "pages/category/category": "customer",
+    "pages/customer-account/customer-account": "customer"
   },
   "utils": {
     "addresses": "customer",
@@ -83,6 +85,7 @@
     "combined": {
       "pages": [
         "pages/index/index",
+        "pages/category/category",
         "pages/cloud-shop/cloud-shop",
         "pages/cloud-catalog/cloud-catalog",
         "pages/admin-backup/admin-backup",
@@ -105,6 +108,7 @@
         "pages/delivery-proof/delivery-proof",
         "pages/order-detail/order-detail",
         "pages/profile/profile",
+        "pages/customer-account/customer-account",
         "pages/customer-settings/customer-settings",
         "pages/admin-note-tags/admin-note-tags",
         "pages/support-chat/support-chat",
@@ -125,6 +129,7 @@
     "customer": {
       "pages": [
         "pages/index/index",
+        "pages/category/category",
         "pages/product-detail/product-detail",
         "pages/cart/cart",
         "pages/checkout/checkout",
@@ -132,6 +137,7 @@
         "pages/orders/orders",
         "pages/order-detail/order-detail",
         "pages/profile/profile",
+        "pages/customer-account/customer-account",
         "pages/customer-settings/customer-settings",
         "pages/customer-support-chat/customer-support-chat",
         "pages/customer-delivery-proof/customer-delivery-proof",
@@ -166,7 +172,9 @@
         "pages/merchant-reviews/merchant-reviews"
       ],
       "bootstrap": "apps/merchant/app.ts",
-      "aliases": {"miniprogram/modules/integration/singleAppHost.ts": "miniprogram/modules/merchant/navigation.ts"}
+      "aliases": {
+        "miniprogram/modules/integration/singleAppHost.ts": "miniprogram/modules/merchant/navigation.ts"
+      }
     }
   }
 }

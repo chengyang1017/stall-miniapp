@@ -1,4 +1,4 @@
-export interface ChatMessage {id:string;seq:string;sender:'customer'|'merchant';content:string;createdAt:string|number}
+export interface ChatMessage {clientKey?:string;id:string;seq:string;sender:'customer'|'merchant';content:string;createdAt:string|number}
 export interface ChatPort {
  readonly sender:'customer'|'merchant'
  bind(options:Record<string,string|undefined>):string

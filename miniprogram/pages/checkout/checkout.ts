@@ -5,7 +5,7 @@ import { isPointDeliverable } from '../../modules/customer/demo/settings'
 import { getPurchaseDetails, clearDirectPurchase, hasDirectPurchase } from '../../utils/directPurchase'
 import { getSelectedAddress, SavedAddress } from '../../utils/addresses'
 import { availableAreas, availableSlots, loadDelivery } from '../../modules/customer/demo/settings'
-import { CartDisplayItem, saveCart } from '../../utils/cart'
+import { CartDisplayItem, saveCart, loadCart } from '../../utils/cart'
 import { createDemoOrder, openCreatedDemoOrder } from '../../modules/customer/demo/orders'
 import { formatPublishTime } from '../../utils/productPublishing'
 import { minimumDisplay } from '../../modules/shared/api/business'
@@ -237,7 +237,7 @@ Page({
           slotId: validSlot.id,
           slotText: `${validSlot.label} ${validSlot.start}–${validSlot.end}`
         })
-        if (hasDirectPurchase()) clearDirectPurchase(); else saveCart([])
+        if (hasDirectPurchase()) clearDirectPurchase(); else {const purchased=new Set(fresh.items.map(x=>x.productId));saveCart(loadCart().filter(x=>!purchased.has(x.productId)))}
           openCreatedDemoOrder(order.id)
         } catch (_) {
           wx.showToast({title:'商品状态已变化，请刷新后重试',icon:'none'})

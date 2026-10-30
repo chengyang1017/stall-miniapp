@@ -3,7 +3,7 @@ Page({
  identity:'',serial:0,visible:false,cursor:'',busy:false,
  data:{cloudMode:false,conversations:[] as any[],loading:false,error:'',hasMore:false,unread:null as number|null},
  onShow(){this.visible=true;this.refresh()},
- onHide(){this.visible=false;this.serial++;this.busy=false;this.cursor='';this.setData({conversations:[],unread:null,loading:false,hasMore:false})},
+ onHide(){this.visible=false;this.serial++;this.busy=false;this.setData({loading:false})},
  onUnload(){this.visible=false;this.serial++},
  async refresh(){await this.fetch(false)},
  async more(){if(this.data.hasMore)await this.fetch(true)},

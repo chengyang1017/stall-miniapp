@@ -4,7 +4,7 @@ import { getCloudContext, getSessionToken } from '../../shared/runtime/context'
 import { authorizedGet } from '../../shared/runtime/auth'
 export const merchantOrderConfig = getCloudContext
 export interface MerchantOrderQuery {q:string;state:string;from:string;to:string}
-export type MerchantOrderCounts=Record<FulfillmentStatus,number>&{all:number;other:number}
+export type MerchantOrderCounts=Record<FulfillmentStatus,number>&{all:number;other:number;unpaid?:number}
 export interface MerchantOrderPage {orders:any[];pendingCount:number;counts:MerchantOrderCounts;matchingCount:number;hasMore:boolean;nextCursor:string|null;canManage:boolean}
 // Includes session identity privately, never returned to WXML or logs.
 export function merchantOrderContextKey():string {

@@ -44,8 +44,8 @@ function makeProfile(authorizedGet) {
     supportIdentity:()=>identity}
   const p = {data:{merchantAuthorized:true,supportUnread:0},merchantSerial:0,merchantOpening:false,serial:0,
     setData(v){Object.assign(this.data,v)}}
-  p.openMerchant = handler(profile,'openMerchant','async onShow()',globals)
-  p.onHide = handler(profile,'onHide','openOrders()',globals)
+  p.openMerchant = handler(profile,'openMerchant','loadAvatarForHeader(',globals)
+  p.onHide = handler(profile,'onHide','  onUnload',globals)
   return {p,calls,storage,setIdentity:x=>{identity=x}}
 }
 
@@ -133,7 +133,7 @@ test('merchant workbench: customer switch navigates to home tab',()=>{
   const navigation=combinedNavigation(wx)
   const fn=handler(admin,'openCustomerShop','revision:',{
     CAN_OPEN_CUSTOMER:navigation.CAN_OPEN_CUSTOMER,
-    navigateCustomerShop:navigation.openCustomerShop,
+    openCustomerShop:navigation.openCustomerShop,
     getCloudContext:()=>({apiBase:'https://test.example',storeSlug:'demo'}),
     wx})
   fn.call({})

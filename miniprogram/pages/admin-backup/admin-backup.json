@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "数据备份与恢复",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#5935cf",
+  "navigationBarTextStyle": "white"
 }

@@ -1,5 +1,25 @@
 # Phase8 V2 — internal-runner-v1
 
+## 最新运行结果：恢复尚未启动（2026-10-27）
+
+当前45源码bundle已用新镜像sha256:c3752474aa41668d4e95400c38a2645957195fab3bf51031e6c65d6d6d210303重新构建审核，标签/配置/平台匹配。但真实恢复在claim前报phase8_v2_recovery_resource_changed，PG仍created，没有任何SQL连接。重复inspect发现Mounts顺序可变；原始指纹还不能仅靠顺序调整复现，未自动改算法/锚点或重试。原failed及所有资源保留，不能据旧授权再次尝试。记录见docs/testing/TEST_HISTORY.md第26节。
+
+## 最新：网络元数据兼容与一次性恢复源码（2026-10-27）
+
+网络实际EnableIPv6仍强制为布尔false，只允许重复driver option缺省，冲突/含糊值、external/NAT/额外网卡/端口仍拒绝。同一现场只读拓扑校验通过，未启动资源。新增`--recover-created`及固定recovery-anchor.json，只面向本轮从未启动的created容器；需原通用授权加`PHASE8_V2_ACTION=recover-created`、`PHASE8_V2_RECOVER_CREATED=START_PINNED_CREATED_ONCE`，不能使用create-db重试或接受任意资源ID。恢复前后核验原始文件和精确资源身份，排他新attempt，保留原failed；成功只新增带来源证明的db.created，不代表bootstrap/ready。
+
+50项新增恢复回归及原249项联合299通过，真实恢复和26项PG用例仍未执行。源码policy已改变镜像bundle；本轮不重建、不修改已有审核状态，下一次运行器任务需重新审核版本配对。完整权限、失败语义和下一步见[恢复说明](../../../docs/testing/PHASE8_V2_RECOVERY.md)。以下旧阶段记录按各自时点阅读。
+
+## 2026-10-27 实际执行更新
+
+已增加固定 `business` 任务，复用本协议的grant、ready核验、真实pg连接与锁观察接缝。`PHASE8_V2_TEST=V2_BUSINESS_TESTS_ONLY`、purpose=business、role=app、scope=business-consistency-v1，且须有同实例ready_verified前置回执；不是任意脚本/SQL入口。26个独立UUID租户用例直接调用checkoutRoute/orderWorkflowRoute/sweepInventory，保留最终订单/库存/流水断言。每次运行只追加测试夹具，不自动DELETE/TRUNCATE/DROP；失败报告先保存，再拒绝“全部成功”。
+
+修复了宿主ACL检查的PowerShell环境变量语法（$env.NAME→$env:NAME），以及活动pg连接异常时销毁租约的处理。本轮离线安全249项通过（原235+新增14）；**真实数据库26项均未运行，不是通过或跳过。**
+
+新UUID `b986df49-4ffc-4b26-bfe4-13e97e1e30ef` 的 r2 容器/卷/网络已获授权创建，但在启动前因 `phase8_v2_network_rejected` 拒绝。容器仍created、Running=false，未执行initdb/bootstrap、001—020迁移或SQL连接。Engine返回EnableIPv6=false，Options中省略重复的com.docker.network.enable_ipv6=false，现策略仍要求该选项存在。用户追加限制“只能修改本轮Compose，否则停止”，因此没有放宽策略或执行恢复入口；仅改Compose不能安全满足现有断言，真实操作已停止。原始failed证据与资源保留，不可再跑create-db，不可自动复用/清理。
+
+本轮运行器已授权本地重建及身份登记：canonical摘要 `sha256:a6d03ce3ee71c18236737ea011b5b5ee4a68bc6988dc5c08f0acad8623c951db`，45文件bundle `2d6720dc8d9ea7b23969d010ed580b9b33bd3b672d68d7387e8b68ca5c3ec2e5`。approved=true仅针对该构建，不是允许绕过失败资源/前置回执。旧B0完全未操作。以下初版设计保留作历史依据，实际状态以上述更新及永久测试档案为准。
+
 本目录是独立协议，不是旧 B0 的恢复入口。旧资源、failed 回执、凭据、UUID 和端口断言保持原状。当前 runner 审核为未批准，所有真实创建/运行入口默认拒绝。
 
 ## 实现与边界
@@ -75,3 +95,18 @@ PG 继续精确使用 B0 已审核的 `postgres:16-alpine` 渠道及其 canonica
 `node --test backend/tests/phase8-safety.unit.test.mjs backend/tests/phase8-remediation.unit.test.mjs backend/tests/phase8-v2.unit.test.mjs`
 
 三份文件均不连接真实 Docker/数据库。V2 使用实际策略、宿主控制器、编译 Docker transport、固定 runner 和 SQL 接缝，外部响应是合成元数据，不是内存数据库验收。
+
+
+## 2026-10-28 当前状态
+
+只读确认原V2仍created，失败证据/卷摘要匹配，容器整体锚点仍不匹配；未重试恢复。当前源码依赖021，历史runner与11项loopback支付测试尚不能直接复用执行。389项离线结果为375通过、3失败、11跳过。完整差异与同一V2分阶段计划见[恢复说明](../../../docs/testing/PHASE8_V2_RECOVERY.md)，该说明最新节优先于本README旧时点描述。
+
+
+## 2026-10-28 版本边界补缺
+
+新增staging021离线包/封存核验，补齐staging三模块与配置/计划；51文件，version2。默认baseline020执行仍严格拒绝21迁移，运行器也明确拒绝version2包。021执行用途/角色/账本与ready阶段适配尚未完成。原指纹生成命令已追溯但资源等价未证明，新规范化函数未接入旧恢复。最终407项离线：396通过、0失败、11跳过。详细记录及下一步独立身份登记授权见[恢复说明](../../../docs/testing/PHASE8_V2_RECOVERY.md)最新节。
+
+
+## 2026-10-28 21:35：021执行源码适配
+
+新增独立version2 grant和upgrade021/ready021/business021/payments021用途，配对staging021审核镜像与54文件bundle。原version1及020默认入口不变；新DBA登记/授权管理角色材料仍须另行授权准备。021原子账本/独立ready/schema/ACL、原26订单与共享11支付场景已接通并完成离线回归。最终446项：435通过、0失败、11跳过；无Docker或数据库执行。详情及A/B比较见[恢复说明](../../../docs/testing/PHASE8_V2_RECOVERY.md)最新节。

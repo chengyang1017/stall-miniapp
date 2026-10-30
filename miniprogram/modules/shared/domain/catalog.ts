@@ -1,4 +1,5 @@
-export interface Category { id:string;name:string }
+import type { CategoryIconKey } from './categoryIcons'
+export interface Category { id:string;name:string;iconKey?:CategoryIconKey|null }
 export type StockMode='unlimited'|'finite'
 export function stockAllows(product: {stockMode?:string;stockQuantity?:number;outOfStock?:boolean}, quantity=1): boolean {
   return !product.outOfStock && (product.stockMode !== 'finite' || (Number.isSafeInteger(product.stockQuantity) && Number(product.stockQuantity)>=quantity))

@@ -1,0 +1,2383 @@
+TAP version 13
+# Subtest: Windows ACL verifier uses actual PowerShell environment syntax
+ok 1 - Windows ACL verifier uses actual PowerShell environment syntax
+  ---
+  duration_ms: 8.5737
+  type: 'test'
+  ...
+# Subtest: business purpose requires a distinct explicit write authorization
+ok 2 - business purpose requires a distinct explicit write authorization
+  ---
+  duration_ms: 2.5683
+  type: 'test'
+  ...
+# Subtest: business grant refuses role/scope borrowing {"role":"observer"}
+ok 3 - business grant refuses role/scope borrowing {"role":"observer"}
+  ---
+  duration_ms: 0.5883
+  type: 'test'
+  ...
+# Subtest: business grant refuses role/scope borrowing {"role":"migrator"}
+ok 4 - business grant refuses role/scope borrowing {"role":"migrator"}
+  ---
+  duration_ms: 0.1943
+  type: 'test'
+  ...
+# Subtest: business grant refuses role/scope borrowing {"scope":"fixture-connections"}
+ok 5 - business grant refuses role/scope borrowing {"scope":"fixture-connections"}
+  ---
+  duration_ms: 0.1804
+  type: 'test'
+  ...
+# Subtest: business suite refuses fixture before any query
+ok 6 - business suite refuses fixture before any query
+  ---
+  duration_ms: 0.4803
+  type: 'test'
+  ...
+# Subtest: business suite refuses bootstrap before any query
+ok 7 - business suite refuses bootstrap before any query
+  ---
+  duration_ms: 0.2759
+  type: 'test'
+  ...
+# Subtest: business suite refuses initialize before any query
+ok 8 - business suite refuses initialize before any query
+  ---
+  duration_ms: 0.1919
+  type: 'test'
+  ...
+# Subtest: business suite refuses ready before any query
+ok 9 - business suite refuses ready before any query
+  ---
+  duration_ms: 0.2585
+  type: 'test'
+  ...
+# Subtest: business suite has unique stable case names and no skipped placeholder cases
+ok 10 - business suite has unique stable case names and no skipped placeholder cases
+  ---
+  duration_ms: 0.7248
+  type: 'test'
+  ...
+# Subtest: business artifact pins actual business dependency closure without importing service entrypoint
+not ok 11 - business artifact pins actual business dependency closure without importing service entrypoint
+  ---
+  duration_ms: 8.0581
+  type: 'test'
+  location: 'C:\\Users\\USER\\WeChatProjects\\miniprogram-1\\backend\\tests\\phase8-business.unit.test.mjs:36:1'
+  failureType: 'testCodeFailure'
+  error: 'phase8_v2_artifact_migrations_rejected'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    requireSafe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/testing/phase8/policy.mjs:5:84)
+    check (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/testing/phase8-v2/policy.mjs:12:34)
+    sourceManifest (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/testing/phase8-v2/artifact.mjs:16:3)
+    async TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/phase8-business.unit.test.mjs:37:17)
+    async Test.run (node:internal/test_runner/test:1313:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+  ...
+# Subtest: active connection transport error destroys its lease once and prevents reuse
+ok 12 - active connection transport error destroys its lease once and prevents reuse
+  ---
+  duration_ms: 1.3758
+  type: 'test'
+  ...
+# Subtest: business job rejects missing ready prerequisite before Docker creation
+ok 13 - business job rejects missing ready prerequisite before Docker creation
+  ---
+  duration_ms: 0.9776
+  type: 'test'
+  ...
+# Subtest: failed database assertion report is preserved then rejects a success result
+ok 14 - failed database assertion report is preserved then rejects a success result
+  ---
+  duration_ms: 4.629
+  type: 'test'
+  ...
+# Subtest: accepts explicit false and Engine-normalized omitted redundant IPv6 option
+ok 15 - accepts explicit false and Engine-normalized omitted redundant IPv6 option
+  ---
+  duration_ms: 3.9657
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects missing actual flag
+ok 16 - network compatibility still rejects missing actual flag
+  ---
+  duration_ms: 0.8746
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects null flag
+ok 17 - network compatibility still rejects null flag
+  ---
+  duration_ms: 0.3757
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects string false flag
+ok 18 - network compatibility still rejects string false flag
+  ---
+  duration_ms: 0.3621
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects zero flag
+ok 19 - network compatibility still rejects zero flag
+  ---
+  duration_ms: 0.3824
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects enabled IPv6
+ok 20 - network compatibility still rejects enabled IPv6
+  ---
+  duration_ms: 0.4376
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects contradictory option
+ok 21 - network compatibility still rejects contradictory option
+  ---
+  duration_ms: 0.4238
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects ambiguous option
+ok 22 - network compatibility still rejects ambiguous option
+  ---
+  duration_ms: 0.4192
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects null option
+ok 23 - network compatibility still rejects null option
+  ---
+  duration_ms: 0.4479
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects undefined option
+ok 24 - network compatibility still rejects undefined option
+  ---
+  duration_ms: 0.6404
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects external network
+ok 25 - network compatibility still rejects external network
+  ---
+  duration_ms: 0.4269
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects missing internal flag
+ok 26 - network compatibility still rejects missing internal flag
+  ---
+  duration_ms: 0.5935
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects NAT gateway
+ok 27 - network compatibility still rejects NAT gateway
+  ---
+  duration_ms: 0.413
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects routed gateway
+ok 28 - network compatibility still rejects routed gateway
+  ---
+  duration_ms: 0.2392
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects no isolated mode
+ok 29 - network compatibility still rejects no isolated mode
+  ---
+  duration_ms: 0.2082
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects unexpected option
+ok 30 - network compatibility still rejects unexpected option
+  ---
+  duration_ms: 0.165
+  type: 'test'
+  ...
+# Subtest: network compatibility still rejects disabled IPv4
+ok 31 - network compatibility still rejects disabled IPv4
+  ---
+  duration_ms: 0.1246
+  type: 'test'
+  ...
+# Subtest: normalized metadata still passes full topology including labels, mounts and no ports
+ok 32 - normalized metadata still passes full topology including labels, mounts and no ports
+  ---
+  duration_ms: 1.5111
+  type: 'test'
+  ...
+# Subtest: recovery rejects wrong database id before a claim/start
+ok 33 - recovery rejects wrong database id before a claim/start
+  ---
+  duration_ms: 1.022
+  type: 'test'
+  ...
+# Subtest: recovery rejects wrong network id before a claim/start
+ok 34 - recovery rejects wrong network id before a claim/start
+  ---
+  duration_ms: 0.4575
+  type: 'test'
+  ...
+# Subtest: recovery rejects other volume before a claim/start
+ok 35 - recovery rejects other volume before a claim/start
+  ---
+  duration_ms: 0.3848
+  type: 'test'
+  ...
+# Subtest: recovery rejects changed container configuration before a claim/start
+ok 36 - recovery rejects changed container configuration before a claim/start
+  ---
+  duration_ms: 0.3225
+  type: 'test'
+  ...
+# Subtest: recovery rejects started before before a claim/start
+ok 37 - recovery rejects started before before a claim/start
+  ---
+  duration_ms: 0.7498
+  type: 'test'
+  ...
+# Subtest: recovery rejects exited container before a claim/start
+ok 38 - recovery rejects exited container before a claim/start
+  ---
+  duration_ms: 0.4263
+  type: 'test'
+  ...
+# Subtest: recovery rejects restart count before a claim/start
+ok 39 - recovery rejects restart count before a claim/start
+  ---
+  duration_ms: 0.7658
+  type: 'test'
+  ...
+# Subtest: recovery rejects running container before a claim/start
+ok 40 - recovery rejects running container before a claim/start
+  ---
+  duration_ms: 0.3264
+  type: 'test'
+  ...
+# Subtest: recovery rejects existing start error before a claim/start
+ok 41 - recovery rejects existing start error before a claim/start
+  ---
+  duration_ms: 1.5139
+  type: 'test'
+  ...
+# Subtest: recovery rejects different engine before a claim/start
+ok 42 - recovery rejects different engine before a claim/start
+  ---
+  duration_ms: 0.3222
+  type: 'test'
+  ...
+# Subtest: recovery rejects upgraded engine without audit before a claim/start
+ok 43 - recovery rejects upgraded engine without audit before a claim/start
+  ---
+  duration_ms: 0.3817
+  type: 'test'
+  ...
+# Subtest: recovery rejects rewritten failed evidence before a claim/start
+ok 44 - recovery rejects rewritten failed evidence before a claim/start
+  ---
+  duration_ms: 0.3367
+  type: 'test'
+  ...
+# Subtest: recovery rejects rewritten launch before a claim/start
+ok 45 - recovery rejects rewritten launch before a claim/start
+  ---
+  duration_ms: 0.2814
+  type: 'test'
+  ...
+# Subtest: recovery rejects extra IPv6 subnet before a claim/start
+ok 46 - recovery rejects extra IPv6 subnet before a claim/start
+  ---
+  duration_ms: 0.3119
+  type: 'test'
+  ...
+# Subtest: recovery rejects network gateway before a claim/start
+ok 47 - recovery rejects network gateway before a claim/start
+  ---
+  duration_ms: 0.5236
+  type: 'test'
+  ...
+# Subtest: recovery rejects wrong launch label before a claim/start
+ok 48 - recovery rejects wrong launch label before a claim/start
+  ---
+  duration_ms: 0.6133
+  type: 'test'
+  ...
+# Subtest: recovery rejects extra network member before a claim/start
+ok 49 - recovery rejects extra network member before a claim/start
+  ---
+  duration_ms: 0.3936
+  type: 'test'
+  ...
+# Subtest: recovery rejects extra adapter before a claim/start
+ok 50 - recovery rejects extra adapter before a claim/start
+  ---
+  duration_ms: 0.7218
+  type: 'test'
+  ...
+# Subtest: recovery rejects published port before a claim/start
+ok 51 - recovery rejects published port before a claim/start
+  ---
+  duration_ms: 1.4412
+  type: 'test'
+  ...
+# Subtest: recovery rejects a different instance before credentials/Docker access
+ok 52 - recovery rejects a different instance before credentials/Docker access
+  ---
+  duration_ms: 1.2569
+  type: 'test'
+  ...
+# Subtest: recovery requires every explicit authorization {"PHASE8_V2_RECOVER_CREATED":""}
+ok 53 - recovery requires every explicit authorization {"PHASE8_V2_RECOVER_CREATED":""}
+  ---
+  duration_ms: 0.3816
+  type: 'test'
+  ...
+# Subtest: recovery requires every explicit authorization {"PHASE8_V2_AUTHORIZE":""}
+ok 54 - recovery requires every explicit authorization {"PHASE8_V2_AUTHORIZE":""}
+  ---
+  duration_ms: 0.245
+  type: 'test'
+  ...
+# Subtest: recovery requires every explicit authorization {"PHASE8_V2_HOST_EXCLUSIVE":""}
+ok 55 - recovery requires every explicit authorization {"PHASE8_V2_HOST_EXCLUSIVE":""}
+  ---
+  duration_ms: 0.2917
+  type: 'test'
+  ...
+# Subtest: recovery requires every explicit authorization {"PHASE8_V2_ACTION":"run"}
+ok 56 - recovery requires every explicit authorization {"PHASE8_V2_ACTION":"run"}
+  ---
+  duration_ms: 0.2107
+  type: 'test'
+  ...
+# Subtest: only three exact owned resources allowed, including stopped runner rejection
+ok 57 - only three exact owned resources allowed, including stopped runner rejection
+  ---
+  duration_ms: 0.6479
+  type: 'test'
+  ...
+# Subtest: successful synthetic recovery claims before start and preserves original failed evidence
+ok 58 - successful synthetic recovery claims before start and preserves original failed evidence
+  ---
+  duration_ms: 1.2125
+  type: 'test'
+  ...
+# Subtest: drift after durable claim rejects start and preserves a failed recovery
+ok 59 - drift after durable claim rejects start and preserves a failed recovery
+  ---
+  duration_ms: 0.8594
+  type: 'test'
+  ...
+# Subtest: failed start never writes a success or reclaims its attempt
+ok 60 - failed start never writes a success or reclaims its attempt
+  ---
+  duration_ms: 1.9519
+  type: 'test'
+  ...
+# Subtest: post-start drift retains failed recovery and never promotes the original failure
+ok 61 - post-start drift retains failed recovery and never promotes the original failure
+  ---
+  duration_ms: 1.4607
+  type: 'test'
+  ...
+# Subtest: a matching digest cannot substitute another failure phase
+ok 62 - a matching digest cannot substitute another failure phase
+  ---
+  duration_ms: 0.5681
+  type: 'test'
+  ...
+# Subtest: a matching digest cannot change first-start launch mode
+ok 63 - a matching digest cannot change first-start launch mode
+  ---
+  duration_ms: 0.5057
+  type: 'test'
+  ...
+# Subtest: actual exclusive claim file cannot be overwritten, including concurrent claims
+ok 64 - actual exclusive claim file cannot be overwritten, including concurrent claims
+  ---
+  duration_ms: 30.6024
+  type: 'test'
+  ...
+# Subtest: R-P1 inspect cannot select the DML app role
+ok 65 - R-P1 inspect cannot select the DML app role
+  ---
+  duration_ms: 3.0859
+  type: 'test'
+  ...
+# Subtest: R-P1 inspect cannot select the migrator role
+ok 66 - R-P1 inspect cannot select the migrator role
+  ---
+  duration_ms: 0.2658
+  type: 'test'
+  ...
+# Subtest: R-P2 bootstrap refuses extra environment PGDATA
+ok 67 - R-P2 bootstrap refuses extra environment PGDATA
+  ---
+  duration_ms: 1.0654
+  type: 'test'
+  ...
+# Subtest: R-P2 bootstrap refuses extra environment PGHOST
+ok 68 - R-P2 bootstrap refuses extra environment PGHOST
+  ---
+  duration_ms: 0.6865
+  type: 'test'
+  ...
+# Subtest: R-P2 bootstrap refuses extra environment PGSERVICE
+ok 69 - R-P2 bootstrap refuses extra environment PGSERVICE
+  ---
+  duration_ms: 0.403
+  type: 'test'
+  ...
+# Subtest: R-P2 bootstrap refuses extra environment POSTGRES_HOST_AUTH_METHOD
+ok 70 - R-P2 bootstrap refuses extra environment POSTGRES_HOST_AUTH_METHOD
+  ---
+  duration_ms: 0.274
+  type: 'test'
+  ...
+# Subtest: R-P3 unapproved image digest prevents access
+ok 71 - R-P3 unapproved image digest prevents access
+  ---
+  duration_ms: 0.5981
+  type: 'test'
+  ...
+# Subtest: R-P1 existing container refuses BEFORE any Docker creation
+ok 72 - R-P1 existing container refuses BEFORE any Docker creation
+  ---
+  duration_ms: 1.5678
+  type: 'test'
+  ...
+# Subtest: R-P1 existing volume refuses BEFORE any Docker creation
+ok 73 - R-P1 existing volume refuses BEFORE any Docker creation
+  ---
+  duration_ms: 0.4016
+  type: 'test'
+  ...
+# Subtest: R-P1 existing network refuses BEFORE any Docker creation
+ok 74 - R-P1 existing network refuses BEFORE any Docker creation
+  ---
+  duration_ms: 0.3891
+  type: 'test'
+  ...
+# Subtest: R-P1 existing project refuses BEFORE any Docker creation
+ok 75 - R-P1 existing project refuses BEFORE any Docker creation
+  ---
+  duration_ms: 0.255
+  type: 'test'
+  ...
+# Subtest: R-P1 missing STALL_PHASE8_AUTHORIZE rejects before lock or external access
+ok 76 - R-P1 missing STALL_PHASE8_AUTHORIZE rejects before lock or external access
+  ---
+  duration_ms: 0.9624
+  type: 'test'
+  ...
+# Subtest: R-P1 missing STALL_PHASE8_START rejects before lock or external access
+ok 77 - R-P1 missing STALL_PHASE8_START rejects before lock or external access
+  ---
+  duration_ms: 0.1646
+  type: 'test'
+  ...
+# Subtest: R-P1 missing STALL_PHASE8_HOST_EXCLUSIVE rejects before lock or external access
+ok 78 - R-P1 missing STALL_PHASE8_HOST_EXCLUSIVE rejects before lock or external access
+  ---
+  duration_ms: 0.1308
+  type: 'test'
+  ...
+# Subtest: R-P1 controlled first create rechecks resources BEFORE starting immutable container ID
+ok 79 - R-P1 controlled first create rechecks resources BEFORE starting immutable container ID
+  ---
+  duration_ms: 2.5942
+  type: 'test'
+  ...
+# Subtest: R-P1 raced volume blocks later creation/start without cleanup
+ok 80 - R-P1 raced volume blocks later creation/start without cleanup
+  ---
+  duration_ms: 1.2447
+  type: 'test'
+  ...
+# Subtest: R-P1 raced network blocks later creation/start without cleanup
+ok 81 - R-P1 raced network blocks later creation/start without cleanup
+  ---
+  duration_ms: 0.8914
+  type: 'test'
+  ...
+# Subtest: R-P1 raced replacement blocks later creation/start without cleanup
+ok 82 - R-P1 raced replacement blocks later creation/start without cleanup
+  ---
+  duration_ms: 1.106
+  type: 'test'
+  ...
+# Subtest: R-P1 independent restart requires its own authorization and read-only post-start identity verification
+ok 83 - R-P1 independent restart requires its own authorization and read-only post-start identity verification
+  ---
+  duration_ms: 0.7454
+  type: 'test'
+  ...
+# Subtest: R-P1 restart identity failure leaves explicit failed audit, never stops or repairs resources
+ok 84 - R-P1 restart identity failure leaves explicit failed audit, never stops or repairs resources
+  ---
+  duration_ms: 1.3827
+  type: 'test'
+  ...
+# Subtest: R-P1 inspect cannot expose any Pool even with otherwise valid access authorization
+ok 85 - R-P1 inspect cannot expose any Pool even with otherwise valid access authorization
+  ---
+  duration_ms: 0.7453
+  type: 'test'
+  ...
+# Subtest: R-P3 synthetic unapproved image blocks controlled launch before any IO
+ok 86 - R-P3 synthetic unapproved image blocks controlled launch before any IO
+  ---
+  duration_ms: 0.284
+  type: 'test'
+  ...
+# Subtest: R-P3 valid synthetic approval yields the exact pinned image identity
+ok 87 - R-P3 valid synthetic approval yields the exact pinned image identity
+  ---
+  duration_ms: 0.235
+  type: 'test'
+  ...
+# Subtest: R-P3 missing approval is rejected before any launch IO
+ok 88 - R-P3 missing approval is rejected before any launch IO
+  ---
+  duration_ms: 0.4121
+  type: 'test'
+  ...
+# Subtest: R-P3 nonboolean approval is rejected before any launch IO
+ok 89 - R-P3 nonboolean approval is rejected before any launch IO
+  ---
+  duration_ms: 0.2188
+  type: 'test'
+  ...
+# Subtest: R-P3 unexpected repository is rejected before any launch IO
+ok 90 - R-P3 unexpected repository is rejected before any launch IO
+  ---
+  duration_ms: 1.2363
+  type: 'test'
+  ...
+# Subtest: R-P3 invalid index digest is rejected before any launch IO
+ok 91 - R-P3 invalid index digest is rejected before any launch IO
+  ---
+  duration_ms: 0.2218
+  type: 'test'
+  ...
+# Subtest: R-P3 missing index digest is rejected before any launch IO
+ok 92 - R-P3 missing index digest is rejected before any launch IO
+  ---
+  duration_ms: 0.1341
+  type: 'test'
+  ...
+# Subtest: R-P3 invalid local image ID is rejected before any launch IO
+ok 93 - R-P3 invalid local image ID is rejected before any launch IO
+  ---
+  duration_ms: 0.1316
+  type: 'test'
+  ...
+# Subtest: R-P3 missing local image ID is rejected before any launch IO
+ok 94 - R-P3 missing local image ID is rejected before any launch IO
+  ---
+  duration_ms: 0.1736
+  type: 'test'
+  ...
+# Subtest: R-P3 missing reviewer is rejected before any launch IO
+ok 95 - R-P3 missing reviewer is rejected before any launch IO
+  ---
+  duration_ms: 0.1775
+  type: 'test'
+  ...
+# Subtest: R-P3 blank reviewer is rejected before any launch IO
+ok 96 - R-P3 blank reviewer is rejected before any launch IO
+  ---
+  duration_ms: 0.175
+  type: 'test'
+  ...
+# Subtest: R-P3 missing review timestamp is rejected before any launch IO
+ok 97 - R-P3 missing review timestamp is rejected before any launch IO
+  ---
+  duration_ms: 0.1991
+  type: 'test'
+  ...
+# Subtest: R-P3 invalid review timestamp is rejected before any launch IO
+ok 98 - R-P3 invalid review timestamp is rejected before any launch IO
+  ---
+  duration_ms: 0.1832
+  type: 'test'
+  ...
+# Subtest: R-P3 real approval record is policy-consistent without fixing its approval state
+ok 99 - R-P3 real approval record is policy-consistent without fixing its approval state
+  ---
+  duration_ms: 24.553
+  type: 'test'
+  ...
+# Subtest: R-P2 Docker always receives an explicit sanitized environment and pinned endpoint
+ok 100 - R-P2 Docker always receives an explicit sanitized environment and pinned endpoint
+  ---
+  duration_ms: 1.0261
+  type: 'test'
+  ...
+# Subtest: R-P2 context/endpoint switching refuses a command BEFORE side effects
+ok 101 - R-P2 context/endpoint switching refuses a command BEFORE side effects
+  ---
+  duration_ms: 0.6257
+  type: 'test'
+  ...
+# Subtest: R-P2 remote endpoint and forbidden Docker actions cannot be used
+ok 102 - R-P2 remote endpoint and forbidden Docker actions cannot be used
+  ---
+  duration_ms: 0.4068
+  type: 'test'
+  ...
+# Subtest: R-P2 pristine catalog and its separately captured fingerprint are accepted
+ok 103 - R-P2 pristine catalog and its separately captured fingerprint are accepted
+  ---
+  duration_ms: 1.1549
+  type: 'test'
+  ...
+# Subtest: R-P2 drift in index is rejected independently of ledger hashes
+ok 104 - R-P2 drift in index is rejected independently of ledger hashes
+  ---
+  duration_ms: 0.1674
+  type: 'test'
+  ...
+# Subtest: R-P2 drift in constraint is rejected independently of ledger hashes
+ok 105 - R-P2 drift in constraint is rejected independently of ledger hashes
+  ---
+  duration_ms: 0.1216
+  type: 'test'
+  ...
+# Subtest: R-P2 drift in trigger is rejected independently of ledger hashes
+ok 106 - R-P2 drift in trigger is rejected independently of ledger hashes
+  ---
+  duration_ms: 0.1627
+  type: 'test'
+  ...
+# Subtest: R-P2 drift in owner is rejected independently of ledger hashes
+ok 107 - R-P2 drift in owner is rejected independently of ledger hashes
+  ---
+  duration_ms: 0.1445
+  type: 'test'
+  ...
+# Subtest: R-P2 drift in observer DML is rejected independently of ledger hashes
+ok 108 - R-P2 drift in observer DML is rejected independently of ledger hashes
+  ---
+  duration_ms: 0.117
+  type: 'test'
+  ...
+# Subtest: R-P2 drift in TRUNCATE is rejected independently of ledger hashes
+ok 109 - R-P2 drift in TRUNCATE is rejected independently of ledger hashes
+  ---
+  duration_ms: 0.0999
+  type: 'test'
+  ...
+# Subtest: R-P2 drift in ledger ACL is rejected independently of ledger hashes
+ok 110 - R-P2 drift in ledger ACL is rejected independently of ledger hashes
+  ---
+  duration_ms: 0.3393
+  type: 'test'
+  ...
+# Subtest: R-P2 catalog definition drift and wrong ready row count cannot claim readiness
+ok 111 - R-P2 catalog definition drift and wrong ready row count cannot claim readiness
+  ---
+  duration_ms: 0.5619
+  type: 'test'
+  ...
+# Subtest: R-P2 successful queries return real transport results and normally release once
+ok 112 - R-P2 successful queries return real transport results and normally release once
+  ---
+  duration_ms: 0.6683
+  type: 'test'
+  ...
+# Subtest: R-P2 timeout destroys the lease immediately, prevents reuse and keeps release idempotent
+ok 113 - R-P2 timeout destroys the lease immediately, prevents reuse and keeps release idempotent
+  ---
+  duration_ms: 0.5126
+  type: 'test'
+  ...
+# Subtest: R-P2 constraint failure may rollback but can never return its connection normally
+ok 114 - R-P2 constraint failure may rollback but can never return its connection normally
+  ---
+  duration_ms: 0.3998
+  type: 'test'
+  ...
+# Subtest: R-P2 uncertain/terminated SQLSTATE 57014 destroys connection immediately
+ok 115 - R-P2 uncertain/terminated SQLSTATE 57014 destroys connection immediately
+  ---
+  duration_ms: 0.3898
+  type: 'test'
+  ...
+# Subtest: R-P2 uncertain/terminated SQLSTATE 57P01 destroys connection immediately
+ok 116 - R-P2 uncertain/terminated SQLSTATE 57P01 destroys connection immediately
+  ---
+  duration_ms: 0.1956
+  type: 'test'
+  ...
+# Subtest: R-P2 uncertain/terminated SQLSTATE 08006 destroys connection immediately
+ok 117 - R-P2 uncertain/terminated SQLSTATE 08006 destroys connection immediately
+  ---
+  duration_ms: 0.1664
+  type: 'test'
+  ...
+# Subtest: R-P2 uncertain/terminated SQLSTATE 40003 destroys connection immediately
+ok 118 - R-P2 uncertain/terminated SQLSTATE 40003 destroys connection immediately
+  ---
+  duration_ms: 0.1154
+  type: 'test'
+  ...
+# Subtest: R-P2 rollback failure destroys connection and preserves original transaction error
+ok 119 - R-P2 rollback failure destroys connection and preserves original transaction error
+  ---
+  duration_ms: 0.5236
+  type: 'test'
+  ...
+# Subtest: R-P2 failed identity destroys client before exposing it; closing invalidates active leases
+ok 120 - R-P2 failed identity destroys client before exposing it; closing invalidates active leases
+  ---
+  duration_ms: 0.6946
+  type: 'test'
+  ...
+# Subtest: R-P2 shell guard/source review: LF, fixed socket, observer privileges and empty first PGDATA
+ok 121 - R-P2 shell guard/source review: LF, fixed socket, observer privileges and empty first PGDATA
+  ---
+  duration_ms: 10.2068
+  type: 'test'
+  ...
+# Subtest: R-B3 repository whitelist rejects postgres before launch IO
+ok 122 - R-B3 repository whitelist rejects postgres before launch IO
+  ---
+  duration_ms: 0.488
+  type: 'test'
+  ...
+# Subtest: R-B3 repository whitelist rejects docker.io/library/postgres:16-alpine before launch IO
+ok 123 - R-B3 repository whitelist rejects docker.io/library/postgres:16-alpine before launch IO
+  ---
+  duration_ms: 0.1568
+  type: 'test'
+  ...
+# Subtest: R-B3 repository whitelist rejects example.invalid/postgres:16-alpine before launch IO
+ok 124 - R-B3 repository whitelist rejects example.invalid/postgres:16-alpine before launch IO
+  ---
+  duration_ms: 0.1322
+  type: 'test'
+  ...
+# Subtest: R-B3 approval cannot override the pinned reference using extra fields
+ok 125 - R-B3 approval cannot override the pinned reference using extra fields
+  ---
+  duration_ms: 0.1498
+  type: 'test'
+  ...
+# Subtest: R-B3 ensureImage inspects only the canonical pinned reference and verifies both identities
+ok 126 - R-B3 ensureImage inspects only the canonical pinned reference and verifies both identities
+  ---
+  duration_ms: 0.6386
+  type: 'test'
+  ...
+# Subtest: R-B3 ensureImage rejects wrong local Image ID without fallback
+ok 127 - R-B3 ensureImage rejects wrong local Image ID without fallback
+  ---
+  duration_ms: 0.4616
+  type: 'test'
+  ...
+# Subtest: R-B3 ensureImage rejects wrong RepoDigest without fallback
+ok 128 - R-B3 ensureImage rejects wrong RepoDigest without fallback
+  ---
+  duration_ms: 0.3255
+  type: 'test'
+  ...
+# Subtest: R-B3 ensureImage rejects missing RepoDigests without fallback
+ok 129 - R-B3 ensureImage rejects missing RepoDigests without fallback
+  ---
+  duration_ms: 0.2091
+  type: 'test'
+  ...
+# Subtest: R-B3 a missing pinned image never triggers tag lookup or pull
+ok 130 - R-B3 a missing pinned image never triggers tag lookup or pull
+  ---
+  duration_ms: 0.4181
+  type: 'test'
+  ...
+# Subtest: R-B3 container attestation accepts canonical pin and rejects other image references
+ok 131 - R-B3 container attestation accepts canonical pin and rejects other image references
+  ---
+  duration_ms: 0.5354
+  type: 'test'
+  ...
+# Subtest: R-B3 container environment must match the same canonical pinned image
+ok 132 - R-B3 container environment must match the same canonical pinned image
+  ---
+  duration_ms: 0.3202
+  type: 'test'
+  ...
+# Subtest: R-B3 controlled launch propagates canonical image through checks and audit records
+ok 133 - R-B3 controlled launch propagates canonical image through checks and audit records
+  ---
+  duration_ms: 0.801
+  type: 'test'
+  ...
+# Subtest: R-B3 Compose requires the supplied pinned reference and never supplies a floating fallback
+ok 134 - R-B3 Compose requires the supplied pinned reference and never supplies a floating fallback
+  ---
+  duration_ms: 3.9372
+  type: 'test'
+  ...
+# Subtest: R-B3 bootstrap image guard accepts only the canonical repository digest grammar
+ok 135 - R-B3 bootstrap image guard accepts only the canonical repository digest grammar
+  ---
+  duration_ms: 1.1324
+  type: 'test'
+  ...
+# Subtest: B0 policy: exact dedicated config, explicit options, no production fallback
+ok 136 - B0 policy: exact dedicated config, explicit options, no production fallback
+  ---
+  duration_ms: 3.278
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects missing STALL_PHASE8_AUTHORIZE
+ok 137 - B0 policy rejects missing STALL_PHASE8_AUTHORIZE
+  ---
+  duration_ms: 0.6416
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects missing STALL_PHASE8_INSTANCE_ID
+ok 138 - B0 policy rejects missing STALL_PHASE8_INSTANCE_ID
+  ---
+  duration_ms: 0.342
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects missing STALL_PHASE8_APP_URL
+ok 139 - B0 policy rejects missing STALL_PHASE8_APP_URL
+  ---
+  duration_ms: 0.3124
+  type: 'test'
+  ...
+# Subtest: B0 policy: independent authorization for initialization and writes
+ok 140 - B0 policy: independent authorization for initialization and writes
+  ---
+  duration_ms: 0.4626
+  type: 'test'
+  ...
+# Subtest: B0 remote Docker overrides cannot substitute for the local test infrastructure
+ok 141 - B0 remote Docker overrides cannot substitute for the local test infrastructure
+  ---
+  duration_ms: 0.4821
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects remote
+ok 142 - B0 policy rejects remote
+  ---
+  duration_ms: 0.545
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects dev database
+ok 143 - B0 policy rejects dev database
+  ---
+  duration_ms: 0.2492
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects dev port
+ok 144 - B0 policy rejects dev port
+  ---
+  duration_ms: 0.316
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects wrong role
+ok 145 - B0 policy rejects wrong role
+  ---
+  duration_ms: 0.3975
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects URL parameter override
+ok 146 - B0 policy rejects URL parameter override
+  ---
+  duration_ms: 0.2472
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects SSL override
+ok 147 - B0 policy rejects SSL override
+  ---
+  duration_ms: 0.2036
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects fragment
+ok 148 - B0 policy rejects fragment
+  ---
+  duration_ms: 0.1709
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects socket
+ok 149 - B0 policy rejects socket
+  ---
+  duration_ms: 0.1209
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects unapproved protocol
+ok 150 - B0 policy rejects unapproved protocol
+  ---
+  duration_ms: 0.1431
+  type: 'test'
+  ...
+# Subtest: B0 policy rejects missing password
+ok 151 - B0 policy rejects missing password
+  ---
+  duration_ms: 0.2315
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation accepts only the complete synthetic dedicated topology
+ok 152 - B0 resource attestation accepts only the complete synthetic dedicated topology
+  ---
+  duration_ms: 1.4457
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects dev project
+ok 153 - B0 resource attestation rejects dev project
+  ---
+  duration_ms: 0.417
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects wrong instance
+ok 154 - B0 resource attestation rejects wrong instance
+  ---
+  duration_ms: 0.2769
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects public port
+ok 155 - B0 resource attestation rejects public port
+  ---
+  duration_ms: 0.2538
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects runtime port mismatch
+ok 156 - B0 resource attestation rejects runtime port mismatch
+  ---
+  duration_ms: 0.2668
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects dev volume
+ok 157 - B0 resource attestation rejects dev volume
+  ---
+  duration_ms: 0.3153
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects volume driver bind options
+ok 158 - B0 resource attestation rejects volume driver bind options
+  ---
+  duration_ms: 0.3367
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects host data bind
+ok 159 - B0 resource attestation rejects host data bind
+  ---
+  duration_ms: 0.2914
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects extra writable bind
+ok 160 - B0 resource attestation rejects extra writable bind
+  ---
+  duration_ms: 0.223
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects missing secret mount
+ok 161 - B0 resource attestation rejects missing secret mount
+  ---
+  duration_ms: 0.1976
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects writable bootstrap script
+ok 162 - B0 resource attestation rejects writable bootstrap script
+  ---
+  duration_ms: 0.2445
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects shared network
+ok 163 - B0 resource attestation rejects shared network
+  ---
+  duration_ms: 0.2567
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects external network
+ok 164 - B0 resource attestation rejects external network
+  ---
+  duration_ms: 0.2105
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects privileged
+ok 165 - B0 resource attestation rejects privileged
+  ---
+  duration_ms: 0.1978
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects stopped
+ok 166 - B0 resource attestation rejects stopped
+  ---
+  duration_ms: 0.2443
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects different entrypoint
+ok 167 - B0 resource attestation rejects different entrypoint
+  ---
+  duration_ms: 0.3348
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects different image
+ok 168 - B0 resource attestation rejects different image
+  ---
+  duration_ms: 0.2105
+  type: 'test'
+  ...
+# Subtest: B0 resource attestation rejects password in environment
+ok 169 - B0 resource attestation rejects password in environment
+  ---
+  duration_ms: 0.273
+  type: 'test'
+  ...
+# Subtest: B0 database identity accepts distinct non-superuser app and migrator roles
+ok 170 - B0 database identity accepts distinct non-superuser app and migrator roles
+  ---
+  duration_ms: 0.8974
+  type: 'test'
+  ...
+# Subtest: B0 inspect and write sessions must report the expected server-side read-only mode
+ok 171 - B0 inspect and write sessions must report the expected server-side read-only mode
+  ---
+  duration_ms: 1.7338
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects database_name
+ok 172 - B0 identity rejects database_name
+  ---
+  duration_ms: 0.4118
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects current_role
+ok 173 - B0 identity rejects current_role
+  ---
+  duration_ms: 0.2235
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects session_role
+ok 174 - B0 identity rejects session_role
+  ---
+  duration_ms: 0.1471
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects server_version
+ok 175 - B0 identity rejects server_version
+  ---
+  duration_ms: 0.1007
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects database_owner
+ok 176 - B0 identity rejects database_owner
+  ---
+  duration_ms: 0.1964
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects rolsuper
+ok 177 - B0 identity rejects rolsuper
+  ---
+  duration_ms: 0.2363
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects rolcreatedb
+ok 178 - B0 identity rejects rolcreatedb
+  ---
+  duration_ms: 0.1424
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects rolcreaterole
+ok 179 - B0 identity rejects rolcreaterole
+  ---
+  duration_ms: 0.0934
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects rolreplication
+ok 180 - B0 identity rejects rolreplication
+  ---
+  duration_ms: 0.0668
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects rolbypassrls
+ok 181 - B0 identity rejects rolbypassrls
+  ---
+  duration_ms: 0.067
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects database_create
+ok 182 - B0 identity rejects database_create
+  ---
+  duration_ms: 0.0682
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects public_create
+ok 183 - B0 identity rejects public_create
+  ---
+  duration_ms: 0.079
+  type: 'test'
+  ...
+# Subtest: B0 identity rejects memberships
+ok 184 - B0 identity rejects memberships
+  ---
+  duration_ms: 0.0808
+  type: 'test'
+  ...
+# Subtest: B0 first initialization requires bootstrap, not a nonexistent ready marker
+ok 185 - B0 first initialization requires bootstrap, not a nonexistent ready marker
+  ---
+  duration_ms: 0.2393
+  type: 'test'
+  ...
+# Subtest: B0 reuse rejects non-ready state bootstrap
+ok 186 - B0 reuse rejects non-ready state bootstrap
+  ---
+  duration_ms: 0.1365
+  type: 'test'
+  ...
+# Subtest: B0 reuse rejects non-ready state initializing
+ok 187 - B0 reuse rejects non-ready state initializing
+  ---
+  duration_ms: 0.0822
+  type: 'test'
+  ...
+# Subtest: B0 reuse rejects non-ready state failed
+ok 188 - B0 reuse rejects non-ready state failed
+  ---
+  duration_ms: 0.1084
+  type: 'test'
+  ...
+# Subtest: B0 ready marker and exact complete ledger are both required
+ok 189 - B0 ready marker and exact complete ledger are both required
+  ---
+  duration_ms: 0.6291
+  type: 'test'
+  ...
+# Subtest: B0 SQL scanner preserves dollar bodies, quoted delimiters and nested comments
+ok 190 - B0 SQL scanner preserves dollar bodies, quoted delimiters and nested comments
+  ---
+  duration_ms: 0.897
+  type: 'test'
+  ...
+# Subtest: B0 migration policy rejects unsafe transaction expression VACUUM
+ok 191 - B0 migration policy rejects unsafe transaction expression VACUUM
+  ---
+  duration_ms: 0.3327
+  type: 'test'
+  ...
+# Subtest: B0 migration policy rejects unsafe transaction expression CREATE INDEX CONCURRENTLY idx ON t(id)
+ok 192 - B0 migration policy rejects unsafe transaction expression CREATE INDEX CONCURRENTLY idx ON t(id)
+  ---
+  duration_ms: 0.1725
+  type: 'test'
+  ...
+# Subtest: B0 migration policy rejects unsafe transaction expression COMMIT
+ok 193 - B0 migration policy rejects unsafe transaction expression COMMIT
+  ---
+  duration_ms: 0.1141
+  type: 'test'
+  ...
+# Subtest: B0 migration policy rejects unsafe transaction expression COPY t FROM STDIN
+ok 194 - B0 migration policy rejects unsafe transaction expression COPY t FROM STDIN
+  ---
+  duration_ms: 0.1704
+  type: 'test'
+  ...
+# Subtest: B0 scanner rejects malformed input and does not infer transaction wrapping
+ok 195 - B0 scanner rejects malformed input and does not infer transaction wrapping
+  ---
+  duration_ms: 0.3705
+  type: 'test'
+  ...
+# Subtest: B0 offline review: actual 001-020 checksums and transaction boundaries match manifest
+not ok 196 - B0 offline review: actual 001-020 checksums and transaction boundaries match manifest
+  ---
+  duration_ms: 27.7357
+  type: 'test'
+  location: 'C:\\Users\\USER\\WeChatProjects\\miniprogram-1\\backend\\tests\\phase8-safety.unit.test.mjs:127:1'
+  failureType: 'testCodeFailure'
+  error: 'phase8_migration_list_rejected'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    requireSafe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/testing/phase8/policy.mjs:5:84)
+    loadMigrations (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/testing/phase8/migrations.mjs:57:3)
+    async TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/phase8-safety.unit.test.mjs:128:35)
+    async Test.run (node:internal/test_runner/test:1313:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+  ...
+# Subtest: B0 migration hash mismatch fails before SQL body can be accepted
+ok 197 - B0 migration hash mismatch fails before SQL body can be accepted
+  ---
+  duration_ms: 2.0148
+  type: 'test'
+  ...
+# Subtest: B0 actual entry functions reject absent authorization BEFORE Docker/pg access
+ok 198 - B0 actual entry functions reject absent authorization BEFORE Docker/pg access
+  ---
+  duration_ms: 3.7168
+  type: 'test'
+  ...
+# Subtest: B0 default CLIs are offline; children receive no database authorization
+ok 199 - B0 default CLIs are offline; children receive no database authorization
+  ---
+  duration_ms: 396.8222
+  type: 'test'
+  ...
+# Subtest: B0 config review: dedicated resources, pre-init entrypoint and no backend service
+ok 200 - B0 config review: dedicated resources, pre-init entrypoint and no backend service
+  ---
+  duration_ms: 2.2034
+  type: 'test'
+  ...
+# Subtest: B0 safe diagnostics never print arbitrary driver messages or credentials
+ok 201 - B0 safe diagnostics never print arbitrary driver messages or credentials
+  ---
+  duration_ms: 0.2599
+  type: 'test'
+  ...
+# Subtest: B0 helper barrier, SQLSTATE predicate and bounded timeout are pure tools, not DB evidence
+ok 202 - B0 helper barrier, SQLSTATE predicate and bounded timeout are pure tools, not DB evidence
+  ---
+  duration_ms: 18.5217
+  type: 'test'
+  ...
+# Subtest: V2 pure profile and approved canonical images retain exact identities
+ok 203 - V2 pure profile and approved canonical images retain exact identities
+  ---
+  duration_ms: 2.3002
+  type: 'test'
+  ...
+# Subtest: V2 rejects profile before create/run mutation
+ok 204 - V2 rejects profile before create/run mutation
+  ---
+  duration_ms: 1.495
+  type: 'test'
+  ...
+# Subtest: V2 rejects authorization before create/run mutation
+ok 205 - V2 rejects authorization before create/run mutation
+  ---
+  duration_ms: 0.1527
+  type: 'test'
+  ...
+# Subtest: V2 rejects host exclusivity before create/run mutation
+ok 206 - V2 rejects host exclusivity before create/run mutation
+  ---
+  duration_ms: 0.0951
+  type: 'test'
+  ...
+# Subtest: V2 rejects action before create/run mutation
+ok 207 - V2 rejects action before create/run mutation
+  ---
+  duration_ms: 0.1166
+  type: 'test'
+  ...
+# Subtest: V2 rejects old B0 UUID before create/run mutation
+ok 208 - V2 rejects old B0 UUID before create/run mutation
+  ---
+  duration_ms: 0.0992
+  type: 'test'
+  ...
+# Subtest: V2 rejects URL override before create/run mutation
+ok 209 - V2 rejects URL override before create/run mutation
+  ---
+  duration_ms: 0.0938
+  type: 'test'
+  ...
+# Subtest: V2 rejects libpq override before create/run mutation
+ok 210 - V2 rejects libpq override before create/run mutation
+  ---
+  duration_ms: 0.0873
+  type: 'test'
+  ...
+# Subtest: V2 rejects purpose before create/run mutation
+ok 211 - V2 rejects purpose before create/run mutation
+  ---
+  duration_ms: 0.1636
+  type: 'test'
+  ...
+# Subtest: V2 rejects runner image unapproved
+ok 212 - V2 rejects runner image unapproved
+  ---
+  duration_ms: 0.2878
+  type: 'test'
+  ...
+# Subtest: V2 rejects runner image repository
+ok 213 - V2 rejects runner image repository
+  ---
+  duration_ms: 0.1302
+  type: 'test'
+  ...
+# Subtest: V2 rejects runner image digest
+ok 214 - V2 rejects runner image digest
+  ---
+  duration_ms: 0.0676
+  type: 'test'
+  ...
+# Subtest: V2 rejects runner image ID
+ok 215 - V2 rejects runner image ID
+  ---
+  duration_ms: 0.0422
+  type: 'test'
+  ...
+# Subtest: V2 rejects runner image reviewer
+ok 216 - V2 rejects runner image reviewer
+  ---
+  duration_ms: 0.0385
+  type: 'test'
+  ...
+# Subtest: V2 rejects runner image timestamp
+ok 217 - V2 rejects runner image timestamp
+  ---
+  duration_ms: 0.1048
+  type: 'test'
+  ...
+# Subtest: V2 rejects runner image bundle
+ok 218 - V2 rejects runner image bundle
+  ---
+  duration_ms: 0.061
+  type: 'test'
+  ...
+# Subtest: V2 rejects runner image base
+ok 219 - V2 rejects runner image base
+  ---
+  duration_ms: 0.1087
+  type: 'test'
+  ...
+# Subtest: V2 rejects unapproved PostgreSQL image independently
+ok 220 - V2 rejects unapproved PostgreSQL image independently
+  ---
+  duration_ms: 0.1542
+  type: 'test'
+  ...
+# Subtest: V2 synthetic pending approval blocks mutation regardless of live review state
+ok 221 - V2 synthetic pending approval blocks mutation regardless of live review state
+  ---
+  duration_ms: 0.2008
+  type: 'test'
+  ...
+# Subtest: V2 real runner review record is policy-consistent without freezing its approval state
+ok 222 - V2 real runner review record is policy-consistent without freezing its approval state
+  ---
+  duration_ms: 15.3059
+  type: 'test'
+  ...
+# Subtest: V2 accepts dedicated isolated topology without host ports
+ok 223 - V2 accepts dedicated isolated topology without host ports
+  ---
+  duration_ms: 2.0548
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects container ID
+ok 224 - V2 topology rejects container ID
+  ---
+  duration_ms: 0.3943
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects image ID
+ok 225 - V2 topology rejects image ID
+  ---
+  duration_ms: 0.3404
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects extra member
+ok 226 - V2 topology rejects extra member
+  ---
+  duration_ms: 0.2759
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects extra adapter
+ok 227 - V2 topology rejects extra adapter
+  ---
+  duration_ms: 0.3361
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects host network
+ok 228 - V2 topology rejects host network
+  ---
+  duration_ms: 0.2343
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects published port
+ok 229 - V2 topology rejects published port
+  ---
+  duration_ms: 0.3038
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects runtime publish
+ok 230 - V2 topology rejects runtime publish
+  ---
+  duration_ms: 0.407
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects PublishAllPorts
+ok 231 - V2 topology rejects PublishAllPorts
+  ---
+  duration_ms: 0.2285
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects IPv6
+ok 232 - V2 topology rejects IPv6
+  ---
+  duration_ms: 0.1691
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects NAT mode
+ok 233 - V2 topology rejects NAT mode
+  ---
+  duration_ms: 0.2349
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects external network
+ok 234 - V2 topology rejects external network
+  ---
+  duration_ms: 0.1404
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects socket mount
+ok 235 - V2 topology rejects socket mount
+  ---
+  duration_ms: 0.358
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects privileged
+ok 236 - V2 topology rejects privileged
+  ---
+  duration_ms: 0.1367
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects shared IPC
+ok 237 - V2 topology rejects shared IPC
+  ---
+  duration_ms: 0.1793
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects host userns
+ok 238 - V2 topology rejects host userns
+  ---
+  duration_ms: 0.3164
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects device request
+ok 239 - V2 topology rejects device request
+  ---
+  duration_ms: 0.2092
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects old B0 volume
+ok 240 - V2 topology rejects old B0 volume
+  ---
+  duration_ms: 0.1699
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects wrong nonce
+ok 241 - V2 topology rejects wrong nonce
+  ---
+  duration_ms: 0.1688
+  type: 'test'
+  ...
+# Subtest: V2 topology rejects libpq environment
+ok 242 - V2 topology rejects libpq environment
+  ---
+  duration_ms: 0.4031
+  type: 'test'
+  ...
+# Subtest: V2 never treats failed legacy or V2 receipts as verified
+ok 243 - V2 never treats failed legacy or V2 receipts as verified
+  ---
+  duration_ms: 0.316
+  type: 'test'
+  ...
+# Subtest: V2 recognizes equivalent Windows Desktop paths without allowing a different source
+ok 244 - V2 recognizes equivalent Windows Desktop paths without allowing a different source
+  ---
+  duration_ms: 0.1504
+  type: 'test'
+  ...
+# Subtest: V2 private root cannot point at legacy secrets or a shared directory
+ok 245 - V2 private root cannot point at legacy secrets or a shared directory
+  ---
+  duration_ms: 0.4443
+  type: 'test'
+  ...
+# Subtest: V2 runner attestation accepts exact nonroot least-privilege metadata
+ok 246 - V2 runner attestation accepts exact nonroot least-privilege metadata
+  ---
+  duration_ms: 0.7422
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects root
+ok 247 - V2 runner rejects root
+  ---
+  duration_ms: 0.202
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects writable root
+ok 248 - V2 runner rejects writable root
+  ---
+  duration_ms: 0.1487
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects capability
+ok 249 - V2 runner rejects capability
+  ---
+  duration_ms: 0.2003
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects missing cap drop
+ok 250 - V2 runner rejects missing cap drop
+  ---
+  duration_ms: 0.1632
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects privilege escalation
+ok 251 - V2 runner rejects privilege escalation
+  ---
+  duration_ms: 0.1416
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects Docker socket
+ok 252 - V2 runner rejects Docker socket
+  ---
+  duration_ms: 0.2425
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects credential mixing
+ok 253 - V2 runner rejects credential mixing
+  ---
+  duration_ms: 0.1693
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects shell command
+ok 254 - V2 runner rejects shell command
+  ---
+  duration_ms: 0.1873
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects environment URL
+ok 255 - V2 runner rejects environment URL
+  ---
+  duration_ms: 0.1818
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects old Node version
+ok 256 - V2 runner rejects old Node version
+  ---
+  duration_ms: 0.1532
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects duplicate Node version
+ok 257 - V2 runner rejects duplicate Node version
+  ---
+  duration_ms: 0.1888
+  type: 'test'
+  ...
+# Subtest: V2 runner rejects extra network
+ok 258 - V2 runner rejects extra network
+  ---
+  duration_ms: 0.1137
+  type: 'test'
+  ...
+# Subtest: V2 grant binds purpose, expiry, fixed target and immutable identities
+ok 259 - V2 grant binds purpose, expiry, fixed target and immutable identities
+  ---
+  duration_ms: 0.5466
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant profile rejects before claim
+ok 260 - V2 invalid grant profile rejects before claim
+  ---
+  duration_ms: 0.3306
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant runner identity rejects before claim
+ok 261 - V2 invalid grant runner identity rejects before claim
+  ---
+  duration_ms: 0.3218
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant role rejects before claim
+ok 262 - V2 invalid grant role rejects before claim
+  ---
+  duration_ms: 0.3116
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant scope rejects before claim
+ok 263 - V2 invalid grant scope rejects before claim
+  ---
+  duration_ms: 0.1384
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant expired rejects before claim
+ok 264 - V2 invalid grant expired rejects before claim
+  ---
+  duration_ms: 0.2204
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant future rejects before claim
+ok 265 - V2 invalid grant future rejects before claim
+  ---
+  duration_ms: 0.1067
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant unbounded rejects before claim
+ok 266 - V2 invalid grant unbounded rejects before claim
+  ---
+  duration_ms: 0.1232
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant production URL rejects before claim
+ok 267 - V2 invalid grant production URL rejects before claim
+  ---
+  duration_ms: 0.1178
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant loopback rejects before claim
+ok 268 - V2 invalid grant loopback rejects before claim
+  ---
+  duration_ms: 0.1118
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant port rejects before claim
+ok 269 - V2 invalid grant port rejects before claim
+  ---
+  duration_ms: 0.1463
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant command rejects before claim
+ok 270 - V2 invalid grant command rejects before claim
+  ---
+  duration_ms: 0.1508
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant empty command rejects before claim
+ok 271 - V2 invalid grant empty command rejects before claim
+  ---
+  duration_ms: 0.0908
+  type: 'test'
+  ...
+# Subtest: V2 invalid grant unknown scope property rejects before claim
+ok 272 - V2 invalid grant unknown scope property rejects before claim
+  ---
+  duration_ms: 0.0968
+  type: 'test'
+  ...
+# Subtest: V2 wrong self hostname cannot consume a grant
+ok 273 - V2 wrong self hostname cannot consume a grant
+  ---
+  duration_ms: 0.1577
+  type: 'test'
+  ...
+# Subtest: V2 grant consumption persists and rejects replay using actual exclusive file IO
+ok 274 - V2 grant consumption persists and rejects replay using actual exclusive file IO
+  ---
+  duration_ms: 25.4894
+  type: 'test'
+  ...
+# Subtest: V2 create orchestration validates before each mutation and never migrates
+ok 275 - V2 create orchestration validates before each mutation and never migrates
+  ---
+  duration_ms: 1.3759
+  type: 'test'
+  ...
+# Subtest: V2 unauthorized create refuses before Docker/FS mutation
+ok 276 - V2 unauthorized create refuses before Docker/FS mutation
+  ---
+  duration_ms: 0.2002
+  type: 'test'
+  ...
+# Subtest: V2 existing resources refuse before reserve/create
+ok 277 - V2 existing resources refuse before reserve/create
+  ---
+  duration_ms: 0.2582
+  type: 'test'
+  ...
+# Subtest: V2 runner orchestration binds grant and returns only bootstrap verified, never ready
+ok 278 - V2 runner orchestration binds grant and returns only bootstrap verified, never ready
+  ---
+  duration_ms: 1.1123
+  type: 'test'
+  ...
+# Subtest: V2 failed receipt blocks runner creation
+ok 279 - V2 failed receipt blocks runner creation
+  ---
+  duration_ms: 0.2046
+  type: 'test'
+  ...
+# Subtest: V2 unsafe runner is never started; failed evidence retained without cleanup
+ok 280 - V2 unsafe runner is never started; failed evidence retained without cleanup
+  ---
+  duration_ms: 0.4928
+  type: 'test'
+  ...
+# Subtest: V2 post-run drift prevents success audit even with exit success
+ok 281 - V2 post-run drift prevents success audit even with exit success
+  ---
+  duration_ms: 0.7829
+  type: 'test'
+  ...
+# Subtest: V2 independent migration and app authorizations cannot be borrowed from bootstrap
+ok 282 - V2 independent migration and app authorizations cannot be borrowed from bootstrap
+  ---
+  duration_ms: 0.2705
+  type: 'test'
+  ...
+# Subtest: V2 real runner bootstrap job uses only read-only SQL and exposes no Pool
+ok 283 - V2 real runner bootstrap job uses only read-only SQL and exposes no Pool
+  ---
+  duration_ms: 1.6507
+  type: 'test'
+  ...
+# Subtest: V2 SQL UUID mismatch destroys connection and never reports bootstrap success
+ok 284 - V2 SQL UUID mismatch destroys connection and never reports bootstrap success
+  ---
+  duration_ms: 0.463
+  type: 'test'
+  ...
+# Subtest: V2 bootstrap rejects business_objects
+ok 285 - V2 bootstrap rejects business_objects
+  ---
+  duration_ms: 0.4264
+  type: 'test'
+  ...
+# Subtest: V2 bootstrap rejects extra_schemas
+ok 286 - V2 bootstrap rejects extra_schemas
+  ---
+  duration_ms: 0.4883
+  type: 'test'
+  ...
+# Subtest: V2 bootstrap rejects observer_write
+ok 287 - V2 bootstrap rejects observer_write
+  ---
+  duration_ms: 0.3486
+  type: 'test'
+  ...
+# Subtest: V2 bootstrap rejects app_write
+ok 288 - V2 bootstrap rejects app_write
+  ---
+  duration_ms: 0.2421
+  type: 'test'
+  ...
+# Subtest: V2 bootstrap rejects migrator_identity_write
+ok 289 - V2 bootstrap rejects migrator_identity_write
+  ---
+  duration_ms: 0.2548
+  type: 'test'
+  ...
+# Subtest: V2 bootstrap rejects privileged/missing role rows
+ok 290 - V2 bootstrap rejects privileged/missing role rows
+  ---
+  duration_ms: 0.2589
+  type: 'test'
+  ...
+# Subtest: V2 connection failure destroys lease, does not return it normally
+ok 291 - V2 connection failure destroys lease, does not return it normally
+  ---
+  duration_ms: 0.4412
+  type: 'test'
+  ...
+# Subtest: V2 app fixture preserves three real-transport seams, distinct PID guard and blocking query
+ok 292 - V2 app fixture preserves three real-transport seams, distinct PID guard and blocking query
+  ---
+  duration_ms: 1.3298
+  type: 'test'
+  ...
+# Subtest: V2 fixture rejects reuse of the same backend PID
+ok 293 - V2 fixture rejects reuse of the same backend PID
+  ---
+  duration_ms: 0.2424
+  type: 'test'
+  ...
+# Subtest: V2 migration orchestration rolls back SQL failure and retains failed claim
+ok 294 - V2 migration orchestration rolls back SQL failure and retains failed claim
+  ---
+  duration_ms: 0.3995
+  type: 'test'
+  ...
+# Subtest: V2 artifact allowlist excludes server, worker entrypoints and complete repository mounts
+not ok 295 - V2 artifact allowlist excludes server, worker entrypoints and complete repository mounts
+  ---
+  duration_ms: 5.2313
+  type: 'test'
+  location: 'C:\\Users\\USER\\WeChatProjects\\miniprogram-1\\backend\\tests\\phase8-v2.unit.test.mjs:95:1'
+  failureType: 'testCodeFailure'
+  error: 'phase8_v2_artifact_migrations_rejected'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    requireSafe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/testing/phase8/policy.mjs:5:84)
+    check (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/testing/phase8-v2/policy.mjs:12:34)
+    sourceManifest (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/testing/phase8-v2/artifact.mjs:16:3)
+    async TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/phase8-v2.unit.test.mjs:95:176)
+    async Test.run (node:internal/test_runner/test:1313:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+  ...
+# Subtest: V2 real Docker transport compiles hardened runner command and strips inherited connection settings
+ok 296 - V2 real Docker transport compiles hardened runner command and strips inherited connection settings
+  ---
+  duration_ms: 1.6242
+  type: 'test'
+  ...
+# Subtest: V2 Docker endpoint drift refuses before creation command
+ok 297 - V2 Docker endpoint drift refuses before creation command
+  ---
+  duration_ms: 0.2673
+  type: 'test'
+  ...
+# Subtest: V2 Docker transport only compiles isolated network and no-recreate no-pull DB creation
+ok 298 - V2 Docker transport only compiles isolated network and no-recreate no-pull DB creation
+  ---
+  duration_ms: 0.3863
+  type: 'test'
+  ...
+# Subtest: V2 final-state seam uses real order-to-store join, parameters and read-only transaction
+ok 299 - V2 final-state seam uses real order-to-store join, parameters and read-only transaction
+  ---
+  duration_ms: 0.3166
+  type: 'test'
+  ...
+# Subtest: NODE_ENV production is a runtime mode, not the reviewed deployment identity
+ok 300 - NODE_ENV production is a runtime mode, not the reviewed deployment identity
+  ---
+  duration_ms: 3.2086
+  type: 'test'
+  ...
+# Subtest: deployment refuses production
+ok 301 - deployment refuses production
+  ---
+  duration_ms: 0.2623
+  type: 'test'
+  ...
+# Subtest: deployment refuses missing
+ok 302 - deployment refuses missing
+  ---
+  duration_ms: 0.137
+  type: 'test'
+  ...
+# Subtest: deployment refuses forgedAPP
+ok 303 - deployment refuses forgedAPP
+  ---
+  duration_ms: 0.1065
+  type: 'test'
+  ...
+# Subtest: deployment refuses wrongService
+ok 304 - deployment refuses wrongService
+  ---
+  duration_ms: 0.1498
+  type: 'test'
+  ...
+# Subtest: deployment refuses notRender
+ok 305 - deployment refuses notRender
+  ---
+  duration_ms: 0.0808
+  type: 'test'
+  ...
+# Subtest: deployment refuses wrongInstance
+ok 306 - deployment refuses wrongInstance
+  ---
+  duration_ms: 0.0739
+  type: 'test'
+  ...
+# Subtest: deployment refuses wrongDatabase
+ok 307 - deployment refuses wrongDatabase
+  ---
+  duration_ms: 0.1157
+  type: 'test'
+  ...
+# Subtest: deployment refuses wrongHost
+ok 308 - deployment refuses wrongHost
+  ---
+  duration_ms: 0.3288
+  type: 'test'
+  ...
+# Subtest: deployment refuses wrongRole
+ok 309 - deployment refuses wrongRole
+  ---
+  duration_ms: 0.2593
+  type: 'test'
+  ...
+# Subtest: deployment refuses libpq
+ok 310 - deployment refuses libpq
+  ---
+  duration_ms: 0.1724
+  type: 'test'
+  ...
+# Subtest: deployment refuses disabled
+ok 311 - deployment refuses disabled
+  ---
+  duration_ms: 0.0886
+  type: 'test'
+  ...
+# Subtest: environment variables cannot approve an empty/duplicate/unreviewed source registry
+ok 312 - environment variables cannot approve an empty/duplicate/unreviewed source registry
+  ---
+  duration_ms: 0.1758
+  type: 'test'
+  ...
+# Subtest: rejected deployment never reaches authentication or pool connect
+ok 313 - rejected deployment never reaches authentication or pool connect
+  ---
+  duration_ms: 0.7321
+  type: 'test'
+  ...
+# Subtest: TLS options and role are explicit and cannot be overridden by connection query
+ok 314 - TLS options and role are explicit and cannot be overridden by connection query
+  ---
+  duration_ms: 0.3545
+  type: 'test'
+  ...
+# Subtest: wrong database marker/branch rejects instead of accepting env declarations
+ok 315 - wrong database marker/branch rejects instead of accepting env declarations
+  ---
+  duration_ms: 2.1262
+  type: 'test'
+  ...
+# Subtest: permission plan isolates administrator and grants only constant lock columns to app
+ok 316 - permission plan isolates administrator and grants only constant lock columns to app
+  ---
+  duration_ms: 0.7509
+  type: 'test'
+  ...
+# Subtest: effective privilege probe rejects superuser
+ok 317 - effective privilege probe rejects superuser
+  ---
+  duration_ms: 0.8158
+  type: 'test'
+  ...
+# Subtest: effective privilege probe rejects owner
+ok 318 - effective privilege probe rejects owner
+  ---
+  duration_ms: 0.2011
+  type: 'test'
+  ...
+# Subtest: effective privilege probe rejects grant-write
+ok 319 - effective privilege probe rejects grant-write
+  ---
+  duration_ms: 0.15
+  type: 'test'
+  ...
+# Subtest: effective privilege probe rejects column-write
+ok 320 - effective privilege probe rejects column-write
+  ---
+  duration_ms: 0.3599
+  type: 'test'
+  ...
+# Subtest: 21 pinned files strip transaction wrappers without splitting function bodies
+ok 321 - 21 pinned files strip transaction wrappers without splitting function bodies
+  ---
+  duration_ms: 0.2227
+  type: 'test'
+  ...
+# Subtest: DDL, permissions, ledger and audit commit exactly once with parameterized identity
+ok 322 - DDL, permissions, ledger and audit commit exactly once with parameterized identity
+  ---
+  duration_ms: 1.9292
+  type: 'test'
+  ...
+# Subtest: migration refuses identity BEFORE DDL
+ok 323 - migration refuses identity BEFORE DDL
+  ---
+  duration_ms: 0.309
+  type: 'test'
+  ...
+# Subtest: migration refuses role BEFORE DDL
+ok 324 - migration refuses role BEFORE DDL
+  ---
+  duration_ms: 0.2048
+  type: 'test'
+  ...
+# Subtest: migration refuses unsafe-role BEFORE DDL
+ok 325 - migration refuses unsafe-role BEFORE DDL
+  ---
+  duration_ms: 0.237
+  type: 'test'
+  ...
+# Subtest: migration refuses concurrent BEFORE DDL
+ok 326 - migration refuses concurrent BEFORE DDL
+  ---
+  duration_ms: 0.2457
+  type: 'test'
+  ...
+# Subtest: migration refuses missing-ledger BEFORE DDL
+ok 327 - migration refuses missing-ledger BEFORE DDL
+  ---
+  duration_ms: 0.4869
+  type: 'test'
+  ...
+# Subtest: migration refuses history BEFORE DDL
+ok 328 - migration refuses history BEFORE DDL
+  ---
+  duration_ms: 0.5436
+  type: 'test'
+  ...
+# Subtest: migration refuses constraint BEFORE DDL
+ok 329 - migration refuses constraint BEFORE DDL
+  ---
+  duration_ms: 0.3784
+  type: 'test'
+  ...
+# Subtest: migration refuses drift BEFORE DDL
+ok 330 - migration refuses drift BEFORE DDL
+  ---
+  duration_ms: 0.3496
+  type: 'test'
+  ...
+# Subtest: transaction failure at ddl leaves neither DDL nor ledger committed (model)
+ok 331 - transaction failure at ddl leaves neither DDL nor ledger committed (model)
+  ---
+  duration_ms: 0.5133
+  type: 'test'
+  ...
+# Subtest: transaction failure at permissions leaves neither DDL nor ledger committed (model)
+ok 332 - transaction failure at permissions leaves neither DDL nor ledger committed (model)
+  ---
+  duration_ms: 0.4488
+  type: 'test'
+  ...
+# Subtest: transaction failure at ledger leaves neither DDL nor ledger committed (model)
+ok 333 - transaction failure at ledger leaves neither DDL nor ledger committed (model)
+  ---
+  duration_ms: 0.5266
+  type: 'test'
+  ...
+# Subtest: transaction failure at audit leaves neither DDL nor ledger committed (model)
+ok 334 - transaction failure at audit leaves neither DDL nor ledger committed (model)
+  ---
+  duration_ms: 0.4907
+  type: 'test'
+  ...
+# Subtest: successful re-run attests ledger and schema without reapplying DDL
+ok 335 - successful re-run attests ledger and schema without reapplying DDL
+  ---
+  duration_ms: 0.6626
+  type: 'test'
+  ...
+# Subtest: migration creates unqualified objects in public and bounds waits before DDL
+ok 336 - migration creates unqualified objects in public and bounds waits before DDL
+  ---
+  duration_ms: 1.3087
+  type: 'test'
+  ...
+# Subtest: unknown COMMIT result destroys client and can only be reconciled by reattestation
+ok 337 - unknown COMMIT result destroys client and can only be reconciled by reattestation
+  ---
+  duration_ms: 0.5821
+  type: 'test'
+  ...
+# Subtest: migration --plan is offline, and unauthorised --apply fails without connecting
+ok 338 - migration --plan is offline, and unauthorised --apply fails without connecting
+  ---
+  duration_ms: 298.0864
+  type: 'test'
+  ...
+# Subtest: PostgreSQL integration target refuses protected databases, remote hosts and mixed roles before connection
+ok 339 - PostgreSQL integration target refuses protected databases, remote hosts and mixed roles before connection
+  ---
+  duration_ms: 2.5774
+  type: 'test'
+  ...
+# Subtest: environment gate refuses before DB I/O: {"APP_ENV":"production"}
+ok 340 - environment gate refuses before DB I/O: {"APP_ENV":"production"}
+  ---
+  duration_ms: 3.2414
+  type: 'test'
+  ...
+# Subtest: environment gate refuses before DB I/O: {"RENDER_SERVICE_ID":"srv-wrong"}
+ok 341 - environment gate refuses before DB I/O: {"RENDER_SERVICE_ID":"srv-wrong"}
+  ---
+  duration_ms: 0.4648
+  type: 'test'
+  ...
+# Subtest: environment gate refuses before DB I/O: {}
+ok 342 - environment gate refuses before DB I/O: {}
+  ---
+  duration_ms: 0.2598
+  type: 'test'
+  ...
+# Subtest: environment gate refuses before DB I/O: {"STAGING_SIMULATED_PAYMENTS":""}
+ok 343 - environment gate refuses before DB I/O: {"STAGING_SIMULATED_PAYMENTS":""}
+  ---
+  duration_ms: 0.218
+  type: 'test'
+  ...
+# Subtest: environment gate refuses before DB I/O: {"STAGING_PAYMENT_INSTANCE_ID":"bad"}
+ok 344 - environment gate refuses before DB I/O: {"STAGING_PAYMENT_INSTANCE_ID":"bad"}
+  ---
+  duration_ms: 0.3297
+  type: 'test'
+  ...
+# Subtest: configured gate is exact and simulated fulfillment never works in production
+ok 345 - configured gate is exact and simulated fulfillment never works in production
+  ---
+  duration_ms: 0.962
+  type: 'test'
+  ...
+# Subtest: real checkout creates unpaid order with stock hold; unpaid acceptance rejected
+ok 346 - real checkout creates unpaid order with stock hold; unpaid acceptance rejected
+  ---
+  duration_ms: 10.2107
+  type: 'test'
+  ...
+# Subtest: authorization refuses no-grant
+ok 347 - authorization refuses no-grant
+  ---
+  duration_ms: 5.5506
+  type: 'test'
+  ...
+# Subtest: authorization refuses marker-disabled
+ok 348 - authorization refuses marker-disabled
+  ---
+  duration_ms: 2.3051
+  type: 'test'
+  ...
+# Subtest: authorization refuses wrong-database
+ok 349 - authorization refuses wrong-database
+  ---
+  duration_ms: 1.0957
+  type: 'test'
+  ...
+# Subtest: authorization refuses wrong-instance
+ok 350 - authorization refuses wrong-instance
+  ---
+  duration_ms: 1.6957
+  type: 'test'
+  ...
+# Subtest: authorization refuses non-wechat
+ok 351 - authorization refuses non-wechat
+  ---
+  duration_ms: 1.5523
+  type: 'test'
+  ...
+# Subtest: cross-store and cross-customer requests cannot discover or confirm order
+ok 352 - cross-store and cross-customer requests cannot discover or confirm order
+  ---
+  duration_ms: 1.3051
+  type: 'test'
+  ...
+# Subtest: rejects untrusted confirmation fields {"requestKey":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","amount":1}
+ok 353 - rejects untrusted confirmation fields {"requestKey":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","amount":1}
+  ---
+  duration_ms: 0.889
+  type: 'test'
+  ...
+# Subtest: rejects untrusted confirmation fields {"requestKey":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","status":"paid"}
+ok 354 - rejects untrusted confirmation fields {"requestKey":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","status":"paid"}
+  ---
+  duration_ms: 0.867
+  type: 'test'
+  ...
+# Subtest: rejects untrusted confirmation fields {"requestKey":"bad"}
+ok 355 - rejects untrusted confirmation fields {"requestKey":"bad"}
+  ---
+  duration_ms: 0.768
+  type: 'test'
+  ...
+# Subtest: rejects untrusted confirmation fields {}
+ok 356 - rejects untrusted confirmation fields {}
+  ---
+  duration_ms: 1.034
+  type: 'test'
+  ...
+# Subtest: rejects untrusted confirmation fields []
+ok 357 - rejects untrusted confirmation fields []
+  ---
+  duration_ms: 0.6804
+  type: 'test'
+  ...
+# Subtest: read-only capability checks live grant and never changes order
+ok 358 - read-only capability checks live grant and never changes order
+  ---
+  duration_ms: 1.5573
+  type: 'test'
+  ...
+# Subtest: finite stock confirms once with audit and no second decrement
+ok 359 - finite stock confirms once with audit and no second decrement
+  ---
+  duration_ms: 2.8869
+  type: 'test'
+  ...
+# Subtest: unlimited stock uses same payment gate and server-owned amount
+ok 360 - unlimited stock uses same payment gate and server-owned amount
+  ---
+  duration_ms: 3.7322
+  type: 'test'
+  ...
+# Subtest: safe replay and concurrent confirmation create one audit/event only (model scheduling)
+ok 361 - safe replay and concurrent confirmation create one audit/event only (model scheduling)
+  ---
+  duration_ms: 3.1767
+  type: 'test'
+  ...
+# Subtest: same request key with another order conflicts
+ok 362 - same request key with another order conflicts
+  ---
+  duration_ms: 6.5487
+  type: 'test'
+  ...
+# Subtest: expired, cancelled and already released orders cannot be revived
+ok 363 - expired, cancelled and already released orders cannot be revived
+  ---
+  duration_ms: 8.9293
+  type: 'test'
+  ...
+# Subtest: missing reservation rejects and a price/stock lock wait cannot extend deadline
+ok 364 - missing reservation rejects and a price/stock lock wait cannot extend deadline
+  ---
+  duration_ms: 2.4071
+  type: 'test'
+  ...
+# Subtest: revocation while waiting for inventory is rechecked before payment writes
+ok 365 - revocation while waiting for inventory is rechecked before payment writes
+  ---
+  duration_ms: 1.3008
+  type: 'test'
+  ...
+# Subtest: live session revoked before transactional authorization cannot confirm
+ok 366 - live session revoked before transactional authorization cannot confirm
+  ---
+  duration_ms: 0.8715
+  type: 'test'
+  ...
+# Subtest: insufficient database privileges have a diagnostic refusal without payment writes
+ok 367 - insufficient database privileges have a diagnostic refusal without payment writes
+  ---
+  duration_ms: 0.742
+  type: 'test'
+  ...
+# Subtest: injected inventory failure rolls back payment, audit, event and stock together
+ok 368 - injected inventory failure rolls back payment, audit, event and stock together
+  ---
+  duration_ms: 3.5812
+  type: 'test'
+  ...
+# Subtest: payment first versus cancellation serializes on real route order lock in model; no refund call
+ok 369 - payment first versus cancellation serializes on real route order lock in model; no refund call
+  ---
+  duration_ms: 3.124
+  type: 'test'
+  ...
+# Subtest: cancellation first releases hold and late confirmation is refused
+ok 370 - cancellation first releases hold and late confirmation is refused
+  ---
+  duration_ms: 2.5082
+  type: 'test'
+  ...
+# Subtest: confirmed simulation follows accepted/preparing/delivering; generic delivered still requires proof
+ok 371 - confirmed simulation follows accepted/preparing/delivering; generic delivered still requires proof
+  ---
+  duration_ms: 2.7404
+  type: 'test'
+  ...
+# Subtest: database status never makes simulated money real in archive summary
+ok 372 - database status never makes simulated money real in archive summary
+  ---
+  duration_ms: 1.5352
+  type: 'test'
+  ...
+# Subtest: commit succeeded but response lost can be recovered by same-key replay without duplicate writes
+ok 373 - commit succeeded but response lost can be recovered by same-key replay without duplicate writes
+  ---
+  duration_ms: 4.0786
+  type: 'test'
+  ...
+# Subtest: merchant pending-count SQL explicitly separates paid new from unpaid new within authorized store
+ok 374 - merchant pending-count SQL explicitly separates paid new from unpaid new within authorized store
+  ---
+  duration_ms: 0.363
+  type: 'test'
+  ...
+# Subtest: actual analytics handler labels simulations and never counts them as received income
+ok 375 - actual analytics handler labels simulations and never counts them as received income
+  ---
+  duration_ms: 1.6986
+  type: 'test'
+  ...
+# Subtest: expiry racing a locked confirmation ultimately releases unpaid hold (model only, not SKIP LOCKED proof)
+ok 376 - expiry racing a locked confirmation ultimately releases unpaid hold (model only, not SKIP LOCKED proof)
+  ---
+  duration_ms: 4.3783
+  type: 'test'
+  ...
+# Subtest: unknown COMMIT result keeps persisted confirmation recoverable by same-key replay
+ok 377 - unknown COMMIT result keeps persisted confirmation recoverable by same-key replay
+  ---
+  duration_ms: 2.3998
+  type: 'test'
+  ...
+# Subtest: a different confirmation key cannot claim replay success for the same paid order
+ok 378 - a different confirmation key cannot claim replay success for the same paid order
+  ---
+  duration_ms: 2.5762
+  type: 'test'
+  ...
+# Subtest: real isolated PostgreSQL staging payments
+    # Subtest: 001–021 ledger, constraints and original triggers actually exist
+    ok 1 - 001–021 ledger, constraints and original triggers actually exist # SKIP
+      ---
+      duration_ms: 0.8936
+      type: 'test'
+      ...
+    # Subtest: real app cannot administer tester grants; lock-only UPDATE satisfies row lock permissions
+    ok 2 - real app cannot administer tester grants; lock-only UPDATE satisfies row lock permissions # SKIP
+      ---
+      duration_ms: 0.147
+      type: 'test'
+      ...
+    # Subtest: real CHECK, composite foreign key and unique key reject invalid rows
+    ok 3 - real CHECK, composite foreign key and unique key reject invalid rows # SKIP
+      ---
+      duration_ms: 0.0956
+      type: 'test'
+      ...
+    # Subtest: concurrent confirmation uses different real backend PIDs and never decrements stock twice
+    ok 4 - concurrent confirmation uses different real backend PIDs and never decrements stock twice # SKIP
+      ---
+      duration_ms: 0.0877
+      type: 'test'
+      ...
+    # Subtest: cancel first blocks late payment and restores exactly one reservation
+    ok 5 - cancel first blocks late payment and restores exactly one reservation # SKIP
+      ---
+      duration_ms: 0.0988
+      type: 'test'
+      ...
+    # Subtest: payment and cancellation race on a verified real order lock
+    ok 6 - payment and cancellation race on a verified real order lock # SKIP
+      ---
+      duration_ms: 0.1057
+      type: 'test'
+      ...
+    # Subtest: expiry change while confirmation waits is rechecked using real database time
+    ok 7 - expiry change while confirmation waits is rechecked using real database time # SKIP
+      ---
+      duration_ms: 0.1151
+      type: 'test'
+      ...
+    # Subtest: expired reservation cannot be revived; original expiry path releases it
+    ok 8 - expired reservation cannot be revived; original expiry path releases it # SKIP
+      ---
+      duration_ms: 0.1236
+      type: 'test'
+      ...
+    # Subtest: real SQL error rolls back payment event, audit and inventory commit
+    ok 9 - real SQL error rolls back payment event, audit and inventory commit # SKIP
+      ---
+      duration_ms: 0.1258
+      type: 'test'
+      ...
+    # Subtest: COMMIT success but lost acknowledgement reconciles through database and safe replay
+    ok 10 - COMMIT success but lost acknowledgement reconciles through database and safe replay # SKIP
+      ---
+      duration_ms: 0.1442
+      type: 'test'
+      ...
+    # Subtest: terminating only the enrolled app backend rolls back an unfinished confirmation
+    ok 11 - terminating only the enrolled app backend rolls back an unfinished confirmation # SKIP
+      ---
+      duration_ms: 0.1061
+      type: 'test'
+      ...
+    1..11
+ok 379 - real isolated PostgreSQL staging payments
+  ---
+  duration_ms: 4.3498
+  type: 'suite'
+  ...
+1..379
+# tests 389
+# suites 1
+# pass 375
+# fail 3
+# cancelled 0
+# skipped 11
+# todo 0
+# duration_ms 708.656

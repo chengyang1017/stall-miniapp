@@ -1,1 +1,5 @@
-{"navigationBarTitleText":"店铺小程序码"}
+{
+  "navigationBarTitleText": "店铺小程序码",
+  "navigationBarBackgroundColor": "#5935cf",
+  "navigationBarTextStyle": "white"
+}

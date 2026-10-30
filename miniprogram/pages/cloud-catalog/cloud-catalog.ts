@@ -3,6 +3,7 @@ import { loginWithWechat, authorizedGet, setLocalDevToken, localDevAllowed } fro
 import { authorizedMutation } from '../../modules/merchant/api/mutation'
 import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
 import { getCloudContext } from '../../modules/shared/runtime/context'
+import { CLOUD_ONLY } from '../../config/cloud'
 
 const CONFIG_KEY = 'stall_cloud_catalog_config_v1'
 const HTTPS = /^https:\/\/[^\s/]+(?:\:\d+)?(?:\/[^\s]*)?$/
@@ -18,7 +19,7 @@ Page({
   onShow(){const c=getCloudContext();this.setData({merchantReady:false,merchantProducts:[],categories:[],cloudOrders:[],selectedOrderId:'',orderDetailText:'',billSummary:null,productId:'',productName:'',productPrice:'',productImageKey:'',productImagePreview:'',merchantMessage:'维护诊断入口，请重新验证当前身份；日常经营使用商家工作台',...c?{apiBase:c.apiBase,storeSlug:c.storeSlug}:{}})},
   onHide(){this.setData({merchantReady:false,cloudOrders:[],orderDetailText:'',billSummary:null,merchantProducts:[],categories:[]})},
   data: {
-    apiBase: '', storeSlug: '', status: '尚未连接', busy: false,
+    apiBase: '', storeSlug: '', status: '尚未连接', busy: false,cloudOnly:CLOUD_ONLY,
     products: [] as DisplayProduct[], merchantProducts: [] as DisplayProduct[],
     categories: [] as Array<{ id: string; name: string }>,
     merchantMessage: '商家账号验证尚未执行', merchantReady: false,
@@ -51,14 +52,15 @@ Page({
       categories:categoryResponse.items, merchantReady:true, merchantMessage:'开发测试会话已验证（15分钟）'})
   },
   onLoad() {
-    const saved = wx.getStorageSync(CONFIG_KEY) as any
+    const saved = CLOUD_ONLY ? getCloudContext() : wx.getStorageSync(CONFIG_KEY) as any
     if (saved && typeof saved.apiBase === 'string' && typeof saved.storeSlug === 'string') {
       this.setData({ apiBase: saved.apiBase, storeSlug: saved.storeSlug, devTokenEnabled: localDevAllowed(saved.apiBase) })
     }
   },
-  onApiInput(e: any) { const apiBase=String(e.detail.value || '').trim(); this.setData({apiBase,devTokenEnabled:localDevAllowed(apiBase)}) },
-  onSlugInput(e: any) { this.setData({ storeSlug: String(e.detail.value || '').trim().toLowerCase() }) },
+  onApiInput(e: any) { if(CLOUD_ONLY)return;const apiBase=String(e.detail.value || '').trim(); this.setData({apiBase,devTokenEnabled:localDevAllowed(apiBase)}) },
+  onSlugInput(e: any) { if(CLOUD_ONLY)return;this.setData({ storeSlug: String(e.detail.value || '').trim().toLowerCase() }) },
   validConfig(): boolean {
+    if(CLOUD_ONLY){const cfg=getCloudContext();if(!cfg)return false;this.setData(cfg);return true}
     const apiBase = this.data.apiBase.replace(/\/+$/, '')
     if (!validApiBase(apiBase) || !SLUG.test(this.data.storeSlug)) {
       wx.showToast({ title: '请填写 HTTPS 地址和合法店铺标识', icon: 'none' }); return false

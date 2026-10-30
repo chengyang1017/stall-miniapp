@@ -1,3 +1,5 @@
+import { selectedCartRows } from '../modules/customer/domain/cartSelection'
+import { traceRequest } from '../modules/shared/runtime/uiTrace'
 // PHASE34_CLOUD_CHECKOUT
 import { cloudCartConfig, cloudCartDetails, readCloudCart, writeCloudCart,cloudCacheSuffix } from './cloudCart'
 import { cloudIdentity as supportIdentity } from '../modules/shared/runtime/context'
@@ -25,9 +27,9 @@ function endpoint(base:string,slug:string,path:string):string {
 function request(url:string,method:'GET'|'POST',body?:any,key?:string):Promise<any> {
   const token=wx.getStorageSync('stall_server_session_v1')
   if(method==='POST'&&(typeof token!=='string'||!token))return Promise.reject(new Error('login_required'))
-  return new Promise((resolve,reject)=>wx.request({url,method,data:body,timeout:15000,
+  return traceRequest(method==='GET'?'delivery.rules':'checkout.submit',()=>new Promise((resolve,reject)=>wx.request({url,method,data:body,timeout:15000,
     header:method==='POST'?{'content-type':'application/json',Authorization:'Bearer '+token,'Idempotency-Key':key||''}:{},
-    success:(r:any)=>r.statusCode>=200&&r.statusCode<300?resolve(r.data):reject(new Error('http_'+r.statusCode+'_'+String(r.data&&r.data.error||'unknown'))),fail:reject}))
+    success:(r:any)=>r.statusCode>=200&&r.statusCode<300?resolve(r.data):reject(new Error('http_'+r.statusCode+'_'+String(r.data&&r.data.error||'unknown'))),fail:reject})))
 }
 export async function loadCloudDelivery(cfg=cloudCartConfig()):Promise<CloudDeliveryRules> {
   if(!cfg)throw new Error('cloud_not_configured')
@@ -38,7 +40,7 @@ export async function loadCloudDelivery(cfg=cloudCartConfig()):Promise<CloudDeli
 }
 export async function loadCloudCheckout(){
   const cfg=cloudCartConfig();if(!cfg)throw new Error('cloud_not_configured')
-  const [cart,rules]=await Promise.all([cloudCartDetails(cfg),loadCloudDelivery(cfg)])
+  const [cart,rules]=await Promise.all([cloudCartDetails(cfg,true),loadCloudDelivery(cfg)])
   if(cart.items.some((item:any)=>item.stockInsufficient))throw new Error('库存不足，请返回购物车减少数量')
   return {cart,rules,business:rules.business}
 }
@@ -77,7 +79,7 @@ export async function createCloudOrder(input:{address:{receiverName:string;phone
   if(!getSessionToken())throw Error('login_required')
   const identity=supportIdentity()
   const cfg=cloudCartConfig();if(!cfg)throw new Error('cloud_not_configured')
-  const items=readCloudCart(cfg.storeSlug).map(x=>({productId:x.productId,quantity:x.quantity}))
+  const items=selectedCartRows(readCloudCart(cfg.storeSlug)).map(x=>({productId:x.productId,quantity:x.quantity}))
   if(!items.length)throw new Error('empty_cart')
   const body={items,address:input.address,slot:input.slot,note:input.note.trim()}
   const pendingKey='stall_cloud_order_pending_v1:'+cloudCacheSuffix(cfg.storeSlug)
@@ -96,6 +98,7 @@ export async function createCloudOrder(input:{address:{receiverName:string;phone
     throw new Error('原待支付订单已取消或预留过期，请重新确认库存后下单')
   }
   wx.removeStorageSync(pendingKey)
-  writeCloudCart(cfg.storeSlug,[])
+  const purchased=new Set(items.map(x=>x.productId))
+  writeCloudCart(cfg.storeSlug,readCloudCart(cfg.storeSlug).filter(x=>!purchased.has(x.productId)))
   return result
 }

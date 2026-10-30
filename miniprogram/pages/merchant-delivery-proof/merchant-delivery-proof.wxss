@@ -1,1 +1,3 @@
 @import "../../modules/features/proof/view.wxss";
+
+@import "../../styles/merchant-theme.wxss";

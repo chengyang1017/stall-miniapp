@@ -1,4 +1,6 @@
-<view class="merchant-page">
+<view wx:if="{{accessLoading}}" class="merchant-page">正在核验商家权限…</view>
+<view wx:if="{{accessError}}" class="merchant-page">{{accessError}}<navigator url="/pages/merchant-login/merchant-login">微信登录并验证店铺权限</navigator></view>
+<view wx:if="{{workspaceAuthorized}}" class="merchant-page">
   <view class="merchant-hero">
     <view class="merchant-eyebrow">MERCHANT CENTER</view>
     <view class="merchant-hero-row">

@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: strict execution default still rejects workspace 021
+ok 1 - strict execution default still rejects workspace 021
+  ---
+  duration_ms: 9.2212
+  type: 'test'
+  ...
+# Subtest: explicit workspace projection preserves exact historical 20 and manifest hash
+ok 2 - explicit workspace projection preserves exact historical 20 and manifest hash
+  ---
+  duration_ms: 35.5087
+  type: 'test'
+  ...
+# Subtest: legacy 020 artifact assertions remain exact on an exact 020 source tree
+ok 3 - legacy 020 artifact assertions remain exact on an exact 020 source tree
+  ---
+  duration_ms: 356.4594
+  type: 'test'
+  ...
+# Subtest: projection refuses tampering 001_init.sql
+ok 4 - projection refuses tampering 001_init.sql
+  ---
+  duration_ms: 151.8235
+  type: 'test'
+  ...
+# Subtest: projection refuses tampering 021_staging_payment.sql
+ok 5 - projection refuses tampering 021_staging_payment.sql
+  ---
+  duration_ms: 161.0369
+  type: 'test'
+  ...
+# Subtest: projection refuses an extra migration
+ok 6 - projection refuses an extra migration
+  ---
+  duration_ms: 168.6484
+  type: 'test'
+  ...
+# Subtest: projection refuses a mismatched extension manifest even with valid SQL
+ok 7 - projection refuses a mismatched extension manifest even with valid SQL
+  ---
+  duration_ms: 144.7512
+  type: 'test'
+  ...
+# Subtest: 021 artifact closes every relative runtime import and deployment config dependency
+ok 8 - 021 artifact closes every relative runtime import and deployment config dependency
+  ---
+  duration_ms: 71.2819
+  type: 'test'
+  ...
+# Subtest: v1 runtime explicitly rejects v2 artifact, never initializes 021 implicitly
+ok 9 - v1 runtime explicitly rejects v2 artifact, never initializes 021 implicitly
+  ---
+  duration_ms: 315.9695
+  type: 'test'
+  ...
+# Subtest: new fingerprint treats object key and mount ordering as representation only
+ok 10 - new fingerprint treats object key and mount ordering as representation only
+  ---
+  duration_ms: 0.5022
+  type: 'test'
+  ...
+# Subtest: new fingerprint preserves semantic array order Env
+ok 11 - new fingerprint preserves semantic array order Env
+  ---
+  duration_ms: 0.2186
+  type: 'test'
+  ...
+# Subtest: new fingerprint preserves semantic array order Cmd
+ok 12 - new fingerprint preserves semantic array order Cmd
+  ---
+  duration_ms: 0.1248
+  type: 'test'
+  ...
+# Subtest: new fingerprint detects changed mount Source
+ok 13 - new fingerprint detects changed mount Source
+  ---
+  duration_ms: 0.1253
+  type: 'test'
+  ...
+# Subtest: new fingerprint detects changed mount RW
+ok 14 - new fingerprint detects changed mount RW
+  ---
+  duration_ms: 0.0805
+  type: 'test'
+  ...
+# Subtest: new fingerprint rejects duplicate destinations and lossy JSON values
+ok 15 - new fingerprint rejects duplicate destinations and lossy JSON values
+  ---
+  duration_ms: 0.2581
+  type: 'test'
+  ...
+# Subtest: legacy recovery still compares original raw digest and cannot borrow new fingerprint
+ok 16 - legacy recovery still compares original raw digest and cannot borrow new fingerprint
+  ---
+  duration_ms: 1.3372
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1568.4531

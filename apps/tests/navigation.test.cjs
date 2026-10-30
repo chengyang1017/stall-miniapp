@@ -37,10 +37,11 @@ function fixture(target, page, denied = false) {
   p.setData = values=>Object.assign(p.data,values)
   return {p,calls,storage,wx}
 }
-test('Combined homepage resumes a freshly authorized merchant workspace',async()=>{
-  const {p,calls}=fixture('combined','index');await p.onShow()
-  assert.equal(calls.filter(c=>c[0]==='request').length,1)
-  assert.ok(calls.some(c=>c[0]==='navigateTo'&&c[1]==='/pages/admin/admin'))
+test('Combined homepage keeps the customer landing page despite a saved merchant preference',async()=>{
+  const {p,calls}=fixture('combined','index');let loaded=0
+  p.loadCloudHome=()=>{loaded++};await p.onShow()
+  assert.equal(loaded,1)
+  assert.equal(calls.filter(c=>c[0]==='navigateTo'||(c[0]==='request'&&c[1].includes('/v1/merchant/'))).length,0)
 })
 test('Customer homepage ignores a saved Combined merchant preference',async()=>{
   const {p,calls}=fixture('customer','index');let loaded=0

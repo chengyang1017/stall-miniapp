@@ -4,8 +4,8 @@ const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const instant=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/
 function validDay(v){return /^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T00:00:00Z'))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v&&v>='2000-01-01'&&v<='2100-12-31'}
 export async function merchantOrderCounts(db,storeId){
-  const columns=states.map(s=>`COUNT(*) FILTER(WHERE fulfillment_status='${s}')::int AS "${s}"`).join(',')
-  const {rows}=await db.query(`SELECT COUNT(*)::int AS "all",${columns} FROM orders WHERE store_id=$1`,[storeId])
+  const columns=states.map(s=>`COUNT(*) FILTER(WHERE fulfillment_status='${s}'${s==='new'?" AND payment_status='paid'":''})::int AS "${s}"`).join(',')
+  const {rows}=await db.query(`SELECT COUNT(*)::int AS "all",COUNT(*) FILTER(WHERE fulfillment_status='new' AND payment_status='unpaid')::int AS unpaid,${columns} FROM orders WHERE store_id=$1`,[storeId])
   return {...rows[0],other:rows[0].cancelled+rows[0].abnormal}
 }
 // Authentication and store authorization are performed by orderWorkflowRoute before entry.
@@ -13,7 +13,7 @@ export async function merchantOrderQuery(req,res,url,pool,store,subject,reply){
   const input=url.searchParams, q=(input.get('q')||'').trim(),from=input.get('from')||'',to=input.get('to')||''
   const state=input.get('state')||'all', size=input.get('limit')||'30',limit=Number(size)
   if([...input.keys()].some(k=>!['q','from','to','state','limit','cursor'].includes(k)||input.getAll(k).length!==1)||
-    (input.get('q')||'').length>100||!['all','latest','other',...states].includes(state)||!/^\d{1,3}$/.test(size)||limit<1||limit>100||
+    (input.get('q')||'').length>100||!['all','latest','other','unpaid',...states].includes(state)||!/^\d{1,3}$/.test(size)||limit<1||limit>100||
     (from||to)&&(!validDay(from)||!validDay(to)||from>to||Date.parse(to)-Date.parse(from)>=366*86400000)){
     reply(res,400,{error:'invalid_order_query'});return
   }
@@ -33,7 +33,8 @@ export async function merchantOrderQuery(req,res,url,pool,store,subject,reply){
     const asOf=cursor?cursor.at:clock.at
     if(cursor&&(Date.parse(asOf)>Date.parse(clock.at)||Date.parse(asOf)<Date.parse(clock.at)-1800000)){reply(res,409,{error:'orders_changed_or_cursor_expired_refresh'});return}
     const params=[store.id,asOf],clauses=['o.store_id=$1','o.created_at<=$2::timestamptz'],bind=v=>{params.push(v);return '$'+params.length}
-    if(states.includes(state))clauses.push(`o.fulfillment_status=${bind(state)}`)
+    if(states.includes(state)){clauses.push(`o.fulfillment_status=${bind(state)}`);if(state==='new')clauses.push("o.payment_status='paid'")}
+    else if(state==='unpaid')clauses.push("o.fulfillment_status='new' AND o.payment_status='unpaid'")
     else if(state==='other')clauses.push("o.fulfillment_status IN ('cancelled','abnormal')")
     if(from){const a=bind(from),b=bind(to);clauses.push(`o.created_at>=(${a}::date::timestamp AT TIME ZONE 'Asia/Shanghai') AND o.created_at<((${b}::date+1)::timestamp AT TIME ZONE 'Asia/Shanghai')`)}
     if(q){
@@ -48,7 +49,7 @@ export async function merchantOrderQuery(req,res,url,pool,store,subject,reply){
     if(cursor&&cursor.revision!==version.revision){reply(res,409,{error:'orders_changed_or_cursor_expired_refresh'});return}
     const counts=await merchantOrderCounts(client,store.id)
     if(cursor){const at=bind(cursor.key),id=bind(cursor.id);clauses.push(`(o.created_at,o.id)<(${at}::timestamptz,${id}::uuid)`)}
-    const {rows}=await client.query(`SELECT o.merchant_note AS "merchantNote",o.merchant_note_version AS "merchantNoteVersion",o.id,o.created_at AS "createdAt",o.payment_status AS "paymentStatus",o.fulfillment_status AS "fulfillmentStatus",o.total_cents AS "totalCents",
+    const {rows}=await client.query(`SELECT o.merchant_note AS "merchantNote",o.merchant_note_version AS "merchantNoteVersion",o.id,o.created_at AS "createdAt",o.payment_status AS "paymentStatus",o.payment_source AS "paymentSource",o.fulfillment_status AS "fulfillmentStatus",o.total_cents AS "totalCents",
       o.delivered_at AS "deliveredAt",o.estimated_arrival AS "estimatedArrival",o.issue_reason AS "issueReason",o.contact_snapshot AS "contactSnapshot",o.delivery_slot_snapshot AS "deliverySlotSnapshot",
       o.inventory_state AS "inventoryState",o.inventory_expires_at AS "inventoryExpiresAt",to_char(o.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "cursorAt"
       FROM orders o WHERE ${clauses.join(' AND ')} ORDER BY o.created_at DESC,o.id DESC LIMIT ${bind(limit+1)}`,params)

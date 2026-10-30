@@ -1,0 +1,12 @@
+/* Shared brand values; semantic feedback keeps its own colors. */
+page,:host{
+  --brand-primary:#7137db;
+  --brand-primary-dark:#5129b4;
+  --brand-primary-soft:#eee5fc;
+  --brand-background:#f7f4fc;
+  --brand-surface:#ffffff;
+  --brand-border:#e6dcf2;
+  --brand-text:#2e243c;
+  --brand-muted:#8c7d9d;
+  --brand-shadow:0 5rpx 20rpx rgba(85,47,141,.06);
+}

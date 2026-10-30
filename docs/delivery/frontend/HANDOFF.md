@@ -51,3 +51,7 @@
 负责人需检查Combined/Customer的checkout→orders：合成资料演示建单、正确返回订单Tab、显示待支付；重复点击/取消/页面离开/营业暂停/价格变化重确认；导航失败后本机订单仍在。云端订单接口仍保持服务端定价和unpaid，不将该DEMO测试当作真实订单/支付验收。
 
 待联调依赖继续为明确隔离staging地址、店铺/顾客/owner/manager/只读用例、错误码与真实私有图片配置。微信工具和iOS/Android由负责人另一台电脑执行，WAITING_FOR_OWNER_PREVIEW，不要求本前端开发者安装或登录。
+
+## 2026-10-30｜同步协作状态
+
+用户要求最新main合并后继续zh：main@3dcb568及其后端变更已随Git合并接入，无额外backend/src/sql/testing编辑。新版账号/手机号/权限缓存、catalog控制器与zh前端防护已整合；离线170项通过，真实环境未在本轮执行。后续API依赖/旧FE-05候选按main当前实现重新核对。

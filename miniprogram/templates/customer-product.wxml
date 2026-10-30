@@ -1,0 +1,17 @@
+<import src="./product-placeholder.wxml"/>
+<template name="productCard">
+<view class="product-media" data-id="{{item.id}}" bindtap="openProduct">
+<image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFill"/>
+<template wx:else is="productPlaceholder" data="{{placeholderStyle,customPlaceholderUrl}}"/>
+<text wx:if="{{item.discounted}}" class="discount-badge">-{{item.discountPercent}}%</text>
+</view>
+<view class="product-copy">
+<view class="product-name" data-id="{{item.id}}" bindtap="openProduct">{{item.name}}</view>
+<view class="product-description">{{item.inventoryText}}</view>
+<view class="product-bottom">
+<view class="price">¥{{item.current}}<text wx:if="{{item.discounted}}" class="old">¥{{item.original}}</text>
+</view>
+<button class="round-add" data-id="{{item.id}}" disabled="{{!item.available}}" catchtap="addCart" aria-label="加入购物车">+</button>
+</view>
+</view>
+</template>

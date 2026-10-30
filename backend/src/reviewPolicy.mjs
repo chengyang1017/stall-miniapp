@@ -7,8 +7,9 @@ export async function verifiedReviewPayment(_db,_order){return {verified:false,r
 export async function inspectReviewContent(_payload){return {state:'pending',reason:'内容安全检测尚未配置，等待平台人工审核'}}
 export const reviewError=(status,message)=>{throw Object.assign(Error(message),{status})}
 export async function reviewPurchase(db,store,subject,itemId){
- const o=(await db.query(`SELECT o.id,o.store_id,o.customer_subject,o.currency,o.payment_status,o.fulfillment_status,o.total_cents,i.id AS item_id,i.product_id,i.product_name FROM orders o JOIN order_items i ON i.order_id=o.id WHERE o.store_id=$1 AND o.customer_subject=$2 AND i.id=$3 FOR UPDATE OF o`,[store,subject,itemId])).rows[0]
+ const o=(await db.query(`SELECT o.id,o.store_id,o.customer_subject,o.currency,o.payment_source,o.payment_status,o.fulfillment_status,o.total_cents,i.id AS item_id,i.product_id,i.product_name FROM orders o JOIN order_items i ON i.order_id=o.id WHERE o.store_id=$1 AND o.customer_subject=$2 AND i.id=$3 FOR UPDATE OF o`,[store,subject,itemId])).rows[0]
  if(!o)reviewError(404,'order_item_not_found')
+ if(o.payment_source==='staging_simulated')return {eligible:false,reason:'模拟支付不能作为真实已购评价凭证',order:o}
  if(o.fulfillment_status!=='delivered'||o.payment_status!=='paid'||!o.product_id)return {eligible:false,reason:'仅本人已送达且具有可信支付确认的订单商品可评价',order:o}
  const proof=await verifiedReviewPayment(db,o)
  const eligible=proof.verified===true&&proof.orderId===o.id&&proof.storeId===store&&proof.customerSubject===subject&&String(proof.totalCents)===String(o.total_cents)&&proof.currency===o.currency&&typeof proof.receiptRef==='string'&&proof.receiptRef.length>0&&proof.receiptRef.length<=200

@@ -2,36 +2,34 @@
 // These use the actual route implementation with a mock transaction client.
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
 
-const source = readFileSync(new URL('../src/orderWorkflow.mjs', import.meta.url), 'utf8')
-const withoutAuthImport = source.replace(/^import\s+\{\s*authenticate\s*,\s*permittedStore\s*\}\s+from\s+['"]\.\/auth\.mjs['"]\s*;?\s*$/m, '')
-assert.notEqual(withoutAuthImport, source, 'Expected route auth import is present')
-const moduleText = 'const authenticate = async () => "merchant-1";\nconst permittedStore = async () => ({id:"store-1",role:"owner"});\n' + withoutAuthImport.replace(/^import\s+[^\n]+$/gm, '')
-const routeModule = await import('data:text/javascript;base64,' + Buffer.from(moduleText).toString('base64'))
-const route = routeModule.orderWorkflowRoute
+import { orderWorkflowRoute as route } from '../src/orderWorkflow.mjs'
 const ID = '11111111-1111-4111-8111-111111111111'
 const BASE = 'http://localhost/v1/merchant/stores/test-shop/orders/' + ID + '/status'
 
 function setup({initial='new',payment='paid',failEvent=false}={}) {
-  let state=initial
+  let state=initial, pendingState=initial
   const logs=[]
   const pool={
-    query: async () => ({rows:[]}),
+    query: async sql => { if(String(sql).includes('FROM auth_sessions'))return {rows:[{external_subject:'merchant-1'}]};if(String(sql).includes('FROM merchant_members'))return {rows:[{id:'store-1',role:'owner'}]};throw Error('Unexpected auth SQL') },
     connect: async () => ({
       async query(sql, args=[]) {
         logs.push(sql.trim().split(/\s+/).slice(0,4).join(' '))
-        if (/^SELECT fulfillment_status,payment_status/i.test(sql)) return {rows:[{fulfillment_status:state,payment_status:payment}]}
-        if (/^UPDATE orders SET/i.test(sql)) {state=args[2];return {rowCount:1,rows:[]}}
+        if(sql==='BEGIN'){pendingState=state;return {rows:[]}}
+        if(sql==='COMMIT'){state=pendingState;return {rows:[]}}
+        if(sql==='ROLLBACK'){pendingState=state;return {rows:[]}}
+        if (/^SELECT \*,inventory_expires_at/.test(sql)) return {rows:[{id:ID,store_id:'store-1',fulfillment_status:state,payment_status:payment,inventory_state:'none',inventory_expired:false}]}
+        if (/^UPDATE orders SET/i.test(sql)) {pendingState=args[2];return {rowCount:1,rows:[]}}
         if (/^INSERT INTO order_status_events/i.test(sql) && failEvent) throw Error('event_insert_failed')
-        return {rows:[],rowCount:1}
+        if (/^INSERT INTO order_status_events/i.test(sql))return {rows:[],rowCount:1}
+        throw Error('Unexpected transaction SQL: '+sql)
       },
       release(){logs.push('RELEASE')}
     })
   }
   async function act(next, reason='', proofKey='') {
     const response={status:0,body:null,writeHead(code){this.status=code},end(text){this.body=JSON.parse(text)}}
-    const req={method:'POST',headers:{}, async *[Symbol.asyncIterator](){yield Buffer.from(JSON.stringify({status:next,reason,proofKey}))}}
+    const req={method:'POST',headers:{authorization:'Bearer '+'A'.repeat(48)}, async *[Symbol.asyncIterator](){yield Buffer.from(JSON.stringify({status:next,reason,proofKey}))}}
     await route(req,response,new URL(BASE),pool)
     return response
   }
@@ -74,7 +72,8 @@ test('unpaid order cannot transition to delivered even with proof key', async ()
   const s=setup({initial:'delivering',payment:'unpaid'})
   const r=await s.act('delivered','', 'delivery-proofs/12345678')
   assert.equal(r.status,409)
-  assert.equal(r.body.error,'payment_not_confirmed')
+  assert.equal(r.body.error,'use_verified_proof_completion_endpoint')
+  assert.ok(!s.logs.some(x=>x.startsWith('UPDATE orders')))
   assert.equal(s.state,'delivering')
 })
 
@@ -83,4 +82,12 @@ test('failed event insertion triggers rollback rather than commit', async () => 
   await assert.rejects(s.act('accepted'), /event_insert_failed/)
   assert.ok(s.logs.includes('ROLLBACK'))
   assert.ok(!s.logs.includes('COMMIT'))
+  assert.equal(s.state,'new','failed transaction must not publish accepted state')
+  assert.ok(s.logs.some(x=>x.startsWith('INSERT INTO order_status_events')),'fault branch actually reached')
+})
+
+for(const [initial,next]of [['new','accepted'],['accepted','preparing'],['preparing','delivering'],['delivering','abnormal']])test(`unpaid ${initial} cannot advance to ${next}`,async()=>{
+ const s=setup({initial,payment:'unpaid'}),r=await s.act(next,'test reason')
+ assert.equal(r.status,409);assert.equal(r.body.error,'payment_not_confirmed');assert.equal(s.state,initial)
+ assert.ok(s.logs.includes('ROLLBACK'));assert.ok(!s.logs.some(x=>x.startsWith('UPDATE orders')))
 })

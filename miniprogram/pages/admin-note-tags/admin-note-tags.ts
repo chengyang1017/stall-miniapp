@@ -6,15 +6,15 @@ function readTags():string[]{const raw=wx.getStorageSync(KEY);return Array.isArr
 Page({
  context:'',serial:0,revision:null as string|null,
  data:{tags:[] as string[],draft:'',editingIndex:-1,editingValue:'',cloudMode:false,busy:false,loading:false,ready:false,error:''},
- onShow(){this.refresh()},
- onHide(){this.serial++;if(getCloudContext())this.setData({tags:[],ready:false,loading:false})},
+ onShow(){if(this.context!==supportIdentity()){this.setData({busy:false});this.refresh();return}if(!this.data.ready||!this.data.draft&&this.data.editingIndex<0)this.refresh()},
+ onHide(){this.serial++;if(getCloudContext())this.setData({loading:false})},
  onUnload(){this.serial++},
  async refresh(){
   if(this.data.busy)return
-  const context=supportIdentity(),serial=++this.serial,cfg=getCloudContext();if(context!==this.context)this.setData({draft:'',editingIndex:-1,editingValue:''});this.context=context
-  this.setData({cloudMode:!!cfg,tags:cfg?[]:readTags(),loading:!!cfg,ready:!cfg,error:'',editingIndex:-1})
+  const context=supportIdentity(),serial=++this.serial,cfg=getCloudContext(),changed=context!==this.context;if(changed)this.setData({draft:'',editingIndex:-1,editingValue:''});this.context=context
+  this.setData({cloudMode:!!cfg,tags:cfg?changed?[]:this.data.tags:readTags(),loading:!!cfg,ready:!cfg||!changed&&this.data.ready,error:''})
   if(!cfg)return
-  try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==supportIdentity())return;this.revision=r.revision||null;this.setData({tags:r.noteTags||[],ready:true})}catch(_){if(serial===this.serial)this.setData({error:'云端标签读取失败，请检查商家登录和权限；未回退本机标签'})}finally{if(serial===this.serial)this.setData({loading:false})}
+  try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==supportIdentity())return;this.revision=r.revision||null;this.setData({tags:r.noteTags||[],ready:true})}catch(e){if(serial===this.serial&&context===supportIdentity()){if(/http_40[13]/.test(String(e)))this.setData({tags:[],ready:false});this.setData({error:'云端标签读取失败，请检查商家登录和权限；未回退本机标签'})}}finally{if(serial===this.serial&&context===supportIdentity())this.setData({loading:false})}
  },
  typeDraft(e:any){if(!this.data.busy)this.setData({draft:String(e.detail.value||'')})},
  typeEdit(e:any){if(!this.data.busy)this.setData({editingValue:String(e.detail.value||'')})},
@@ -23,7 +23,7 @@ Page({
   const cfg=getCloudContext(),context=this.context;this.setData({busy:true,error:''})
   try{if(cfg)this.revision=await patchMerchantBusiness(cfg,this.revision,{noteTags:tags});else wx.setStorageSync(KEY,tags)
    if(context!==supportIdentity())return false;this.setData({tags});return true
-  }catch(e){if(context===supportIdentity())this.setData({error:String(e).includes('409')?'设置已变化，请刷新后重新编辑，未覆盖云端配置':'保存失败，输入保留；请重试或刷新核对',ready:false});return false}finally{this.setData({busy:false})}
+  }catch(e){if(context===supportIdentity())this.setData({error:String(e).includes('409')?'设置已变化，请刷新后重新编辑，未覆盖云端配置':'保存失败，输入保留；请重试或刷新核对',ready:false});return false}finally{if(context===supportIdentity())this.setData({busy:false})}
  },
  async add(){const value=this.data.draft.trim(),tags=this.data.tags.slice();if(!value||value.length>20){wx.showToast({title:'标签须为1至20字',icon:'none'});return}if(tags.includes(value)||tags.length>=30){wx.showToast({title:'标签重复或超过30个',icon:'none'});return}if(await this.persist([...tags,value]))this.setData({draft:''})},
  edit(e:any){if(!this.data.ready||this.data.busy)return;const i=Number(e.currentTarget.dataset.index);if(Number.isInteger(i)&&this.data.tags[i]!==undefined)this.setData({editingIndex:i,editingValue:this.data.tags[i]})},

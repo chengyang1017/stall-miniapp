@@ -8,8 +8,6 @@ const index=read('miniprogram/pages/index/index.ts')
 const home=read('miniprogram/pages/index/index.wxml')
 const login=read('miniprogram/pages/merchant-login/merchant-login.ts')
 const auth=read('miniprogram/modules/shared/runtime/auth.ts')
-const host=read('miniprogram/modules/integration/singleAppHost.ts')
-const targets=JSON.parse(read('apps/build-targets.json')).targets
 const app=JSON.parse(read('miniprogram/app.json'))
 
 test('one AppID contains merchant-login and admin plus customer landing page',()=>{
@@ -28,20 +26,13 @@ test('merchant preference is set only after server-backed permission check',()=>
  assert.ok(validate>=0 && check>validate && save>check)
  assert.match(login,/url:'\/pages\/admin\/admin'/)
 })
-test('app opening cannot route to merchant without fresh authorized request',()=>{
- const section=index.slice(index.indexOf('const merchantPreference='),index.indexOf("this.setData({entryLoading:false});refreshPagePresentation(this);"))
- assert.match(section,/await authorizedGet\(/)
- assert.match(section,/Array\.isArray\(result.items\)/)
- const authorize=section.indexOf('await authorizedGet(')
- const navigate=section.indexOf('openMerchantWorkspace()')
- assert.ok(authorize>=0 && navigate>authorize)
- assert.match(section.slice(authorize,navigate),/Array\.isArray\(result.items\)/)
- assert.match(section.slice(authorize,navigate),/stillMerchant&&merchantIdentity===supportIdentity\(\)/)
- assert.match(index,/if\(CAN_OPEN_MERCHANT && merchantCfg/)
- assert.match(host,/openMerchantWorkspace\(\)\{wx.navigateTo\(\{url:'\/pages\/admin\/admin'\}\)\}/)
- assert.equal(targets.customer.aliases['miniprogram/modules/integration/singleAppHost.ts'],'miniprogram/modules/customer/navigation.ts')
+test('customer onShow never routes from a saved merchant preference',()=>{
+ const section=index.slice(index.indexOf('async onShow()'),index.indexOf('  onHide()'))
+ assert.doesNotMatch(section,/openMerchantWorkspace|stall_merchant_home_preference_v1|await authorizedGet/)
+ assert.match(read('miniprogram/modules/integration/singleAppHost.ts'),/wx.navigateTo\(\{url:'\/pages\/admin\/admin'\}\)/)
  assert.match(auth,/Authorization: `Bearer \$\{token\}`/)
 })
+
 test('merchant logout clears saved merchant-first preference',()=>{
  assert.match(login,/wx.removeStorageSync\('stall_merchant_home_preference_v1'\)/)
 })
@@ -52,10 +43,7 @@ test('merchant can choose the customer shop without creating another AppID',()=>
  assert.match(admin,/openCustomerShop\(/)
  assert.match(admin,/customer\|/)
  assert.match(admin,/if\(!CAN_OPEN_CUSTOMER\)return/)
- assert.match(admin,/navigateCustomerShop\(\)/)
- assert.match(admin,/openCustomerShop as navigateCustomerShop/)
- assert.match(host,/openCustomerShop\(\)\{wx.switchTab\(\{url:'\/pages\/index\/index'\}\)\}/)
- assert.equal(targets.merchant.aliases['miniprogram/modules/integration/singleAppHost.ts'],'miniprogram/modules/merchant/navigation.ts')
+ assert.match(read('miniprogram/modules/integration/singleAppHost.ts'),/wx.switchTab/)
  assert.match(layout,/bindtap="openCustomerShop"/)
 })
 test('customer profile shows merchant navigation only after a server check',()=>{

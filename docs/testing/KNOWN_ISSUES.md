@@ -1,5 +1,11 @@
 # 已知问题、修复记录与剩余风险
 
+## 最新阻断：V2容器规格指纹不稳定及原摘要差异（2026-10-27）
+
+**R-V2-FP01（P1，待核查/修复）：**恢复入口把未规范化的Docker inspect Config/HostConfig/Mounts通过JSON.stringify直接摘要。实际连续只读查询中Mounts数组顺序变化，导致相同挂载集合产生不同指纹；原离线夹具的固定顺序未覆盖该问题。Config、HostConfig、排序后挂载集合在本轮观测中稳定，但40320种挂载顺序仍不能复现原锚点，原始整体差异尚未完全解释，不能假定没有其他表示差异或实质变化。
+
+实际恢复在claim/start前报phase8_v2_recovery_resource_changed并停止；容器仍created，原failed材料未改，未连接数据库。最新运行器已按授权对齐当前源码，镜像不是此次拒绝原因。后续先审查稳定的结构规范化及完整基线证据，保留Config.Env/Entrypoint/Cmd等有顺序语义的数组，不得粗暴排序所有数组或覆盖原锚点凑通过。未获新授权前不重试恢复、不清理资源。详细脱敏证据见PHASE8_V2_BOOTSTRAP_START_AUDIT.json及历史第26节。
+
 更新日期：2026-10-27；本次Engine恢复后只读验收基线 `d63c80a553c2a852af485a1f289a146e86c018ed`。前轮构建前审计基线为 `80114f191668a8c9adb1da6b4de81a4a7ffadfef`；历史记录仍以对应提交/时点为准，不用最新运行态覆盖历史失败。
 上述为B3-R历史设计时点。最新B3-V2基线 `083f67548d044c29ad4a9e0497d791e4348fd5f8`：已实现独立运行器源码，原138项加新97项共235项离线通过；未实际运行Docker资源或SQL、未恢复旧现场。已修复表示源码/指定离线范围成立，不表示真实业务环境已验收。
 
@@ -101,3 +107,39 @@ B3-V2 增补：原R-14/R-16/R-18继续开放；原失败实例没有改动或接
 ## B3-V2 runner 独立审核待办（2026-10-27）
 
 仓库中的构建审计支持对固定镜像身份和构建过程进行证据审查，但通过 GitHub 的本轮复核无法直接访问 Windows 上现存 Docker 镜像字节和资源，因而**不能独立断言当前镜像状态未变**。最终批准前须本地只读 inspect/内容与资源核验，随后对明确 digest 单独人工授权。`runner-image-approval.json` 继续 `approved=false`，旧 B3 与 B4 继续阻塞。见 [审查记录](PHASE8_V2_RUNNER_INDEPENDENT_REVIEW.md)。
+
+## 2026-10-28 Phase8 V2只读复核补充（未提交）
+
+本轮保留起始54个已跟踪修改和27个未跟踪文件；无Docker/DB写入、镜像重建、凭据创建或Git提交推送。Engine只读查询可达，V2精确ID和创建时间匹配，仍created/从未启动；原attempt/failure/launch三项字节摘要及卷规格均匹配，未出现recovery attempt。Config/HostConfig/挂载集合与10月27日诊断摘要一致，但容器整体摘要不匹配原锚点，缺少原始完整规格，无法证明仅是顺序差异。恢复仍在claim/start之前阻断，不重置锚点或重试create-db。
+
+本轮8文件离线联合回归：389项，375通过、3失败、11跳过、0取消；Node v24.16.0，日志`.local/phase8-readonly/offline.tap`。失败为B0清单、V2 artifact、business artifact封存检查，均由源码目录新增021触发；不与历史计数累加。001—020、bootstrap/ready/ACL、26项真实订单、021及11项真实支付PG均未运行。当前业务依赖021列及新增staging模块，旧runner不能执行当前工作区；现有11项loopback测试不能直接接无宿主端口V2。没有声称已经具备真实测试执行条件。
+
+完整当前证据、最小恢复替代方案、同一V2的020→021分阶段计划、覆盖缺口及Neon/Render前置条件见[恢复说明](PHASE8_V2_RECOVERY.md)。下一步先解决原始身份基线缺失；如无法找回，须单独批准同一资源的追加身份核验/登记方案，不能直接批准启动。旧B0/B3失败现场、锚点、回执及历史20项manifest均未改。
+
+## 2026-10-28 V2最小补缺实际修复（后续轮，未提交）
+
+追溯到原始Node指纹生成命令（2026-10-27T14:56:07.085Z）：固定顶层字段后直接JSON.stringify，未排序嵌套键/Mounts，未保存完整容器原spec。规范已确认，历史资源等价仍未证明。新增独立v2规范化/回归，未接入旧恢复入口，原锚点、回执和Docker资源不改；仍需人工批准同一精确资源的追加身份核验/登记，不能启动恢复。
+
+三个021测试冲突已通过显式版本机制解决：默认执行严格020；离线workspace021-baseline020核验全部21个摘要后只返回历史20；staging021离线包version2补齐staging三模块/配置/计划，51文件。旧version1的45文件/20迁移及拒绝未知/篡改断言仍有覆盖。021打包及离线核验完成，但host/grant/runner/SQL阶段执行适配未完成，实际运行器明确拒绝v2包；不能称11项支付PG已可执行。
+
+9文件最终离线联合407项：396通过、0失败、11跳过、0取消，Node v24.16.0。日志`.local/phase8-readonly/repair-final.tap`；新增phase8-version-boundary18项，数量不与历史/中间验证相加。真实恢复、bootstrap、001—021迁移、ready、26业务和11支付PG均未运行。本轮无Docker、数据库、Neon、Render或Git命令，无镜像构建，全部既有未提交修改保留。证据生成命令来源、源码变更、021最小执行扩展与下一步授权见[恢复说明](PHASE8_V2_RECOVERY.md)本轮新增节。
+
+## 2026-10-28 21:15 UTC+8：V2独立身份重新核验，登记因证据缺失停止
+
+本轮实际只读inspect：原V2容器04d174ff…（2026-10-27T14:43:54.913235797Z）、网络e269447b…（14:43:50.847655525Z）、卷stall-phase8-r2-data（14:43:47Z）身份匹配，容器仍created/从未启动。PG/runner/Node实际固定ID、RepoDigest、平台和旧bundle标签核对通过；8项挂载、单网卡无端口、internal/isolated/IPv6关闭、单子网无gateway和空成员均通过。与历史诊断的Config/HostConfig/挂载集合及网络16字段相同，原容器整体摘要仍不同。
+
+19项当前静态检查在PowerShell7只读ACL补充后全部通过（12对象ACL通过；原PowerShell5模块加载失败日志保留），不是业务测试数量。依据用户本轮第7条“证据缺失，停止登记”，没有生成新登记/锚点/created/recovery回执：原完整container spec仍不可得；已检查历史audit缺少bind bootstrap内容原始摘要，路径一致不证明历史内容一致。未发现可确认的实质篡改，也未证明原资源完全等价。
+
+新观测摘要只记录未批准；原锚点文件SHA256仍6acc14a560334d28e84db95627b0d1fd9a9bf9cfa21c77a95ce4b477c4329b27，原attempt/failure/launch字节摘要匹配且保留。最终日志`.local/phase8-readonly/identity-decision-1793193311755.json`（SHA256 76b025472cb9520ba4c1dfd936aa8f9f299dbea01bfa64fa36bf55609e9b509c），结果blocked_evidence_incomplete，下一次恢复前置条件未满足。完整资源ID/创建时间、逐项依据及ACL补充日志见[恢复说明](PHASE8_V2_RECOVERY.md)本轮新增节。
+
+021仍只有打包/离线封存适配；执行用途、角色、账本、21就绪阶段和固定真实PG用例接缝待实现。本轮无源码改动或测试重跑，前轮407项结果保持历史，不重复累加。没有Docker资源写入、启动/停止、bootstrap/SQL、Neon/Render或Git commit/push/reset；全部既有未提交修改保留。下一步需补原始证据，或由用户明确审查并接受历史不可证明项后改变登记条件，不能自动启动恢复。
+
+## 2026-10-28 21:35 UTC+8：021固定运行器源码适配完成（真实PG未执行）
+
+新增version2 grant与upgrade021/ready021/business021/payments021四个固定用途，显式授权、schema/计划/20基线/前置回执绑定；旧version1默认入口保持严格020。staging021源码封存54文件，需新镜像审核配对，原批准未改。原V2摘要本轮不再调查。
+
+新增schema021原子升级、独立stage021账本/catalog基线和只读ready/schema/ACL验收；原20账本/marker/基线保留。未来独立DBA登记脚本为新authorizer角色和test_only锚点做准备，本轮未执行。固定无参授权函数在升级事务内处理必要schema USAGE，避免提前改变旧020 ACL；权限严格限定并核验函数来源。payments021仅该用途挂载app/migrator/authorizer三凭据，其他用途仍单角色。11支付场景提取成共享PAYMENT_CASES，原独立PG入口与runner复用同一断言；business021复用既有26项，无新测试框架。
+
+最终10文件联合离线446项：435通过、0失败、11跳过、0取消；新增phase8-021.unit39项。Node v24.16.0，15个MJS语法通过；日志`.local/phase8-readonly/021-final.tap`，SHA256 50cca1db87e6ddfa42fcde813eff934ba5df101bca1f986f3f9cbbea7020bf79。不与历史407或中间验证累加。真实Docker恢复/创建/挂载、bootstrap、001—021迁移、ready、26+11 PG、Neon/Render均未运行，旧证据/回执和全部未提交修改保留；无Git操作。
+
+A需明确接受历史缺口、追加登记并实现恢复协议，证据较弱且时间不确定。优先推荐B：保留旧现场，复用全部现有控制器/审核成果/26+11用例，仅补一个固定新资源配置及完整身份登记机制，再另行授权新实例创建和测试。当前名称固定、不能重名，B也尚未创建；这不是从零重建基础设施。完整源码范围、grant/权限/原子性、日志、中间失败、未运行清单和A/B比较见[恢复说明](PHASE8_V2_RECOVERY.md)本轮新增节。

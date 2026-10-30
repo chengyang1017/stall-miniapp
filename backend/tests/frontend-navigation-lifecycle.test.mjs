@@ -32,12 +32,12 @@ function fixture({cloud=true}={}){
     customerOrdersRequest:()=>{const gate=deferred();requests.push(gate);return gate.promise},
     supportIdentity:()=>identity,
     proofUrl:()=>{const gate=deferred();proofs.push(gate);return gate.promise},
-    loadWorkflowOrders:()=>[],chinaTime:x=>x,workflowText:x=>x}
-  const p={detailSerial:0,detailVisible:false,
+    paymentLabel:()=> '支付状态待核实',loadWorkflowOrders:()=>[],chinaTime:x=>x,workflowText:x=>x}
+  const p={detailSerial:0,detailVisible:false,detailContext:'',simulationOperation:0,loadSimulationCapability(){},
     data:{order:{id:'order-A'},found:false,proofImage:'',proofError:'',proofLoading:false,cloudMode:false,items:[]},
     setData(v){Object.assign(this.data,v)}}
   for(const [name,next] of [
-    ['onShow','onHide()'],['onHide','onUnload()'],['onUnload','proofReadError()'],
+    ['onShow','onHide()'],['onHide','onUnload()'],['onUnload','async loadSimulationCapability('],
     ['renewProof','async previewProof()'],['previewProof','\n})']])p[name]=method(name,next,globals)
   return {p,requests,proofs,calls,setIdentity:x=>{identity=x}}
 }

@@ -6,6 +6,7 @@
   ],
   "pages": [
     "pages/index/index",
+    "pages/category/category",
     "pages/cloud-shop/cloud-shop",
     "pages/cloud-catalog/cloud-catalog",
     "pages/admin-backup/admin-backup",
@@ -28,6 +29,7 @@
     "pages/delivery-proof/delivery-proof",
     "pages/order-detail/order-detail",
     "pages/profile/profile",
+    "pages/customer-account/customer-account",
     "pages/customer-settings/customer-settings",
     "pages/admin-note-tags/admin-note-tags",
     "pages/support-chat/support-chat",
@@ -44,14 +46,14 @@
   ],
   "window": {
     "navigationBarTitleText": "小摊商店",
-    "navigationBarBackgroundColor": "#16865d",
+    "navigationBarBackgroundColor": "#5935cf",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#f5f6f8"
+    "backgroundColor": "#f6f3ff"
   },
   "style": "v2",
   "tabBar": {
-    "color": "#8b978f",
-    "selectedColor": "#16865d",
+    "color": "#716884",
+    "selectedColor": "#6634dc",
     "backgroundColor": "#ffffff",
     "borderStyle": "white",
     "list": [
@@ -62,6 +64,12 @@
         "selectedIconPath": "assets/tabbar/home_active.png"
       },
       {
+        "pagePath": "pages/category/category",
+        "text": "分类",
+        "iconPath": "assets/tabbar/category.png",
+        "selectedIconPath": "assets/tabbar/category_active.png"
+      },
+      {
         "pagePath": "pages/cart/cart",
         "text": "购物车",
         "iconPath": "assets/tabbar/cart.png",
@@ -69,9 +77,7 @@
       },
       {
         "pagePath": "pages/orders/orders",
-        "text": "订單",
-        "iconPath": "assets/tabbar/orders.png",
-        "selectedIconPath": "assets/tabbar/orders_active.png"
+        "text": "订单"
       },
       {
         "pagePath": "pages/profile/profile",

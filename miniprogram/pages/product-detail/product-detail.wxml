@@ -1,29 +1,27 @@
 <import src="../../templates/product-placeholder.wxml"/>
-<view class="page"><view wx:if="{{presentationError}}">{{presentationError}}</view>
-  <view class="hero">
-    <image wx:if="{{imageUrl}}" class="photo" src="{{imageUrl}}" mode="aspectFill" />
-    <view wx:else class="placeholder"><template is="productPlaceholder" data="{{placeholderStyle:placeholderStyle,customPlaceholderUrl:customPlaceholderUrl}}"/></view>
+<view class="detail-page">
+  <view class="gallery">
+    <swiper wx:if="{{imageUrls.length}}" class="gallery-swiper" current="{{imageIndex}}" indicator-dots="{{imageUrls.length > 1}}" circular="{{imageUrls.length > 1}}" bindchange="changeImage" indicator-active-color="#ffffff">
+      <swiper-item wx:for="{{imageUrls}}" wx:key="*this"><image class="gallery-image" src="{{item}}" mode="aspectFill" bindtap="previewImages" /></swiper-item>
+    </swiper>
+    <view wx:else class="gallery-empty"><template is="productPlaceholder" data="{{placeholderStyle,customPlaceholderUrl}}"/></view>
+    <view class="gallery-shade"></view>
+    <button class="back-button" style="top:{{navigationTop}}px" bindtap="goBack" aria-label="返回">‹</button>
+    <text wx:if="{{imageUrls.length > 1}}" class="gallery-counter">{{imageIndex + 1}} / {{imageUrls.length}}</text>
   </view>
-  <view class="card">
-    <view class="category">{{categoryName}}</view>
-    <view class="name">{{name}}</view>
-    <view class="price">¥{{current}} <text wx:if="{{discounted}}" class="old">¥{{original}}</text></view>
-    <view wx:if="{{discounted}}" class="sale">限时优惠</view>
-    <view class="category">{{inventoryText}}</view>
-    <view wx:if="{{manualSoldOut}}" class="unavailable">商家手动售罄</view>
-    <view wx:if="{{!available}}" class="unavailable">商品未上架、手动售罄或库存不足，暂不可购买</view>
+  <view class="detail-body">
+    <view class="detail-sync" aria-live="polite">{{cloudLoading ? '正在确认商品…' : cloudError}}</view>
+    <button wx:if="{{cloudError}}" size="mini" bindtap="refresh">重新加载</button>
+    <view class="detail-info surface">
+      <view class="detail-info-top"><view class="detail-name">{{name || (cloudLoading ? '正在读取商品' : '商品详情')}}</view><view class="detail-prices"><view class="detail-price">{{current ? '¥' + current : '—'}}</view><view wx:if="{{discounted && current}}" class="detail-original"><text>¥{{original}}</text><text class="sale-badge">-{{discountPercent}}%</text></view></view></view>
+      <view wx:if="{{description}}" class="detail-summary">{{description}}</view>
+      <view class="detail-meta"><text wx:if="{{categoryName}}" class="category-label">{{categoryName}}</text><text>{{inventoryText}}</text><text wx:if="{{manualSoldOut}}" class="unavailable">商家手动售罄</text></view>
+    </view>
+    <view class="surface quantity-card"><view class="quantity-line"><text class="detail-section-title">数量</text><view class="detail-counter"><button bindtap="decrease" disabled="{{quantity <= 1 || !available || purchaseBusy || cloudLoading}}" aria-label="减少数量">−</button><text>{{quantity}}</text><button bindtap="increase" disabled="{{quantity >= maxQuantity || !available || purchaseBusy || cloudLoading}}" aria-label="增加数量">+</button></view></view><view class="quantity-subtotal">小计 ¥{{totalText}}<text wx:if="{{cloudMode}}"> · 立即购买将加入购物车并结算已选商品</text></view></view>
+    <view wx:if="{{description}}" class="surface description-card"><view class="detail-section-heading" bindtap="toggleDetails"><text>▤ 商品详情</text><text class="collapse-arrow">{{detailsExpanded ? '⌃' : '⌄'}}</text></view><view hidden="{{!detailsExpanded}}" class="detail-description">{{description}}</view></view>
+    <product-reviews wx:if="{{cloudMode && name}}" product-id="{{productId}}" enabled="{{!cloudLoading && !cloudError}}" compact="{{true}}" />
+    <view wx:elif="{{!cloudMode && name}}" class="local-reviews">用户评价<text>本地演示暂无交易评价</text></view>
+    <view wx:if="{{recommendations.length}}" class="related-section"><view class="section-heading"><text>☆ 相关推荐</text><text class="more" bindtap="goCategories">查看更多 ›</text></view><scroll-view scroll-x class="related-scroll"><view class="related-track"><view wx:for="{{recommendations}}" wx:key="id" class="related-card"><view data-id="{{item.id}}" bindtap="openRecommendation"><image wx:if="{{item.imageUrl}}" class="related-image" src="{{item.imageUrl}}" mode="aspectFill"/><view wx:else class="related-placeholder"><template is="productPlaceholder" data="{{placeholderStyle,customPlaceholderUrl}}"/></view><view class="related-name">{{item.name}}</view></view><view class="related-bottom"><text>¥{{item.current}}</text><button class="round-add" data-id="{{item.id}}" bindtap="addRecommendation" disabled="{{purchaseBusy || cloudLoading}}" aria-label="加入购物车">+</button></view></view></view></scroll-view></view>
   </view>
-  <view class="card">
-    <view class="subtitle">商品介绍</view>
-    <view class="description">{{description || '商家暂未填写商品介绍。'}}</view>
-  </view>
-  <view class="card quantity-row">
-    <text>购买数量</text>
-    <view class="counter"><button size="mini" bindtap="decrease" disabled="{{quantity <= 1}}">−</button><text>{{quantity}}</text><button size="mini" bindtap="increase" disabled="{{quantity >= maxQuantity}}">＋</button></view>
-  </view>
-  <product-reviews wx:if="{{cloudMode}}" product-id="{{productId}}" enabled="{{cloudMode}}" />
-  <view class="footer">
-    <view><view class="label">合计</view><view class="total">¥{{totalText}}</view></view>
-    <view class="actions"><button bindtap="addCart" disabled="{{!available || purchaseBusy}}">加入购物车</button><button type="primary" bindtap="buyNow" disabled="{{!available || purchaseBusy}}">{{cloudMode ? '加入并去结算' : '立即购买'}}</button></view>
-  </view>
+  <view class="detail-footer"><view class="detail-footer-link favorite-disabled" bindtap="favorite" aria-label="收藏暂未开通"><text>♡</text><view>收藏</view></view><view class="detail-footer-link" bindtap="goCart"><view class="cart-symbol"><image class="detail-cart-icon" src="/assets/tabbar/cart.png" mode="aspectFit"/><text wx:if="{{cartCount}}" class="detail-cart-badge">{{cartCount > 99 ? '99+' : cartCount}}</text></view><view>购物车</view></view><button class="detail-add" disabled="{{!available || purchaseBusy || cloudLoading || cloudError}}" bindtap="addCart">加入购物车</button><button class="detail-buy" disabled="{{!available || purchaseBusy || cloudLoading || cloudError}}" loading="{{purchaseBusy}}" bindtap="buyNow">立即购买</button></view>
 </view>

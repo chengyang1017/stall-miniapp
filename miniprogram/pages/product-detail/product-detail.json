@@ -2,5 +2,6 @@
   "navigationBarTitleText": "商品详情",
   "usingComponents": {
     "product-reviews": "/modules/customer/components/product-reviews/product-reviews"
-  }
+  },
+  "navigationStyle": "custom"
 }

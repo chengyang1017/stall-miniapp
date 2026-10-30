@@ -1,1 +1,6 @@
-{"navigationBarTitleText":"客服消息","enablePullDownRefresh":true}
+{
+  "navigationBarTitleText": "客服消息",
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#5935cf",
+  "navigationBarTextStyle": "white"
+}

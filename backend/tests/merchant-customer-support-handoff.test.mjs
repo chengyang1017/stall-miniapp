@@ -71,7 +71,7 @@ function store() {
   }
   return db
 }
-function publicMessage(m){return {id:m.id,seq:m.seq,sender:m.sender,content:m.content,createdAt:m.createdAt}}
+function publicMessage(m){return {id:m.id,seq:m.seq,sender:m.sender,clientKey:m.clientKey,content:m.content,createdAt:m.createdAt}}
 function request(subject,method,path,payload){
   const raw=payload===undefined?'':JSON.stringify(payload)
   return {testSubject:subject,method,headers:{'content-length':String(Buffer.byteLength(raw))},async *[Symbol.asyncIterator](){if(raw)yield Buffer.from(raw)},url:new URL('http://localhost'+path)}
@@ -138,4 +138,14 @@ test('foreign customer and unauthorized merchant cannot read or write the conver
   const forbidden=await invoke(db,'bob','GET',merchantPath+'/messages')
   assert.equal(forbidden.status,403)
   assert.equal(db.messages.length,1)
+})
+
+test('message API exposes server-stored clientKey for exact optimistic reconciliation',async()=>{
+ const db=store();const result=await invoke(db,'alice','POST',customerPath+'/messages',{content:'safe retry',clientKey:KEY1})
+ assert.equal(result.body.message.clientKey,KEY1)
+ const read=await invoke(db,'alice','GET',customerPath+'/messages')
+ assert.equal(read.body.messages[0].clientKey,KEY1)
+ const projectionQueries=db.queries.filter(q=>q.sql.includes('FROM support_messages WHERE conversation_id=$1')&&q.sql.includes('seq::text'))
+ assert.ok(projectionQueries.length>0)
+ for(const query of projectionQueries)assert.match(query.sql,/client_key AS "clientKey"/)
 })

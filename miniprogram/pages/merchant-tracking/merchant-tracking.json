@@ -1,1 +1,6 @@
-{"navigationBarTitleText":"配送位置共享","enablePullDownRefresh":true}
+{
+  "navigationBarTitleText": "配送位置共享",
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#5935cf",
+  "navigationBarTextStyle": "white"
+}

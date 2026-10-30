@@ -1,16 +1,18 @@
-page { background:#f6f8f7; }
+page { background:var(--brand-background); }
 .note-admin-page { padding:28rpx; }
 .note-intro { padding:16rpx 6rpx 26rpx; }
-.note-title { font-size:38rpx;font-weight:700;color:#1b3328; }
-.note-desc { font-size:25rpx;line-height:1.65;color:#74857b;margin-top:12rpx; }
+.note-title { font-size:38rpx;font-weight:700;color:var(--brand-text); }
+.note-desc { font-size:25rpx;line-height:1.65;color:var(--brand-muted);margin-top:12rpx; }
 .note-panel { background:#fff;padding:26rpx;border-radius:20rpx;margin-bottom:22rpx; }
-.note-section { font-size:29rpx;font-weight:600;margin-bottom:18rpx;color:#22392f; }
+.note-section { font-size:29rpx;font-weight:600;margin-bottom:18rpx;color:var(--brand-text); }
 .note-add-row,.note-row { display:flex;align-items:center;gap:12rpx; }
-.note-input { flex:1;min-width:0;height:76rpx;box-sizing:border-box;padding:0 18rpx;border-radius:12rpx;background:#f2f7f4;font-size:27rpx; }
-.note-add { margin:0 !important;background:#16865d !important;color:white !important; }
-.note-row { min-height:82rpx;padding:14rpx 0;border-top:1rpx solid #edf1ee; }
+.note-input { flex:1;min-width:0;height:76rpx;box-sizing:border-box;padding:0 18rpx;border-radius:12rpx;background:var(--brand-background);font-size:27rpx; }
+.note-add { margin:0 !important;background:var(--brand-primary) !important;color:white !important; }
+.note-row { min-height:82rpx;padding:14rpx 0;border-top:1rpx solid var(--brand-background); }
 .note-row-name { flex:1;min-width:0;font-size:28rpx;word-break:break-all; }
-.note-action { color:#16865d;font-size:24rpx;white-space:nowrap;padding:10rpx 3rpx; }
-.note-action.muted { color:#8c9b92; }.note-action.danger { color:#cc6660; }
+.note-action { color:var(--brand-primary);font-size:24rpx;white-space:nowrap;padding:10rpx 3rpx; }
+.note-action.muted { color:var(--brand-muted); }.note-action.danger { color:#cc6660; }
 .note-edit-input { height:68rpx; }
-.note-empty,.note-hint { color:#85958b;font-size:24rpx;line-height:1.5; }
+.note-empty,.note-hint { color:var(--brand-muted);font-size:24rpx;line-height:1.5; }
+
+@import "../../styles/merchant-theme.wxss";

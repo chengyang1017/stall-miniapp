@@ -1,6 +1,7 @@
 import { loginWithWechat, authorizedGet, setLocalDevToken, localDevAllowed, requestIdentity } from '../../modules/shared/runtime/auth'
 import { getCloudContext } from '../../modules/shared/runtime/context'
 import { clearSessionCaches } from '../../modules/shared/runtime/sessionLifecycle'
+import { CLOUD_ONLY } from '../../config/cloud'
 
 const CONFIG_KEY = 'stall_cloud_catalog_config_v1'
 const TOKEN_KEY = 'stall_server_session_v1'
@@ -10,11 +11,11 @@ function validBase(base: string): boolean {
 }
 Page({
   pageVisible: false, operationSerial: 0,
-  data: { apiBase: '', storeSlug: '', devToken: '', showLocalDev: false,
+  data: { apiBase: '', storeSlug: '', devToken: '', showLocalDev: false,cloudOnly:CLOUD_ONLY,
     busy: false, authenticated: false, status: '尚未验证商家身份' },
   onShow() {
     this.pageVisible = true
-    const config = wx.getStorageSync(CONFIG_KEY) as any
+    const config = CLOUD_ONLY ? getCloudContext() : wx.getStorageSync(CONFIG_KEY) as any
     const apiBase = config && typeof config.apiBase === 'string' ? config.apiBase : ''
     const storeSlug = config && typeof config.storeSlug === 'string' ? config.storeSlug : ''
     this.setData({ apiBase, storeSlug, authenticated: false, showLocalDev: localDevAllowed(apiBase) && storeSlug === 'stall-demo' })
@@ -26,6 +27,7 @@ Page({
   onSlugInput(e: any) { if(this.data.busy)return; const storeSlug = String(e.detail.value || '').trim().toLowerCase(); this.setData({ storeSlug, showLocalDev: localDevAllowed(this.data.apiBase) && storeSlug === 'stall-demo', authenticated: false }) },
   onTokenInput(e: any) { if(this.data.busy)return; this.setData({ devToken: String(e.detail.value || '').trim() }) },
   config(): boolean {
+    if(CLOUD_ONLY){const cfg=getCloudContext();if(!cfg)return false;this.setData(cfg);return true}
     const apiBase = String(this.data.apiBase).replace(/\/+$/, '')
     const storeSlug = this.data.storeSlug
     if (!validBase(apiBase) || !SLUG.test(storeSlug)) {

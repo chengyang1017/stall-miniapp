@@ -7,27 +7,41 @@ export const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a
 export const HEX=/^[0-9a-f]{64}$/, DIGEST=/^sha256:[0-9a-f]{64}$/
 export const PURPOSES=Object.freeze({bootstrap:{role:'observer',scope:'bootstrap-select',state:'bootstrap'},
   initialize:{role:'migrator',scope:'manifest-001-020',state:'bootstrap'},ready:{role:'observer',scope:'ready-select',state:'ready'},
-  fixture:{role:'app',scope:'fixture-connections',state:'ready'}})
+  fixture:{role:'app',scope:'fixture-connections',state:'ready'},
+  business:{role:'app',scope:'business-consistency-v1',state:'ready'}})
+export const PURPOSES021=Object.freeze({upgrade021:{role:'migrator',scope:'upgrade-020-to-021',state:'ready'},
+ ready021:{role:'observer',scope:'schema-acl-021-select',state:'ready021'},
+ business021:{role:'app',scope:'business-consistency-021',state:'ready021'},
+ payments021:{role:'app',scope:'payments-021-eleven-cases',state:'ready021'}})
+export const purposeSpec=purpose=>Object.hasOwn(PURPOSES,purpose)?PURPOSES[purpose]:Object.hasOwn(PURPOSES021,purpose)?PURPOSES021[purpose]:undefined
 export const check=(value,code)=>requireSafe(value,'phase8_v2_'+code)
 export function images(pg,runner) {
   const database=approvedImage(pg)
   check(runner?.approved===true&&runner.repository===V2.runnerRepository&&DIGEST.test(runner.digest||'')&&DIGEST.test(runner.imageId||'')&&
     HEX.test(runner.bundleSha256||'')&&typeof runner.reviewedBy==='string'&&runner.reviewedBy.trim()&&
     Number.isFinite(Date.parse(runner.reviewedAt))&&/^node@sha256:[a-f0-9]{64}$/.test(runner.baseReference||''),'image_not_approved')
-  return {database,runner:{reference:V2.runnerRepository+'@'+runner.digest,imageId:runner.imageId,bundleSha256:runner.bundleSha256}}
+  check(runner.schemaProfile===undefined||['baseline020','staging021'].includes(runner.schemaProfile),'image_schema_rejected')
+  return {database,runner:{reference:V2.runnerRepository+'@'+runner.digest,imageId:runner.imageId,bundleSha256:runner.bundleSha256,schemaProfile:runner.schemaProfile||'baseline020'}}
 }
 export function configuration(env,action,pg,runner) {
   check(env.PHASE8_V2_PROFILE===V2.profile,'profile_rejected')
   check(env.PHASE8_V2_AUTHORIZE==='ISOLATED_V2_ONLY'&&env.PHASE8_V2_HOST_EXCLUSIVE==='I_CONTROL_LOCAL_DOCKER','not_authorized')
-  check(['create-db','run'].includes(action)&&env.PHASE8_V2_ACTION===action,'action_not_authorized')
+  check(['create-db','recover-created','run'].includes(action)&&env.PHASE8_V2_ACTION===action,'action_not_authorized')
+  if(action==='recover-created')check(env.PHASE8_V2_RECOVER_CREATED==='START_PINNED_CREATED_ONCE','recovery_not_authorized')
   check(UUID.test(env.PHASE8_V2_INSTANCE||'')&&env.PHASE8_V2_INSTANCE!=='43805bf5-1391-4d3f-b8ce-e3bfa9448d48','instance_rejected')
   if(action==='run') {
-    check(UUID.test(env.PHASE8_V2_RUN_ID||'')&&Object.hasOwn(PURPOSES,env.PHASE8_V2_PURPOSE||''),'purpose_rejected')
+    check(UUID.test(env.PHASE8_V2_RUN_ID||'')&&!!purposeSpec(env.PHASE8_V2_PURPOSE),'purpose_rejected')
+    if(Object.hasOwn(PURPOSES021,env.PHASE8_V2_PURPOSE)){
+      check(env.PHASE8_V2_SCHEMA==='EXPLICIT_021_ONLY'&&env.PHASE8_V2_021_AUTHORIZE===({upgrade021:'UPGRADE_021_ATOMIC_ONCE',ready021:'VERIFY_021_READ_ONLY',business021:'RUN_EXISTING_26_ON_021',payments021:'RUN_11_PAYMENT_CASES_ON_021'})[env.PHASE8_V2_PURPOSE], 'schema021_not_authorized')
+    }
     if(env.PHASE8_V2_PURPOSE==='initialize')check(env.PHASE8_V2_MIGRATE==='INITIALIZE_NEW_V2_ONCE','migration_not_authorized')
     if(env.PHASE8_V2_PURPOSE==='fixture')check(env.PHASE8_V2_TEST==='V2_FIXTURE_ONLY','fixture_not_authorized')
+    if(env.PHASE8_V2_PURPOSE==='business')check(env.PHASE8_V2_TEST==='V2_BUSINESS_TESTS_ONLY','business_not_authorized')
   }
   check(!['DATABASE_URL','PGHOST','PGPORT','PGUSER','PGPASSWORD','PGSERVICE','PGOPTIONS'].some(k=>env[k]),'connection_override_rejected')
-  return {profile:V2.profile,instance:env.PHASE8_V2_INSTANCE,runId:env.PHASE8_V2_RUN_ID,purpose:env.PHASE8_V2_PURPOSE,images:images(pg,runner)}
+  const selectedImages=images(pg,runner)
+  if(action==='run')check(selectedImages.runner.schemaProfile===(Object.hasOwn(PURPOSES021,env.PHASE8_V2_PURPOSE)?'staging021':'baseline020'),'image_schema_rejected')
+  return {profile:V2.profile,instance:env.PHASE8_V2_INSTANCE,runId:env.PHASE8_V2_RUN_ID,purpose:env.PHASE8_V2_PURPOSE,images:selectedImages}
 }
 export function receipt(r,c) {
   check(r?.version===2&&r.profile===V2.profile&&r.status==='created_verified'&&r.project===V2.project&&r.instance===c.instance&&
@@ -49,19 +63,28 @@ function base(c,name,image,config,nonce,running) {
   check(noPorts(c),'host_port_rejected')
   check(h.NetworkMode===V2.network&&Object.keys(c.NetworkSettings.Networks||{}).join()===V2.network,'network_mode_rejected')
 }
+// EnableIPv6 is the authoritative, mandatory boolean in NetworkInspect. Engine
+// may omit the redundant driver option; a present contradictory/ambiguous value
+// remains an error. No daemon defaults or falsy coercion are used as evidence.
+export function networkIsolation(network){
+  const options=network?.Options
+  check(network?.Name===V2.network&&network.Driver==='bridge'&&network.Internal===true&&network.EnableIPv6===false&&
+    options&&typeof options==='object'&&!Array.isArray(options)&&
+    options['com.docker.network.bridge.gateway_mode_ipv4']==='isolated'&&
+    (!Object.hasOwn(options,'com.docker.network.enable_ipv6')||options['com.docker.network.enable_ipv6']==='false')&&
+    (!Object.hasOwn(options,'com.docker.network.enable_ipv4')||options['com.docker.network.enable_ipv4']==='true')&&
+    Object.keys(options).every(k=>['com.docker.network.bridge.gateway_mode_ipv4','com.docker.network.enable_ipv6','com.docker.network.enable_ipv4'].includes(k)), 'network_rejected')
+}
 export function topology(db,volume,network,c,r,sources,{running=true,runner=null}={}) {
   receipt(r,c);base(db,V2.container,c.images.database,c,r.nonce,running)
   check(db.Id===r.dbId&&network?.Id===r.networkId,'resource_identity_rejected')
   check(volume?.Name===V2.volume&&volume.Driver==='local'&&empty(volume.Options)&&labels(volume.Labels,c,r.nonce),'volume_rejected')
-  const options=network?.Options||{}
-  check(network?.Name===V2.network&&network.Driver==='bridge'&&network.Internal===true&&network.EnableIPv6===false&&
-    options['com.docker.network.bridge.gateway_mode_ipv4']==='isolated'&&options['com.docker.network.enable_ipv6']==='false'&&
-    Object.keys(options).every(k=>['com.docker.network.bridge.gateway_mode_ipv4','com.docker.network.enable_ipv6','com.docker.network.enable_ipv4'].includes(k))&&
-    labels(network.Labels,c,r.nonce),'network_rejected')
+  networkIsolation(network)
+  check(labels(network.Labels,c,r.nonce),'network_rejected')
   const expected=running?[db.Id,...runner&&runner.State.Running?[runner.Id]:[]]:[]
   check(JSON.stringify(Object.keys(network.Containers||{}).sort())===JSON.stringify(expected.sort()),'network_members_rejected')
   const e=db.NetworkSettings.Networks[V2.network]
-  check((!running||e.NetworkID===network.Id&&isIP(e.IPAddress)===4&&!e.Gateway)&&!e.GlobalIPv6Address,'endpoint_rejected')
+  check((!running||e.NetworkID===network.Id&&isIP(e.IPAddress)===4&&!e.Gateway)&&!e.GlobalIPv6Address&&!e.IPv6Gateway,'endpoint_rejected')
   check(JSON.stringify(db.Config.Entrypoint)===JSON.stringify(['sh','/phase8/bootstrap-entrypoint.sh'])&&JSON.stringify(db.Config.Cmd)===JSON.stringify(
     ['postgres','-c','log_statement=none','-c','log_min_error_statement=panic','-c','log_parameter_max_length_on_error=0','-c','listen_addresses=*','-c','port=5432']),'entrypoint_rejected')
   const vars=db.Config.Env||[],map=new Map(vars.map(s=>{const i=s.indexOf('=');return [s.slice(0,i),s.slice(i+1)]}))
@@ -89,7 +112,8 @@ export function runnerIdentity(r,c,dbReceipt,paths,{running=false}={}) {
   check(vars.size===(r.Config.Env||[]).length&&/^\d+\.\d+\.\d+$/.test(vars.get('NODE_VERSION')||'')&&Number(vars.get('NODE_VERSION').split('.')[0])>=20,'runner_node_version_rejected')
   check(Object.keys(r.HostConfig.Tmpfs||{}).join()==='/tmp'&&r.HostConfig.Tmpfs['/tmp']==='rw,noexec,nosuid,size=16777216','runner_tmpfs_rejected')
   const expected=[['/run/phase8-grant',paths.grant,true],['/run/phase8-claim',paths.claim,false],['/run/secrets/phase8_role',paths.secret,true]]
-  check(r.Mounts?.length===3&&expected.every(([dest,src,ro])=>r.Mounts.filter(m=>m.Destination===dest&&sameSource(m.Source,src)&&m.Type==='bind'&&m.RW===!ro).length===1),'runner_mount_rejected')
+  if(c.purpose==='payments021')expected.push(['/run/secrets/phase8_migrator',paths.migratorSecret,true],['/run/secrets/phase8_authorizer',paths.authorizerSecret,true])
+  check(r.Mounts?.length===expected.length&&expected.every(([dest,src,ro])=>r.Mounts.filter(m=>m.Destination===dest&&sameSource(m.Source,src)&&m.Type==='bind'&&m.RW===!ro).length===1),'runner_mount_rejected')
 }
 export function sameSource(a,b) {
   const norm=s=>{if(typeof s!=='string')return '';s=s.replaceAll('\\','/').replace(/^\/run\/desktop\/mnt\/host\/([a-z])\//i,'$1:/');return /^[a-z]:\//i.test(s)?s.toLowerCase():s}

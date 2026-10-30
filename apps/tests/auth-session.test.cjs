@@ -104,7 +104,7 @@ for(const target of ['combined','merchant']) {
     const pending=f.page.logout();f.page.onHide();f.storage.set(TOKEN,newToken);f.page.onShow()
     f.requests[0].success({statusCode:200,data:{}});await pending
     assert.equal(f.storage.get(TOKEN),newToken);assert.equal(f.page.data.busy,true)
-    f.requests[1].success({statusCode:200,data:{items:[]}});await Promise.resolve();await Promise.resolve()
+    f.requests[1].success({statusCode:200,data:{items:[]}});await new Promise(setImmediate)
     assert.equal(f.page.data.authenticated,true);assert.equal(f.page.data.busy,false)
   })
   test(`${target} merchant login: hidden page cannot authenticate or navigate after permission response`,async()=>{
@@ -127,7 +127,7 @@ for(const target of ['combined','merchant']) {
     const old=f.page.verifyExisting();f.page.onHide();f.page.onShow()
     assert.equal(f.requests.length,2);f.requests[0].fail(Error('offline'));await old
     assert.equal(f.page.data.busy,true);assert.equal(f.page.data.authenticated,false)
-    f.requests[1].success({statusCode:200,data:{items:[]}});await Promise.resolve();await Promise.resolve()
+    f.requests[1].success({statusCode:200,data:{items:[]}});await new Promise(setImmediate)
     assert.equal(f.page.data.busy,false);assert.equal(f.page.data.authenticated,true)
     assert.equal(f.calls.length,0)
   })

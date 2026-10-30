@@ -3,6 +3,12 @@ import path from 'node:path'
 import { ROOT,config,walk } from './miniapp-graph.mjs'
 import { scanJavaScript } from './miniapp-preview-audit.mjs'
 
+// A named preview is always a new sibling under dist, never an arbitrary path.
+export function phonePreviewFolder(value='phone-preview'){
+ if(typeof value!=='string'||!/^phone-preview(?:-[a-z0-9][a-z0-9-]{0,32})?$/.test(value))throw Error('Unsafe phone preview output name')
+ return value
+}
+
 // Fail the build if its JavaScript still contains syntax rejected by WeChat preview.
 export function assertPreviewCompatibleJS(source, filename){
  const findings=scanJavaScript(source,filename)
@@ -13,9 +19,10 @@ export function assertPreviewCompatibleJS(source, filename){
 }
 
 // Inspection only: no miniapp APIs or business functions are executed.
-export function checkOutput(target){
+export function checkOutput(target,folder=target){
  const plan=config.targets[target];if(!plan)throw Error('Unknown output target')
- const output=path.join(ROOT,'dist',target),root=path.join(output,'miniprogram')
+ if(folder!==target&&!(target==='combined'&&phonePreviewFolder(folder)===folder))throw Error('Unknown output folder')
+ const output=path.join(ROOT,'dist',folder),root=path.join(output,'miniprogram')
  const manifest=JSON.parse(fs.readFileSync(path.join(output,'build-manifest.json'),'utf8'))
  const app=JSON.parse(fs.readFileSync(path.join(root,'app.json'),'utf8'))
  const locationDesc=app.permission?.['scope.userLocation']?.desc

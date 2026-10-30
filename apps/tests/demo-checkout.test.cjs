@@ -63,7 +63,7 @@ for(const target of ['combined','customer']) {
     assert.deepEqual(f.storage.get(CART),[]);assert.deepEqual(f.routes,[['switchTab','/pages/orders/orders']])
     const orders=f.page('orders');orders.onShow()
     assert.equal(orders.data.createdId,f.orders()[0].id);assert.equal(orders.data.visibleOrders.length,1)
-    assert.equal(orders.data.visibleOrders[0].paymentText,'待付款')
+    assert.equal(orders.data.visibleOrders[0].paymentText,'待支付')
   })
   test(`${target} DEMO checkout allows only one pending confirmation`,()=>{
     const f=fixture(target);f.p.confirmOrder();f.p.confirmOrder();assert.equal(f.modals.length,1)

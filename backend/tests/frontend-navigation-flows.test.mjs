@@ -7,7 +7,7 @@ import vm from 'node:vm'
 
 const root=new URL('../../',import.meta.url)
 const read=path=>readFileSync(new URL(path,root),'utf8')
-const page=path=>read(`miniprogram/pages/${path}.ts`)
+const page=path=>path==='index/index'?read('miniprogram/modules/customer/controllers/catalog.ts'):read(`miniprogram/pages/${path}.ts`)
 const app=JSON.parse(read('miniprogram/app.json'))
 const target=JSON.parse(read('apps/build-targets.json'))
 const routes={

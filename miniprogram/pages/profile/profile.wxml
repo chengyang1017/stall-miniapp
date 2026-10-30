@@ -1,28 +1,117 @@
 <view class="profile-page">
-  <view class="profile-hero">
-    <view class="profile-avatar">我</view>
-    <view class="profile-identity">
-      <view class="profile-name">我的</view>
-      <view class="profile-subtitle">订单与配送信息管理</view>
-    </view>
+<view class="customer-hero profile-header">
+<view class="hero-title">我的</view>
+<view class="hero-subtitle">管理账户 · 查看订单 · 享受服务</view>
+<view class="profile-identity" bindtap="showLogin">
+<view class="profile-avatar avatar-{{avatarStyle}}"><image wx:if="{{avatarPhotoPath}}" src="{{avatarPhotoPath}}" mode="aspectFill" class="profile-avatar-photo"/><text wx:else>♙</text></view>
+<view class="profile-account">
+<view class="profile-name">{{accountName}}</view>
+<view class="profile-subtitle">{{accountSubtitle}}</view>
+</view>
+<text class="profile-chevron">›</text>
+</view>
+</view>
+<view class="profile-body">
+<view class="surface profile-stats">
+<view bindtap="unavailable">
+<text>♡</text>
+<view>—</view>
+<text class="muted">我的收藏</text>
+</view>
+<view bindtap="unavailable">
+<text>♧</text>
+<view>—</view>
+<text class="muted">优惠券</text>
+</view>
+<view bindtap="unavailable">
+<text>◎</text>
+<view>—</view>
+<text class="muted">积分</text>
+</view>
+</view>
+<view class="surface">
+<view class="section-heading" bindtap="openOrders">
+<text>▤ 我的订单</text>
+<text class="more">查看全部 ›</text>
+</view>
+<view class="profile-orders">
+<view wx:for="{{orderEntries}}" wx:key="label" data-tab="{{item.tab}}" data-fulfillment="{{item.fulfillment}}" bindtap="openOrders">
+<text>{{item.icon}}</text>
+<view>{{item.label}}</view>
+</view>
+</view>
+</view>
+<view class="surface profile-links">
+<navigator class="service-row" url="/pages/addresses/addresses">
+<text class="service-icon">⌖</text>收货地址<text class="value">›</text>
+</navigator>
+<view class="service-row" bindtap="unavailable">
+<text class="service-icon">♧</text>我的优惠券<text class="value">暂未开通 ›</text>
+</view>
+<view class="service-row" bindtap="unavailable">
+<text class="service-icon">◎</text>积分中心<text class="value">暂未开通 ›</text>
+</view>
+<view class="service-row" bindtap="unavailable">
+<text class="service-icon">♡</text>我的收藏<text class="value">暂未开通 ›</text>
+</view>
+<view class="service-row" bindtap="unavailable">
+<text class="service-icon">◷</text>浏览记录<text class="value">暂未开通 ›</text>
+</view>
+<navigator class="service-row" url="/pages/customer-reviews/customer-reviews">
+<text class="service-icon">☆</text>我的商品评价<text class="value">›</text>
+</navigator>
+</view>
+<view wx:if="{{merchantAuthorized}}" class="surface merchant-entry" bindtap="openMerchant">
+<text class="service-icon">♧</text>
+<view>
+<view>商家工作台</view>
+<text class="muted">在线管理店铺与商品</text>
+</view>
+<text class="profile-chevron">›</text>
+</view>
+<view class="surface">
+<view class="section-heading">帮助与服务</view>
+<view class="help-grid">
+<navigator url="/pages/customer-support-chat/customer-support-chat">
+<text>♧</text>联系商家<view wx:if="{{cloudSupport && supportUnread !== null}}" class="muted">未读 {{supportUnread}}</view>
+</navigator>
+<view data-kind="faq" bindtap="serviceInfo">
+<text>?</text>常见问题</view>
+<navigator url="/pages/customer-support-chat/customer-support-chat">
+<text>♧</text>意见反馈</navigator>
+<view data-kind="about" bindtap="serviceInfo">
+<text>ⓘ</text>关于我们</view>
+</view>
+</view>
+<view class="surface account-controls">
+<navigator wx:if="{{loggedIn}}" class="service-row" url="/pages/customer-account/customer-account"><text class="service-icon">♙</text>个人资料<text class="value">›</text></navigator>\n<view wx:if="{{loggedIn}}" class="service-row" bindtap="logout"><text class="service-icon">⇥</text>退出登录<text class="value">›</text></view>
+<navigator class="service-row" url="/pages/customer-settings/customer-settings">
+<text class="service-icon">⚙</text>设置与隐私<text class="value">›</text>
+</navigator>
+</view>
+<view wx:if="{{phonePreview}}" class="notice">Staging 真机预览 · 非生产环境</view>
+</view>
+</view>
+<view wx:if="{{loginPanel}}" class="login-overlay" catchtap="closeLogin">
+  <view class="login-sheet" catchtap="keepLoginOpen">
+<view class="login-dialog">
+  <view class="login-dialog-title">登录账号</view>
+  <view class="login-dialog-subtitle">选择适合你的登录方式</view>
+  <view class="login-methods">
+    <view class="login-method {{loginMethod === 'wechat' ? 'active' : ''}}" data-method="wechat" bindtap="selectLoginMethod">微信快捷登录</view>
+    <view class="login-method {{loginMethod === 'phone' ? 'active' : ''}}" data-method="phone" bindtap="selectLoginMethod">手机号登录</view>
   </view>
-  <view class="profile-section">
-    <navigator class="profile-link" url="/pages/addresses/addresses">
-      <view class="profile-glyph">⌂</view><view class="profile-link-content"><view class="profile-title">收货地址</view><view class="profile-desc">管理常用配送地址</view></view><view class="profile-chevron">›</view>
-    </navigator>
-    <view class="profile-link" bindtap="openOrders">
-      <view class="profile-glyph">☷</view><view class="profile-link-content"><view class="profile-title">我的订单</view><view class="profile-desc">查看订单和配送进度</view></view><view class="profile-chevron">›</view>
-    </view>
-    <navigator class="profile-link profile-contact" url="/pages/customer-support-chat/customer-support-chat">
-      <view class="profile-glyph">✉</view><view class="profile-link-content"><view class="profile-title">联系商家<text wx:if="{{cloudSupport}}"> · 未读 {{supportUnread === null ? '—' : supportUnread}}</text></view><view class="profile-desc">向商家发送消息</view></view><view class="profile-chevron">›</view>
-    </navigator>
-    <navigator class="profile-link" url="/pages/customer-reviews/customer-reviews"><view class="profile-glyph">☆</view><view class="profile-link-content"><view class="profile-title">我的商品评价</view><view class="profile-desc">查看审核、修改或撤回自己的评价</view></view><view class="profile-chevron">›</view></navigator>
+  <view wx:if="{{loginMethod === 'wechat'}}">
+    <button class="wechat-login-button" loading="{{loginBusy}}" disabled="{{loginBusy}}" bindtap="loginWechat">使用微信账号登录</button>
+    <view class="login-hint">通过微信官方登录凭证验证身份，不获取手机号</view>
   </view>
-  <view class="profile-section">
-    <view wx:if="{{merchantAuthorized}}" class="profile-link" bindtap="openMerchant"><view class="profile-glyph">▣</view><view class="profile-link-content"><view class="profile-title">商家工作台</view><view class="profile-desc">通过商家权限验证后显示</view></view><view class="profile-chevron">›</view></view>
-    <navigator class="profile-link" url="/pages/customer-settings/customer-settings">
-      <view class="profile-glyph">⚙</view><view class="profile-link-content"><view class="profile-title">设置</view><view class="profile-desc">偏好与隐私说明</view></view><view class="profile-chevron">›</view>
-    </navigator>
+  <view wx:else>
+    <view class="phone-input-row"><text>+86</text><input type="number" maxlength="11" placeholder="请输入中国大陆手机号" value="{{phoneNumber}}" bindinput="onPhoneInput"/></view>
+    <button class="sms-login-button" bindtap="requestSmsCode">获取短信验证码</button>
+    <view class="login-hint">短信验证服务尚未开通，目前不能使用手机号登录</view>
   </view>
-  <view class="profile-note">{{cloudSupport ? '客服使用当前云端店铺，需微信身份登录' : '本地演示客服消息只保存在当前设备'}}</view>
+  <view wx:if="{{loginStatus}}" class="notice">{{loginStatus}}</view>
+  <button class="login-close" disabled="{{loginBusy}}" bindtap="closeLogin">返回</button>
+</view>
+  </view>
 </view>

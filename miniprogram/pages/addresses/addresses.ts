@@ -13,10 +13,10 @@ import { loginWithWechat } from '../../modules/shared/runtime/auth'
 const newAddressId = () => `addr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
 Page({
-  addressIdentity:'',createRequest:{fingerprint:'',key:''},
+  disposed:false,writeSerial:0,addressIdentity:'',createRequest:{fingerprint:'',key:''},
   deliverySerial:0,cloudRules:null as CloudDeliveryRules|null,deliveryContext:'',
   data: {
-    addressBusy:false,
+    addressBusy:false,addressListSync:false,addressSync:'idle',addressFeedback:'',addressTiming:{validationMs:0,writeMs:0,listMs:0},
     addresses: [] as Array<SavedAddress & {deliveryIssue?:string}>,
     cloudMode:false,deliveryBusy:false,deliveryError:'',deliveryStatus:'',deliveryAreaId:'',
     areas: [] as PublicDeliveryArea[],
@@ -30,17 +30,17 @@ Page({
     locationName: '',
     mapAddress: ''
   },
-  onShow() { this.refresh() },
-  onHide(){this.deliverySerial++;if(getCloudContext())this.setData({addresses:[],deliveryBusy:false})},
-  onUnload(){this.deliverySerial++},
+  onShow() { this.disposed=false;if(this.addressIdentity===supportIdentity()&&(this.data.addressBusy||this.data.addressListSync))return;this.refresh() },
+  onHide(){this.deliverySerial++;this.setData({deliveryBusy:false})},
+  onUnload(){this.disposed=true;this.deliverySerial++;this.writeSerial++},
   async refresh() {
     const cfg=getCloudContext(),serial=++this.deliverySerial,key=cfg?deliveryStoreKey(cfg):'local-demo'
-    const identity=supportIdentity();if(this.addressIdentity!==identity){this.addressIdentity=identity;this.createRequest={fingerprint:'',key:''};this.setData({addresses:[]});this.clearForm()}
+    const identity=supportIdentity();if(this.addressIdentity!==identity){this.writeSerial++;this.addressIdentity=identity;this.setData({addressBusy:false,addressListSync:false,addressSync:'idle',addressFeedback:''});this.createRequest={fingerprint:'',key:''};this.cloudRules=null;this.setData({addresses:[],areas:[]});this.clearForm()}
     const changed=this.deliveryContext && this.deliveryContext!==key;this.deliveryContext=key
     if(changed)this.clearForm()
-    this.cloudRules=null
+    if(changed)this.cloudRules=null
     if(!cfg){this.setData({cloudMode:false,deliveryBusy:false,deliveryError:'',deliveryStatus:'本机演示配送区域',addresses:loadAddresses(),areas:availableAreas()});return}
-    this.setData({cloudMode:true,deliveryBusy:true,deliveryError:'',deliveryStatus:'正在读取自己的云端地址及配送区域…',areas:[],addresses:[]})
+    this.setData({cloudMode:true,deliveryBusy:true,deliveryError:'',deliveryStatus:'正在读取自己的云端地址及配送区域…'})
     try{
       const [addressesResult,rulesResult]=await Promise.allSettled([refreshCloudAddresses(),loadCloudDelivery(cfg)]),current=getCloudContext()
       if(serial!==this.deliverySerial||identity!==supportIdentity())return
@@ -50,14 +50,27 @@ Page({
       if(serial!==this.deliverySerial||!current||deliveryStoreKey(current)!==key)return
       this.cloudRules=rules
       this.setData({areas:rules.areas.filter(a=>a.enabled),deliveryStatus:cloudDeliveryReason(rules)||'区域以云端规则为准，地图半径由下单服务器最终校验',addresses:loadAddresses().map(a=>({...a,area:resolveDeliveryArea(a,rules.areas,key)?.name||a.area,deliveryIssue:deliveryAddressReason(a,rules.areas,key)}))})
-    }catch(_){if(serial===this.deliverySerial&&identity===supportIdentity())this.setData({addresses:[],deliveryError:'云端地址读取失败，请先微信登录或重试；未使用本机地址替代',deliveryStatus:'地址及配送信息未确认'})}
+    }catch(error){if(serial===this.deliverySerial&&!this.disposed&&identity===supportIdentity())this.setData({.../http_40[13]/.test(String(error))?{addresses:[],areas:[]}: {},deliveryError:'云端地址读取失败，请先微信登录或重试；未使用本机地址替代',deliveryStatus:'地址及配送信息未确认'})}
     finally{if(serial===this.deliverySerial){this.setData({deliveryBusy:false});const current=getCloudContext();if(!current||deliveryStoreKey(current)!==key)this.setData({deliveryError:'店铺或模式已变化，请重新读取配送区域',areas:[]})}}
   },
   async login(){const cfg=getCloudContext();if(!cfg||this.data.addressBusy)return;this.setData({addressBusy:true});try{await loginWithWechat(cfg.apiBase);await this.refresh()}catch(_){wx.showToast({title:'微信登录失败，请重试',icon:'none'})}finally{this.setData({addressBusy:false})}},
+  renderAddressList(){this.setData({addresses:loadAddresses().map(a=>({...a,deliveryIssue:this.cloudRules?deliveryAddressReason(a,this.cloudRules.areas,this.deliveryContext):'配送规则未确认'}))})},
   async cloudChange(method:'POST'|'PATCH'|'DELETE',id:string,body:Record<string,any>):Promise<boolean>{
     if(this.data.addressBusy||this.addressIdentity!==supportIdentity())return false
-    const identity=supportIdentity();this.setData({addressBusy:true})
-    try{await writeCloudAddress(method,id,body);if(identity!==supportIdentity())return false;return true}catch(e){if(identity===supportIdentity())wx.showModal({title:'地址未确认保存',content:String(e).includes('409')?'地址已变化，请刷新后核对。输入内容已保留。':'请检查登录和网络后重试，输入内容已保留。',showCancel:false});return false}finally{this.setData({addressBusy:false})}
+    this.deliverySerial++
+    const identity=supportIdentity(),serial=++this.writeSerial,start=Date.now(),current=()=>!this.disposed&&serial===this.writeSerial&&identity===supportIdentity()
+    this.setData({addressBusy:true,addressListSync:false,deliveryBusy:false,addressSync:'saving',addressFeedback:'正在保存，等待服务器确认'})
+    try{
+      await writeCloudAddress(method,id,body);if(!current())return false
+      this.setData({addressSync:'confirmed',addressFeedback:'服务器已确认保存，正在更新列表',addressTiming:{...this.data.addressTiming,writeMs:Date.now()-start,listMs:0}})
+      const readStart=Date.now();this.setData({addressListSync:true})
+      // A confirmed save releases the form immediately. The single read-back is background work.
+      refreshCloudAddresses().then(()=>{if(current()){this.renderAddressList();this.setData({addressFeedback:'地址已保存',addressTiming:{...this.data.addressTiming,listMs:Date.now()-readStart}})}}).catch(error=>{if(current()){if(/http_40[13]/.test(String(error)))this.setData({addresses:[]});this.setData({addressFeedback:'地址已保存，但列表同步失败，请重新读取核对',addressTiming:{...this.data.addressTiming,listMs:Date.now()-readStart}})}}).finally(()=>{if(current())this.setData({addressListSync:false})})
+      return true
+    }catch(e){if(current()){
+      if(/http_40[13]/.test(String(e)))this.setData({addresses:[]})
+      this.setData({addressSync:'failed',addressFeedback:String(e).includes('409')?'地址已变化，请刷新核对；输入已保留':'保存未确认，请检查网络或登录后重试；输入已保留',addressTiming:{...this.data.addressTiming,writeMs:Date.now()-start}})
+    }return false}finally{if(current())this.setData({addressBusy:false})}
   },
   addressAllowed(address:SavedAddress):boolean {
     const cfg=getCloudContext()
@@ -109,6 +122,7 @@ Page({
   },
   async save() {
     if(this.data.addressBusy)return
+    const validationStart=Date.now()
     const receiverName=this.data.receiverName.trim()
     const phone=this.data.phone.trim()
     const area=this.data.area
@@ -123,8 +137,9 @@ Page({
       if(this.data.editingId&&!loadAddresses().some(a=>a.id===this.data.editingId)){wx.showToast({title:'地址已变化，请刷新核对',icon:'none'});return}
       const current=loadAddresses().find(a=>a.id===this.data.editingId),body={receiverName,phone,deliveryAreaId:this.data.deliveryAreaId,detail,latitude:this.data.latitude,longitude:this.data.longitude,locationName:this.data.locationName,mapAddress:this.data.mapAddress}
       const fp=JSON.stringify(body);if(this.createRequest.fingerprint!==fp)this.createRequest={fingerprint:fp,key:supportKey()}
+      this.setData({addressTiming:{validationMs:Date.now()-validationStart,writeMs:0,listMs:0}})
       const ok=await this.cloudChange(current?'PATCH':'POST',current?.id||'',{...body,...current?{expectedVersion:current.version}:{clientKey:this.createRequest.key}})
-      if(ok){this.clearForm();this.createRequest={fingerprint:'',key:''};await this.refresh();wx.showToast({title:'云端地址已保存'})}return
+      if(ok){this.clearForm();this.createRequest={fingerprint:'',key:''};wx.showToast({title:'云端地址已保存'})}return
     }
     if(!this.addressAllowed(candidate))return
     const items=loadAddresses()
@@ -140,6 +155,7 @@ Page({
     wx.showToast({title:'地址已保存'})
   },
   choose(e: WechatMiniprogram.TouchEvent) {
+    if(getCloudContext()&&(this.data.addressBusy||this.data.addressListSync)){wx.showToast({title:'地址正在同步，请稍候再选择',icon:'none'});return}
     const id=String(e.currentTarget.dataset.id),address=loadAddresses().find(a=>a.id===id)
     if(!address||!this.addressAllowed(address))return
     selectAddress(id)
@@ -149,7 +165,7 @@ Page({
     const id=String(e.currentTarget.dataset.id)
     const target=loadAddresses().find(a=>a.id===id)
     if (!target) { wx.showToast({title:'地址不存在',icon:'none'}); return }
-    if(getCloudContext()){if(await this.cloudChange('PATCH',id,{isDefault:true,expectedVersion:target.version}))await this.refresh();return}
+    if(getCloudContext()){await this.cloudChange('PATCH',id,{isDefault:true,expectedVersion:target.version});return}
     if(!this.addressAllowed(target))return
     const region=this.data.cloudMode&&this.cloudRules?resolveDeliveryArea(target,this.cloudRules.areas,this.deliveryContext):undefined
     const items=loadAddresses().map(a=>({...a,isDefault:a.id===id,...a.id===id&&region?{area:region.name,deliveryAreaId:region.id,deliveryStoreKey:this.deliveryContext}:{}}))
@@ -160,7 +176,7 @@ Page({
   remove(e: WechatMiniprogram.TouchEvent) {
     const id=String(e.currentTarget.dataset.id)
     if(this.data.addressBusy)return
-    if(getCloudContext()){const address=loadAddresses().find(a=>a.id===id),identity=supportIdentity();if(!address)return;wx.showModal({title:'删除这个云端地址？',content:'仅删除常用地址，不影响历史订单地址快照。',success:async r=>{if(r.confirm&&identity===supportIdentity()&&await this.cloudChange('DELETE',id,{expectedVersion:address.version}))await this.refresh()}});return}
+    if(getCloudContext()){const address=loadAddresses().find(a=>a.id===id),identity=supportIdentity();if(!address)return;wx.showModal({title:'删除这个云端地址？',content:'仅删除常用地址，不影响历史订单地址快照。',success:async r=>{if(r.confirm&&identity===supportIdentity())await this.cloudChange('DELETE',id,{expectedVersion:address.version})}});return}
     wx.showModal({title:'删除这个地址？',success:r=>{
       if (!r.confirm) return
       const old=loadAddresses()

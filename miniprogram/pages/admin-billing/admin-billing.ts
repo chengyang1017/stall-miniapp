@@ -1,3 +1,4 @@
+import { paymentLabel } from '../../modules/shared/domain/payment'
 import {loadWorkflowOrders,workflowLabel} from '../../modules/merchant/demo/orders'
 import { getCloudContext } from '../../modules/shared/runtime/context'
 import { authorizedGet } from '../../modules/shared/runtime/auth'
@@ -29,7 +30,7 @@ Page({
     const r=await authorizedGet(cfg.apiBase,`/v1/merchant/stores/${cfg.storeSlug}/billing`,{...this.query(),...this.cursor?{cursor:this.cursor}:{}})
     if(serial!==this.serial||context!==businessContextKey())return
     if(!r?.summary||!Array.isArray(r.items)||typeof r.hasMore!=='boolean')throw Error('invalid_billing_response')
-    const x=r.summary,rows=r.items.map((o:any)=>({id:o.id,date:localDay(o.createdAt),time:localTime(o.createdAt),name:'',items:o.itemsText,amount:yuan(Number(o.totalCents)),payment:o.paymentStatus==='unpaid'?'未支付':'支付状态未核验',status:cloudStatuses[o.fulfillmentStatus]||'状态未识别'}))
+    const x=r.summary,rows=r.items.map((o:any)=>({id:o.id,date:localDay(o.createdAt),time:localTime(o.createdAt),name:'',items:o.itemsText,amount:yuan(Number(o.totalCents)),payment:paymentLabel(o),status:cloudStatuses[o.fulfillmentStatus]||'状态未识别'}))
     const seen=new Set(this.data.rows.map(o=>o.id)),add=rows.filter((o:any)=>!seen.has(o.id))
     const update:Record<string,any>={count:Number(x.orderCount),pending:Number(x.pendingCount),delivered:Number(x.deliveredCount),cancelled:Number(x.cancelCount),orderValue:yuan(Number(x.orderCents)),received:'0.00',unpaid:yuan(Number(x.unpaidCents)),hasMore:r.hasMore,notice:r.notice}
     if(reset)update.rows=rows;else add.forEach((o:any,i:number)=>{update['rows['+(this.data.rows.length+i)+']']=o})

@@ -1,5 +1,16 @@
 # 前端交付进度
 
+## 当前现场｜2026-10-30｜SYNC-MAIN
+
+用户要求更新朋友已合并的main后继续zh。开始zh/origin/zh=5a0499d333bde7970c528689d77f675df668e3a7，工作区干净。fetch后origin/main=3dcb568（Merge PR#1），本地main由b308134快进到3dcb568；main尚未包含zh的6个提交，因此在zh合并origin/main，保留双方历史，不reset/rebase/force。
+
+16个冲突文件按新版结构合并：首页保留main的catalog控制器与“不自动恢复商家工作台”行为；保留新版账号/手机号/权限缓存、商家workspace和cloud-only预览配置；共享auth同时保留main预览校验/错误码与zh的最新登录/上下文/可见性/令牌校验；本地checkout保留zh确认保护及notice，同时保留main只移除本次购买商品的购物车行为；订单保留main筛选入口和paymentLabel，叠加zh一次性notice。没有改动main的backend/src、sql、testing内容。
+
+最终npm run verify:frontend：170通过/0失败/0跳过；三目标构建、边界、产物通过，Combined137模块38页372产物、Customer83模块15页248产物、Merchant90模块19页249产物。初测49项旧夹具/旧预期不兼容保留日志，未删/跳测试；适配新版首页、5个Tab、paymentLabel和异步缓存链后全绿。
+
+继续工作分支zh。此次只做同步/冲突兼容和验证，不开展新的业务功能、真实API/支付/微信工具或生产操作；平台结果不从离线验证推断。旧FE-05候选须结合main的新源码重新评估，不直接照旧审计结论实施。
+
+
 ## 当前状态｜2026-10-27｜FE-04（最新）
 
 **DEVELOPMENT，尚未进入最终收尾。** 上一轮FE-02/03已完成并推送；本轮开始local/origin zh均524c6dc040d47dcb0e35243f2c345dc85c45b890，main=b308134，工作区干净。重跑既有verify:frontend：143通过/0失败/0跳过。

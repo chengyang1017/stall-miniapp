@@ -6,7 +6,7 @@ const TIME=/^([01]\d|2[0-3]):[0-5]\d$/
 Page({
  revision:null as string|null,serial:0,context:'',
  data:{accepting:false,notice:'',days:[] as Array<{name:string;enabled:boolean;start:string;end:string}>,status:'正在读取',cloudMode:false,busy:false,ready:false,error:''},
- onShow(){this.refresh()},onUnload(){this.serial++},
+ onShow(){if(this.context!==businessContextKey()||!this.data.ready)this.refresh()},onUnload(){this.serial++},
  async refresh(){
   if(this.data.busy&&this.data.ready)return
   const cfg=getCloudContext(),context=businessContextKey(),serial=++this.serial;this.context=context

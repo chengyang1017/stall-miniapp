@@ -38,7 +38,7 @@ function buildReport(orders,lines,products,query) {
     if(!matchesName(p.id,p.name) || query.categoryId==='unknown' || query.categoryId && p.category_id!==query.categoryId || groups.has(p.id))continue
     groups.set(p.id,{key:p.id,productId:p.id,name:p.name,quantity:0,orderCents:0,paidCents:0,orderIds:new Set(),lastOrderAt:null,categories:new Set()})
   }
-  const summary={orderCount:0,paidCount:0,unpaidCount:0,cancelCount:0,unverifiedCount:0,effectiveOrderCount:0,orderCents:0,paidCents:0,unpaidCents:0,averageCents:0,quantity:0}
+  const summary={simulatedCount:0,simulatedOrderCents:0,orderCount:0,paidCount:0,unpaidCount:0,cancelCount:0,unverifiedCount:0,effectiveOrderCount:0,orderCents:0,paidCents:0,unpaidCents:0,averageCents:0,quantity:0}
   const daily=[], byDay=new Map(), hourly=Array.from({length:24},(_,hour)=>({hour,orderCount:0}))
   for(let t=Date.parse(query.from+'T00:00:00Z');t<=Date.parse(query.to+'T00:00:00Z');t+=DAY) {
     const row={day:new Date(t).toISOString().slice(0,10),orderCount:0,orderCents:0,paidCents:0,quantity:0};daily.push(row);byDay.set(row.day,row)
@@ -49,6 +49,7 @@ function buildReport(orders,lines,products,query) {
     const day=byDay.get(o.business_day)
     if(!day)continue
     summary.orderCount++;day.orderCount++;hourly[o.business_hour].orderCount++
+    if(o.payment_source==='staging_simulated'){summary.simulatedCount++;summary.simulatedOrderCents+=filtered?selected.amount:cents(o.total_cents)}
     if(o.fulfillment_status==='cancelled'){summary.cancelCount++;continue}
     const amount=filtered?selected.amount:cents(o.total_cents), quantity=selected?.quantity || 0
     summary.effectiveOrderCount++;summary.orderCents+=amount;summary.quantity+=quantity;day.orderCents+=amount;day.quantity+=quantity
@@ -64,11 +65,11 @@ function buildReport(orders,lines,products,query) {
   rows.sort((a,b)=>b[query.rankBy]-a[query.rankBy] || (a.key<b.key?-1:a.key>b.key?1:0))
   for(const value of [...Object.values(summary),...rows.flatMap(r=>[r.quantity,r.orderCount,r.orderCents]),...daily.flatMap(r=>[r.orderCount,r.orderCents,r.quantity])])if(!Number.isSafeInteger(value)||value<0)throw Error('analytics_numeric_limit')
   return {summary,daily,hourly,rows,ranking:rows.filter(row=>row.orderCount>0).slice(0,query.top),amountScope:filtered?'匹配商品快照金额，不含配送费':'订单总额，含配送费',
-    notice:'销量为未取消订单的下单件数，包含未支付；取消订单不计金额和件数。当前无可信支付成功核验链路，确认收款为零。分类仅依据下单时快照；旧订单归入未记录历史分类。'}
+    notice:'销量为未取消订单的下单件数，包含未支付及明确标识的Staging模拟订单；模拟订单不计真实到账；取消订单不计金额和件数。当前无可信支付成功核验链路，确认收款为零。分类仅依据下单时快照；旧订单归入未记录历史分类。'}
 }
 
 function exportReport(report,type,query) {
-  const meta=[['报表类型',type,'开始日期',query.from,'结束日期',query.to,'时区','Asia/Shanghai','币种','CNY'],['统计说明',report.notice],['总览/趋势金额口径',report.amountScope],['商品筛选',query.q || '全部','分类筛选ID',query.categoryId || '全部']]
+  const meta=[['报表类型',type,'开始日期',query.from,'结束日期',query.to,'时区','Asia/Shanghai','币种','CNY'],['统计说明',report.notice],['Staging模拟订单数',report.summary.simulatedCount,'模拟订单金额（非真实收款）',money(report.summary.simulatedOrderCents)],['总览/趋势金额口径',report.amountScope],['商品筛选',query.q || '全部','分类筛选ID',query.categoryId || '全部']]
   let records
   if(type==='overview')records=[['指标','数值'],...Object.entries({订单总数:report.summary.orderCount,已确认支付订单数:0,未支付订单数:report.summary.unpaidCount,取消订单数:report.summary.cancelCount,其他未核验支付状态订单数:report.summary.unverifiedCount,订单总金额:money(report.summary.orderCents),已确认支付金额:'0.00',未支付订单金额:money(report.summary.unpaidCents),客单价:money(report.summary.averageCents),商品下单数量:report.summary.quantity})]
   else if(type==='daily')records=[['北京时间日期','订单数量（含取消）','订单金额','已确认支付金额','商品下单数量'],...report.daily.map(r=>[r.day,r.orderCount,money(r.orderCents),'0.00',r.quantity])]
@@ -102,7 +103,7 @@ export async function salesAnalyticsRoute(req,res,url,pool) {
   try {
     await client.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');open=true
     await client.query("SET LOCAL statement_timeout='5000ms'")
-    const {rows:orders}=await client.query(`SELECT o.id,o.created_at,o.total_cents,o.payment_status,o.fulfillment_status,
+    const {rows:orders}=await client.query(`SELECT o.id,o.created_at,o.total_cents,o.payment_status,o.payment_source,o.fulfillment_status,
       to_char(o.created_at AT TIME ZONE 'Asia/Shanghai','YYYY-MM-DD') AS business_day,extract(hour FROM o.created_at AT TIME ZONE 'Asia/Shanghai')::int AS business_hour FROM orders o
       WHERE o.store_id=$1 AND o.currency='CNY' AND o.created_at >= ($2::date::timestamp AT TIME ZONE 'Asia/Shanghai')
       AND o.created_at < (($3::date+1)::timestamp AT TIME ZONE 'Asia/Shanghai')

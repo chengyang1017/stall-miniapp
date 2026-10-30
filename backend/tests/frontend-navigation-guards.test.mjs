@@ -5,6 +5,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import vm from 'node:vm'
+import {stripTypeScriptTypes} from 'node:module'
 
 const source=readFileSync(new URL('../../miniprogram/pages/cart/cart.ts',import.meta.url),'utf8')
 
@@ -36,7 +37,7 @@ function extractCheckout(){
 }
 const body=extractCheckout()
 
-function execute({cloud=false,minimumReached=true,cloudError='',totalCount=2,shortfall=0}={}){
+function execute({cloud=false,minimumReached=true,cloudError='',totalCount=2,shortfall=0,amountState='confirmed'}={}){
   const navigation=[],toasts=[],directClear=[]
   const cart={totalCount,totalText:'10.00'}
   const wx={
@@ -45,12 +46,15 @@ function execute({cloud=false,minimumReached=true,cloudError='',totalCount=2,sho
   }
   const context={wx,
     cloudCartConfig:()=>cloud?{storeSlug:'test'}:null,
+    cloudCartViewKey:()=> 'synthetic-current-context',
     clearDirectPurchase:()=>directClear.push(true),
     getCartDetails:()=>cart,
+    selectedCartDetails:value=>value,
     minimumOrderShortfall:()=>shortfall
   }
-  const fn=vm.runInNewContext(`(function(){${body}})`,context,{timeout:250})
-  fn.call({data:{minimumReached,cloudError,totalCount}})
+  const fn=vm.runInNewContext(stripTypeScriptTypes(`(function(){${body}})`,{mode:'strip'}),context,{timeout:250})
+  fn.call({refreshSelection(){},cloudContext:'synthetic-current-context',data:{selectedCount:totalCount,selectedMinimumReached:minimumReached,selectionMap:{},minimumReached,cloudError,totalCount,
+    items:[],quantityPending:false,amountState,cloudMode:cloud,deliveryError:'',cloudLoading:false,deliveryLoading:false,cloudDeliveryReady:true}})
   return {navigation,toasts,directClear}
 }
 
@@ -77,6 +81,14 @@ test('cloud cart: valid cart opens checkout exactly once',()=>{
   assert.equal(result.directClear.length,0,'cloud mode must not clear a local direct purchase')
 })
 
+test('cloud cart: last confirmed display amount cannot bypass an unconfirmed current quote',()=>{
+ for(const amountState of ['checking','stale']){
+  const result=execute({cloud:true,amountState,minimumReached:true})
+  assert.deepEqual(result.navigation,[])
+  assert.ok(result.toasts.some(t=>t.includes('金额确认')))
+ }
+})
+
 test('local cart: minimum-order shortfall blocks checkout',()=>{
   const result=execute({cloud:false,shortfall:5})
   assert.deepEqual(result.navigation,[])
@@ -86,7 +98,7 @@ test('local cart: minimum-order shortfall blocks checkout',()=>{
 test('local cart: empty cart blocks checkout',()=>{
   const result=execute({cloud:false,totalCount:0})
   assert.deepEqual(result.navigation,[])
-  assert.ok(result.toasts.some(t=>t.includes('购物车为空')))
+  assert.ok(result.toasts.some(t=>t.includes('请选择商品')))
 })
 
 test('local cart: valid cart opens checkout exactly once',()=>{

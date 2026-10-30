@@ -1,1 +1,6 @@
-{"navigationBarTitleText":"经营分析","enablePullDownRefresh":true}
+{
+  "navigationBarTitleText": "经营分析",
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#5935cf",
+  "navigationBarTextStyle": "white"
+}

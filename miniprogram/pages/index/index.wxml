@@ -1,263 +1,99 @@
-
-<view class="page"><view wx:if="{{entryLoading}}" class="empty">正在读取店铺入口…</view><view wx:if="{{entryError}}" class="stall-connect-card"><view class="stall-connect-title">暂时无法连接商店</view><view class="stall-connect-detail">请检查网络连接后重试。如果问题持续，可能是商店服务暂时不可用。</view><button size="mini" bindtap="retryStoreEntry">重新连接</button></view><view wx:if="{{presentationError}}" style="padding:16rpx;color:#a44;font-size:24rpx">{{presentationError}}</view>
-<view wx:if="{{cloudMode && !cloudConnectionError && !entryError}}" style="padding:14rpx 26rpx;color:#537e68;font-size:23rpx;">
-  <text wx:if="{{cloudBusy}}">正在加载商品…</text>
-  <text wx:if="{{cloudStatus}}">{{cloudStatus}}</text>
-  <button wx:if="{{cloudStatus}}" size="mini" bindtap="loadCloudHome">重试</button>
+<import src="../../templates/customer-product.wxml"/>
+<view class="customer-hero">
+<view class="hero-title">{{storeName}}</view>
+<view class="hero-subtitle">精选好物 · 便捷选购</view>
+<view class="customer-search">
+<text class="search-symbol">⌕</text>
+<input maxlength="100" value="{{searchInput}}" bindinput="inputSearch" bindconfirm="searchProducts" confirm-type="search" placeholder="搜索商品名称"/>
+<button bindtap="searchProducts">搜索</button>
+<button wx:if="{{searchInput}}" bindtap="clearSearch">×</button>
 </view>
-<view wx:if="{{!cloudConnectionError && !entryError}}" class="store-hours-banner" style="padding:18rpx 26rpx;color:#16865d;background:#e8f6ef;font-size:26rpx;">{{businessInfo.label}}<text wx:if="{{businessInfo.notice}}"> · {{businessInfo.notice}}</text></view>
-<view wx:if="{{cloudMode && !cloudConnectionError && !entryError && deliverySummary}}" style="padding:12rpx 26rpx;color:#66776b;font-size:23rpx;overflow-wrap:anywhere;">{{deliverySummary}}</view>
-
-<view wx:if="{{cloudConnectionError && !entryError}}" class="stall-connect-card"><view class="stall-connect-title">暂时无法连接商店</view><view class="stall-connect-detail">请检查网络连接后重试。如果问题持续，可能是商店服务暂时不可用。</view><button size="mini" bindtap="loadCloudHome">重新连接</button></view>
-<view wx:if="{{!cloudConnectionError && !entryError}}">
-<view class="hero">
-  <navigator url="/pages/customer-support-chat/customer-support-chat">联系商家 ›</navigator>
-  <view class="hero-title">{{storeName}}</view>
-  <button wx:if="{{cloudMode && !entryError && shareReady}}" size="mini" open-type="share">分享店铺给好友</button>
-  <view>欢迎选购 · 人民币结算</view>
 </view>
-
-<view style="display:flex;gap:12rpx;padding:20rpx 26rpx;align-items:center">
-  <input style="flex:1;min-width:0" maxlength="100" value="{{searchInput}}" bindinput="inputSearch" bindconfirm="searchProducts" confirm-type="search" placeholder="搜索商品名称" />
-  <button size="mini" bindtap="searchProducts">搜索</button><button size="mini" bindtap="clearSearch">清空</button>
+<view class="home-body">
+<view class="home-sync-status" aria-live="polite">{{entryLoading ? '正在确认店铺…' : cloudBusy ? '正在同步商品' : cloudStatus}}</view>
+<view wx:if="{{entryError || cloudConnectionError}}" class="surface stall-connect-card">
+<view>暂时无法连接商店</view>
+<view class="notice">{{entryError || '请检查网络后重试'}}</view>
+<button size="mini" bindtap="retryStoreEntry">重新连接</button>
 </view>
-<!-- 限时折扣专区 -->
-<view wx:if="{{discountedProducts.length > 0}}">
-
-  <view class="heading">🔥 限时折扣</view>
-
-  <view
-    wx:for="{{discountedProducts}}"
-    wx:key="id"
-    class="product"
-  >
-    <view class="details stall-product-row-v3" data-id="{{item.id}}" bindtap="openProduct">
-    <image wx:if="{{item.imageUrl}}" class="stall-product-thumb-v2" src="{{item.imageUrl}}" mode="aspectFill" />
-      <view wx:if="{{!item.imageUrl}}" class="stall-placeholder-choice-shell">
-  <image wx:if="{{(placeholderStyle === 'custom') ? (customPlaceholderUrl) : false}}" class="stall-custom-placeholder-preview" src="{{customPlaceholderUrl}}" mode="aspectFill" />
-  <view wx:if="{{placeholderStyle === 'classic'}}" class="stall-empty-thumb-v4 stall-classic-picker"><view class="stall-classic-icon"><view class="stall-classic-sun"></view><view class="stall-classic-hill"></view></view><text class="stall-classic-text">暂无图片</text></view>
-  <view wx:if="{{placeholderStyle === 'mountain'}}" class="stall-empty-thumb-v4 stall-empty-art-v5">
-    <view class="stall-art-frame-v5">
-      <view class="stall-art-sun-v5"></view>
-      <view class="stall-art-hill-back-v5"></view>
-      <view class="stall-art-hill-front-v5"></view>
-    </view>
-    <text class="stall-art-label-v5">暂无图片</text>
-  </view>
-  <view wx:if="{{placeholderStyle === 'bag'}}" class="stall-empty-thumb-v4 stall-bag-placeholder-v6">
-    <view class="stall-bag-icon-v6">
-      <view class="stall-bag-handle-v6"></view>
-      <view class="stall-bag-body-v6"></view>
-    </view>
-    <text class="stall-bag-label-v6">暂无图片</text>
-  </view>
-  <view wx:if="{{placeholderStyle === 'playful'}}" class="stall-empty-thumb-v4 stall-art-placeholder-v7">
-    <view class="stall-art-glow-v7"></view>
-    <view class="stall-art-spark-v7 stall-art-spark-left-v7"></view>
-    <view class="stall-art-spark-v7 stall-art-spark-right-v7"></view>
-    <view class="stall-art-shadow-v7"></view>
-    <view class="stall-art-box-v7">
-      <view class="stall-art-box-side-v7"></view>
-      <view class="stall-art-box-front-v7"></view>
-      <view class="stall-art-box-top-v7"></view>
-      <view class="stall-art-ribbon-v7"></view>
-      <view class="stall-art-face-left-v7"></view>
-      <view class="stall-art-face-right-v7"></view>
-      <view class="stall-art-smile-v7"></view>
-    </view>
-    <text class="stall-art-caption-v7">暂无图片</text>
-  </view>
-  <view wx:if="{{placeholderStyle === 'premium'}}" class="stall-empty-thumb-v4 stall-premium-art-v8">
-    <view class="spa-v8-background"></view>
-    <view class="spa-v8-halo"></view>
-    <view class="spa-v8-ring"></view>
-    <view class="spa-v8-dot spa-v8-dot-a"></view>
-    <view class="spa-v8-dot spa-v8-dot-b"></view>
-    <view class="spa-v8-star spa-v8-star-a"></view>
-    <view class="spa-v8-star spa-v8-star-b"></view>
-    <view class="spa-v8-shadow"></view>
-    <view class="spa-v8-package">
-      <view class="spa-v8-box-side"></view>
-      <view class="spa-v8-box-front"></view>
-      <view class="spa-v8-box-lid"></view>
-      <view class="spa-v8-ribbon-front"></view>
-      <view class="spa-v8-ribbon-top"></view>
-      <view class="spa-v8-bow spa-v8-bow-left"></view>
-      <view class="spa-v8-bow spa-v8-bow-right"></view>
-      <view class="spa-v8-bow-center"></view>
-      <view class="spa-v8-sticker"><view class="spa-v8-sticker-heart"></view></view>
-    </view>
-    <view class="spa-v8-label"><text>暂无图片</text></view>
-  </view>
+<view wx:if="{{cloudStatus && !cloudBusy}}" class="notice" bindtap="loadCloudHome">{{cloudStatus}} · 点击重试</view>
+<view wx:if="{{entryBlocking && !entryError && !cloudConnectionError}}">
+<view class="skeleton">
 </view>
-    <view class="stall-product-text-v3">
-      <view class="name">{{item.name}}</view>
-      <view class="sale">限时优惠</view>
-
-      <view class="price">
-        ¥{{item.current}}
-        <text class="old">¥{{item.original}}</text>
-      </view>
-    
-    </view>
-  </view>
-
-    <button
-      size="mini"
-      data-id="{{item.id}}"
-      disabled="{{!item.available}}" bindtap="addCart"
-    >
-      {{item.available ? '加入' : '售罄/缺货'}}
-    </button>
-  </view>
-
+<view class="skeleton">
 </view>
-
-<view wx:if="{{cloudMode && !entryError && (dealsHasMore || dealError)}}" style="padding:20rpx;text-align:center">
- <view>{{dealError}}</view><button size="mini" bindtap="loadMoreDeals" loading="{{dealBusy}}" disabled="{{dealBusy || cloudBusy}}">加载更多优惠</button>
 </view>
-<!-- 商品分类 -->
-<view class="heading">商品分类</view>
-
-<scroll-view class="categories" scroll-x="true">
-
-  <view
-    class="category {{selectedCategory === 'all' ? 'active' : ''}}"
-    data-id="all"
-    bindtap="chooseCategory"
-  >
-    全部
-  </view>
-
-  <view
-    wx:for="{{categories}}"
-    wx:key="id"
-    class="category {{selectedCategory === item.id ? 'active' : ''}}"
-    data-id="{{item.id}}"
-    bindtap="chooseCategory"
-  >
-    {{item.name}}
-  </view>
-
+<view class="home-catalog" hidden="{{entryBlocking || cloudConnectionError || !!entryError}}">
+<view wx:if="{{businessInfo.label || businessInfo.notice}}" class="notice">{{businessInfo.label}} {{businessInfo.notice}}</view>
+<view class="deals-section" hidden="{{!discountedProducts.length}}">
+<view class="section-heading">
+<text>✦ 优惠专区</text>
+<text class="more">好物优惠 · 以实时价格为准</text>
+</view>
+<scroll-view scroll-x class="deals-scroll">
+<view class="deals-track">
+<view wx:for="{{discountedProducts}}" wx:key="id" class="product deal-product" data-trace-list="discountedProducts" data-trace-key="{{item.id}}">
+<render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="home" list-name="discountedProducts" row-key="{{item.id}}"/>
+<template is="productCard" data="{{item,placeholderStyle,customPlaceholderUrl}}"/>
+</view>
+</view>
 </scroll-view>
-
-<!-- 商品列表 -->
-<view class="heading">商品列表</view>
-
-<view wx:if="{{products.length === 0 && !cloudBusy && !cloudStatus}}" class="empty">
-  暂无商品
+<view wx:if="{{dealsHasMore || dealError}}" class="notice" bindtap="loadMoreDeals">{{dealError || (dealBusy ? '加载中…' : '查看更多优惠 ›')}}</view>
 </view>
-
-<view
-  wx:for="{{products}}"
-  wx:key="id"
-  class="product"
->
-  <view class="details stall-product-row-v3" data-id="{{item.id}}" bindtap="openProduct">
-    <image wx:if="{{item.imageUrl}}" class="stall-product-thumb-v2" src="{{item.imageUrl}}" mode="aspectFill" />
-      <view wx:if="{{!item.imageUrl}}" class="stall-placeholder-choice-shell">
-  <image wx:if="{{(placeholderStyle === 'custom') ? (customPlaceholderUrl) : false}}" class="stall-custom-placeholder-preview" src="{{customPlaceholderUrl}}" mode="aspectFill" />
-  <view wx:if="{{placeholderStyle === 'classic'}}" class="stall-empty-thumb-v4 stall-classic-picker"><view class="stall-classic-icon"><view class="stall-classic-sun"></view><view class="stall-classic-hill"></view></view><text class="stall-classic-text">暂无图片</text></view>
-  <view wx:if="{{placeholderStyle === 'mountain'}}" class="stall-empty-thumb-v4 stall-empty-art-v5">
-    <view class="stall-art-frame-v5">
-      <view class="stall-art-sun-v5"></view>
-      <view class="stall-art-hill-back-v5"></view>
-      <view class="stall-art-hill-front-v5"></view>
-    </view>
-    <text class="stall-art-label-v5">暂无图片</text>
-  </view>
-  <view wx:if="{{placeholderStyle === 'bag'}}" class="stall-empty-thumb-v4 stall-bag-placeholder-v6">
-    <view class="stall-bag-icon-v6">
-      <view class="stall-bag-handle-v6"></view>
-      <view class="stall-bag-body-v6"></view>
-    </view>
-    <text class="stall-bag-label-v6">暂无图片</text>
-  </view>
-  <view wx:if="{{placeholderStyle === 'playful'}}" class="stall-empty-thumb-v4 stall-art-placeholder-v7">
-    <view class="stall-art-glow-v7"></view>
-    <view class="stall-art-spark-v7 stall-art-spark-left-v7"></view>
-    <view class="stall-art-spark-v7 stall-art-spark-right-v7"></view>
-    <view class="stall-art-shadow-v7"></view>
-    <view class="stall-art-box-v7">
-      <view class="stall-art-box-side-v7"></view>
-      <view class="stall-art-box-front-v7"></view>
-      <view class="stall-art-box-top-v7"></view>
-      <view class="stall-art-ribbon-v7"></view>
-      <view class="stall-art-face-left-v7"></view>
-      <view class="stall-art-face-right-v7"></view>
-      <view class="stall-art-smile-v7"></view>
-    </view>
-    <text class="stall-art-caption-v7">暂无图片</text>
-  </view>
-  <view wx:if="{{placeholderStyle === 'premium'}}" class="stall-empty-thumb-v4 stall-premium-art-v8">
-    <view class="spa-v8-background"></view>
-    <view class="spa-v8-halo"></view>
-    <view class="spa-v8-ring"></view>
-    <view class="spa-v8-dot spa-v8-dot-a"></view>
-    <view class="spa-v8-dot spa-v8-dot-b"></view>
-    <view class="spa-v8-star spa-v8-star-a"></view>
-    <view class="spa-v8-star spa-v8-star-b"></view>
-    <view class="spa-v8-shadow"></view>
-    <view class="spa-v8-package">
-      <view class="spa-v8-box-side"></view>
-      <view class="spa-v8-box-front"></view>
-      <view class="spa-v8-box-lid"></view>
-      <view class="spa-v8-ribbon-front"></view>
-      <view class="spa-v8-ribbon-top"></view>
-      <view class="spa-v8-bow spa-v8-bow-left"></view>
-      <view class="spa-v8-bow spa-v8-bow-right"></view>
-      <view class="spa-v8-bow-center"></view>
-      <view class="spa-v8-sticker"><view class="spa-v8-sticker-heart"></view></view>
-    </view>
-    <view class="spa-v8-label"><text>暂无图片</text></view>
-  </view>
+<swiper wx:if="{{discountedProducts.length}}" class="feature-swiper" indicator-dots circular indicator-active-color="#ffffff">
+<swiper-item wx:for="{{discountedProducts}}" wx:key="id">
+<view class="feature-banner" data-id="{{item.id}}" bindtap="openProduct">
+<view>
+<text class="feature-label">精选优惠</text>
+<view class="feature-title">{{item.name}}</view>
+<view>¥{{item.current}} · 立即选购 ›</view>
 </view>
-    <view class="stall-product-text-v3">
-    <view class="name">{{item.name}}</view>
-    <view class="category">{{item.inventoryText}}</view>
-
-    <view wx:if="{{item.discounted}}" class="sale">
-      限时折扣
-    </view>
-
-    <view class="price">
-      ¥{{item.current}}
-
-      <text wx:if="{{item.discounted}}" class="old">
-        ¥{{item.original}}
-      </text>
-    </view>
-  
-    </view>
-  </view>
-
-  <button
-    size="mini"
-    disabled="{{!item.available}}"
-    data-id="{{item.id}}"
-    bindtap="addCart"
-  >
-    {{item.available ? '加入' : '停售/售罄/缺货'}}
-  </button>
+<image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFill"/>
 </view>
-
-<view wx:if="{{cloudMode}}" style="padding:24rpx;text-align:center;color:#66776b">
-  <button wx:if="{{hasMore}}" size="mini" loading="{{cloudBusy}}" disabled="{{cloudBusy}}" bindtap="loadMoreProducts">加载更多商品</button>
-  <text wx:if="{{!hasMore && !cloudBusy && products.length}}">已全部加载</text>
+</swiper-item>
+</swiper>
+<view wx:else class="feature-banner" bindtap="goCategories">
+<view>
+<text class="feature-label">发现好物</text>
+<view class="feature-title">{{storeName}}</view>
+<view>浏览店铺商品 ›</view>
 </view>
-<!-- 底部购物车 -->
-<view class="footer">
-  <view>
-    <view>购物车 {{cartCount}} 件</view>
-    <view class="footer-price">¥{{cartTotal}}</view>
-  </view>
-
-  <button size="mini" type="primary" bindtap="goCart">
-    查看购物车
-  </button>
+<text class="feature-art">✧</text>
 </view>
-
+<view class="quick-grid">
+<view bindtap="goCategories">
+<text>✦</text>全部商品</view>
+<view bindtap="showDeals">
+<text>♢</text>优惠</view>
+<view bindtap="showDelivery">
+<text>♧</text>配送</view>
+<view bindtap="unavailable">
+<text>♡</text>收藏</view>
 </view>
-
-
+<view class="section-heading">
+<text>▦ 商品分类</text>
+<text class="more" bindtap="goCategories">查看全部 ›</text>
+</view>
+<scroll-view scroll-x class="category-scroll">
+<view class="category-track">
+<view class="category {{selectedCategory === 'all' ? 'active' : ''}}" data-id="all" bindtap="chooseCategory">
+<image class="category-icon" src="{{selectedCategory === 'all' ? allCategoryIcon.iconActivePath : allCategoryIcon.iconPath}}" mode="aspectFit"/>全部</view>
+<view wx:for="{{categories}}" wx:key="id" class="category {{selectedCategory === item.id ? 'active' : ''}}" data-id="{{item.id}}" bindtap="chooseCategory">
+<image class="category-icon" src="{{selectedCategory === item.id ? item.iconActivePath : item.iconPath}}" mode="aspectFit"/>{{item.name}}</view>
+</view>
+</scroll-view>
+<view class="section-heading">
+<text>✧ 推荐商品</text>
+<text class="more" bindtap="goCategories">查看更多 ›</text>
+</view>
+<view class="product-grid">
+<view wx:for="{{products}}" wx:key="id" class="product" data-trace-list="products" data-trace-key="{{item.id}}">
+<render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="home" list-name="products" row-key="{{item.id}}"/>
+<template is="productCard" data="{{item,placeholderStyle,customPlaceholderUrl}}"/>
+</view>
+</view>
+<view wx:if="{{!products.length && !cloudBusy}}" class="empty">暂无符合条件的商品</view>
+<button wx:if="{{hasMore}}" class="load-more" loading="{{cloudBusy}}" disabled="{{cloudBusy}}" bindtap="loadMoreProducts">加载更多商品</button>
+<button wx:if="{{shareReady}}" open-type="share" class="share-shop">分享店铺</button>
+</view>
 </view>

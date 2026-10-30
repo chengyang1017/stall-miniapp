@@ -1,11 +1,25 @@
-page { background:#f5f6f7; }
-.settings-page { padding:32rpx 28rpx 60rpx; }
-.settings-section-title { margin:28rpx 6rpx 16rpx; font-size:27rpx; font-weight:600; color:#32493b; }
-.settings-card { background:#fff; border-radius:22rpx; padding:25rpx 27rpx; }
-.settings-row { display:flex; align-items:center; gap:20rpx; }
-.settings-main { flex:1; }
-.settings-name,.settings-text-title { font-size:28rpx; color:#21352b; font-weight:600; }
-.settings-desc { font-size:22rpx; line-height:1.5; color:#8a9890; margin-top:10rpx; }
-.settings-text-title { margin-top:16rpx; }
-.settings-text-title:first-child { margin-top:0; }
-.settings-text { font-size:24rpx; line-height:1.75; color:#78877e; margin-top:10rpx; margin-bottom:22rpx; }
+page{background:#f6f5f9}
+.settings-page{padding:24rpx 28rpx calc(72rpx + env(safe-area-inset-bottom));box-sizing:border-box}
+.settings-heading{font-size:26rpx;font-weight:650;color:#6f687f;margin:34rpx 8rpx 16rpx}
+.settings-heading:first-child{margin-top:12rpx}
+.settings-card{border-radius:24rpx;background:#fff;padding:28rpx 30rpx;box-shadow:0 5rpx 22rpx rgba(51,27,87,.035)}
+.account-identity{display:flex;align-items:center;gap:20rpx;padding-bottom:24rpx}
+.account-icon{width:92rpx;height:92rpx;border-radius:50%;flex-shrink:0;background:#ece4ff;color:#6132bf;display:flex;align-items:center;justify-content:center;font-size:38rpx;font-weight:700}
+.account-info{flex:1;min-width:0}
+.account-name{color:#272038;font-size:34rpx;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.account-caption{color:#9a93a6;font-size:22rpx;margin-top:6rpx}
+.account-state{color:#6235b7;background:#f2ecff;border-radius:24rpx;padding:9rpx 14rpx;font-size:21rpx}
+.edit-section{border-top:1rpx solid #f0edf4;padding-top:26rpx}
+.field-label,.settings-name{font-size:28rpx;color:#312940;font-weight:600}
+.nickname-input{display:block;height:88rpx;line-height:88rpx;box-sizing:border-box;padding:0 22rpx;border-radius:16rpx;background:#f8f7fa;border:1rpx solid #e9e4ef;font-size:29rpx;color:#282234;margin-top:16rpx}
+.field-caption,.settings-desc{color:#9992a4;font-size:22rpx;line-height:1.65;margin-top:10rpx}
+.save-button{background:#653bc5;color:#fff;border-radius:18rpx;font-size:29rpx;font-weight:600;margin-top:24rpx;height:90rpx;line-height:90rpx}
+.save-button[disabled]{opacity:.6}
+.save-status{font-size:23rpx;color:#66577b;line-height:1.6;margin-top:16rpx;overflow-wrap:anywhere}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:20rpx;min-height:76rpx}
+.settings-main{flex:1;min-width:0}
+.privacy-chevron{font-size:24rpx;color:#6740bc;flex-shrink:0}
+.privacy-details{border-top:1rpx solid #eeebf3;margin-top:20rpx;padding-top:10rpx}
+.settings-text-title{font-size:26rpx;font-weight:600;color:#393248;margin-top:24rpx}
+.settings-text{font-size:24rpx;color:#80798b;line-height:1.75;margin-top:10rpx}
+.logout-button{background:#fff;color:#c4495e;border:1rpx solid #f0dce0;font-size:29rpx;border-radius:20rpx;height:94rpx;line-height:94rpx;margin-top:44rpx}

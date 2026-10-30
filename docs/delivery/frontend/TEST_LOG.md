@@ -102,3 +102,14 @@ WECHAT-DEVTOOLS、iOS、Android三类验收均WAITING_FOR_OWNER_PREVIEW且无回
 ### FE-04 提交与推送核验
 
 产品SHA27646b30ab3d9b13d26db93de71e37b853c236db；普通git push origin zh成功，git ls-remote --heads origin zh返回相同SHA，status为zh...origin/zh且无修改。新增原任务书快照的Markdown尾随空白在提交前规范化；原失败/测试日志均未重写。最后的SHA/PR交接文档不改变产品、构建或测试文件，因此不为纯文档再次运行重复业务测试；受测代码一致性另用git diff核对。
+
+## 2026-10-30｜SYNC-MAIN｜最新main合并回zh
+
+本地main快进到远端3dcb568；zh保留旧6提交并合并该main。16个冲突已按新版产品行为和既有安全保护逐项处理。保留原始日志，未执行后端/live/数据库/生产/微信工具测试。
+
+- 首次npm run verify:frontend：170项121通过/49失败/0跳过，evidence/20261030-main-sync-first.txt；构建及静态扫描已通过。失败包括旧首页自动商家跳转预期、旧4Tab数量与非Tab订单断言、订单entry存储mock缺key、profile函数提取跨入TS头像方法、admin导航mock名称、支付文案与新权限缓存Promise链的微任务等待。没有将其隐藏或删除。
+- 定向node --test apps/tests/navigation.test.cjs apps/tests/auth-session.test.cjs apps/tests/demo-checkout.test.cjs backend/tests/frontend-navigation-runtime.test.mjs backend/tests/frontend-navigation-orders-phase6.test.mjs backend/tests/frontend-navigation.test.mjs：117通过/0失败/0跳过，evidence/20261030-main-sync-targeted.txt。保留授权拒绝/身份变化/隐藏/重复点击断言，按实际新版契约适配夹具。
+- 最终npm run verify:frontend：170通过/0失败/0跳过/0取消；evidence/20261030-main-sync-final.txt。Combined137模块38页372产物、Customer83模块15页248产物、Merchant90模块19页249产物。静态预览扫描各0错误/1插件警告。170为最终覆盖总数，不叠加前两次。
+- 无残留冲突标记；相对origin/main的backend/src、backend/sql、backend/testing无差异。用户指定继续zh；不推main、不自动合并PR。
+
+本轮未执行微信平台/真机/staging/真实支付，不对朋友其他机器已有验收结果作额外判断；本机离线验证仍不能替代平台验收。

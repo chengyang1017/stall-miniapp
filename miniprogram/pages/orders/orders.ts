@@ -1,3 +1,4 @@
+import { paymentLabel } from '../../modules/shared/domain/payment'
 import { customerOrdersConfig, customerOrdersRequest } from '../../modules/customer/api/orders' // PHASE35_CUSTOMER_ORDERS
 import { loadWorkflowOrders, chinaTime, takeCreatedDemoOrder } from '../../modules/customer/demo/orders'
 import { cloudIdentity as supportIdentity } from '../../modules/shared/runtime/context'
@@ -40,7 +41,7 @@ function normalize(o: any): any {
     ...publicOrder,
     id: String(o.id || ''),
     statusText: statusLabel(o),
-    paymentText: ({unpaid:'待付款',paid:'已付款',refunded:'已退款',partially_refunded:'部分退款'} as Record<string,string>)[payment(o)]||'支付状态待核实',
+    paymentText: paymentLabel(o),
     createdText: created ? chinaTime(created) : '',
     showEta: status === 'delivering' && !!o.estimatedArrival,
     etaText: String(o.estimatedArrival || ''),
@@ -69,12 +70,26 @@ Page({
     activeTab: 'all' as OrderTab,
     allOrders: [] as any[],
     visibleOrders: [] as any[],
-    createdId: ''
+    entryFulfillment:'',createdId: ''
   },
   onLoad(options: Record<string, string | undefined>) {
-    this.setData({ createdId: options.created || '' })
+    this.setData({ createdId: options.created || '',activeTab:TABS.some(t=>t.key===options.tab)?options.tab as OrderTab:'all',entryFulfillment:['pending','delivering','refund'].includes(options.fulfillment||'')?options.fulfillment||'':'' })
   },
-  onShow() {this.visible=true;this.syncListContext();const createdId=takeCreatedDemoOrder();if(createdId)this.setData({createdId,activeTab:'all'});this.refresh()},
+  entryMatches(o:any){const filter=this.data.entryFulfillment;if(!filter)return true;const status=fulfillment(o);return filter==='pending'?payment(o)==='paid'&&['new','accepted','preparing'].includes(status):filter==='delivering'?status==='delivering':payment(o).includes('refund')||status==='refunded'},
+  onShow() {
+    this.visible=true
+    this.syncListContext()
+    const entry=wx.getStorageSync('stall_order_tab_entry_v1') as any
+    if(entry&&typeof entry==='object'){
+      wx.removeStorageSync('stall_order_tab_entry_v1')
+      const tab=TABS.some(t=>t.key===entry.tab)?entry.tab as OrderTab:'all'
+      const fulfillment=['pending','delivering','refund'].includes(entry.fulfillment)?entry.fulfillment:''
+      this.setData({activeTab:tab,entryFulfillment:fulfillment,createdId:typeof entry.created==='string'?entry.created:''})
+    }
+    const createdId=takeCreatedDemoOrder()
+    if(createdId)this.setData({createdId,activeTab:'all',entryFulfillment:''})
+    this.refresh()
+  },
   onHide(){this.visible=false;this.serial++;this.setData({createdId:''});if(this.data.cloudMode||customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
   onUnload(){this.visible=false;this.serial++;this.listContext=''},
   onPullDownRefresh(){this.refresh().finally(()=>wx.stopPullDownRefresh())},
@@ -120,7 +135,7 @@ Page({
         seen.add(order.id)
         orders.push(order)
       }
-      this.setData({allOrders:orders,visibleOrders:orders,hasMore:data.hasMore,nextCursor:data.hasMore?data.nextCursor:'',tabs:TABS.map(t=>({...t,count:Number(data.counts&&data.counts[t.key])||0}))})
+      this.setData({allOrders:orders,visibleOrders:orders.filter(o=>this.entryMatches(o)),hasMore:data.hasMore,nextCursor:data.hasMore?data.nextCursor:'',tabs:TABS.map(t=>({...t,count:Number(data.counts&&data.counts[t.key])||0}))})
     }catch(_){if(this.currentCloudRequest(serial,context))this.setData({error:'云端订单加载失败，请检查登录后重试；已读取的订单仍保留，未读取本机订单'})}
     finally{if(serial===this.serial)this.setData({loading:false})}
   },
@@ -134,14 +149,14 @@ Page({
     this.setData({
       allOrders: orders,
       tabs: TABS.map(t => ({ ...t, count: orders.filter(o => matched(o, t.key)).length })),
-      visibleOrders: orders.filter(o => matched(o, this.data.activeTab))
+      visibleOrders: orders.filter(o => matched(o, this.data.activeTab)&&this.entryMatches(o))
     })
   },
   switchTab(e: any) {
     const next = String(e.currentTarget.dataset.tab || 'all') as OrderTab
     if (!TABS.some(t => t.key === next)) return
     const changed = this.syncListContext()
-    this.setData({ activeTab: next })
+    this.setData({ activeTab: next,entryFulfillment:'' })
     if(customerOrdersConfig())this.loadCloudPage(true)
     else if(changed)this.refresh()
     else this.setData({visibleOrders:this.data.allOrders.filter(o=>matched(o,next))})

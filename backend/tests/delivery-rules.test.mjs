@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { validRules, verifyDelivery } from '../src/deliveryRules.mjs'
 
+const serverNow=new Date('2026-10-28T04:00:00.000Z')
 const buildRules = () => ({
   accepting: true,
   days: Array.from({length: 7}, () => ({enabled:true,start:'00:00',end:'23:59'})),
@@ -9,14 +10,14 @@ const buildRules = () => ({
   slots: [{id:'slot1',label:'Daytime',enabled:true,start:'00:00',end:'23:59'}]
 })
 function tomorrow() {
-  const shifted = new Date(Date.now() + 8 * 3600000 + 86400000)
+  const shifted = new Date(serverNow.getTime() + 8 * 3600000 + 86400000)
   return shifted.toISOString().slice(0,10)
 }
 const address = () => ({areaId:'zone1'})
 const slot = () => ({id:'slot1',date:tomorrow()})
 function mock(rules, exists=true) {
   const queries=[]
-  return {queries, client:{ async query(sql,params){queries.push({sql,params});return {rows: exists ? [{configuration:rules}] : []} } }}
+  return {queries, client:{ async query(sql,params){queries.push({sql,params});if(sql==='SELECT clock_timestamp() AS now')return {rows:[{now:new Date(serverNow)}]};assert.equal(sql,'SELECT configuration FROM store_delivery_rules WHERE store_id=$1 FOR SHARE');return {rows: exists ? [{configuration:rules}] : []} } }}
 }
 
 test('valid delivery configuration is accepted',()=>{
@@ -60,4 +61,5 @@ test('eligible delivery returns a server-owned slot snapshot',async()=>{
   assert.equal(result.snapshot.date,tomorrow())
   assert.equal(result.area.id,'zone1')
   assert.deepEqual(db.queries[0].params,['store1'])
+  assert.ok(db.queries.some(q=>q.sql==='SELECT clock_timestamp() AS now'))
 })

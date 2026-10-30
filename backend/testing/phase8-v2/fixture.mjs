@@ -1,7 +1,9 @@
 // Real connections and SQL only, not a simulated database or copied business algorithm.
 import { check } from './policy.mjs'
+export function barrier(){let signal;const promise=new Promise(r=>{signal=r});return {promise,signal}}
+export async function bounded(promise,ms=10000){check(Number.isInteger(ms)&&ms>0&&ms<=30000,'wait_bound_rejected');let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('phase8_wait_timeout')),ms)})])}finally{clearTimeout(timer)}}
 export function fixture(pool,g) {
-  check(g.purpose==='fixture'&&g.role==='app','fixture_role_rejected')
+  check(['fixture','business'].includes(g.purpose)&&g.role==='app','fixture_role_rejected')
   const routePool=client=>{let busy=false;return {query:(s,a)=>{check(!busy,'connection_borrowed');return client.query(s,a)},async connect(){check(!busy,'connection_borrowed');busy=true;let done=false;return {query:(s,a)=>{check(!done,'connection_released');return client.query(s,a)},release(error){if(!done){done=true;busy=false;if(error)client.release(error)}}}}}}
   return {namespace:'p8r2_'+g.runId.replaceAll('-',''),
     async connections(action){const clients=[];try{

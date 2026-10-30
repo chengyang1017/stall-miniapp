@@ -1,20 +1,22 @@
-.bill-page { padding: 28rpx; min-height:100vh; box-sizing:border-box; background:#f5f7f6; color:#24352b; }
+.bill-page { padding: 28rpx; min-height:100vh; box-sizing:border-box; background:var(--brand-background); color:var(--brand-text); }
 .bill-header { margin:22rpx 0 28rpx; }
 .bill-title { font-size:42rpx; font-weight:700; }
-.bill-hint { font-size:23rpx; color:#718176; margin-top:10rpx; }
+.bill-hint { font-size:23rpx; color:var(--brand-muted); margin-top:10rpx; }
 .bill-filter,.bill-stat,.bill-order { background:#fff; border-radius:18rpx; padding:24rpx; margin-bottom:18rpx; }
 .bill-date { font-size:29rpx; padding-bottom:12rpx; }
 .bill-actions { display:flex; gap:12rpx; justify-content:flex-start; }
 .bill-actions button { margin:0; }
 .bill-grid { display:grid; grid-template-columns:1fr 1fr; gap:16rpx; }
 .bill-stat { min-width:0; margin-bottom:0; }
-.bill-stat text { display:block; color:#7b8b80; font-size:23rpx; }
+.bill-stat text { display:block; color:var(--brand-muted); font-size:23rpx; }
 .bill-stat view { font-size:32rpx; font-weight:700; margin-top:13rpx; overflow-wrap:anywhere; }
 .bill-warning { font-size:23rpx; line-height:1.6; padding:20rpx 4rpx; color:#9a602a; }
 .bill-section { display:flex; align-items:center; justify-content:space-between; margin:24rpx 0 18rpx; font-size:30rpx; font-weight:600; }
 .bill-section button { margin:0; }
-.bill-empty { padding:60rpx 0; text-align:center; color:#8c978e; }
+.bill-empty { padding:60rpx 0; text-align:center; color:var(--brand-muted); }
 .bill-order { font-size:25rpx; line-height:1.7; }
 .bill-order-top,.bill-order-bottom { display:flex; justify-content:space-between; gap:12rpx; }
-.bill-order-bottom,.bill-id { color:#809086; font-size:22rpx; margin:8rpx 0; }
-.bill-money { font-size:30rpx; font-weight:700; color:#16865d; }
+.bill-order-bottom,.bill-id { color:var(--brand-muted); font-size:22rpx; margin:8rpx 0; }
+.bill-money { font-size:30rpx; font-weight:700; color:var(--brand-primary); }
+
+@import "../../styles/merchant-theme.wxss";

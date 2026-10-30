@@ -1,0 +1,17 @@
+<view class="account-page">
+ <view class="account-card"><view class="avatar-circle avatar-{{avatarStyle}}"><image wx:if="{{avatarPhotoPath}}" class="avatar-photo" src="{{avatarPhotoPath}}" mode="aspectFill"/><text wx:else>我</text></view><view class="account-title">{{loggedIn ? (nickname || '微信用户') : '未登录'}}</view><view class="account-hint">{{loggedIn ? '账号资料已连接云端' : '请先在「我的」页面登录'}}</view></view>
+ <view wx:if="{{loggedIn}}" class="editor-card"><view class="editor-title">基本资料</view><view class="field-title">照片头像</view><button class="photo-upload-btn" loading="{{photoBusy}}" disabled="{{photoBusy}}" bindtap="chooseAvatarPhoto">从相册或相机选择照片</button><view wx:if="{{photoStatus}}" class="profile-message">{{photoStatus}}</view><view class="editor-help">支持 JPEG/PNG，最多512KB；图片存入独立私有存储桶。</view><view class="field-title" style="margin-top:30rpx">头像样式</view><view class="avatar-options"><view class="avatar-choice avatar-violet {{avatarStyle === 'violet' ? 'selected' : ''}}" data-style="violet" bindtap="chooseAvatarStyle">我</view><view class="avatar-choice avatar-blue {{avatarStyle === 'blue' ? 'selected' : ''}}" data-style="blue" bindtap="chooseAvatarStyle">我</view><view class="avatar-choice avatar-green {{avatarStyle === 'green' ? 'selected' : ''}}" data-style="green" bindtap="chooseAvatarStyle">我</view><view class="avatar-choice avatar-peach {{avatarStyle === 'peach' ? 'selected' : ''}}" data-style="peach" bindtap="chooseAvatarStyle">我</view></view><view wx:if="{{avatarStatus}}" class="profile-message">{{avatarStatus}}</view><view class="field-title">昵称</view><input class="nickname-editor" maxlength="30" value="{{nickname}}" placeholder="输入昵称" bindinput="onNicknameInput"/><view class="editor-help">最多30个字符，不影响微信昵称</view><button class="primary-btn" loading="{{profileBusy}}" disabled="{{profileBusy}}" bindtap="saveNickname">保存修改</button><view wx:if="{{profileStatus}}" class="profile-message">{{profileStatus}}</view></view>
+ <view wx:if="{{loggedIn}}" class="editor-card phone-card">
+   <view class="editor-title">手机号</view>
+   <view class="phone-summary">
+     <view>
+       <view class="phone-value">{{phoneLoading ? '正在读取…' : (phoneBound ? maskedPhone : '未绑定手机号')}}</view>
+       <view class="editor-help">{{phoneBound ? '该号码已经通过验证' : '绑定前必须验证手机号所有权'}}</view>
+     </view>
+     <button class="phone-bind-button" open-type="getPhoneNumber" bindgetphonenumber="bindWechatPhone" loading="{{phoneLoading}}" disabled="{{phoneLoading}}">{{phoneBound ? '重新验证' : '微信授权绑定'}}</button>
+   </view>
+   <view wx:if="{{phoneStatus}}" class="profile-message">{{phoneStatus}}</view>
+   <view class="editor-help">仅支持中国大陆 +86 手机号；绑定必须由微信官方验证。商家交付时进行真实授权测试。</view>
+ </view>
+ <view class="footnote">个人资料与账号关联，手机号只有通过身份验证后才能绑定。</view>
+</view>

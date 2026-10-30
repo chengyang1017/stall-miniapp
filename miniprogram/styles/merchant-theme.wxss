@@ -1,0 +1,11 @@
+@import "./brand-tokens.wxss";
+/* Appearance only: no sizing, spacing, positioning, flow or navigation rules. */
+page{background:var(--brand-background);color:var(--brand-text)}
+button[type=primary]{background:linear-gradient(130deg,var(--brand-primary),var(--brand-primary-dark));color:#fff}
+button[type=primary][disabled]{background:#e4d9f2;color:#aa9abf}
+input:focus,textarea:focus{border-color:var(--brand-primary)}
+.card,.panel,.proof-card,.bill-filter,.bill-stat,.bill-order,.hours-card,.merchant-group,.merchant-shortcuts,.merchant-minimum,.merchant-pending{box-shadow:var(--brand-shadow)}
+.merchant-hero{background:linear-gradient(130deg,var(--brand-primary-dark),#9b73e5);color:#fff}
+.support-line.mine .support-bubble{background:var(--brand-primary-soft)}
+.support-compose button{background:var(--brand-primary);color:#fff}
+.proof-link{color:var(--brand-primary)}

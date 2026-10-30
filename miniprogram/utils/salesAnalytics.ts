@@ -7,7 +7,7 @@ import { loadStore } from '../modules/merchant/demo/store'
 export interface AnalyticsQuery {from:string;to:string;q:string;categoryId:string;rankBy:string;top:number}
 export interface AnalyticsProduct {key:string;productId:string|null;name:string;quantity:number;orderCount:number;orderCents:number;paidCents:number;lastOrderAt:string|null;stockLabel:string;historicalCategories:string;currentName:string}
 export interface AnalyticsDay {day:string;orderCount:number;orderCents:number;paidCents:number;quantity:number}
-export interface AnalyticsSummary {orderCount:number;paidCount:number;unpaidCount:number;cancelCount:number;unverifiedCount:number;effectiveOrderCount:number;orderCents:number;paidCents:number;unpaidCents:number;averageCents:number;quantity:number}
+export interface AnalyticsSummary {simulatedCount?:number;simulatedOrderCents?:number;orderCount:number;paidCount:number;unpaidCount:number;cancelCount:number;unverifiedCount:number;effectiveOrderCount:number;orderCents:number;paidCents:number;unpaidCents:number;averageCents:number;quantity:number}
 export interface AnalyticsReport {summary:AnalyticsSummary;daily:AnalyticsDay[];hourly:Array<{hour:number;orderCount:number}>;ranking:AnalyticsProduct[];products:AnalyticsProduct[];totalProducts:number;hasMore:boolean;snapshot:string;page:number;categories:Array<{id:string;name:string}>;notice:string;amountScope:string;source:string}
 export const analyticsPresets=['今天','昨天','最近7天','最近30天','本月','上月','自定义日期范围']
 export const rankKeys=['quantity','orderCents','paidCents','orderCount']

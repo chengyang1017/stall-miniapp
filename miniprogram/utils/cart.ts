@@ -136,8 +136,8 @@ export function syncCartTabBadge(): void {
     return sum + (Number.isFinite(n) && n > 0 ? Math.floor(n) : 0)
   }, 0) : 0
   if (count > 0) {
-    wx.setTabBarBadge({ index: 1, text: count > 99 ? '99+' : String(count), fail: () => {} })
+    wx.setTabBarBadge({ index: 2, text: count > 99 ? '99+' : String(count), fail: () => {} })
   } else {
-    wx.removeTabBarBadge({ index: 1, fail: () => {} })
+    wx.removeTabBarBadge({ index: 2, fail: () => {} })
   }
 }

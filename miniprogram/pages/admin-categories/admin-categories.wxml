@@ -1,5 +1,6 @@
 <view class="category-page">
-  <view class="hint">{{cloudMode ? '云端分类 · 当前授权店铺' : '本机演示分类'}}<text wx:if="{{cloudBusy}}"> · 正在处理…</text></view><view wx:if="{{cloudError}}" class="hint">{{cloudError}}</view><button size="mini" bindtap="reloadCategories" disabled="{{cloudBusy}}">重新读取分类</button>
+  <view class="hint">{{cloudMode ? '云端分类 · 当前授权店铺' : '本机演示分类'}}<text wx:if="{{cloudBusy || cloudRefreshing}}"> · 正在处理…</text></view><view wx:if="{{cloudError}}" class="hint">{{cloudError}}</view><button size="mini" bindtap="reloadCategories" disabled="{{cloudBusy}}">重新读取分类</button>
+  <view class="hint" wx:if="{{syncMessage}}">{{syncMessage}}（{{syncState}}）</view>
   <view class="page-title">分类管理</view>
   <view class="page-subtitle">添加、重命名和拖动排列商品分类</view>
   <view class="panel">
@@ -8,14 +9,17 @@
       <input class="name-input" placeholder="输入分类名称" maxlength="40" value="{{newName}}" bindinput="onNewName" />
       <button class="add-btn" size="mini" bindtap="addCategory">添加</button>
     </view>
+    <view class="category-icon-field" bindtap="openNewIconPicker"><image src="{{newIconPath}}" mode="aspectFit"/><text>分类图标 · {{newIconKey ? newIconLabel : '默认图标'}}</text><text class="icon-field-arrow">选择 ›</text></view>
+    <view wx:if="{{cloudMode && !categoryIconsSupported}}" class="icon-capability-note">当前服务尚未启用图标保存；旧分类使用默认图标，名称和排序仍可正常管理。</view>
   </view>
   <view class="panel">
     <view class="panel-title">分类列表</view>
     <view class="hint">按住右侧拖动手柄调整顺序，松手自动保存。</view>
-    <view wx:if="{{categories.length === 0}}" class="empty">暂无分类</view>
+    <view wx:if="{{categories.length === 0}}" class="empty">{{cloudRefreshing ? '正在读取分类…' : '暂无分类'}}</view>
     <view wx:else class="sort-area" style="height:{{areaHeight}}px;">
-      <view wx:for="{{rows}}" wx:key="id" class="sort-row {{draggingId === item.id ? 'is-dragging' : ''}}" style="height:{{rowHeight}}px;top:{{item.y}}px;">
+      <view wx:for="{{rows}}" wx:key="id" class="sort-row {{draggingId === item.id ? 'is-dragging' : ''}}" style="height:{{rowHeight}}px;transform:translateY({{item.y}}px);">
         <view class="cat-row {{editingId === item.id ? 'is-editing' : ''}}">
+          <view class="category-row-icon" data-id="{{item.id}}" catchtap="openEditIconPicker" aria-label="选择分类图标"><image src="{{editingId === item.id ? editingIconPath : item.iconPath}}" mode="aspectFit"/></view>
           <view class="cat-info">
             <input wx:if="{{editingId === item.id}}" class="inline-cat-input" value="{{editingName}}" maxlength="40" bindinput="onEditingName" bindconfirm="saveRename" confirm-type="done" />
             <text wx:else class="cat-name">{{item.name}}</text>
@@ -25,12 +29,21 @@
             <button class="cancel-inline-btn" size="mini" bindtap="cancelRename">取消</button>
           </block>
           <block wx:else>
-            <button class="edit-btn" size="mini" data-id="{{item.id}}" bindtap="beginRename">重命名</button>
+            <button class="edit-btn" size="mini" data-id="{{item.id}}" bindtap="beginRename">编辑</button>
             <button class="delete-btn" size="mini" data-id="{{item.id}}" bindtap="deleteCategory">删除</button>
           </block>
           <view class="handle" data-id="{{item.id}}" catchtouchstart="handleStart" catchtouchmove="handleMove" catchtouchend="handleEnd" catchtouchcancel="handleEnd">☰</view>
         </view>
       </view>
+    </view>
+  </view>
+
+  <view wx:if="{{pickerTarget}}" class="category-icon-overlay" catchtap="closeIconPicker">
+    <view class="category-icon-sheet" catchtap="stopPickerTap">
+      <view class="icon-sheet-heading"><text>选择分类图标</text><button size="mini" bindtap="closeIconPicker">完成</button></view>
+      <view class="icon-preview-line"><image src="{{pickerTarget === 'new' ? newIconPath : editingIconPath}}" mode="aspectFit"/><text>{{pickerTarget === 'new' ? newName || '新分类' : editingName}}</text><text class="icon-draft-label">保存分类后生效</text></view>
+      <view class="icon-auto-choice {{(pickerTarget === 'new' ? newIconKey : editingIconKey) === '' ? 'selected' : ''}}" data-key="" bindtap="selectIcon">默认图标 · 未选择时使用通用分类图标</view>
+      <scroll-view scroll-y class="icon-options-scroll"><view class="icon-options-grid"><view wx:for="{{iconOptions}}" wx:key="key" class="icon-option {{(pickerTarget === 'new' ? newIconKey : editingIconKey) === item.key ? 'selected' : ''}}" data-key="{{item.key}}" bindtap="selectIcon"><image src="{{item.path}}" mode="aspectFit"/><text>{{item.label}}</text><text wx:if="{{(pickerTarget === 'new' ? newIconKey : editingIconKey) === item.key}}" class="icon-option-check">✓</text></view></view></scroll-view>
     </view>
   </view>
 </view>

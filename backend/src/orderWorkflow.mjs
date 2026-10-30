@@ -1,3 +1,4 @@
+import { verifiedFulfillmentPayment } from './stagingPayments.mjs'
 import { pageScope,pageQuery,pageResult,cursorTime } from './customerPagination.mjs'
 import { authenticate, permittedStore } from './auth.mjs'
 import { resolveOrderInventory } from './inventory.mjs'
@@ -17,7 +18,7 @@ async function readJson(req) {
   for await (const chunk of req) { raw += chunk.toString('utf8'); if (Buffer.byteLength(raw) > 4096) throw new Error('too_large') }
   try { return JSON.parse(raw) } catch { throw new Error('invalid_json') }
 }
-export async function orderWorkflowRoute(req, res, url, pool) {
+export async function orderWorkflowRoute(req, res, url, pool,simulationPolicy={}) {
   const list = new RegExp(`^/v1/merchant/stores/(${slugRe})/orders$`).exec(url.pathname)
   const summary = new RegExp(`^/v1/merchant/stores/(${slugRe})/orders/summary$`).exec(url.pathname)
   const item = new RegExp(`^/v1/merchant/stores/(${slugRe})/orders/(${uuidRe})$`).exec(url.pathname)
@@ -96,7 +97,7 @@ export async function orderWorkflowRoute(req, res, url, pool) {
     if(!subject){reply(res,401,{error:'login_required'});return true}
     const store=await permittedStore(pool,subject,m[1])
     if(!store||!['owner','manager'].includes(store.role)){reply(res,403,{error:'forbidden'});return true}
-    const {rows}=await pool.query('SELECT id,fulfillment_status,payment_status,delivery_proof_key FROM orders WHERE store_id=$1 AND id=$2',[store.id,m[2]])
+    const {rows}=await pool.query('SELECT id,fulfillment_status,payment_status,payment_source,simulation_instance_id,delivery_proof_key FROM orders WHERE store_id=$1 AND id=$2',[store.id,m[2]])
     if(!rows.length){reply(res,404,{error:'order_not_found'});return true}
     let body;try{body=await readJson(req)}catch(e){reply(res,400,{error:'invalid_json'});return true}
     if(completeMatch&&rows[0].fulfillment_status==='delivered'&&body?.proofKey===rows[0].delivery_proof_key){reply(res,200,{ok:true,status:'delivered',reused:true});return true}
@@ -115,7 +116,7 @@ export async function orderWorkflowRoute(req, res, url, pool) {
       const uploadUrl=await getSignedUrl(s3,new PutObjectCommand({Bucket:bucket,Key:key,ContentType:body.contentType}),{expiresIn:300})
       reply(res,200,{key,uploadUrl,contentType:body.contentType});return true
     }
-    if(rows[0].payment_status!=='paid'){reply(res,409,{error:'payment_not_confirmed'});return true}
+    if(!await verifiedFulfillmentPayment(pool,rows[0],simulationPolicy.env,simulationPolicy.profiles)){reply(res,409,{error:'payment_not_confirmed'});return true}
     const key=body&&body.proofKey
     const expected=new RegExp('^delivery-proofs/'+store.id+'/'+m[2]+'/[0-9a-f-]{36}\.(jpg|png|webp)$')
     if(typeof key!=='string'||!expected.test(key)){reply(res,400,{error:'invalid_proof_key'});return true}
@@ -154,7 +155,7 @@ export async function orderWorkflowRoute(req, res, url, pool) {
       count(*) FILTER (WHERE ${filters.completed})::integer AS completed,
       count(*) FILTER (WHERE ${other})::integer AS other
       FROM orders o JOIN stores s ON s.id=o.store_id WHERE s.slug=$1 AND o.customer_subject=$2`,[customerList[1],subject])
-    const result=await pool.query(`SELECT ${cursorTime('o')} AS "cursorTime",o.id,o.created_at AS "createdAt",o.payment_status AS "paymentStatus",o.fulfillment_status AS "fulfillmentStatus",o.total_cents AS "totalCents",o.delivered_at AS "deliveredAt",o.estimated_arrival AS "estimatedArrival",o.issue_reason AS "issueReason"
+    const result=await pool.query(`SELECT ${cursorTime('o')} AS "cursorTime",o.id,o.created_at AS "createdAt",o.payment_status AS "paymentStatus",o.payment_source AS "paymentSource",o.fulfillment_status AS "fulfillmentStatus",o.total_cents AS "totalCents",o.delivered_at AS "deliveredAt",o.estimated_arrival AS "estimatedArrival",o.issue_reason AS "issueReason"
       FROM orders o JOIN stores s ON s.id=o.store_id
       WHERE s.slug=$1 AND o.customer_subject=$2 AND (${filters[tab]})
       AND ($3::timestamptz IS NULL OR (o.created_at,o.id)<($3::timestamptz,$4::uuid))
@@ -169,7 +170,7 @@ export async function orderWorkflowRoute(req, res, url, pool) {
     reply(res,200,{orders:enriched,hasMore:paged.hasMore,nextCursor:paged.nextCursor,counts:counts.rows[0]});return true
   }
   if (customer) {
-    const {rows} = await pool.query(`SELECT o.id,o.created_at AS "createdAt",o.payment_status AS "paymentStatus",o.fulfillment_status AS "fulfillmentStatus",o.total_cents AS "totalCents",o.delivered_at AS "deliveredAt",o.estimated_arrival AS "estimatedArrival",o.issue_reason AS "issueReason",o.contact_snapshot AS "contactSnapshot",o.delivery_slot_snapshot AS "deliverySlotSnapshot"
+    const {rows} = await pool.query(`SELECT o.id,o.created_at AS "createdAt",o.payment_status AS "paymentStatus",o.payment_source AS "paymentSource",o.fulfillment_status AS "fulfillmentStatus",o.total_cents AS "totalCents",o.delivered_at AS "deliveredAt",o.estimated_arrival AS "estimatedArrival",o.issue_reason AS "issueReason",o.contact_snapshot AS "contactSnapshot",o.delivery_slot_snapshot AS "deliverySlotSnapshot"
       FROM orders o JOIN stores s ON s.id=o.store_id WHERE s.slug=$1 AND o.id=$2 AND o.customer_subject=$3`,[customer[1],customer[2],subject])
     if(!rows.length){reply(res,404,{error:'not_found'});return true}
     const lines=await pool.query(`SELECT oi.id AS "orderItemId",oi.product_id AS "productId",oi.product_name AS "name",oi.unit_price_cents AS "unitPriceCents",oi.quantity,oi.line_total_cents AS "lineTotalCents" FROM order_items oi WHERE oi.order_id=$1 ORDER BY oi.id`,[rows[0].id])
@@ -227,7 +228,7 @@ export async function orderWorkflowRoute(req, res, url, pool) {
     if (order.inventory_state==='released' && next!=='cancelled') { await client.query('ROLLBACK');reply(res,409,{error:'inventory_released_requires_review'});return true }
     // Payment authorization is independent of stock mode. Preserve legal unpaid
     // cancellation, but never advance fulfillment through inventory_state='none'.
-    if (next!=='cancelled' && order.payment_status!=='paid') { await client.query('ROLLBACK');reply(res,409,{error:'payment_not_confirmed'});return true }
+    if (next!=='cancelled' && !await verifiedFulfillmentPayment(client,order,simulationPolicy.env,simulationPolicy.profiles)) { await client.query('ROLLBACK');reply(res,409,{error:'payment_not_confirmed'});return true }
     if (order.inventory_state==='held') {
       if (order.payment_status==='unpaid' && next==='cancelled') await resolveOrderInventory(client,order,'released','cancel',subject,'商家取消未支付订单，释放预留')
       else if (order.payment_status==='paid') await resolveOrderInventory(client,order,'committed','payment',subject,'已确认付款，预留转为正式扣减（不再次扣库存）')

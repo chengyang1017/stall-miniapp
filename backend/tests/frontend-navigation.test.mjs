@@ -31,7 +31,7 @@ test('combined registration and three build target page sets agree', () => {
 })
 
 test('all tabBar targets are registered and present in customer build', () => {
-  assert.equal(tabs.size, 4)
+  assert.equal(tabs.size, 5)
   for (const page of tabs) {
     assert.ok(registered.has(page), `missing tab ${page}`)
     assert.ok(customer.has(page), `customer tab missing ${page}`)
@@ -58,7 +58,7 @@ test('customer profile static links stay in customer build', () => {
   }
   assert.match(wxml, /bindtap="openOrders"/)
   assert.match(ts, /wx\.switchTab\(\{\s*url:\s*'\/pages\/orders\/orders'/)
-  assert.ok(tabs.has('pages/orders/orders'))
+  assert.equal(tabs.has('pages/orders/orders'),true);assert.ok(tabs.has('pages/category/category'))
 })
 
 test('merchant workbench static links stay in merchant build', () => {
@@ -72,20 +72,21 @@ test('switching from merchant workspace to customer uses the home tab', () => {
   const {ts,wxml} = pageSource('pages/admin/admin')
   assert.match(wxml, /bindtap="openCustomerShop"/)
   assert.match(ts, /openCustomerShop\(\)/)
+  assert.match(ts, /import \{ CAN_OPEN_CUSTOMER,openCustomerShop \} from '..\/..\/modules\/integration\/singleAppHost'/)
   assert.match(ts, /if\(!CAN_OPEN_CUSTOMER\)return/)
-  assert.match(ts, /navigateCustomerShop\(\)/)
-  assert.match(readFileSync(resolve(root, 'miniprogram/modules/integration/singleAppHost.ts'), 'utf8'), /wx\.switchTab\(\{url:'\/pages\/index\/index'\}\)/)
+  assert.match(read('miniprogram/modules/integration/singleAppHost.ts'), /wx\.switchTab\(\{url:'\/pages\/index\/index'\}\)/)
   assert.ok(tabs.has('pages/index/index'))
 })
 
 test('profile merchant shortcut is gated by verified authorization', () => {
   const {ts,wxml} = pageSource('pages/profile/profile')
   assert.match(wxml, /wx:if="\{\{merchantAuthorized\}\}"[^>]*bindtap="openMerchant"/)
-  assert.match(ts, /if\(!CAN_OPEN_MERCHANT\|\|!this\.data\.merchantAuthorized\|\|this\.merchantOpening\)return/)
+  assert.match(ts, /if\(!this\.data\.merchantAuthorized\|\|this\.merchantOpening\)return/)
   assert.match(ts, /await authorizedGet\(/)
   assert.match(ts, /Array\.isArray\(result\.items\)/)
   assert.match(ts, /openMerchantWorkspace\(\)/)
-  assert.match(readFileSync(resolve(root, 'miniprogram/modules/integration/singleAppHost.ts'), 'utf8'), /wx\.navigateTo\(\{url:'\/pages\/admin\/admin'\}\)/)
+  assert.match(ts, /if\(!CAN_OPEN_MERCHANT\)return/)
+  assert.match(read('miniprogram/modules/integration/singleAppHost.ts'), /wx\.navigateTo\(\{url:'\/pages\/admin\/admin'\}\)/)
   assert.ok(merchant.has('pages/admin/admin'))
 })
 
