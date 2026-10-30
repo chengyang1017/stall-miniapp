@@ -73,7 +73,7 @@ Page({
     this.setData({phoneWriteBusy:true,phoneAddressStatus:'正在提交手机号地址操作…'})
     return new Promise(resolve=>wx.request({
       url:apiBase.replace(/\/$/,'')+'/v1/customer/account/stores/'+slug+'/addresses'+(id?'/'+id:''),
-      method,timeout:20000,header:{Authorization:'Bearer '+token,'content-type':'application/json'},data:body,
+      method:method as WechatMiniprogram.RequestOption['method'],timeout:20000,header:{Authorization:'Bearer '+token,'content-type':'application/json'},data:body,
       success:(r:any)=>{
         const now=getCloudContext(),session=wx.getStorageSync('stall_customer_phone_session_v1') as any
         if(this.disposed||serial!==this.phoneWriteSerial||session?.token!==token||session?.apiBase!==apiBase||now?.apiBase!==apiBase||now?.storeSlug!==slug){resolve(false);return}
