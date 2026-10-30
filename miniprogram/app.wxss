@@ -8,3 +8,8 @@
   padding: 200rpx 0;
   box-sizing: border-box;
 } 
+
+/* Shared loading indicator across merchant and customer pages */
+.global-loading-wrap{display:flex;justify-content:center;align-items:center;min-height:64rpx;padding:12rpx 0;box-sizing:border-box}
+.global-loading-spinner{display:inline-block;box-sizing:border-box;width:34rpx;height:34rpx;border:4rpx solid #e7ddfa;border-top-color:#6936de;border-radius:50%;animation:global-loading-spin .7s linear infinite}
+@keyframes global-loading-spin{to{transform:rotate(360deg)}}
