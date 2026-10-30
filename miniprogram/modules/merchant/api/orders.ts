@@ -30,6 +30,11 @@ export async function fetchMerchantOrderPage(c:{apiBase:string;storeSlug:string}
   if(!result.counts||['all','new','accepted','preparing','delivering','delivered','cancelled','abnormal','other'].some(k=>!Number.isSafeInteger(result.counts[k])||result.counts[k]<0)||result.pendingCount!==result.counts.new||!Number.isSafeInteger(result.matchingCount)||result.matchingCount<0||typeof result.canManage!=='boolean'||typeof result.hasMore!=='boolean'||result.hasMore&&(typeof result.nextCursor!=='string'||!result.nextCursor))throw new Error('invalid_order_page')
   return result
 }
+export async function fetchMerchantOrderSummary(c:{apiBase:string;storeSlug:string}):Promise<{pendingCount:number;unpaidCount:number}>{
+  const result=await request(c,'/v1/merchant/stores/'+c.storeSlug+'/orders/summary','GET')
+  if(!result||result.pendingStatus!=='new'||!Number.isSafeInteger(result.pendingCount)||result.pendingCount<0||!Number.isSafeInteger(result.counts?.unpaid)||result.counts.unpaid<0)throw new Error('invalid_order_summary')
+  return {pendingCount:result.pendingCount,unpaidCount:result.counts.unpaid}
+}
 export async function fetchMerchantPendingCount(c:{apiBase:string;storeSlug:string}):Promise<number>{
   const result=await request(c,'/v1/merchant/stores/'+c.storeSlug+'/orders/summary','GET')
   if(!result||result.pendingStatus!=='new'||!Number.isSafeInteger(result.pendingCount)||result.pendingCount<0)throw new Error('invalid_pending_count')
