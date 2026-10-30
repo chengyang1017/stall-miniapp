@@ -51,16 +51,68 @@ Page({
     this.refreshIconPreviews()
     void this.flushCloudChanges()
   },
+  // The server is authoritative: after an uncertain write, check whether it committed
+  // before deciding to roll back the optimistic UI.
+  sameCategoryState(a:Category[],b:Category[]){
+    return a.length===b.length&&a.every((c,i)=>c.id===b[i].id&&c.name===b[i].name&&(c.iconKey??null)===(b[i].iconKey??null))
+  },
+  async reconcileCloudWrite(change:{method:'POST'|'PATCH'|'DELETE';id:string;body:Record<string,any>;temporaryId:string}){
+    const latest=await readCloudCategories()
+    const before=this.confirmed
+    const after=latest.items as Category[]
+    let applied=false
+    if(change.method==='POST'){
+      const sameName=after.filter(c=>c.name===change.body.name)
+      applied=sameName.length===1&&!before.some(c=>c.id===sameName[0].id)
+        &&(!Object.prototype.hasOwnProperty.call(change.body,'iconKey')||(sameName[0].iconKey??null)===change.body.iconKey)
+    }else if(change.method==='DELETE'){
+      applied=!after.some(c=>c.id===change.id)
+    }else if(change.id==='order'){
+      applied=this.sameCategoryState(after,this.applyCloudChange(after,change))
+    }else{
+      const c=after.find(c=>c.id===change.id)
+      applied=!!c&&c.name===change.body.name
+        &&(!Object.prototype.hasOwnProperty.call(change.body,'iconKey')||(c.iconKey??null)===change.body.iconKey)
+    }
+    return {latest,applied}
+  },
   async flushCloudChanges(){
     if(this.saving)return
     this.saving=true
     const operation=++this.operationSerial,context=this.context
+    const valid=()=>!this.disposed&&operation===this.operationSerial&&context===supportIdentity()
+    let failure=''
     try{
       while(this.saveQueue.length){
         const change=this.saveQueue[0]
         this.confirmedBeforeIds=this.confirmed.map(c=>c.id)
-        const result=await writeCloudCategories(change.method,change.id,{...change.body,expectedRevision:this.revision})
-        if(this.disposed||operation!==this.operationSerial||context!==supportIdentity())return
+        let result:any
+        try{
+          result=await writeCloudCategories(change.method,change.id,{...change.body,expectedRevision:this.revision})
+        }catch(e){
+          if(!valid())return
+          const reason=String(e)
+          // 409 means the snapshot is stale; timeout or a malformed acknowledgement
+          // may mean the server committed despite the client receiving no confirmation.
+          if(/http_409|timeout|request:fail|category_write_unconfirmed|invalid_category_response|category_icon_write_unconfirmed/i.test(reason)){
+            try{
+              const checked=await this.reconcileCloudWrite(change)
+              if(!valid())return
+              this.revision=checked.latest.revision
+              this.confirmed=checked.latest.items
+              this.setData({categoryIconsSupported:checked.latest.categoryIconsSupported===true})
+              if(checked.applied){result=checked.latest}
+              else if(/http_409/.test(reason)&&change.method!=='POST'&&change.method!=='DELETE'){
+                // Rebase a non-creating edit/order onto the latest revision once.
+                result=await writeCloudCategories(change.method,change.id,{...change.body,expectedRevision:this.revision})
+              }else throw e
+            }catch(reconcileError){
+              if(!valid())return
+              throw reconcileError
+            }
+          }else throw e
+        }
+        if(!valid())return
         this.revision=result.revision
         this.confirmed=result.items
         this.saveQueue.shift()
@@ -68,24 +120,32 @@ Page({
           const created=(result.items as Category[]).find((c:Category)=>!this.confirmedBeforeIds.includes(c.id))
           if(created){for(const queued of this.saveQueue){if(queued.id===change.temporaryId)queued.id=created.id;if(Array.isArray(queued.body.ids))queued.body.ids=queued.body.ids.map((v:string)=>v===change.temporaryId?created.id:v)}}
         }
-
-        if(!this.data.draggingId)this.renderCategories(this.saveQueue.reduce((items,next)=>this.applyCloudChange(items,next),result.items))
-        else this.setData({categories:this.saveQueue.reduce((items,next)=>this.applyCloudChange(items,next),result.items)})
+        const current=this.saveQueue.reduce((items,next)=>this.applyCloudChange(items,next),result.items as Category[])
+        if(!this.data.draggingId)this.renderCategories(current)
+        else this.setData({categories:current})
         this.setData({categoryIconsSupported:result.categoryIconsSupported===true})
       }
-      if(!this.disposed&&context===supportIdentity())this.setData({syncState:'confirmed',syncMessage:'已保存'})
+      if(valid())this.setData({syncState:'confirmed',syncMessage:''})
     }catch(e){
-      if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity()){
+      if(valid()){
+        failure=String(e)
         this.saveQueue=[]
         this.renderCategories(this.confirmed)
-        this.setData({syncState:'failed',syncMessage:'保存未确认，正在自动重新读取',cloudError:'云端同步异常，正在自动恢复'});wx.showToast({title:'保存失败，已恢复分类',icon:'none'})
+        this.setData({syncState:'failed',syncMessage:'',cloudError:failure})
+        const readable=/category_has_products/.test(failure)?'分类下仍有商品，无法删除'
+          :/category_name_exists/.test(failure)?'分类名称已存在'
+          :/categories_changed_refresh|http_409/.test(failure)?'分类已变化，请重试'
+          :/category_icons_not_available|category_icon_write_unconfirmed/.test(failure)?'云端暂不支持保存该图标'
+          :/http_40[13]|not_logged_in/.test(failure)?'登录或店铺权限已失效'
+          :'保存未确认，请检查网络后重试'
+        wx.showToast({title:readable,icon:'none'})
+        console.warn('[categories] cloud write not confirmed',failure)
       }
     }finally{
       this.saving=false
-      if(!this.disposed&&operation===this.operationSerial&&context===supportIdentity()){
-        const recover=this.data.syncState==='failed'
+      if(valid()){
         this.setData({cloudBusy:false})
-        if(recover)void this.reloadCategories()
+        if(failure)void this.reloadCategories()
       }
     }
   },
