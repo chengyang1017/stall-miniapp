@@ -13,9 +13,11 @@ import { loginWithWechat } from '../../modules/shared/runtime/auth'
 const newAddressId = () => `addr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
 Page({
+  phoneAddressSerial:0,
   disposed:false,writeSerial:0,addressIdentity:'',createRequest:{fingerprint:'',key:''},
   deliverySerial:0,cloudRules:null as CloudDeliveryRules|null,deliveryContext:'',
   data: {
+    phoneAddressList:[] as Array<{id:string;receiverName:string;phone:string;area:string;detail:string;isDefault:boolean}>,phoneAddressStatus:'',phoneAddressLoading:false,
     addressBusy:false,addressListSync:false,addressSync:'idle',addressFeedback:'',addressTiming:{validationMs:0,writeMs:0,listMs:0},
     addresses: [] as Array<SavedAddress & {deliveryIssue?:string}>,
     cloudMode:false,deliveryBusy:false,deliveryError:'',deliveryStatus:'',deliveryAreaId:'',
@@ -30,9 +32,33 @@ Page({
     locationName: '',
     mapAddress: ''
   },
-  onShow() { this.disposed=false;if(this.addressIdentity===supportIdentity()&&(this.data.addressBusy||this.data.addressListSync))return;this.refresh() },
-  onHide(){this.deliverySerial++;this.setData({deliveryBusy:false})},
-  onUnload(){this.disposed=true;this.deliverySerial++;this.writeSerial++},
+  onShow() { this.disposed=false;this.refreshPhoneAddresses();if(this.addressIdentity===supportIdentity()&&(this.data.addressBusy||this.data.addressListSync))return;this.refresh() },
+  onHide(){this.phoneAddressSerial++;this.deliverySerial++;this.setData({deliveryBusy:false})},
+  onUnload(){this.phoneAddressSerial++;this.disposed=true;this.deliverySerial++;this.writeSerial++},
+  refreshPhoneAddresses(){
+    const cfg=getCloudContext()
+    const saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+    const serial=++this.phoneAddressSerial
+    this.setData({phoneAddressList:[],phoneAddressStatus:'',phoneAddressLoading:false})
+    if(!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'||!/^[A-Za-z0-9_-]{40,100}$/.test(saved.token))return
+    const token=saved.token,slug=cfg.storeSlug,apiBase=cfg.apiBase
+    this.setData({phoneAddressLoading:true,phoneAddressStatus:'正在验证手机号顾客身份并读取地址…'})
+    wx.request({url:apiBase.replace(/\\/$/,'')+'/v1/customer/account/stores/'+slug+'/addresses',method:'GET',timeout:15000,
+      header:{Authorization:'Bearer '+token},
+      success:(r:any)=>{
+        const current=wx.getStorageSync('stall_customer_phone_session_v1') as any
+        const now=getCloudContext()
+        if(this.disposed||serial!==this.phoneAddressSerial||current?.token!==token||current?.apiBase!==apiBase||now?.storeSlug!==slug||now?.apiBase!==apiBase)return
+        if(r.statusCode===200&&Array.isArray(r.data?.addresses)){
+          this.setData({phoneAddressList:r.data.addresses,phoneAddressStatus:'手机号顾客地址（只读；编辑请用微信登录）'})
+        }else{
+          this.setData({phoneAddressList:[],phoneAddressStatus:r.statusCode===404?'手机号地址预览暂未启用':r.statusCode===401?'手机号顾客会话已失效，请重新授权':'暂时无法读取手机号顾客地址'})
+        }
+      },
+      fail:()=>{if(!this.disposed&&serial===this.phoneAddressSerial)this.setData({phoneAddressStatus:'手机号地址读取失败，请检查网络'})},
+      complete:()=>{if(!this.disposed&&serial===this.phoneAddressSerial)this.setData({phoneAddressLoading:false})}
+    })
+  },
   async refresh() {
     const cfg=getCloudContext(),serial=++this.deliverySerial,key=cfg?deliveryStoreKey(cfg):'local-demo'
     const identity=supportIdentity();if(this.addressIdentity!==identity){this.writeSerial++;this.addressIdentity=identity;this.setData({addressBusy:false,addressListSync:false,addressSync:'idle',addressFeedback:''});this.createRequest={fingerprint:'',key:''};this.cloudRules=null;this.setData({addresses:[],areas:[]});this.clearForm()}

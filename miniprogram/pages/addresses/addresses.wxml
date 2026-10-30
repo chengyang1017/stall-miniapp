@@ -1,5 +1,13 @@
 <view class="page">
   <view class="heading">我的地址</view>
+  <view wx:if="{{phoneAddressLoading || phoneAddressStatus || phoneAddressList.length}}" class="card">
+    <view class="subheading">手机号顾客地址（只读）</view>
+    <view class="tip">{{phoneAddressStatus}}</view>
+    <view wx:for="{{phoneAddressList}}" wx:key="id" class="address-detail">
+      <view>{{item.receiverName}} · {{item.phone}}</view>
+      <view>{{item.area}} {{item.detail}}</view>
+    </view>
+  </view>
   <view class="tip">{{cloudMode ? '当前登录顾客的云端地址 · 当前店铺配送区域' : '本机演示配送规则'}} · {{deliveryStatus}}</view>
   <button wx:if="{{cloudMode}}" size="mini" bindtap="login" disabled="{{addressBusy}}">微信登录／重新验证身份</button>
   <view wx:if="{{deliveryError}}" class="tip">{{deliveryError}}<button size="mini" bindtap="refresh">重新读取区域</button></view>
