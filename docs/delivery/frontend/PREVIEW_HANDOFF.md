@@ -105,3 +105,6 @@ FE-02提交已确认：172aa7d254432f97de924ebcf8032361fc29cb22，已push并核�
 7. 页面明确注明只存当前设备、不跨设备同步；清小程序存储会丢失。收藏最多200件，到限额给出移除提示。Merchant构建不含收藏页面/代码。
 
 请负责人回传SHA、目标、工具/基础库/机型系统、具体步骤和脱敏截图/报错；不要提供令牌/密码/AppSecret。功能离线完成不等于整店交付，仍DEVELOPMENT。
+
+## 2026-10-31 SBX-01
+Partial Sandbox channel foundation implemented; DEVELOPMENT, full lifecycle incomplete. Details, files/variables, commands/evidence, external test steps and remaining implementation: [SANDBOX_PAYMENT_STAGE.md](SANDBOX_PAYMENT_STAGE.md). Backend payment 83/0/0, final frontend 221/0/0; first frontend 170 pass/45 fail preserved and harness fixes documented. Platform WAITING_FOR_OWNER_PREVIEW; no provider/PG runtime, migration or deployment. Baseline main@18f18f7; isolated codex/sandbox-payment-channels branch preserves collaborator state. Next: durable attempt/event ledger, duplicate collection compensation, refunds and receipts.

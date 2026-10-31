@@ -280,3 +280,5 @@ P2：非首版必要的增强功能。
 将这套职责分工写入前端 AGENTS.md 和永久进度文档，以后所有 Codex 会话都必须遵守。
 
 现在按原任务书继续执行，先处理尚未 Push 的 4278c40、调查 8 项旧测试失败，并继续推进能够独立完成的开发工作。
+## 2026-10-31 SBX-01
+Partial Sandbox channel foundation implemented; DEVELOPMENT, full lifecycle incomplete. Details, files/variables, commands/evidence, external test steps and remaining implementation: [SANDBOX_PAYMENT_STAGE.md](SANDBOX_PAYMENT_STAGE.md). Backend payment 83/0/0, final frontend 221/0/0; first frontend 170 pass/45 fail preserved and harness fixes documented. Platform WAITING_FOR_OWNER_PREVIEW; no provider/PG runtime, migration or deployment. Baseline main@18f18f7; isolated codex/sandbox-payment-channels branch preserves collaborator state. Next: durable attempt/event ledger, duplicate collection compensation, refunds and receipts.

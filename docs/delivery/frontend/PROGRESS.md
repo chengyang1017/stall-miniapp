@@ -109,3 +109,6 @@ FE-03（P0身份隔离/可靠性）：已用真实编译auth模块复现切店�
 ## 2026-10-27｜FE-04 Git同步回执
 
 产品提交27646b30ab3d9b13d26db93de71e37b853c236db已Commit并普通Push到origin/zh，git ls-remote核验远端一致，工作区干净。后续仅补预览SHA/核查回执文档，不改变169项验证所测代码。草稿PR#2保留未合并；下一项FE-05见顶部，任务书整体未完、仍DEVELOPMENT及WAITING_FOR_OWNER_PREVIEW。
+
+## 2026-10-31 SBX-01
+Partial Sandbox channel foundation implemented; DEVELOPMENT, full lifecycle incomplete. Details, files/variables, commands/evidence, external test steps and remaining implementation: [SANDBOX_PAYMENT_STAGE.md](SANDBOX_PAYMENT_STAGE.md). Backend payment 83/0/0, final frontend 221/0/0; first frontend 170 pass/45 fail preserved and harness fixes documented. Platform WAITING_FOR_OWNER_PREVIEW; no provider/PG runtime, migration or deployment. Baseline main@18f18f7; isolated codex/sandbox-payment-channels branch preserves collaborator state. Next: durable attempt/event ledger, duplicate collection compensation, refunds and receipts.

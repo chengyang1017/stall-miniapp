@@ -15,7 +15,8 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env){
  if(req.method!=='POST'||url.search){reply(res,405,{error:'method_not_allowed'});return true}
  if(env.PAYMENT_DB_ENV!=='isolated-test'){reply(res,503,{error:'isolated_test_database_required'});return true}
  let gateway
- try{gateway=createStripeCheckoutGateway({secretKey:env.STRIPE_TEST_SECRET_KEY,webhookSecret:env.STRIPE_TEST_WEBHOOK_SECRET,successUrl:env.STRIPE_TEST_SUCCESS_URL,cancelUrl:env.STRIPE_TEST_CANCEL_URL})}
+ const config={secretKey:env.STRIPE_TEST_SECRET_KEY,webhookSecret:env.STRIPE_TEST_WEBHOOK_SECRET,successUrl:env.STRIPE_TEST_SUCCESS_URL,cancelUrl:env.STRIPE_TEST_CANCEL_URL}
+ try{gateway=createStripeCheckoutGateway(config)}
  catch{reply(res,503,{error:'stripe_test_configuration_missing'});return true}
  try{
   if(checkout){
@@ -24,11 +25,20 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env){
    if(!subject){reply(res,401,{error:'login_required'});return true}
    const requestKey=req.headers['idempotency-key']
    if(typeof requestKey!=='string'||!key.test(requestKey)){reply(res,400,{error:'invalid_idempotency_key'});return true}
+   const rawBody=await read(req)
+   let input
+   try{input=rawBody.length?JSON.parse(rawBody.toString('utf8')):{}}catch{reply(res,400,{error:'invalid_json'});return true}
+   if(!input||Array.isArray(input)||typeof input!=='object'||Object.keys(input).some(k=>k!=='channel')||!['card','alipay','wechat_pay'].includes(input.channel||'card')){reply(res,400,{error:'invalid_payment_channel'});return true}
+   const channel=input.channel||'card'
+   const paymentMethodConfiguration=env['STRIPE_TEST_'+channel.toUpperCase()+'_CONFIGURATION']
+   if(!paymentMethodConfiguration){reply(res,503,{error:'stripe_channel_configuration_required'});return true}
+   gateway=createStripeCheckoutGateway({...config,channel,paymentMethodConfiguration})
    const scoped=await pool.query('SELECT 1 FROM orders o JOIN stores s ON s.id=o.store_id WHERE s.slug=$1 AND s.is_active=true AND o.id=$2 AND o.customer_subject=$3',[checkout[1],checkout[2],subject])
    if(!scoped.rows.length){reply(res,404,{error:'order_not_found'});return true}
    const payment=await prepareOrderPayment(pool,{orderId:checkout[2],subject,requestKey})
+   if(payment.currency!=='CNY'){reply(res,409,{error:'payment_currency_must_be_cny'});return true}
    const result=await gateway.create(payment)
-   reply(res,200,{sessionId:result.sessionId,url:result.url,testMode:true});return true
+   reply(res,200,{sessionId:result.sessionId,url:result.url,channel,provider:'stripe',testMode:true,nativePayment:false});return true
   }
   const raw=await read(req)
   const signed=verifyStripeSignature(raw,req.headers['stripe-signature'],env.STRIPE_TEST_WEBHOOK_SECRET)

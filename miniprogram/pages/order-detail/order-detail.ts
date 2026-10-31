@@ -1,4 +1,5 @@
 import { paymentLabel } from '../../modules/shared/domain/payment'
+import { createSandboxCheckout, SandboxChannel } from '../../modules/customer/api/sandboxPayment'
 import { supportKey } from '../../modules/shared/domain/support'
 import { proofUrl } from '../../modules/customer/api/proof' // PHASE38_PROOF_READ
 import { customerOrdersConfig, customerOrdersRequest,stagingOrderPayment } from '../../modules/customer/api/orders' // PHASE35_CUSTOMER_ORDERS
@@ -9,6 +10,24 @@ function workflowText(st: string): string {
   return labels[st] || '待接单'
 }
 Page({
+  sandboxKeys:{} as Record<string,string>,sandboxBusy:false,
+  async openSandboxCheckout(e:any){
+    const cfg=customerOrdersConfig(),channel=e.currentTarget.dataset.channel as SandboxChannel
+    if(!cfg||this.phoneReadOnly||this.sandboxBusy||!this.detailVisible||this.data.order.paymentStatus!=='unpaid')return
+    const identity=supportIdentity(),serial=this.detailSerial,id=String(this.data.order.id)
+    const current=()=>this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()
+    const key=[identity,id,channel].join(':')
+    if(!this.sandboxKeys[key])this.sandboxKeys[key]='sandbox_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)
+    this.sandboxBusy=true
+    try{
+      const url=await createSandboxCheckout(cfg,id,channel,this.sandboxKeys[key])
+      if(!current())return
+      wx.showModal({title:'Stripe Sandbox 外部测试',content:'链接仅用于外部浏览器测试，不是小程序原生付款。完成或取消后返回并刷新订单；付款结果以服务器核验为准。',confirmText:'复制链接',success:(r:any)=>{
+        if(r.confirm&&current())wx.setClipboardData({data:url})
+      }})
+    }catch(_){if(current())wx.showToast({title:'测试入口不可用，或结果未知；请刷新订单后重试',icon:'none'})}
+    finally{this.sandboxBusy=false}
+  },
   phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
   data: { simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {

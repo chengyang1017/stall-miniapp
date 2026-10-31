@@ -135,3 +135,6 @@ WECHAT-DEVTOOLS、iOS、Android三类验收均WAITING_FOR_OWNER_PREVIEW且无回
 最终构建：Combined139模块39页377产物、Customer85模块16页253产物、Merchant90模块19页249产物。源码边界、产物清单通过；静态预览0错误、各1个历史预编译JS插件警告。代码/配置/Markdown diff检查通过（原始证据中的空白不为美化而改写），原占位提示已无匹配。相对origin/main的backend/src、sql、testing无差异。
 
 测试使用合成商品、.invalid域名和内存wx，未连接真实微信/API/支付、未运行后端、数据库或Docker。平台/真机WAITING_FOR_OWNER_PREVIEW；实服务未运行项总数未枚举，不记成0。用户要求检查后push，本轮源代码和测试检查已完成，随后才提交推送。
+
+## 2026-10-31 SBX-01
+Partial Sandbox channel foundation implemented; DEVELOPMENT, full lifecycle incomplete. Details, files/variables, commands/evidence, external test steps and remaining implementation: [SANDBOX_PAYMENT_STAGE.md](SANDBOX_PAYMENT_STAGE.md). Backend payment 83/0/0, final frontend 221/0/0; first frontend 170 pass/45 fail preserved and harness fixes documented. Platform WAITING_FOR_OWNER_PREVIEW; no provider/PG runtime, migration or deployment. Baseline main@18f18f7; isolated codex/sandbox-payment-channels branch preserves collaborator state. Next: durable attempt/event ledger, duplicate collection compensation, refunds and receipts.

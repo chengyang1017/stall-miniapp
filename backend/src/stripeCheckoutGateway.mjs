@@ -19,7 +19,10 @@ export function verifyStripeSignature(raw,header,secret,now=Math.floor(Date.now(
  if(!matches)fail('stripe_signature_invalid')
  return JSON.parse(raw.toString('utf8'))
 }
-export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,cancelUrl,fetchImpl=fetch,now}){
+export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,cancelUrl,fetchImpl=fetch,now,channel='card',paymentMethodConfiguration}){
+ if(!['card','alipay','wechat_pay'].includes(channel))fail('stripe_invalid_channel')
+ if(paymentMethodConfiguration!==undefined&&!/^pmc_[A-Za-z0-9]+$/.test(paymentMethodConfiguration))fail('stripe_invalid_method_configuration')
+ if(channel!=='card'&&!paymentMethodConfiguration)fail('stripe_channel_configuration_required')
  // Test-only until a merchant account is explicitly configured and reviewed.
  if(!/^sk_test_[A-Za-z0-9]+$/.test(secretKey||''))fail('stripe_test_key_required')
  if(!/^whsec_[A-Za-z0-9]+$/.test(webhookSecret||''))fail('stripe_webhook_secret_required')
@@ -29,24 +32,25 @@ export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,
    // Amount and currency have already been obtained from the server order.
    const body=new URLSearchParams({
     mode:'payment',
-    'payment_method_types[0]':'card',
     'line_items[0][price_data][currency]':request.currency.toLowerCase(),
     'line_items[0][price_data][unit_amount]':String(request.amountCents),
     'line_items[0][price_data][product_data][name]':'Order '+request.orderId,
     'line_items[0][quantity]':'1',
     client_reference_id:request.orderId,
     'metadata[orderId]':request.orderId,
+    'metadata[channel]':channel,
     expires_at:String(Math.floor(Date.now()/1000)+1800),
     success_url:successUrl,cancel_url:cancelUrl
    })
+   if(paymentMethodConfiguration)body.set('payment_method_configuration',paymentMethodConfiguration)
    const response=await fetchImpl('https://api.stripe.com/v1/checkout/sessions',{
-    method:'POST',headers:{Authorization:'Bearer '+secretKey,'Idempotency-Key':'checkout:'+request.orderId+':'+request.requestKey,
+    method:'POST',signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+secretKey,'Idempotency-Key':'checkout:'+request.orderId+':'+channel+':'+request.requestKey,
      'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()
    })
    if(!response.ok)fail('stripe_checkout_creation_failed')
    const session=await response.json()
-   if(!session||!/^cs_test_/.test(session.id||'')||!validUrl(session.url))fail('stripe_invalid_checkout_session')
-   return Object.freeze({provider:'stripe',mode:'sandbox',sessionId:session.id,url:session.url})
+   if(!session||!/^cs_test_/.test(session.id||'')||!validUrl(session.url)||new URL(session.url).hostname!=='checkout.stripe.com')fail('stripe_invalid_checkout_session')
+   return Object.freeze({provider:'stripe',mode:'sandbox',channel,sessionId:session.id,url:session.url})
   },
   async verifyNotification(raw,headers={}){
    const sig=headers['stripe-signature']||headers['Stripe-Signature']

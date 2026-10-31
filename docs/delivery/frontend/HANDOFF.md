@@ -76,3 +76,6 @@
 受测提交ab809a80b0d2590388dc18eda35af830d1796d1c（zh），功能提交b7a2300，main基线8293716。最终再次实跑`npm run verify:frontend`：215通过/0失败/0跳过，证据`evidence/20261030-library-synced.txt`。预览入口和核验步骤以PREVIEW_HANDOFF.md顶部FE-06为准；下方保留历史材料。
 
 收藏与浏览记录仅本机持久化，按账号/店铺/API隔离；现有后端没有对应同步接口，跨设备/重装恢复不在本次已实现范围。负责人接手微信平台与iOS/Android验收，状态WAITING_FOR_OWNER_PREVIEW；有截图/错误后继续独立复现修复。下一项独立工作为处理负责人预览反馈；不再凭空新增功能。当前DEVELOPMENT，未正式交付。旧PR#2由负责人关闭，本轮单独创建草稿PR而不重开旧PR。
+
+## 2026-10-31 SBX-01
+Partial Sandbox channel foundation implemented; DEVELOPMENT, full lifecycle incomplete. Details, files/variables, commands/evidence, external test steps and remaining implementation: [SANDBOX_PAYMENT_STAGE.md](SANDBOX_PAYMENT_STAGE.md). Backend payment 83/0/0, final frontend 221/0/0; first frontend 170 pass/45 fail preserved and harness fixes documented. Platform WAITING_FOR_OWNER_PREVIEW; no provider/PG runtime, migration or deployment. Baseline main@18f18f7; isolated codex/sandbox-payment-channels branch preserves collaborator state. Next: durable attempt/event ledger, duplicate collection compensation, refunds and receipts.

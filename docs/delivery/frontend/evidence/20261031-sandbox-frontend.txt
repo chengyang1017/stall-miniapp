@@ -1,0 +1,1388 @@
+
+> miniprogram-ts-quickstart@1.0.0 verify:frontend
+> node scripts/verify-frontend.mjs
+
+
+> node scripts/check-boundaries.mjs
+combined: 140 source files; dependency boundaries and cycles checked
+customer: 86 source files; dependency boundaries and cycles checked
+merchant: 90 source files; dependency boundaries and cycles checked
+
+> node scripts/build-miniapp.mjs combined
+combined: emitted modules, page ownership and resource inventory checked
+combined: compiled 140 source modules, 39 pages, 378 artifacts -> dist/combined
+
+> node scripts/build-miniapp.mjs customer
+customer: emitted modules, page ownership and resource inventory checked
+customer: compiled 86 source modules, 16 pages, 254 artifacts -> dist/customer
+
+> node scripts/build-miniapp.mjs merchant
+merchant: emitted modules, page ownership and resource inventory checked
+merchant: compiled 90 source modules, 19 pages, 249 artifacts -> dist/merchant
+
+> node scripts/check-build-output.mjs
+combined: emitted modules, page ownership and resource inventory checked
+customer: emitted modules, page ownership and resource inventory checked
+merchant: emitted modules, page ownership and resource inventory checked
+
+> node scripts/miniapp-preview-audit.mjs dist/combined
+Preview preflight: scanned 140 JS and 46 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node scripts/miniapp-preview-audit.mjs dist/customer
+Preview preflight: scanned 86 JS and 23 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node scripts/miniapp-preview-audit.mjs dist/merchant
+Preview preflight: scanned 90 JS and 22 WXML files
+WARN project.config.json:1:1 [TYPESCRIPT_PLUGIN_MISSING] TypeScript compiler plugin not selected
+Result: 0 error(s), 1 warning(s)
+
+> node --test apps/tests/navigation.test.cjs apps/tests/auth-session.test.cjs apps/tests/demo-checkout.test.cjs apps/tests/product-library.test.cjs backend/tests/build-role-contracts.test.mjs backend/tests/frontend-navigation.test.mjs backend/tests/frontend-navigation-flows.test.mjs backend/tests/frontend-navigation-guards.test.mjs backend/tests/frontend-navigation-lifecycle.test.mjs backend/tests/frontend-navigation-orders-phase6.test.mjs backend/tests/frontend-navigation-runtime.test.mjs backend/tests/merchant-entry-contract.test.mjs backend/tests/miniapp-preview-audit.test.mjs backend/tests/miniapp-preview-build-guard.test.mjs
+✔ current WeChat login saves the verified response and cache scope (6.2158ms)
+✔ store switch during wx.login prevents sending the old code (4.7057ms)
+✔ backend switch during exchange cannot overwrite session or scope (4.1528ms)
+✔ logout during exchange cannot be undone by a late login response (3.8114ms)
+✔ replacement session cannot be overwritten by a late exchange (3.4961ms)
+✔ newer login supersedes an earlier exchange even if the earlier one returns first (4.8698ms)
+✔ inactive requesting page cannot start a backend exchange (3.994ms)
+✔ inactive requesting page cannot save an in-flight exchange (3.291ms)
+✔ malformed server token is rejected without overwriting the session (12.0403ms)
+✔ HTTP and network failures preserve the previous session (8.0555ms)
+✔ combined merchant logout: old response cannot release a newer identity verification (13.3279ms)
+✔ combined merchant login: hidden page cannot authenticate or navigate after permission response (5.3709ms)
+✔ combined merchant login: current explicit verification opens workspace only after authorization (5.0587ms)
+✔ combined merchant login: old finally cannot release a newer page verification (6.836ms)
+✔ combined merchant login: busy inputs and repeat verification cannot switch the request context (5.1415ms)
+✔ combined merchant login: leaving during code exchange prevents session resurrection (5.1043ms)
+✔ merchant merchant logout: old response cannot release a newer identity verification (6.4282ms)
+✔ merchant merchant login: hidden page cannot authenticate or navigate after permission response (4.8648ms)
+✔ merchant merchant login: current explicit verification opens workspace only after authorization (4.8196ms)
+✔ merchant merchant login: old finally cannot release a newer page verification (5.0541ms)
+✔ merchant merchant login: busy inputs and repeat verification cannot switch the request context (5.5921ms)
+✔ merchant merchant login: leaving during code exchange prevents session resurrection (6.1847ms)
+✔ combined DEMO checkout saves one unpaid order and opens the orders Tab (41.6368ms)
+✔ combined DEMO checkout allows only one pending confirmation (28.7321ms)
+✔ combined cancelled or failed confirmation preserves cart and allows retry (55.4117ms)
+✔ combined confirmation after onHide cannot create an order (34.785ms)
+✔ combined confirmation after onUnload cannot create an order (31.8515ms)
+✔ combined switching to CLOUD while DEMO confirmation is pending does not create local data (33.3667ms)
+✔ combined business pause during confirmation is revalidated (26.1034ms)
+✔ combined delivery pause during confirmation is revalidated (22.9258ms)
+✔ combined changed price is shown again instead of silently accepting a new total (26.7067ms)
+✔ combined route failure is reported as saved unpaid order and does not resubmit (30.2894ms)
+✔ combined direct purchase only clears its own selection (33.4111ms)
+✔ combined existing orders Tab selects all once and does not replay creation notice (30.4637ms)
+✔ combined a DEMO order notice cannot cross an identity or cloud context (32.9245ms)
+✔ customer DEMO checkout saves one unpaid order and opens the orders Tab (41.6825ms)
+✔ customer DEMO checkout allows only one pending confirmation (31.0366ms)
+✔ customer cancelled or failed confirmation preserves cart and allows retry (70.369ms)
+✔ customer confirmation after onHide cannot create an order (30.4925ms)
+✔ customer confirmation after onUnload cannot create an order (29.4647ms)
+✔ customer switching to CLOUD while DEMO confirmation is pending does not create local data (33.9587ms)
+✔ customer business pause during confirmation is revalidated (27.19ms)
+✔ customer delivery pause during confirmation is revalidated (29.1254ms)
+✔ customer changed price is shown again instead of silently accepting a new total (25.2713ms)
+✔ customer route failure is reported as saved unpaid order and does not resubmit (27.1293ms)
+✔ customer direct purchase only clears its own selection (25.6501ms)
+✔ customer existing orders Tab selects all once and does not replay creation notice (33.2241ms)
+✔ customer a DEMO order notice cannot cross an identity or cloud context (30.6296ms)
+✔ Combined homepage keeps the customer landing page despite a saved merchant preference (32.6713ms)
+✔ Customer homepage ignores a saved Combined merchant preference (34.9495ms)
+✔ Customer profile never requests merchant permissions or opens workspace (11.8223ms)
+✔ Combined profile still authorizes before explicitly opening workspace (15.4155ms)
+✔ Combined profile does not navigate after a rejected permission request (11.257ms)
+✔ Combined workbench can explicitly switch back to customer tab (22.8285ms)
+✔ Merchant workbench hides and rejects an unavailable customer tab (27.4109ms)
+✔ Combined profile suppresses repeated taps while permission is pending (13.3364ms)
+✔ Combined profile ignores permission response after hiding (15.3728ms)
+✔ Combined profile ignores permission response after identity replacement (13.4436ms)
+✔ Combined homepage does not resume workspace after denied permission (24.8656ms)
+✔ favorite toggles persist without inventing browsing history (15.0712ms)
+✔ history is deduplicated, most recent first, and bounded to 100 (32.5779ms)
+✔ favorite cap refuses overflow without removing an existing favorite (95.5517ms)
+✔ revisiting updates favorite snapshots without changing favorite order or saved time (5.9208ms)
+✔ account, store, origin, guest and demo namespaces remain separate (8.7644ms)
+✔ stale scope cannot read or mutate a replacement identity (7.4195ms)
+✔ stored snapshots exclude token, extra fields and signed image query strings (7.9291ms)
+✔ corrupt records are filtered and invalid incoming products cannot overwrite data (7.8693ms)
+✔ remove and clear affect only the chosen kind (6.8029ms)
+✔ favorites and history survive a fresh module session on the same device (14.0202ms)
+✔ combined: existing detail button favorites and confirmed visits create history (21.1489ms)
+✔ combined: invalid detail does not record a visit or allow favorite (20.6226ms)
+✔ combined: late cloud detail after identity change creates no history in either account (22.4734ms)
+✔ combined: storage failure reports unsuccessful favorite instead of fake success (17.7106ms)
+✔ combined: saved list uses live demo price, preserves deleted rows and allows removing them (14.7179ms)
+✔ combined: sold out product stays visible and can open its detail (14.5167ms)
+✔ combined: cloud lookup batches at most 40 IDs and confirms current prices (32.0527ms)
+✔ combined: cloud failure preserves explicitly stale snapshots and retry succeeds (14.9915ms)
+✔ combined: late response after identity cannot show previous records (14.1381ms)
+✔ combined: late response after store cannot show previous records (13.2984ms)
+✔ combined: late response after hide cannot show previous records (19.5531ms)
+✔ combined: old clear confirmation cannot delete another account or another kind (19.4276ms)
+✔ combined: clear only current history after confirmation and preserve favorite (18.7179ms)
+✔ combined: refreshing while clear dialog is pending invalidates the old confirmation (14.6519ms)
+✔ combined: switching library kind invalidates a pending clear dialog (14.9795ms)
+✔ combined: list storage read and write errors keep records recoverable (13.9077ms)
+✔ combined: existing profile and homepage entries open the shared library and show counts (37.2046ms)
+✔ customer: existing detail button favorites and confirmed visits create history (20.065ms)
+✔ customer: invalid detail does not record a visit or allow favorite (17.7592ms)
+✔ customer: late cloud detail after identity change creates no history in either account (20.1384ms)
+✔ customer: storage failure reports unsuccessful favorite instead of fake success (14.977ms)
+✔ customer: saved list uses live demo price, preserves deleted rows and allows removing them (10.4263ms)
+✔ customer: sold out product stays visible and can open its detail (11.9679ms)
+✔ customer: cloud lookup batches at most 40 IDs and confirms current prices (25.5927ms)
+✔ customer: cloud failure preserves explicitly stale snapshots and retry succeeds (12.0847ms)
+✔ customer: late response after identity cannot show previous records (12.489ms)
+✔ customer: late response after store cannot show previous records (11.9994ms)
+✔ customer: late response after hide cannot show previous records (11.5293ms)
+✔ customer: old clear confirmation cannot delete another account or another kind (14.392ms)
+✔ customer: clear only current history after confirmation and preserve favorite (12.1225ms)
+✔ customer: refreshing while clear dialog is pending invalidates the old confirmation (13.5727ms)
+✔ customer: switching library kind invalidates a pending clear dialog (13.2301ms)
+✔ customer: list storage read and write errors keep records recoverable (12.3686ms)
+✔ customer: existing profile and homepage entries open the shared library and show counts (42.6179ms)
+✔ merchant output contains no customer library page or storage module (1.9162ms)
+✔ customer and merchant pages each have a declared owner (1.9053ms)
+✔ GPS and review pages remain role-specific (0.3492ms)
+✔ checkout and basket are customer-only, administration merchant-only (1.1249ms)
+✔ customer product and order destinations are registered (1.168ms)
+✔ product-card tap encodes reserved characters in product IDs (2.9788ms)
+✔ empty product ID never opens an arbitrary detail (1.6494ms)
+✔ order-card tap encodes reserved characters in order IDs (1.7922ms)
+✔ empty order ID is rejected before navigation (1.6709ms)
+✔ product detail decodes ID on load and checkout is the direct-purchase destination (1.4368ms)
+✔ cart checkout navigation remains gated by cart/amount validation (0.8984ms)
+✔ checkout address selector opens registered customer address page (2.7457ms)
+✔ successful local checkout uses the orders Tab and transfers its creation notice without URL parameters (2.6867ms)
+✔ order details preserve the supplied order ID for subsequent data retrieval (0.8169ms)
+✔ role-specific customer tracking, proof and review destinations stay out of merchant build (0.2272ms)
+(node:25812) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ cloud cart: minimum-order shortfall prevents checkout (36.5648ms)
+✔ cloud cart: catalog/delivery load error prevents checkout (2.1258ms)
+✔ cloud cart: empty cart prevents checkout (1.4988ms)
+✔ cloud cart: valid cart opens checkout exactly once (1.5867ms)
+✔ cloud cart: last confirmed display amount cannot bypass an unconfirmed current quote (5.8439ms)
+✔ local cart: minimum-order shortfall blocks checkout (2.8816ms)
+✔ local cart: empty cart blocks checkout (1.616ms)
+✔ local cart: valid cart opens checkout exactly once (1.4874ms)
+✔ local cart: a positive shortfall with an empty cart never navigates (1.4941ms)
+✖ order detail: pending response is ignored after page hide (3.7922ms)
+✖ order detail: pending response is ignored after unload (0.8435ms)
+✖ order detail: old request cannot overwrite newer onShow (0.5954ms)
+✖ order detail: identity change discards pending order response (1.3083ms)
+✖ order detail: obsolete fetch failure does not show toast (1.0463ms)
+✖ order detail: current fetch failure shows error, not fabricated order (0.9182ms)
+✖ proof: concurrent refreshes make one request and show latest URL (1.6776ms)
+✖ proof: hiding page discards a late signed URL (0.7772ms)
+✖ proof: identity change discards a late signed URL (0.8189ms)
+✖ proof: current URL failure is reported without image (0.8033ms)
+✖ proof: preview with no image does not open image viewer (0.6265ms)
+(node:22680) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ phase6: initial load sends scoped authenticated parameters and normalizes real page state (7.2863ms)
+✖ phase6: empty successful response clears pagination without inventing orders (3.6055ms)
+✖ phase6: next page appends orders and forwards the opaque cursor unchanged (4.4202ms)
+✖ phase6: overlapping IDs across pages are not displayed twice (4.62ms)
+✖ phase6: duplicate IDs inside a single returned page are displayed once (4.2015ms)
+✖ phase6: repeated reach-bottom events share one in-flight pagination request (3.5391ms)
+✖ phase6: unknown filter leaves tab, rows and request count unchanged (4.2532ms)
+✖ phase6: rapid filter requests completing in reverse order retain only the newest result (5.2735ms)
+✖ phase6: stale failure cannot clear the newer filter loading indicator or set its error (6.3292ms)
+✖ phase6: pull refresh clears cursor and rejects a late pre-refresh page (8.8805ms)
+✖ phase6: onHide invalidates late resolve without additional setData (4.408ms)
+✖ phase6: onHide invalidates late reject without additional setData (3.7963ms)
+✖ phase6: onUnload invalidates late resolve without additional setData (3.3518ms)
+✖ phase6: onUnload invalidates late reject without additional setData (7.0323ms)
+✖ phase6: changed identity rejects a pending response before orders reach the page (4.9462ms)
+✖ phase6: identity change before pagination cannot retain or append the previous user orders (5.9828ms)
+✖ phase6: store change before pagination cannot reuse the previous store rows or cursor (4.3968ms)
+✖ phase6: onShow after identity change resets old rows and makes a fresh first-page request (3.4418ms)
+✖ phase6: malformed null page is rejected without exposing invalid rows (3.4876ms)
+✖ phase6: malformed non-array orders is rejected without exposing invalid rows (4.4288ms)
+✖ phase6: malformed non-boolean hasMore is rejected without exposing invalid rows (4.2858ms)
+✖ phase6: malformed non-string next cursor is rejected without exposing invalid rows (3.7367ms)
+✖ phase6: malformed empty next cursor is rejected without exposing invalid rows (5.276ms)
+✖ phase6: malformed order with no stable ID is rejected without exposing invalid rows (4.0589ms)
+✖ phase6: malformed order with non-numeric total is rejected without exposing invalid rows (7.6257ms)
+✖ phase6: first-page network failure never falls back to local demo orders (6.6368ms)
+✖ phase6: failed next page retains loaded rows and cursor and can be retried successfully (6.2084ms)
+✖ phase6: exhausted pagination never makes another request on button or reach-bottom (6.7372ms)
+✔ phase6: local mode sorts, filters and counts local orders without any cloud requests (7.5112ms)
+✖ phase6: switching cloud to local invalidates an outstanding cloud result (9.5209ms)
+✔ phase6: switching local to cloud clears demo rows and stale errors before awaiting cloud (22.1601ms)
+✖ phase6: pull refresh always stops its spinner after a current request failure (6.3418ms)
+✔ phase6 API: no session token rejects without invoking wx.request (4.8202ms)
+✔ phase6 API: non-200 response rejects instead of returning its payload (4.6712ms)
+✔ phase6 API: invalid detail ID is rejected without network activity (3.2434ms)
+✖ phase6: identity switch keeps new loading and list isolated when old pagination resolve runs finally (3.6769ms)
+✖ phase6: identity switch keeps new loading and list isolated when old pagination reject runs finally (3.5907ms)
+✖ phase6: store switch keeps new loading and list isolated when old pagination resolve runs finally (4.012ms)
+✖ phase6: store switch keeps new loading and list isolated when old pagination reject runs finally (2.6707ms)
+✔ profile: a verified merchant explicitly enters workspace and saves preference (7.4686ms)
+✔ profile: rejected permission never navigates or stores merchant preference (4.8167ms)
+✔ profile: simultaneous taps make only one authorization request (5.5613ms)
+✔ profile: hiding while permission is pending prevents late navigation (6.5608ms)
+✔ profile: session identity changes invalidate a pending authorization (4.5995ms)
+✔ merchant login: passive session verification must not navigate (2.5216ms)
+✔ merchant login: explicit verified action can navigate (2.6005ms)
+✔ merchant login: invalid permission response never navigates (2.2121ms)
+✔ merchant workbench: customer switch navigates to home tab (3.9175ms)
+✔ combined registration and three build target page sets agree (2.8333ms)
+✔ all tabBar targets are registered and present in customer build (0.3437ms)
+✔ every literal navigator URL on registered pages has a valid page target (24.3034ms)
+✔ customer profile static links stay in customer build (1.2638ms)
+✔ merchant workbench static links stay in merchant build (1.1758ms)
+✔ switching from merchant workspace to customer uses the home tab (1.3515ms)
+✔ profile merchant shortcut is gated by verified authorization (1.4371ms)
+✔ passive merchant session check cannot automatically navigate (0.7886ms)
+✔ customer-only build disables merchant workspace navigation (1.0104ms)
+✔ role-specific chat, proof, reviews and tracking destinations are registered (3.8182ms)
+✔ one AppID contains merchant-login and admin plus customer landing page (2.5392ms)
+✔ shop homepage does not display a merchant administration entry (0.4599ms)
+✔ merchant preference is set only after server-backed permission check (0.1944ms)
+✔ customer onShow never routes from a saved merchant preference (0.5275ms)
+✔ merchant logout clears saved merchant-first preference (0.1558ms)
+✔ merchant can choose the customer shop without creating another AppID (1.3227ms)
+✔ customer profile shows merchant navigation only after a server check (1.0775ms)
+✔ preview scanner detects optional chaining in generated JS with exact location (2.2581ms)
+✔ preview scanner detects nullish coalescing and assignment (0.8841ms)
+✔ preview scanner does not flag simple strings and comments (0.2321ms)
+✔ preview scanner rejects known broken checkbox-group opening tag (0.3476ms)
+✔ preview scanner does not reject a valid checkbox-group (0.151ms)
+✔ preview configuration warns about ES2020/es6=false mismatch without calling it a definite compiler failure (0.2088ms)
+✔ end-to-end audit of disposable fixture detects both real preview blockers (8.8477ms)
+✔ missing generated JS is reported as unverified, not as full preview success (3.8632ms)
+✔ real TypeScript ES2019 emission removes optional chaining and nullish coalescing (615.0844ms)
+✔ mutation: emitted ES2020 optional chaining is rejected by build guard (539.2019ms)
+✔ mutation: injected nullish syntax is rejected by build guard (0.2837ms)
+✔ string literals mentioning optional chaining do not fail the build (0.2448ms)
+ℹ tests 215
+ℹ suites 0
+ℹ pass 170
+ℹ fail 45
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4782.3729
+
+✖ failing tests:
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:46:1
+✖ order detail: pending response is ignored after page hide (3.7922ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:47:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17)
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:51:1
+✖ order detail: pending response is ignored after unload (0.8435ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:52:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:56:1
+✖ order detail: old request cannot overwrite newer onShow (0.5954ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:57:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:63:1
+✖ order detail: identity change discards pending order response (1.3083ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:64:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:68:1
+✖ order detail: obsolete fetch failure does not show toast (1.0463ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:69:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:73:1
+✖ order detail: current fetch failure shows error, not fabricated order (0.9182ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:74:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:78:1
+✖ proof: concurrent refreshes make one request and show latest URL (1.6776ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:79:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:85:1
+✖ proof: hiding page discards a late signed URL (0.7772ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:86:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:91:1
+✖ proof: identity change discards a late signed URL (0.8189ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:92:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:97:1
+✖ proof: current URL failure is reported without image (0.8033ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:98:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+
+test at backend\tests\frontend-navigation-lifecycle.test.mjs:104:1
+✖ proof: preview with no image does not open image viewer (0.6265ms)
+  order-detail.ts:8
+        const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
+                                                                                               ^^
+  
+  SyntaxError: Unexpected identifier 'as'
+      at new Script (node:vm:117:7)
+      at createScript (node:vm:269:10)
+      at Object.runInNewContext (node:vm:310:10)
+      at method (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:23:13)
+      at fixture (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:41:76)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-lifecycle.test.mjs:105:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:77:1
+✖ phase6: initial load sends scoped authenticated parameters and normalizes real page state (7.2863ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:78:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:94:1
+✖ phase6: empty successful response clears pagination without inventing orders (3.6055ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:95:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:99:1
+✖ phase6: next page appends orders and forwards the opaque cursor unchanged (4.4202ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:100:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:108:1
+✖ phase6: overlapping IDs across pages are not displayed twice (4.62ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:109:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:114:1
+✖ phase6: duplicate IDs inside a single returned page are displayed once (4.2015ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:115:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:119:1
+✖ phase6: repeated reach-bottom events share one in-flight pagination request (3.5391ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:120:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:127:1
+✖ phase6: unknown filter leaves tab, rows and request count unchanged (4.2532ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:128:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:132:1
+✖ phase6: rapid filter requests completing in reverse order retain only the newest result (5.2735ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:133:25)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:144:1
+✖ phase6: stale failure cannot clear the newer filter loading indicator or set its error (6.3292ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:145:25)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:151:1
+✖ phase6: pull refresh clears cursor and rejects a late pre-refresh page (8.8805ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:152:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:160:3
+✖ phase6: onHide invalidates late resolve without additional setData (4.408ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:161:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:160:3
+✖ phase6: onHide invalidates late reject without additional setData (3.7963ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:161:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:160:3
+✖ phase6: onUnload invalidates late resolve without additional setData (3.3518ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:161:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:160:3
+✖ phase6: onUnload invalidates late reject without additional setData (7.0323ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:161:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:169:1
+✖ phase6: changed identity rejects a pending response before orders reach the page (4.9462ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:170:25)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:175:1
+✖ phase6: identity change before pagination cannot retain or append the previous user orders (5.9828ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:176:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:185:1
+✖ phase6: store change before pagination cannot reuse the previous store rows or cursor (4.3968ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:186:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:194:1
+✖ phase6: onShow after identity change resets old rows and makes a fresh first-page request (3.4418ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:195:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed null page is rejected without exposing invalid rows (3.4876ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed non-array orders is rejected without exposing invalid rows (4.4288ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed non-boolean hasMore is rejected without exposing invalid rows (4.2858ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed non-string next cursor is rejected without exposing invalid rows (3.7367ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed empty next cursor is rejected without exposing invalid rows (5.276ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed order with no stable ID is rejected without exposing invalid rows (4.0589ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:207:3
+✖ phase6: malformed order with non-numeric total is rejected without exposing invalid rows (7.6257ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:208:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:214:1
+✖ phase6: first-page network failure never falls back to local demo orders (6.6368ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:215:44)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:220:1
+✖ phase6: failed next page retains loaded rows and cursor and can be retried successfully (6.2084ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:221:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:229:1
+✖ phase6: exhausted pagination never makes another request on button or reach-bottom (6.7372ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:230:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:243:1
+✖ phase6: switching cloud to local invalidates an outstanding cloud result (9.5209ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:244:44)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:258:1
+✖ phase6: pull refresh always stops its spinner after a current request failure (6.3418ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:259:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:282:3
+✖ phase6: identity switch keeps new loading and list isolated when old pagination resolve runs finally (3.6769ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:283:19)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:282:3
+✖ phase6: identity switch keeps new loading and list isolated when old pagination reject runs finally (3.5907ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:283:19)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:282:3
+✖ phase6: store switch keeps new loading and list isolated when old pagination resolve runs finally (4.012ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:283:19)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at backend\tests\frontend-navigation-orders-phase6.test.mjs:282:3
+✖ phase6: store switch keeps new loading and list isolated when old pagination reject runs finally (2.6707ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'stall_customer_phone_session_v1'
+  - 'stall_server_session_v1'
+           ^
+  
+      at Proxy.getStorageSync (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:42:85)
+      at Object.loadPhoneOrders (miniprogram/pages/orders/orders.ts:90:20)
+      at Object.refreshPhoneOrders (miniprogram/pages/orders/orders.ts:86:29)
+      at Object.onShow (miniprogram/pages/orders/orders.ts:120:10)
+      at loaded (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:71:60)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/frontend-navigation-orders-phase6.test.mjs:283:19)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stall_customer_phone_session_v1',
+    expected: 'stall_server_session_v1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
