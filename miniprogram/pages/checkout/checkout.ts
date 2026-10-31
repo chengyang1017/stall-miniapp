@@ -18,6 +18,7 @@ import { getSessionToken } from '../../modules/shared/runtime/context'
 const DRAFT_KEY = 'stall_checkout_draft_v1'
 
 Page({
+  chooseSandboxChannel(e:any){const channel=String(e.currentTarget.dataset.channel||'');if(['card','alipay','wechat_pay'].includes(channel))this.setData({sandboxChannel:channel})},
   checkoutContext:'',
   draftStorageKey(){const cfg=cloudCartConfig();return cfg?(getSessionToken()?DRAFT_KEY+':'+cloudCacheSuffix(cfg.storeSlug):''):DRAFT_KEY+':demo'},
   restoreDraft(){this.checkoutContext=supportIdentity();const key=this.draftStorageKey(),draft=key?wx.getStorageSync(key):null;this.setData({note:draft&&typeof draft.note==='string'?draft.note:'',selectedAddress:null,hasAddress:false,selectedSlotId:'',noteShortcuts:[]})},
@@ -40,6 +41,7 @@ Page({
     this.saveDraft()
   },
   data: {
+    sandboxChannel:'card',
     demoConfirmBusy:false,
     orderSubmitting:false,
     cloudMode: false, cloudBusy: false, cloudError: '',deliveryError:'',selectionNotice:'',cloudAreaName:'', deliveryDate: '', deliveryDateMin: '', deliveryDateMax: '', cloudRules: null as any, cloudAreas: [] as Array<{id:string;name:string}>,
@@ -152,13 +154,13 @@ Page({
     if(!slot){ wx.showToast({title:'请选择有效配送时段',icon:'none'}); return }
     if(!address.receiverName.trim()||!address.phone.trim()||!address.detail.trim()){ wx.showToast({title:'请补全收货地址',icon:'none'}); return }
     if(!this.data.totalCount){ wx.showToast({title:'购物车为空',icon:'none'}); return }
-    const submittedContext=supportIdentity();this.setData({cloudBusy:true,orderSubmitting:true})
+    const submittedSerial=this.cloudSerial,submittedContext=supportIdentity();this.setData({cloudBusy:true,orderSubmitting:true})
     try {
       const result=await createCloudOrder({address:{receiverName:address.receiverName,phone:address.phone,areaId:area.id,
         detail:address.detail,latitude:address.latitude,longitude:address.longitude},slot:{id:slot.id,date},note:String(this.data.note||'')})
       if(submittedContext!==supportIdentity())return
       wx.showModal({title:'订单已创建（待支付）',content:'订单号：'+result.orderId+'\n服务端金额：¥'+(Number(result.totalCents)/100).toFixed(2)+(result.inventoryExpiresAt?'\n有限库存预留至：'+formatPublishTime(result.inventoryExpiresAt,'Asia/Shanghai')+' 北京时间（UTC+8），未支付会释放。':'')+'\n尚未扣款，请勿当作付款成功。',showCancel:false,
-        success:()=>wx.switchTab({url:'/pages/cart/cart'})})
+        success:()=>{if(submittedSerial===this.cloudSerial&&submittedContext===supportIdentity())wx.navigateTo({url:'/pages/order-detail/order-detail?id='+encodeURIComponent(result.orderId)+'&sandboxChannel='+this.data.sandboxChannel})}})
     }catch(e:any){
       if(submittedContext!==supportIdentity())return
       const message=String(e&&e.message||e)

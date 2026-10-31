@@ -1,0 +1,622 @@
+✖ all 001-023 migrations execute and 023 repeat fails rather than hiding drift (3069.4272ms)
+✖ concurrent reservations share one durable attempt and reject another channel (3.511ms)
+✖ network interruption reuses durable request key, amount and expiry after retry (0.0868ms)
+✖ card verified payment settles and writes immutable receipt (0.049ms)
+✖ alipay verified payment settles and writes immutable receipt (0.0641ms)
+✖ wechat_pay verified payment settles and writes immutable receipt (0.072ms)
+✖ duplicates and out-of-order expired callbacks do not reverse trusted payment (0.0449ms)
+✖ failed and expired sessions allow a new attempt without recreating order (0.047ms)
+✖ late trusted collection queues one compensating refund without resurrecting stock (0.0945ms)
+✖ second distinct paid session is compensated, first receipt and settlement preserved (0.0926ms)
+✖ full and partial refund reservations validate amount and idempotency under concurrency (0.043ms)
+✖ actual Stripe refund adapter sends partial amount with stable per-job idempotency (0.0336ms)
+✖ submitted refund leases allow polling, survive expired lease and preserve receipt (0.0641ms)
+✖ finite held inventory commits once with no second stock decrement (0.0375ms)
+✖ rollback includes receipt, event and status on invalid order snapshot (0.0521ms)
+✖ disabled worker performs no provider or database calls (0.0617ms)
+✖ local database restart recovers durable attempt and request key (0.0474ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 0
+ℹ fail 17
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3427.0904
+
+✖ failing tests:
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:43:1
+✖ all 001-023 migrations execute and 023 repeat fails rather than hiding drift (3069.4272ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:47:1
+✖ concurrent reservations share one durable attempt and reject another channel (3.511ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:53:1
+✖ network interruption reuses durable request key, amount and expiry after retry (0.0868ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:60:53
+✖ card verified payment settles and writes immutable receipt (0.049ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:60:53
+✖ alipay verified payment settles and writes immutable receipt (0.0641ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:60:53
+✖ wechat_pay verified payment settles and writes immutable receipt (0.072ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:70:1
+✖ duplicates and out-of-order expired callbacks do not reverse trusted payment (0.0449ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:78:1
+✖ failed and expired sessions allow a new attempt without recreating order (0.047ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:84:1
+✖ late trusted collection queues one compensating refund without resurrecting stock (0.0945ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:91:1
+✖ second distinct paid session is compensated, first receipt and settlement preserved (0.0926ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:99:1
+✖ full and partial refund reservations validate amount and idempotency under concurrency (0.043ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:109:1
+✖ actual Stripe refund adapter sends partial amount with stable per-job idempotency (0.0336ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:121:1
+✖ submitted refund leases allow polling, survive expired lease and preserve receipt (0.0641ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:131:1
+✖ finite held inventory commits once with no second stock decrement (0.0375ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:140:1
+✖ rollback includes receipt, event and status on invalid order snapshot (0.0521ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:146:1
+✖ disabled worker performs no provider or database calls (0.0617ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:149:1
+✖ local database restart recovers durable attempt and request key (0.0474ms)
+  error: role "stall_payment_app_limited" does not exist
+      at pe.Oe (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:18174)
+      at pe.tt (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:15560)
+      at pe.parse (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-EP7TJL7B.js:1:14234)
+      at D.ze (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1759)
+      at file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:5:1151
+      at wasm://wasm/022aac12:wasm-function[10953]:0x52a5d7
+      at wasm://wasm/022aac12:wasm-function[3598]:0x2159d1
+      at wasm://wasm/022aac12:wasm-function[3640]:0x21ce4a
+      at wasm://wasm/022aac12:wasm-function[3650]:0x21d07f
+      at wasm://wasm/022aac12:wasm-function[9935]:0x4d6fbb {
+    length: 102,
+    severity: 'ERROR',
+    code: '42704',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'acl.c',
+    line: '5562',
+    routine: 'get_role_oid',
+    query: "-- Apply only after verified customer account groundwork. Additive profile storage.\r\nALTER TABLE public.customer_accounts ADD COLUMN IF NOT EXISTS nickname text NOT NULL DEFAULT '';\r\nALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_nickname_length CHECK (char_length(nickname) <= 30);\r\nGRANT UPDATE (nickname, updated_at) ON public.customer_accounts TO stall_payment_app_limited;\r\n",
+    params: undefined,
+    queryOptions: undefined
+  }

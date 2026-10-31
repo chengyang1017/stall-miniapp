@@ -4,12 +4,26 @@
   <view wx:if="{{found && cloudMode && order.fulfillmentStatus === 'delivered'}}" class="order-detail-card"><view class="order-detail-title">评价商品</view><view class="order-detail-muted">须核验真实支付后才能发表；商家已送达不等于已确认收款。</view><navigator wx:for="{{items}}" wx:key="orderItemId" wx:if="{{item.orderItemId}}" url="/pages/customer-reviews/customer-reviews?orderItemId={{item.orderItemId}}">评价 {{item.name}} ›</navigator></view>
   <view wx:if="{{!found}}" class="order-detail-empty">找不到该订单，或者订单已被删除</view>
   <view wx:else>
-    <view wx:if="{{cloudMode && order.paymentStatus === 'unpaid'}}" class="order-detail-card">
+    <view wx:if="{{cloudMode && !phoneReadOnly && order.paymentStatus === 'unpaid'}}" class="order-detail-card">
       <view class="order-detail-title">Sandbox 外部支付测试</view>
       <view>仅隔离测试服务配置后可用。复制到外部浏览器测试，返回后重新进入本页查询服务端状态。微信原生支付尚未接入。</view>
       <button size="mini" data-channel="wechat_pay" bindtap="openSandboxCheckout">微信支付测试链接</button>
       <button size="mini" data-channel="alipay" bindtap="openSandboxCheckout">支付宝测试链接</button>
       <button size="mini" data-channel="card" bindtap="openSandboxCheckout">银行卡测试链接</button>
+      <button size="mini" bindtap="cancelSandboxPayment">取消当前付款会话 / 更换渠道</button>
+    </view>
+    <view wx:if="{{cloudMode && !phoneReadOnly}}" class="order-detail-card">
+      <view class="order-detail-title">Sandbox 支付记录与电子小票</view>
+      <button size="mini" bindtap="loadSandboxPayment">查询服务端最新状态</button><view>{{sandboxError}}</view>
+      <view wx:if="{{sandbox.stale}}">渠道暂不可用，以下为已保存状态，最新结果尚未确认。</view>
+      <view wx:for="{{sandbox.attempts}}" wx:key="id">{{item.channelText}} · ¥{{item.amountText}} · {{item.label}}</view>
+      <view wx:for="{{sandbox.refunds}}" wx:key="id">退款 ¥{{item.amountText}} · {{item.label}} · {{item.refundId}}</view>
+      <view wx:for="{{sandbox.receipts}}" wx:key="id" wx:for-item="receipt">
+        <view>测试电子小票 · {{receipt.notice}}</view><view>订单：{{receipt.orderId}}</view>
+        <view>{{receipt.channelText}} · ¥{{receipt.totalText}} {{receipt.currency}} · {{receipt.paidAt}}</view>
+        <view wx:for="{{receipt.items}}" wx:key="productId">{{item.name}} × {{item.quantity}} · 单价 ¥{{item.unitText}}</view>
+        <view>交易参考：{{receipt.transactionId}}</view><view>校验摘要：{{receipt.sha256}}</view>
+      </view>
     </view>
     <view wx:if="{{simulationAuthorized}}" class="order-detail-card"><view>Staging测试入口 · 不发生真实付款</view><button bindtap="confirmSimulation" disabled="{{simulationBusy || !simulationEligible}}" loading="{{simulationBusy}}">{{simulationBusy ? '正在核对模拟确认' : '授权测试：模拟支付确认'}}</button><view>仅服务端授权的测试人员可操作；非微信支付，不计真实收入。</view><view>{{simulationError}}</view></view>
     <view class="order-detail-card"><view class="order-detail-title">订单详情</view><view class="order-detail-status">{{statusText}}</view><view class="order-detail-muted">支付状态：{{paymentText}}</view><view class="order-detail-muted">订单编号：{{order.id}}</view><view class="order-detail-muted">下单时间：{{createdText}}</view></view>

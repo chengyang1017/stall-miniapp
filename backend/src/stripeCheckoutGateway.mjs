@@ -19,7 +19,7 @@ export function verifyStripeSignature(raw,header,secret,now=Math.floor(Date.now(
  if(!matches)fail('stripe_signature_invalid')
  return JSON.parse(raw.toString('utf8'))
 }
-export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,cancelUrl,fetchImpl=fetch,now,channel='card',paymentMethodConfiguration}){
+export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,cancelUrl,fetchImpl=fetch,now,channel='card',paymentMethodConfiguration,expiresAt}){
  if(!['card','alipay','wechat_pay'].includes(channel))fail('stripe_invalid_channel')
  if(paymentMethodConfiguration!==undefined&&!/^pmc_[A-Za-z0-9]+$/.test(paymentMethodConfiguration))fail('stripe_invalid_method_configuration')
  if(channel!=='card'&&!paymentMethodConfiguration)fail('stripe_channel_configuration_required')
@@ -39,7 +39,8 @@ export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,
     client_reference_id:request.orderId,
     'metadata[orderId]':request.orderId,
     'metadata[channel]':channel,
-    expires_at:String(Math.floor(Date.now()/1000)+1800),
+    'metadata[paymentAttemptKey]':request.requestKey,
+    expires_at:String(expiresAt??Math.floor(Date.now()/1000)+1800),
     success_url:successUrl,cancel_url:cancelUrl
    })
    if(paymentMethodConfiguration)body.set('payment_method_configuration',paymentMethodConfiguration)

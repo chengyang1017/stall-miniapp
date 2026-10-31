@@ -198,5 +198,10 @@ Page({
     const id = String(e.currentTarget.dataset.id || '')
     if (!id) return
     wx.navigateTo({ url: '/pages/order-detail/order-detail?id=' + encodeURIComponent(id) })
+  },
+  openSandboxOrder(e:any){
+    const id=String(e.currentTarget.dataset.id||''),channel=String(e.currentTarget.dataset.channel||'')
+    if(!this.data.cloudMode||! /^[0-9a-f-]{36}$/i.test(id)||!['card','alipay','wechat_pay'].includes(channel))return
+    wx.navigateTo({url:'/pages/order-detail/order-detail?id='+encodeURIComponent(id)+'&sandboxChannel='+channel})
   }
 })

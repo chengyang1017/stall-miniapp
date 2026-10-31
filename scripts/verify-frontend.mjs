@@ -7,6 +7,7 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 const tests = [
   'apps/tests/navigation.test.cjs',
   'apps/tests/sandbox-payment.test.cjs',
+  'apps/tests/sandbox-lifecycle.test.cjs',
   'apps/tests/auth-session.test.cjs',
   'apps/tests/demo-checkout.test.cjs',
   'apps/tests/product-library.test.cjs',

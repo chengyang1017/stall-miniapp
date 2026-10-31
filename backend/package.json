@@ -15,11 +15,15 @@
     "test:merchant-permissions:dev": "node scripts/test-merchant-permissions-dev.mjs",
     "test:tenant-catalog:dev": "node scripts/test-tenant-catalog-dev.mjs",
     "dev:ui-session": "node scripts/issue-ui-session-dev.mjs",
-    "test:payment": "node --test tests/paymentGateway.test.mjs tests/orderPaymentPreparation.test.mjs tests/paymentSettlement.test.mjs tests/paymentSettlementTransaction.test.mjs tests/paymentSchemaPreflight.test.mjs tests/stripeCheckoutGateway.test.mjs tests/stripeTestPaymentRoute.test.mjs tests/stripeTestRefund.test.mjs tests/stripeTestRefundJobs.test.mjs"
+    "test:payment": "node --test tests/paymentGateway.test.mjs tests/orderPaymentPreparation.test.mjs tests/paymentSettlement.test.mjs tests/paymentSettlementTransaction.test.mjs tests/paymentSchemaPreflight.test.mjs tests/stripeCheckoutGateway.test.mjs tests/stripeTestPaymentRoute.test.mjs tests/stripeTestRefund.test.mjs tests/stripeTestRefundJobs.test.mjs",
+    "test:payment:lifecycle": "node --test --test-concurrency=1 tests/sandbox-payment-lifecycle.test.mjs"
   },
   "dependencies": {
-    "pg": "^8.13.0",
     "@aws-sdk/client-s3": "^3.800.0",
-    "@aws-sdk/s3-request-presigner": "^3.800.0"
+    "@aws-sdk/s3-request-presigner": "^3.800.0",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.14"
   }
 }

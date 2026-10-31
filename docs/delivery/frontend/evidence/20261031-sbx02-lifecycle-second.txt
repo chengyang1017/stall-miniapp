@@ -1,0 +1,56 @@
+✔ all 001-023 migrations execute and 023 repeat fails rather than hiding drift (2593.9653ms)
+✔ concurrent reservations share one durable attempt and reject another channel (19.4598ms)
+✔ network interruption reuses durable request key, amount and expiry after retry (9.8464ms)
+✔ card verified payment settles and writes immutable receipt (26.3041ms)
+✔ alipay verified payment settles and writes immutable receipt (18.3992ms)
+✔ wechat_pay verified payment settles and writes immutable receipt (20.4252ms)
+✔ duplicates and out-of-order expired callbacks do not reverse trusted payment (20.3221ms)
+✔ failed and expired sessions allow a new attempt without recreating order (12.0302ms)
+✔ late trusted collection queues one compensating refund without resurrecting stock (25.3955ms)
+✔ second distinct paid session is compensated, first receipt and settlement preserved (18.9582ms)
+✔ full and partial refund reservations validate amount and idempotency under concurrency (19.3714ms)
+✔ actual Stripe refund adapter sends partial amount with stable per-job idempotency (12.6358ms)
+✔ submitted refund leases allow polling, survive expired lease and preserve receipt (15.2157ms)
+✔ finite held inventory commits once with no second stock decrement (29.1145ms)
+✔ rollback includes receipt, event and status on invalid order snapshot (7.2008ms)
+✔ disabled worker performs no provider or database calls (0.6845ms)
+✖ local database restart recovers durable attempt and request key (295.4664ms)
+✖ C:\Users\USER\WeChatProjects\miniprogram-1\backend\tests\sandbox-payment-lifecycle.test.mjs (0.2863ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 16
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13309.5603
+
+✖ failing tests:
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:149:1
+✖ local database restart recovers durable attempt and request key (295.4664ms)
+  Error [RuntimeError]: Aborted(). Build with -sASSERTIONS for more info.
+      at abort (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:1:75551)
+      at __abort_js (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:2:74054)
+      at wasm://wasm/022aac12:wasm-function[13318]:0x61bf24
+      at wasm://wasm/022aac12:wasm-function[9934]:0x4d491a
+      at wasm://wasm/022aac12:wasm-function[5342]:0x34ba07
+      at wasm://wasm/022aac12:wasm-function[1404]:0xaa51e
+      at wasm://wasm/022aac12:wasm-function[1402]:0xa962d
+      at wasm://wasm/022aac12:wasm-function[4565]:0x2dc7fe
+      at wasm://wasm/022aac12:wasm-function[1391]:0xa7b05
+      at wasm://wasm/022aac12:wasm-function[10120]:0x4e2f73
+
+test at backend\tests\sandbox-payment-lifecycle.test.mjs:23:1
+✖ C:\Users\USER\WeChatProjects\miniprogram-1\backend\tests\sandbox-payment-lifecycle.test.mjs (0.2863ms)
+  Error: PGlite is closed
+      at D._checkReady (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:3:198672)
+      at D.close (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/node_modules/@electric-sql/pglite/dist/chunk-66APQTYC.js:3:197606)
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/sandbox-payment-lifecycle.test.mjs:23:30)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1306:25)
+      at TestHook.run (node:internal/test_runner/test:1651:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.runHook (node:internal/test_runner/test:1198:20)
+      at after (node:internal/test_runner/test:1251:20)
+      at Test.run (node:internal/test_runner/test:1332:13)

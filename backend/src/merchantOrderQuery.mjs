@@ -1,3 +1,4 @@
+import {sandboxOrderColumns} from './sandboxPaymentQuery.mjs'
 import { createHash } from 'node:crypto'
 const states=['new','accepted','preparing','delivering','delivered','cancelled','abnormal']
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -50,7 +51,7 @@ export async function merchantOrderQuery(req,res,url,pool,store,subject,reply){
     const counts=await merchantOrderCounts(client,store.id)
     if(cursor){const at=bind(cursor.key),id=bind(cursor.id);clauses.push(`(o.created_at,o.id)<(${at}::timestamptz,${id}::uuid)`)}
     const {rows}=await client.query(`SELECT o.merchant_note AS "merchantNote",o.merchant_note_version AS "merchantNoteVersion",o.id,o.created_at AS "createdAt",o.payment_status AS "paymentStatus",o.payment_source AS "paymentSource",o.fulfillment_status AS "fulfillmentStatus",o.total_cents AS "totalCents",
-      o.delivered_at AS "deliveredAt",o.estimated_arrival AS "estimatedArrival",o.issue_reason AS "issueReason",o.contact_snapshot AS "contactSnapshot",o.delivery_slot_snapshot AS "deliverySlotSnapshot",
+      o.delivered_at AS "deliveredAt",o.estimated_arrival AS "estimatedArrival",o.issue_reason AS "issueReason"${sandboxOrderColumns()},o.contact_snapshot AS "contactSnapshot",o.delivery_slot_snapshot AS "deliverySlotSnapshot",
       o.inventory_state AS "inventoryState",o.inventory_expires_at AS "inventoryExpiresAt",to_char(o.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "cursorAt"
       FROM orders o WHERE ${clauses.join(' AND ')} ORDER BY o.created_at DESC,o.id DESC LIMIT ${bind(limit+1)}`,params)
     const hasMore=rows.length>limit,page=rows.slice(0,limit),ids=page.map(o=>o.id)

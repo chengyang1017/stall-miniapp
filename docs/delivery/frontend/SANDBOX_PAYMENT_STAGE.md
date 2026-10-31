@@ -1,3 +1,5 @@
+> SBX-02 continuation: the durable lifecycle/refund/receipt implementation and current evidence supersede this historical SBX-01 snapshot. See [SANDBOX_PAYMENT_LIFECYCLE.md](SANDBOX_PAYMENT_LIFECYCLE.md). External Neon/Stripe/platform acceptance is still pending.
+
 # SBX-01 — Sandbox channel foundation (2026-10-31)
 
 Status: DEVELOPMENT, incomplete against full payment lifecycle acceptance. No deployment, migration, provider transaction or refund executed. No secrets inspected or copied. Existing untracked local backup preserved.
