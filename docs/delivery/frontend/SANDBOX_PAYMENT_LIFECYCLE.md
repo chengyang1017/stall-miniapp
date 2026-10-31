@@ -103,3 +103,7 @@ Rollback: disable STRIPE_TEST_PAYMENTS_ENABLED/lifecycle/worker/refund switches,
 ## Git review receipt
 
 PR #7 is retained; no duplicate PR and no automatic merge. Exact submitted SHA/remote synchronization is appended after commit. Migration SHA-256 above is canonical LF text so Git autocrlf does not change its audit identity.
+
+## SBX-02 tested product commit
+
+Tested implementation commit: `ef89649b7b79332b1c0c202857d12fb8911b0b85`. Final evidence: payment 83/0/0, lifecycle 35/0/0, frontend 230/0/0 and three TypeScript targets; additional regression 140/1/0 with the same P7-39 baseline failure. PR [#7](https://github.com/chengyang1017/stall-miniapp/pull/7), existing branch codex/sandbox-payment-channels. The following documentation-only commit records this SHA and does not change tested code. Remote verification is reported in the PR/chat after ordinary push. Owner preview paths and steps are in SANDBOX_PAYMENT_LIFECYCLE.md; WAITING_FOR_OWNER_PREVIEW and DEVELOPMENT remain accurate.
