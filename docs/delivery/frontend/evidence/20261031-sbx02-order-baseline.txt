@@ -1,0 +1,90 @@
+✔ P7-01 SQL adapter rejects unknown SQL and discards uncommitted writes (3.0382ms)
+✔ P7-02 first checkout saves server price snapshots, unpaid hold, reservation and matching movement (3.5229ms)
+✔ P7-03 repeated same-key clicks replay one order without another stock deduction (2.9766ms)
+✔ P7-04 response lost after COMMIT can be safely retried with the same key (0.8817ms)
+✔ P7-05 same key with a changed cart is a conflict and leaves committed state untouched (0.8655ms)
+✔ P7-06 concurrent same-key requests serialize and return the same committed order (1.0141ms)
+✔ P7-07 concurrent same key with different contents returns one success and one conflict (0.746ms)
+✔ P7-08 identical retry keys are scoped by customer and store, not globally shared (1.2357ms)
+✔ P7-09 distinct retry keys are distinct checkouts (no cart-based deduplication guarantee) (0.7739ms)
+✔ P7-10 two customers contending for the final unit produce one order and one stock conflict (0.7331ms)
+✔ P7-11 five contending customers cannot reserve more than two available units (1.14ms)
+✔ P7-12 quantity exceeding available stock rejects before any persisted writes (0.3496ms)
+✔ P7-13/active product becoming unpublished before locked read is rejected (0.3347ms)
+✔ P7-13/sold_out product becoming manually sold out before locked read is rejected (0.2323ms)
+✔ P7-14 server uses latest locked price/quantity, ignoring stale client inventory version (0.4933ms)
+✔ P7-15 multi-product cart with one insufficient product does not deduct any product (6.3523ms)
+✔ P7-16/second line insert DB failure rolls back orders, lines, quantities, reservations and movements (0.7078ms)
+✔ P7-16/second stock movement DB failure rolls back orders, lines, quantities, reservations and movements (0.5132ms)
+✔ P7-16/commit before durable apply DB failure rolls back orders, lines, quantities, reservations and movements (0.5163ms)
+✔ P7-17 retry after rolled-back DB failure creates exactly one successful order (0.7992ms)
+✔ P7-18 cross-store product ID is unavailable and cannot change either store inventory (0.2875ms)
+✔ P7-19 unsigned checkout fails authentication without transactions or writes (0.123ms)
+✔ P7-20 two authorized merchants concurrently accepting one order record only one transition (2.6162ms)
+✔ P7-21 repeated accepted transition conflicts without duplicate events or inventory mutations (0.9425ms)
+✔ P7-22/cancelled->accepted illegal transition preserves order and inventory (0.5837ms)
+✔ P7-22/delivered->preparing illegal transition preserves order and inventory (0.5239ms)
+✔ P7-22/delivered->cancelled illegal transition preserves order and inventory (0.5456ms)
+✔ P7-22/new->delivering illegal transition preserves order and inventory (0.5614ms)
+✔ P7-23 held unpaid order cannot be accepted, and paid hold commits without deducting twice (0.9707ms)
+✔ P7-24 unauthorized store, foreign order ID and non-managing roles cannot change an order (1.7962ms)
+✔ P7-25 another customer or another store cannot read an order by knowing its ID (0.5951ms)
+✔ P7-26 status event insertion failure rolls back transition and paid hold resolution together (0.8618ms)
+✔ P7-27 unpaid cancellation releases stock once and repeated cancellation cannot credit it twice (0.8505ms)
+✔ P7-28 failed cancellation audit insert rolls back stock release as well as status (1.0013ms)
+✔ P7-29 selected expired unpaid hold is released/cancelled once by real sweep function (0.7042ms)
+✔ P7-30 accept at exact hold expiry cancels and releases instead of accepting (0.715ms)
+✔ P7-31 expired-order cancellation excludes sweep in the lock MODEL, not a PostgreSQL SKIP LOCKED verification (0.7413ms)
+✔ P7-32 sweep owning the order lock makes competing cancellation a safe status conflict (0.693ms)
+✔ P7-33 partial multi-product release failure rolls back earlier restored products and movements (2.2835ms)
+✔ P7-34 paid cancellation does not fabricate a refund or restore committed sold stock (1.1717ms)
+✔ P7-35 missing reason and unverified delivered endpoint cannot bypass existing state machine (0.7501ms)
+✔ P7-36 rightful customer reads original transaction snapshots after current product changes (0.7849ms)
+✔ P7-37 mixed finite/unlimited multi-product order locks in UUID order and reserves only finite stock (0.6145ms)
+✔ P7-38 missing or malformed idempotency key is rejected before any transaction (0.4316ms)
+✖ P7-39 business closing while waiting for product read is rechecked before inserting order (1.1851ms)
+✔ P7-40 replenishing cancelled hold does not clear merchant manual sold-out flag (0.7522ms)
+✔ P7-41 worker audit insertion failure rolls back expiry release and can be retried safely (1.029ms)
+✔ P7-42 selected paid hold is committed by worker without another deduction or auto-refund (0.7316ms)
+✔ P7-43 selected failed-payment unpaid hold is released with the correct source, once (0.8762ms)
+✔ P7-44/finite/new->accepted unpaid fulfillment cannot bypass payment through inventory mode (0.7385ms)
+✔ P7-44/finite/accepted->preparing unpaid fulfillment cannot bypass payment through inventory mode (0.5971ms)
+✔ P7-44/finite/preparing->delivering unpaid fulfillment cannot bypass payment through inventory mode (0.6006ms)
+✔ P7-45/finite paid fixture retains accept, prepare, dispatch and report-abnormal workflow (1.5093ms)
+✔ P7-44/unlimited/new->accepted unpaid fulfillment cannot bypass payment through inventory mode (0.6493ms)
+✔ P7-44/unlimited/accepted->preparing unpaid fulfillment cannot bypass payment through inventory mode (2.0063ms)
+✔ P7-44/unlimited/preparing->delivering unpaid fulfillment cannot bypass payment through inventory mode (0.5333ms)
+✔ P7-45/unlimited paid fixture retains accept, prepare, dispatch and report-abnormal workflow (0.9037ms)
+✔ P7-46 unlimited unpaid new or legacy accepted/preparing orders retain legal cancellation (1.4615ms)
+✔ P7-47/refunded is not a paid authorization for unlimited fulfillment (0.4879ms)
+✔ P7-47/partially_refunded is not a paid authorization for unlimited fulfillment (0.4232ms)
+✔ P7-48 event adapter distinguishes SQL literals, escaped quotes, NULL and parameter positions (0.2099ms)
+✔ P7-49/finite unpaid legacy delivery cannot bypass payment to mark abnormal (0.6579ms)
+✔ P7-49/unlimited unpaid legacy delivery cannot bypass payment to mark abnormal (0.661ms)
+ℹ tests 63
+ℹ suites 0
+ℹ pass 62
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 796.2584
+
+✖ failing tests:
+
+test at backend\tests\business-consistency-phase7.test.mjs:41:27
+✖ P7-39 business closing while waiting for product read is rechecked before inserting order (1.1851ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  201 !== 409
+  
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/business-consistency-phase7.test.mjs:371:37)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 201,
+    expected: 409,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

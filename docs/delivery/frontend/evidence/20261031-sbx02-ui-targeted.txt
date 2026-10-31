@@ -1,0 +1,15 @@
+✔ compiled customer page queries provider-backed status then refreshes order payment label (4.0635ms)
+✔ compiled customer page discards hidden or changed-identity receipt response (1.6492ms)
+✔ compiled merchant page reads receipts and discards stale store context (1.3902ms)
+✔ merchant refund requires server canRefund and validates entered amount before HTTP (1.704ms)
+✔ compiled checkout selects only supported external sandbox channels (1.1654ms)
+✔ view models preserve all payment, refund and original receipt states (0.2308ms)
+✔ shared compiled HTTP adapter uses merchant route and rejects changed identity or untrusted success (2.8217ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 282.2205

@@ -4,6 +4,8 @@ import {loadWorkflowOrders,updateWorkflowOrder,chinaTime} from '../../modules/me
 import {saveDemoOrders} from '../../modules/merchant/demo/orders'
 import { merchantOrderConfig, merchantOrderContextKey, fetchMerchantOrderPage, updateMerchantOrder, saveMerchantOrderNote, MerchantOrderCounts, MerchantOrderQuery } from '../../modules/merchant/api/orders'
 import {saveMerchantEta} from '../../utils/merchantEtaCloud'
+import {sandboxPaymentRequest} from '../../modules/shared/api/sandboxPayment'
+import {sandboxPaymentView} from '../../modules/shared/domain/sandboxPayment'
 const tabs=[{key:'latest',label:'全部订单'},{key:'unpaid',label:'待支付'},{key:'new',label:'待接单'},{key:'accepted',label:'已接单'},{key:'preparing',label:'备货中'},{key:'delivering',label:'配送中'},{key:'delivered',label:'已送达'},{key:'cancelled',label:'已取消'},{key:'abnormal',label:'配送异常'},{key:'other',label:'取消 / 异常'}]
 const labels:Record<string,string>={new:'新订单',accepted:'已接单',preparing:'备货中',delivering:'配送中',delivered:'已送达',cancelled:'已取消',abnormal:'配送异常'}
 function state(o:any):string{const s=String(o.fulfillmentStatus||'new');return ['canceled','refunded'].includes(s)?'cancelled':s==='exception'?'abnormal':s}
@@ -13,12 +15,36 @@ function validRange(from:string,to:string):boolean{if(!from&&!to)return true;con
 function emptyCounts():MerchantOrderCounts{return {all:0,new:0,accepted:0,preparing:0,delivering:0,delivered:0,cancelled:0,abnormal:0,other:0}}
 function errorMessage(e:unknown):string{const s=String(e);if(/orders_changed|cursor/.test(s))return '订单数据已变化或分页已过期，请刷新后继续加载';if(/401|403|not_logged_in/.test(s))return '登录已失效或无操作权限，请重新登录有权限的商家账号';if(s.includes('payment_not_confirmed'))return '尚未确认支付，现有支付或库存预留规则禁止此操作';if(s.includes('inventory_reservation_expired'))return '库存预留已过期，服务器已处理，请刷新核对';if(/invalid_transition|state_changed|inventory_released/.test(s))return '订单状态或库存预留已变化，请刷新核对';if(s.includes('400'))return '查询条件或操作参数无效，请检查日期范围和输入';return '请求失败或结果未能确认，请检查网络后刷新核对，勿重复操作'}
 Page({
+ async viewSandboxPayment(e:any){
+  const cfg=merchantOrderConfig(),id=String(e.currentTarget.dataset.id||''),context=merchantOrderContextKey(),serial=this.serial
+  if(!cfg||!this.visible)return
+  this.setData({sandboxOrderId:id,sandbox:null,sandboxError:''})
+  try{const r=await sandboxPaymentRequest(cfg,id,true)
+   if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({sandbox:sandboxPaymentView(r)})
+  }catch(_){if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({sandboxError:'Sandbox 未启用、无权限或网络不可用，无法确认最新结果'})}
+ },
+ requestSandboxRefund(){
+  const cfg=merchantOrderConfig(),id=this.data.sandboxOrderId,s=this.data.sandbox,context=merchantOrderContextKey(),serial=this.serial
+  if(!cfg||!s?.canRefund||this.data.sandboxRefundBusy||!this.visible)return
+  const current=()=>this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&id===this.data.sandboxOrderId
+  wx.showModal({title:'Sandbox 测试退款',content:'输入退款金额（元）；仅测试交易，原始小票保留。',editable:true,placeholderText:'例如 1.00',success:async(r:any)=>{
+   if(!r.confirm||!current())return
+   if(!/^\d{1,7}(\.\d{1,2})?$/.test(r.content||'')){wx.showToast({title:'请输入有效金额',icon:'none'});return}
+   const amount=Math.round(Number(r.content)*100),reserved=s.refunds.filter((x:any)=>x.kind==='merchant').reduce((n:number,x:any)=>n+Number(x.amountCents),0)
+   const key='refund_'+id+'_'+amount+'_'+reserved
+   this.setData({sandboxRefundBusy:true})
+   try{await sandboxPaymentRequest(cfg,id,true,'sandbox-refund',{amountCents:amount},key)
+    if(current())await this.viewSandboxPayment({currentTarget:{dataset:{id}}})
+   }catch(_){if(current())this.setData({sandboxError:'退款申请未确认，请查询记录后重试；不得当作已退款'})}
+   finally{if(current())this.setData({sandboxRefundBusy:false})}
+  }})
+ },
  loaded:[] as any[],localRows:[] as any[],localFiltered:[] as any[],counts:emptyCounts(),context:'',serial:0,nextCursor:'',localOffset:0,visible:false,
- data:{dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
+ data:{sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
   orderTabs:tabs.map(t=>({...t,count:0})),countsKnown:false,globalTotal:0,globalPending:0,matchingCount:0,
   noteInputs:{} as Record<string,string>,etaInputs:{} as Record<string,string>,cloudMode:false,cloudBusy:false,loadingMore:false,cloudError:'',moreError:'',hasMore:false,refreshRequired:false,canManage:true,
   batchMode:false,selectedIds:[] as string[],selectedMap:{} as Record<string,boolean>,selectedCount:0,allSelected:false,operationBusy:false,operationProgress:'',batchResult:'',batchFailures:[] as Array<{id:string;reason:string}>},
- onShow(){this.visible=true;this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
+ onShow(){this.visible=true;this.setData({sandbox:null,sandboxOrderId:'',sandboxError:'',sandboxRefundBusy:false});this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
  onHide(){this.visible=false;this.serial++;this.setData({cloudBusy:false,loadingMore:false})},
  onUnload(){this.visible=false;this.serial++;this.loaded=[];this.localRows=[];this.localFiltered=[]},
  async onPullDownRefresh(){try{if(!this.data.operationBusy)await this.refresh()}finally{wx.stopPullDownRefresh()}},

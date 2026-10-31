@@ -45,3 +45,14 @@ main已演进为catalog控制器、账号资料/手机号、权限proof和5个Ta
 - 只存公开商品快照的白名单字段，拒绝无效价格/ID/name并过滤签名图片查询串。列表重新确认商品：下架记录可删除，缺货详情仍可查看；网络失败标为旧价格/待确认，不混用DEMO或伪造当前售价。
 - 清空弹窗与异步读取绑定scope+序号+可见性，账号/店铺/标签/重载变化使旧操作失效；失效后清屏，防止旧账号快照残留。单次storage写入保存两类集合，失败如实提示，重启可恢复。
 - 无跨设备同步，不新增后端接口、真实登录或支付要求；未来云同步必须另定服务端权限、保留/删除和迁移契约。
+
+## 2026-10-31 SBX-01
+Partial Sandbox channel foundation implemented; DEVELOPMENT, full lifecycle incomplete. Details, files/variables, commands/evidence, external test steps and remaining implementation: [SANDBOX_PAYMENT_STAGE.md](SANDBOX_PAYMENT_STAGE.md). Backend payment 83/0/0, final frontend 221/0/0; first frontend 170 pass/45 fail preserved and harness fixes documented. Platform WAITING_FOR_OWNER_PREVIEW; no provider/PG runtime, migration or deployment. Baseline main@18f18f7; isolated codex/sandbox-payment-channels branch preserves collaborator state. Next: durable attempt/event ledger, duplicate collection compensation, refunds and receipts.
+
+## 2026-10-31 SBX-02 — durable Sandbox lifecycle
+
+Continues PR #7 on codex/sandbox-payment-channels, baseline cd3097a. Implemented migration 027, single-active durable attempts, signed event audit/provider recovery, full/partial refunds using existing jobs, late/duplicate compensation, immutable receipts and checkout/orders/detail/merchant panels. Current implementation, files, environment/ACL/isolation gates, actual test evidence and owner steps: [SANDBOX_PAYMENT_LIFECYCLE.md](SANDBOX_PAYMENT_LIFECYCLE.md).
+
+Final payment 83 pass/0 fail/0 skip; new WASM PostgreSQL lifecycle 35/0/0; frontend 230/0/0 with three strict TypeScript builds. Additional selected order/Staging regression 140 pass/1 fail/0 skip: P7-39 also fails on read-only cd3097a baseline (62/1/0); original tests and current business policy not weakened. Windows native PGlite directory restart failed; preserved logs, separate persisted-archive fresh-process recovery passed. No Neon/native multi-connection, Stripe Test or WeChat runtime acceptance; WAITING_FOR_OWNER_PREVIEW. DEVELOPMENT retained on evidence, no automatic feature enable/migration/deployment/funds.
+
+Next independent task: owner-reviewed isolated migration/ACL setup and real Neon multi-connection + Stripe Test/channel/WeChat acceptance using the linked steps; resolve existing P7-39 policy/test mismatch before release. Product SHA/remote confirmation appended after commit.

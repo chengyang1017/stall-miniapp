@@ -1,3 +1,5 @@
+> 2026-10-31 SBX-02: this document below preserves prior stages. Durable attempt/event records, recovery, full/partial refunds, compensation, immutable receipts and customer/merchant UI are now implemented behind additional disabled-by-default gates and independent migration 027. Current routes, variables, marker/ACL requirements, tests and remaining external acceptance: [Sandbox lifecycle handoff](../../docs/delivery/frontend/SANDBOX_PAYMENT_LIFECYCLE.md). No remote migration, activation or provider transaction was executed.
+
 # Stripe isolated test HTTP interface
 
 Disabled by default. Do not enable on the main Render service or production database.

@@ -39,7 +39,7 @@ function fixture({cloud=true,local=[]}={}){
   const requests=[],writes=[],calls=[],jobs=[]
   const identity=()=>JSON.stringify([cfg?.apiBase??null,cfg?.storeSlug??null,token])
   const wx=new Proxy({
-    getStorageSync(key){if(key==='stall_order_tab_entry_v1')return undefined;assert.equal(key,'stall_server_session_v1');return token},
+    getStorageSync(key){if(key==='stall_order_tab_entry_v1'||key==='stall_customer_phone_session_v1')return undefined;assert.equal(key,'stall_server_session_v1');return token},
     request(options){
       let settled=false
       requests.push({options,
