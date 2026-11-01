@@ -440,3 +440,15 @@ test('refund requests authenticate only with test secret and use Stripe HTTPS AP
   assert.equal(call.options.signal instanceof AbortSignal,true)
  }
 })
+
+test('merchant refund HTTP success with unreadable JSON requires review',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>({
+  ok:true,json:async()=>{
+   if(url.endsWith('/refunds'))throw new SyntaxError('invalid JSON')
+   return session
+  }
+ })})
+ await assert.rejects(client.refundPayment(job),/stripe_refund_unconfirmed/)
+})
