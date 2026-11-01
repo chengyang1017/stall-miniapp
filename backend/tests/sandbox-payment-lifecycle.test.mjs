@@ -530,3 +530,16 @@ test('provider response with missing refund ID is reviewed without waiting for l
  assert.equal(saved.last_error,'invalid_stripe_refund_id')
  assert.equal(saved.lease_token,null)
 })
+
+test('refund polling database finalization error propagates without fallback update',async()=>{
+ const {reconcileOneSubmittedStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ let writes=0
+ const fake={async query(sql){
+  if(sql.includes('SET lease_token=gen_random_uuid()'))return {rows:[{id:'test-job',lease_token:'lease',refund_id:'re_valid',amount_cents:100,payment_intent_id:'pi_valid'}]}
+  if(sql.includes('SET status=$3,provider_status=$4')){writes++;throw Error('write failed')}
+  if(sql.includes('status=CASE WHEN $3')){writes++;throw Error('unexpected fallback')}
+  throw Error('unexpected query')
+ }}
+ await assert.rejects(reconcileOneSubmittedStripeTestRefund(fake,{getRefundStatus:async()=>({refundId:'re_valid',amountCents:100,paymentIntentId:'pi_valid',status:'succeeded'})}),/refund_persist_failed/)
+ assert.equal(writes,1)
+})
