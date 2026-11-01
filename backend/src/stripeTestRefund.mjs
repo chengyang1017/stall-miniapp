@@ -7,9 +7,15 @@ const orderId=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
  if(!/^sk_test_[A-Za-z0-9]+$/.test(secretKey||''))fail('stripe_test_key_required')
  async function call(path,options={}){
-  const response=await fetchImpl('https://api.stripe.com/v1/'+path,{
-   ...options,signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+secretKey,...options.headers}
-  })
+  let response
+  try{
+   response=await fetchImpl('https://api.stripe.com/v1/'+path,{
+    ...options,signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+secretKey,...options.headers}
+   })
+  }catch(error){
+   if(options.method==='POST'&&['AbortError','TimeoutError'].includes(error?.name))fail('stripe_refund_unconfirmed')
+   throw error
+  }
   if(!response.ok){
    // A 5xx after refund POST may mean Stripe processed the refund before failing.
    if(options.method==='POST'&&response.status>=500)fail('stripe_refund_unconfirmed')

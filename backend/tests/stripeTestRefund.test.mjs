@@ -119,3 +119,14 @@ test('Stripe refund POST server errors require review; preflight GET errors rema
  const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:503})})
  await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
 })
+
+test('refund POST timeout is uncertain while preflight timeout remains retryable',async()=>{
+ const timeout=Object.assign(new Error('timeout'),{name:'TimeoutError'})
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  if(url.endsWith('/refunds'))throw timeout
+  return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{throw timeout}})
+ await assert.rejects(preflight.refundLatePayment(audit),error=>error===timeout)
+})
