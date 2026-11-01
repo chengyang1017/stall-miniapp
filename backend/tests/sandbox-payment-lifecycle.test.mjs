@@ -577,6 +577,19 @@ test('refund synchronization is idempotent and excludes failed refund jobs',asyn
  assert.equal((await readSandboxPayment(pool,attempt.order_id)).receipts.length,1)
 })
 
+test('invalid Stripe refund status payload enters review rather than polling indefinitely',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:173,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='submitted',refund_id='re_invalid_payload',next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id])
+ const result=await reconcileOneSubmittedStripeTestRefund(pool,{getRefundStatus:async()=>{throw Error('stripe_refund_status_invalid')}})
+ assert.equal(result.action,'review')
+ const {rows:[saved]}=await pool.query('SELECT status,last_error,lease_token FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'stripe_refund_status_invalid')
+ assert.equal(saved.lease_token,null)
+})
+
 // Must run last: it closes the shared PGlite instance to verify cold restart.
 test('fresh process restores persisted PostgreSQL snapshot and durable request key',async()=>{
  const o=await order(),a=await reserve(o)

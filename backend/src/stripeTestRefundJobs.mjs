@@ -108,7 +108,7 @@ export async function reconcileOneSubmittedStripeTestRefund(db,client){
   return await finalizeSubmittedRefund(db,job,result,state)
  }catch(error){
   if(error?.message==='refund_persist_failed')throw error
-  const mismatch=['refund_status_mismatch','refund_status_unknown'].includes(error?.message)
+  const mismatch=['refund_status_mismatch','refund_status_unknown','stripe_refund_status_invalid'].includes(error?.message)
   const updated=await db.query(`
  UPDATE stripe_test_refund_jobs SET status=CASE WHEN $3 THEN 'review' ELSE 'submitted' END,
  lease_token=NULL,lease_expires_at=NULL,
