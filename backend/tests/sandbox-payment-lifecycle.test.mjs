@@ -517,3 +517,16 @@ test('contradictory provider refund result is quarantined immediately without re
  assert.equal(saved.last_error,'refund_provider_result_inconsistent')
  assert.equal(saved.lease_token,null)
 })
+
+test('provider response with missing refund ID is reviewed without waiting for lease expiry',async()=>{
+ const attempt=await opened(await order(),'card')
+ await pay(attempt)
+ const job=await requestSandboxRefund(pool,{orderId:attempt.order_id,subject:'synthetic-owner',amountCents:157,requestKey:randomUUID()})
+ const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ const result=await processOneStripeTestRefund(pool,{refundPayment:async()=>({completed:true,status:'succeeded'})})
+ assert.equal(result.action,'review')
+ const {rows:[saved]}=await pool.query('SELECT status,last_error,lease_token FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'invalid_stripe_refund_id')
+ assert.equal(saved.lease_token,null)
+})
