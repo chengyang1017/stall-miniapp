@@ -72,3 +72,16 @@ test('refund lookup failure keeps submitted status for retry',async()=>{
  const out=await reconcileOneSubmittedStripeTestRefund(m.db,{getRefundStatus:async()=>{throw Error('network')}})
  assert.equal(out.lookupFailed,true);assert.equal(out.action,'submitted')
 })
+
+test('refund finalization rejects invalid amount and conflicting completion without writing',async()=>{
+ for(const result of [
+  {refundId:'re_abc',amountCents:1598,status:'succeeded',completed:true},
+  {refundId:'re_abc',amountCents:'1599',status:'succeeded',completed:true},
+  {refundId:'re_abc',amountCents:1599,status:'failed',completed:true},
+  {refundId:'re_abc',amountCents:1599,status:'succeeded',completed:false}
+ ]){
+  const m=fake([])
+  await assert.rejects(finishStripeTestRefund(m.db,job,result),/refund_amount_mismatch|refund_provider_result_inconsistent/)
+  assert.equal(m.calls.length,0)
+ }
+})
