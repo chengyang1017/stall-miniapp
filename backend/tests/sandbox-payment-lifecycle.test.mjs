@@ -680,6 +680,19 @@ test('string refund amount cannot pass provider response integrity checks',async
  assert.equal(saved.last_error,'refund_amount_mismatch')
 })
 
+test('refund finalizer independently rejects missing or mismatched amounts without writing',async()=>{
+ const {finishStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ let writes=0
+ const db={async query(){writes++;throw Error('unexpected write')}}
+ const job={id:randomUUID(),lease_token:randomUUID(),amount_cents:199}
+ for(const amountCents of [undefined,'199',198,200,NaN]){
+  await assert.rejects(finishStripeTestRefund(db,job,{
+   refundId:'re_finalizer_guard',status:'succeeded',completed:true,amountCents
+  }),/refund_amount_mismatch/)
+ }
+ assert.equal(writes,0)
+})
+
 // Must run last: it closes the shared PGlite instance to verify cold restart.
 test('fresh process restores persisted PostgreSQL snapshot and durable request key',async()=>{
  const o=await order(),a=await reserve(o)

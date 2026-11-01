@@ -33,6 +33,7 @@ export async function finishStripeTestRefund(db,job,result){
    result.completed!==(result.status==='succeeded'))fail('refund_provider_result_inconsistent')
  const status=result.status==='succeeded'?'succeeded':['failed','canceled'].includes(result.status)?'review':'submitted'
  if(!/^re_[a-zA-Z0-9_]+$/.test(result?.refundId||''))fail('invalid_stripe_refund_id')
+ if(!Number.isSafeInteger(result?.amountCents)||result.amountCents!==Number(job.amount_cents))fail('refund_amount_mismatch')
  const row=await db.query(`UPDATE stripe_test_refund_jobs SET status=$3,refund_id=$4,
   payment_intent_id=COALESCE($5,payment_intent_id),provider_status=COALESCE($6,provider_status),
   lease_token=NULL,lease_expires_at=NULL,
