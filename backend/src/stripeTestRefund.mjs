@@ -45,7 +45,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
     'metadata[orderId]':job.order_id,'metadata[refundJobId]':job.id})
    const refund=await call('refunds',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded',
     'Idempotency-Key':'sandbox-refund:'+job.id},body:body.toString()})
-   if(!refund||typeof refund!=='object'||!refundId.test(refund.id||'')||refund.payment_intent!==session.payment_intent||refund.amount!==Number(job.amount_cents)||
+   if(!refund||typeof refund!=='object'||Array.isArray(refund)||!refundId.test(refund.id||'')||refund.payment_intent!==session.payment_intent||refund.amount!==Number(job.amount_cents)||
     !['pending','requires_action','succeeded','failed','canceled'].includes(refund.status)||refund.currency!=='cny'||refund.livemode!==false)fail('stripe_refund_unconfirmed')
    return {refundId:refund.id,status:refund.status,paymentIntentId:session.payment_intent,amountCents:refund.amount,completed:refund.status==='succeeded'}
   },
@@ -80,7 +80,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
     'Content-Type':'application/x-www-form-urlencoded',
     'Idempotency-Key':'late-refund:'+session.id
    },body:body.toString()})
-   if(!refund||typeof refund!=='object'||!refundId.test(refund.id||'')||refund.payment_intent!==session.payment_intent||
+   if(!refund||typeof refund!=='object'||Array.isArray(refund)||!refundId.test(refund.id||'')||refund.payment_intent!==session.payment_intent||
       refund.amount!==Number(audit.amount_cents)||refund.status==='failed'||
       !['pending','requires_action','succeeded'].includes(refund.status)||refund.currency!=='cny'||refund.livemode!==false)
      fail('stripe_refund_unconfirmed')

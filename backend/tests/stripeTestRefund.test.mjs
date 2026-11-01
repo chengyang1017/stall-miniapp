@@ -491,3 +491,13 @@ test('refund status rejects array payloads that masquerade as Stripe objects',as
  })})
  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
 })
+
+test('refund creation rejects array-shaped provider payloads',async()=>{
+ const spoofed=[{...refund}]
+ Object.assign(spoofed,refund)
+ const {client}=setup({refund:spoofed})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:1599,payment_amount_cents:1599}
+ await assert.rejects(client.refundPayment(job),/stripe_refund_unconfirmed/)
+})
