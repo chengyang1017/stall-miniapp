@@ -29,9 +29,10 @@ export async function finishStripeTestRefund(db,job,result){
  const status=result?.completed===true?'succeeded':'submitted'
  if(!/^re_[a-zA-Z0-9_]+$/.test(result?.refundId||''))fail('invalid_stripe_refund_id')
  const row=await db.query(`UPDATE stripe_test_refund_jobs SET status=$3,refund_id=$4,
+  payment_intent_id=COALESCE($5,payment_intent_id),provider_status=COALESCE($6,provider_status),
   lease_token=NULL,lease_expires_at=NULL,last_error=NULL,updated_at=clock_timestamp()
  WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,
- [job.id,job.lease_token,status,result.refundId])
+ [job.id,job.lease_token,status,result.refundId,result.paymentIntentId||null,result.status||null])
  if(row.rowCount!==1)fail('refund_lease_lost')
  return status
 }
@@ -59,8 +60,6 @@ export async function processOneStripeTestRefund(db,client){
   }
   const result=job.kind==='merchant'?await client.refundPayment(job):await client.refundLatePayment(audit)
   const status=await finishStripeTestRefund(db,job,result)
-  if(job.kind)await db.query(`UPDATE stripe_test_refund_jobs SET payment_intent_id=$2,provider_status=$3 WHERE id=$1 AND refund_id=$4`,
-   [job.id,result.paymentIntentId||null,result.status||null,result.refundId])
   return {action:status,jobId:job.id}
  }catch(e){
   // Errors from the Stripe API are recorded, rather than assumed refunded.

@@ -382,3 +382,19 @@ test('exhausted pending refund is marked review instead of remaining pending for
  assert.equal(record.status,'review')
  assert.equal(record.last_error,'retry_lease_exhausted')
 })
+
+test('completed refund persists provider details atomically with final state',async()=>{
+ const attempt=await opened(await order(),'card')
+ await pay(attempt)
+ const job=await requestSandboxRefund(pool,{orderId:attempt.order_id,subject:'synthetic-owner',amountCents:100,requestKey:randomUUID()})
+ const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ const processed=await processOneStripeTestRefund(pool,{refundPayment:async()=>({
+  completed:true,refundId:'re_atomic_test',paymentIntentId:'pi_atomic_test',status:'succeeded'
+ })})
+ assert.equal(processed.action,'succeeded')
+ const {rows:[saved]}=await pool.query('SELECT status,refund_id,payment_intent_id,provider_status FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'succeeded')
+ assert.equal(saved.refund_id,'re_atomic_test')
+ assert.equal(saved.payment_intent_id,'pi_atomic_test')
+ assert.equal(saved.provider_status,'succeeded')
+})
