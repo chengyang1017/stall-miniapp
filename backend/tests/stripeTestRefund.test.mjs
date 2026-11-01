@@ -169,3 +169,36 @@ test('empty Checkout Session data is rejected before any refund POST',async()=>{
   assert.equal(calls,1)
  }
 })
+
+test('merchant partial refund uses durable job idempotency key and exact amount',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ const calls=[]
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async(url,options)=>{
+  calls.push({url,options})
+  return {ok:true,json:async()=>url.endsWith('/refunds')?
+   {...refund,amount:250}:session}
+ }})
+ const result=await client.refundPayment(job)
+ assert.equal(result.refundId,refund.id)
+ assert.equal(result.amountCents,250)
+ assert.equal(calls.length,2)
+ assert.equal(calls[1].options.headers['Idempotency-Key'],'sandbox-refund:'+job.id)
+ const params=new URLSearchParams(calls[1].options.body)
+ assert.equal(params.get('payment_intent'),session.payment_intent)
+ assert.equal(params.get('amount'),'250')
+ assert.equal(params.get('metadata[orderId]'),job.order_id)
+ assert.equal(params.get('metadata[refundJobId]'),job.id)
+})
+test('merchant refund rejects mismatched paid session before making refund POST',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ for(const override of [{currency:'usd'},{amount_total:'1599'},{livemode:true},{client_reference_id:'wrong'}]){
+  const calls=[]
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+   calls.push(url);return {ok:true,json:async()=>({...session,...override})}
+  }})
+  await assert.rejects(client.refundPayment(job),/stripe_refund_session_mismatch/)
+  assert.equal(calls.length,1)
+ }
+})
