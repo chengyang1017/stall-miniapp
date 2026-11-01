@@ -264,3 +264,13 @@ test('refund status lookup rejects null or undefined JSON payload',async()=>{
   await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
  }
 })
+
+test('refund status lookup rejects malformed provider state and payment intent',async()=>{
+ for(const changes of [{status:undefined},{status:'unexpected'},{payment_intent:undefined},
+  {payment_intent:'invalid'},{amount:0},{currency:undefined},{livemode:undefined}]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+   ok:true,json:async()=>({...refund,...changes})
+  })})
+  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+ }
+})
