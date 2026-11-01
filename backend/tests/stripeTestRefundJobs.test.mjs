@@ -85,3 +85,14 @@ test('refund finalization rejects invalid amount and conflicting completion with
   assert.equal(m.calls.length,0)
  }
 })
+
+test('polling rejects string refund amount as an integrity mismatch',async()=>{
+ const m=fake([{rows:[{id:'job-1',lease_token:'lease',refund_id:'re_abc',amount_cents:'1599'}]},{rowCount:1,rows:[{id:'job-1'}]}])
+ const out=await reconcileOneSubmittedStripeTestRefund(m.db,{getRefundStatus:async()=>({
+  refundId:'re_abc',status:'succeeded',amountCents:'1599'
+ })})
+ assert.equal(out.action,'review')
+ assert.equal(out.lookupFailed,false)
+ assert.equal(m.calls[1].args[2],true)
+ assert.equal(m.calls[1].args[3],'refund_status_mismatch')
+})
