@@ -122,7 +122,7 @@ test('actual Stripe refund adapter sends partial amount with stable per-job idem
  const client=createStripeTestRefundClient({secretKey:env.STRIPE_TEST_SECRET_KEY,fetchImpl:async(url,options)=>{
   if(url.includes('/checkout/sessions/'))return {ok:true,json:async()=>({...session(a),payment_intent:'pi_synthetic'})}
   headers=options.headers;body=new URLSearchParams(options.body)
-  return {ok:true,json:async()=>({id:'re_partial',payment_intent:'pi_synthetic',amount:250,currency:'cny',status:'succeeded'})}
+  return {ok:true,json:async()=>({id:'re_partial',payment_intent:'pi_synthetic',amount:250,currency:'cny',livemode:false,status:'succeeded'})}
  }})
  const result=await client.refundPayment(job)
  assert.equal(result.completed,true);assert.equal(body.get('amount'),'250');assert.equal(headers['Idempotency-Key'],'sandbox-refund:'+job.id)

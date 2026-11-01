@@ -28,7 +28,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
    const refund=await call('refunds',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded',
     'Idempotency-Key':'sandbox-refund:'+job.id},body:body.toString()})
    if(!refundId.test(refund.id||'')||refund.payment_intent!==session.payment_intent||refund.amount!==Number(job.amount_cents)||
-    !['pending','requires_action','succeeded','failed','canceled'].includes(refund.status)||refund.currency!=='cny')fail('stripe_refund_unconfirmed')
+    !['pending','requires_action','succeeded','failed','canceled'].includes(refund.status)||refund.currency!=='cny'||refund.livemode!==false)fail('stripe_refund_unconfirmed')
    return {refundId:refund.id,status:refund.status,paymentIntentId:session.payment_intent,amountCents:refund.amount,completed:refund.status==='succeeded'}
   },
   async getRefundStatus(refundId){
@@ -59,7 +59,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
    },body:body.toString()})
    if(!refundId.test(refund.id||'')||refund.payment_intent!==session.payment_intent||
       refund.amount!==Number(audit.amount_cents)||refund.status==='failed'||
-      !['pending','requires_action','succeeded'].includes(refund.status))
+      !['pending','requires_action','succeeded'].includes(refund.status)||refund.currency!=='cny'||refund.livemode!==false)
      fail('stripe_refund_unconfirmed')
    return Object.freeze({refundId:refund.id,status:refund.status,sessionId:session.id,
     amountCents:refund.amount,completed:refund.status==='succeeded'})

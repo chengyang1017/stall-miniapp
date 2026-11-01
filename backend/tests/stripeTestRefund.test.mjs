@@ -83,3 +83,11 @@ test('status lookup rejects live-mode or wrong-currency refunds',async()=>{
   await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
  }
 })
+
+test('late refund creation rejects live-mode or wrong-currency Stripe response',async()=>{
+ for(const change of [{livemode:true},{livemode:undefined},{currency:'usd'},{currency:undefined}]){
+  const {client,calls}=setup({refund:{...refund,...change}})
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+  assert.equal(calls.length,2)
+ }
+})
