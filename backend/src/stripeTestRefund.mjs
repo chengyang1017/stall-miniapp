@@ -30,7 +30,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
  return Object.freeze({
   async refundPayment(job){
    if(!orderId.test(job?.order_id||'')||!sessionId.test(job?.checkout_session_id||'')||
-    !Number.isSafeInteger(Number(job.amount_cents))||Number(job.amount_cents)<=0||
+    !Number.isSafeInteger(Number(job.amount_cents))||!['number','string'].includes(typeof job.amount_cents)||String(job.amount_cents).trim()===''||Number(job.amount_cents)<=0||
     !Number.isSafeInteger(Number(job.payment_amount_cents))||Number(job.amount_cents)>Number(job.payment_amount_cents)||
     !orderId.test(job.id||''))fail('invalid_refund_request')
    const session=await call('checkout/sessions/'+encodeURIComponent(job.checkout_session_id))
