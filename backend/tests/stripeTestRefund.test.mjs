@@ -157,3 +157,15 @@ test('late-payment refund rejects numeric-string or fractional Checkout Session 
   assert.equal(calls.length,1)
  }
 })
+
+test('empty Checkout Session data is rejected before any refund POST',async()=>{
+ for(const value of [null,undefined]){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++
+   return {ok:true,json:async()=>value}
+  }})
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_session_mismatch/)
+  assert.equal(calls,1)
+ }
+})
