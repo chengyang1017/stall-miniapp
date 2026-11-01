@@ -101,20 +101,22 @@ export async function reconcileOneSubmittedStripeTestRefund(db,client){
   const result=await client.getRefundStatus(job.refund_id)
   if(result.refundId!==job.refund_id||result.amountCents!==Number(job.amount_cents)||job.payment_intent_id&&result.paymentIntentId!==job.payment_intent_id)
    throw fail('refund_status_mismatch')
+  if(!['succeeded','pending','requires_action','failed','canceled'].includes(result.status))
+   throw fail('refund_status_unknown')
   const state=result.status==='succeeded'?'succeeded':
     ['failed','canceled'].includes(result.status)?'review':'submitted'
   return await finalizeSubmittedRefund(db,job,result,state)
  }catch(error){
   if(error?.message==='refund_persist_failed')throw error
-  const mismatch=error?.message==='refund_status_mismatch'
+  const mismatch=['refund_status_mismatch','refund_status_unknown'].includes(error?.message)
   const updated=await db.query(`
  UPDATE stripe_test_refund_jobs SET status=CASE WHEN $3 THEN 'review' ELSE 'submitted' END,
  lease_token=NULL,lease_expires_at=NULL,
  next_attempt_at=clock_timestamp()+interval '5 minutes',
- last_error=CASE WHEN $3 THEN 'refund_status_mismatch' ELSE 'refund_status_unavailable' END,
+ last_error=CASE WHEN $3 THEN $4 ELSE 'refund_status_unavailable' END,
  updated_at=clock_timestamp()
  WHERE id=$1 AND lease_token=$2 AND status='submitted' RETURNING id`,
- [job.id,job.lease_token,mismatch])
+ [job.id,job.lease_token,mismatch,error?.message||null])
   if(updated.rowCount!==1)fail('refund_lease_lost')
   return {action:mismatch?'review':'submitted',jobId:job.id,lookupFailed:!mismatch}
  }

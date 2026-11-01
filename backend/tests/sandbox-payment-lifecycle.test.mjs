@@ -543,3 +543,17 @@ test('refund polling database finalization error propagates without fallback upd
  await assert.rejects(reconcileOneSubmittedStripeTestRefund(fake,{getRefundStatus:async()=>({refundId:'re_valid',amountCents:100,paymentIntentId:'pi_valid',status:'succeeded'})}),/refund_persist_failed/)
  assert.equal(writes,1)
 })
+
+test('unknown Stripe refund polling status is quarantined instead of endlessly submitted',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:163,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='submitted',refund_id='re_unknown_status',next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id])
+ const result=await reconcileOneSubmittedStripeTestRefund(pool,{getRefundStatus:async()=>({
+  refundId:'re_unknown_status',amountCents:163,paymentIntentId:'pi_unknown',status:'unexpected_state'
+ })})
+ assert.equal(result.action,'review')
+ const {rows:[saved]}=await pool.query('SELECT status,last_error FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'refund_status_unknown')
+})
