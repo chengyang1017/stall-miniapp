@@ -472,3 +472,13 @@ test('refund status lookup rejects malformed successful JSON safely',async()=>{
  })})
  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
 })
+
+test('refund POST HTTP 409 idempotency conflict is reviewed, unlike preflight GET',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  if(url.endsWith('/refunds'))return {ok:false,status:409}
+  return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:409})})
+ await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
+})
