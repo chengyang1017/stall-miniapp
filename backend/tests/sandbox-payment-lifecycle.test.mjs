@@ -398,3 +398,19 @@ test('completed refund persists provider details atomically with final state',as
  assert.equal(saved.payment_intent_id,'pi_atomic_test')
  assert.equal(saved.provider_status,'succeeded')
 })
+
+test('provider-declared failed refund is reviewed immediately, not submitted',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:125,requestKey:randomUUID()})
+ const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ const processed=await processOneStripeTestRefund(pool,{refundPayment:async()=>({
+  completed:false,refundId:'re_failed_test',paymentIntentId:'pi_failed_test',status:'failed'
+ })})
+ assert.equal(processed.action,'review')
+ const {rows:[saved]}=await pool.query('SELECT status,refund_id,provider_status,last_error FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.refund_id,'re_failed_test')
+ assert.equal(saved.provider_status,'failed')
+ assert.equal(saved.last_error,'stripe_refund_failed')
+})

@@ -26,11 +26,12 @@ export async function claimStripeTestRefund(db){
 }
 export async function finishStripeTestRefund(db,job,result){
  if(!job?.id||!job?.lease_token)fail('refund_lease_required')
- const status=result?.completed===true?'succeeded':'submitted'
+ const status=result?.completed===true?'succeeded':['failed','canceled'].includes(result?.status)?'review':'submitted'
  if(!/^re_[a-zA-Z0-9_]+$/.test(result?.refundId||''))fail('invalid_stripe_refund_id')
  const row=await db.query(`UPDATE stripe_test_refund_jobs SET status=$3,refund_id=$4,
   payment_intent_id=COALESCE($5,payment_intent_id),provider_status=COALESCE($6,provider_status),
-  lease_token=NULL,lease_expires_at=NULL,last_error=NULL,updated_at=clock_timestamp()
+  lease_token=NULL,lease_expires_at=NULL,
+  last_error=CASE WHEN $3='review' THEN 'stripe_refund_failed' ELSE NULL END,updated_at=clock_timestamp()
  WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,
  [job.id,job.lease_token,status,result.refundId,result.paymentIntentId||null,result.status||null])
  if(row.rowCount!==1)fail('refund_lease_lost')
