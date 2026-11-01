@@ -462,3 +462,16 @@ test('database finalization failure after Stripe response never requeues refund'
  assert.equal(providerCalls,1)
  assert.equal(requeues,0)
 })
+
+test('expired processing refund lease requires review instead of issuing a second refund',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:137,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='processing',attempt_count=1,lease_token=gen_random_uuid(),lease_expires_at=now()-interval '1 minute' WHERE id=$1",[job.id])
+ const {claimStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ await claimStripeTestRefund(pool)
+ const {rows:[saved]}=await pool.query('SELECT status,last_error,lease_token FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'refund_outcome_unknown')
+ assert.equal(saved.lease_token,null)
+})

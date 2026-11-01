@@ -11,15 +11,15 @@ export async function enqueueStripeTestRefunds(db){
 export async function claimStripeTestRefund(db){
  const result=await db.query(`
  WITH exhausted AS (UPDATE stripe_test_refund_jobs SET status='review',lease_token=NULL,lease_expires_at=NULL,
- last_error='retry_lease_exhausted',updated_at=clock_timestamp()
- WHERE attempt_count>=5 AND ((status='processing' AND lease_expires_at<clock_timestamp()) OR status='pending') RETURNING id)
+ last_error=CASE WHEN status='processing' THEN 'refund_outcome_unknown' ELSE 'retry_lease_exhausted' END,
+ updated_at=clock_timestamp()
+ WHERE (status='processing' AND lease_expires_at<clock_timestamp())
+    OR (status='pending' AND attempt_count>=5) RETURNING id)
  UPDATE stripe_test_refund_jobs j SET status='processing',lease_token=gen_random_uuid(),
  lease_expires_at=clock_timestamp()+interval '2 minutes',attempt_count=attempt_count+1,
  updated_at=clock_timestamp()
  WHERE j.id=(SELECT id FROM stripe_test_refund_jobs WHERE
-   (status='pending' AND next_attempt_at<=clock_timestamp() OR
-    status='processing' AND lease_expires_at<clock_timestamp())
-   AND attempt_count<5
+   status='pending' AND next_attempt_at<=clock_timestamp() AND attempt_count<5
    ORDER BY next_attempt_at,id FOR UPDATE SKIP LOCKED LIMIT 1)
  RETURNING id,order_id,checkout_session_id,amount_cents,lease_token,attempt_count,kind,payment_amount_cents,created_at`)
  return result.rows[0]||null
