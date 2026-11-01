@@ -283,3 +283,12 @@ test('missing HTTP response after refund POST is reviewed, while GET fails safel
  const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>null})
  await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
 })
+
+test('refund POST with malformed HTTP failure status is treated as uncertain',async()=>{
+ for(const status of [undefined,null,'500',0,200]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>
+   url.endsWith('/refunds')?{ok:false,status}:{ok:true,json:async()=>session}
+  })
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ }
+})
