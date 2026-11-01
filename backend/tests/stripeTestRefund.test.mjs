@@ -347,3 +347,21 @@ test('pending late-payment compensation remains incomplete',async()=>{
  assert.equal(out.status,'pending')
  assert.equal(out.completed,false)
 })
+
+test('failed or canceled merchant refunds are never marked complete',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ for(const status of ['failed','canceled','requires_action']){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>({
+   ok:true,json:async()=>url.endsWith('/refunds')?
+    {...refund,amount:250,status}:session
+  })})
+  const out=await client.refundPayment(job)
+  assert.equal(out.status,status)
+  assert.equal(out.completed,false)
+ }
+})
+test('failed late-payment compensation is not acknowledged as a successful refund',async()=>{
+ const {client}=setup({refund:{...refund,status:'failed'}})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+})
