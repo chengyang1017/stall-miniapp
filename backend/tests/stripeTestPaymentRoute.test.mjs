@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {stripeTestPaymentRoute,sandboxCancellationPending} from '../src/stripeTestPaymentRoute.mjs'
+import {stripeTestPaymentRoute,sandboxCancellationPending,sandboxCancellationConflict} from '../src/stripeTestPaymentRoute.mjs'
 const url=new URL('http://localhost/v1/stores/demo/orders/11111111-1111-4111-8111-111111111111/stripe-test-checkout')
 const callback=new URL('http://localhost/v1/payments/stripe-test/webhook')
 const res=()=>({status:null,body:null,writeHead(s){this.status=s},end(s){this.body=JSON.parse(s)}})
@@ -119,4 +119,13 @@ test('asynchronous checkout cannot be treated as canceled while unpaid',()=>{
  assert.equal(sandboxCancellationPending({session:{status:'complete',payment_status:'paid'},event:{status:'succeeded'}}),false)
  assert.equal(sandboxCancellationPending({session:{status:'expired',payment_status:'unpaid'},event:null}),false)
  assert.equal(sandboxCancellationPending({session:{status:'open',payment_status:'unpaid'},event:null}),false)
+})
+
+test('cancellation distinguishes already collected, pending, and expired Stripe sessions',()=>{
+ const paid={session:{status:'complete',payment_status:'paid'},event:{status:'succeeded'}}
+ const pending={session:{status:'complete',payment_status:'unpaid'},event:null}
+ const expired={session:{status:'expired',payment_status:'unpaid'},event:null}
+ assert.equal(sandboxCancellationConflict(paid),'payment_already_collected')
+ assert.equal(sandboxCancellationConflict(pending),'payment_cancellation_pending')
+ assert.equal(sandboxCancellationConflict(expired),null)
 })
