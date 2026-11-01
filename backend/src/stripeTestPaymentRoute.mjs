@@ -73,7 +73,8 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
    if(!store||!['owner','manager'].includes(store.role)){reply(res,403,{error:'forbidden'});return true}
    if(env.STRIPE_TEST_REFUNDS_ENABLED!=='true'){reply(res,503,{error:'sandbox_refunds_disabled'});return true}
    const body=await json(req)
-   if(!body||Array.isArray(body)||typeof body!=='object'||Object.keys(body).some(k=>k!=='amountCents'))throw Error('invalid_refund_request')
+   if(!body||Array.isArray(body)||typeof body!=='object'||Object.keys(body).some(k=>k!=='amountCents')||
+    !Number.isSafeInteger(body.amountCents)||body.amountCents<=0||!key.test(req.headers['idempotency-key']||''))throw Error('invalid_refund_request')
    const job=await requestSandboxRefund(pool,{orderId,subject,amountCents:body.amountCents,requestKey:req.headers['idempotency-key']})
    reply(res,202,{sandbox:true,refund:{id:job.id,status:job.status,amountCents:Number(job.amount_cents)}});return true
   }

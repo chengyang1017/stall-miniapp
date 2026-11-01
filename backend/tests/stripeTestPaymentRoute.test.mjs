@@ -236,3 +236,23 @@ test('cancel rejects older settled collection even when latest attempt is termin
  assert.equal(response.status,409)
  assert.equal(response.body.error,'payment_already_collected')
 })
+
+test('malformed refund amount or idempotency key returns 400 before touching the refund ledger',async()=>{
+ const merchantUrl=new URL(url.href.replace('/v1/stores/','/v1/merchant/stores/').replace('/stripe-test-checkout','/sandbox-refund'))
+ for(const amountCents of [undefined,0,-1,1.5,'100',null,Number.MAX_SAFE_INTEGER+1]){
+  const response=res()
+  await stripeTestPaymentRoute(requestJson({amountCents}),response,merchantUrl,mockPool,{...isolatedEnv,STRIPE_TEST_REFUNDS_ENABLED:'true'},{
+   authenticate:async()=> 'test-manager',permittedStore:async()=>({role:'manager'}),client:{}
+  })
+  assert.equal(response.status,400,String(amountCents))
+  assert.equal(response.body.error,'invalid_refund_request')
+ }
+ const response=res()
+ const noKey=requestJson({amountCents:100})
+ noKey.headers['idempotency-key']='short'
+ await stripeTestPaymentRoute(noKey,response,merchantUrl,mockPool,{...isolatedEnv,STRIPE_TEST_REFUNDS_ENABLED:'true'},{
+  authenticate:async()=> 'test-manager',permittedStore:async()=>({role:'manager'}),client:{}
+ })
+ assert.equal(response.status,400)
+ assert.equal(response.body.error,'invalid_refund_request')
+})
