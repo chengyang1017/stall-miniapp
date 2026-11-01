@@ -51,7 +51,12 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
   },
   async getRefundStatus(refundId){
    if(typeof refundId!=='string'||!/^re_[A-Za-z0-9_]+$/.test(refundId))fail('invalid_stripe_refund_id')
-   const refund=await call('refunds/'+encodeURIComponent(refundId))
+   let refund
+   try{refund=await call('refunds/'+encodeURIComponent(refundId))}
+   catch(error){
+    if(error instanceof SyntaxError)fail('stripe_refund_status_invalid')
+    throw error
+   }
    if(!refund||typeof refund!=='object'||refund.id!==refundId||!['succeeded','pending','requires_action','failed','canceled'].includes(refund.status)||!intentId.test(refund.payment_intent||'')||!Number.isSafeInteger(refund.amount)||refund.amount<=0||refund.livemode!==false||refund.currency!=='cny')
     fail('stripe_refund_status_invalid')
    return Object.freeze({refundId,status:refund.status,paymentIntentId:refund.payment_intent,

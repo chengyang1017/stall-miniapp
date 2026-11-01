@@ -465,3 +465,10 @@ test('merchant refund POST transport failure is uncertain but preflight failures
  const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{throw reset}})
  await assert.rejects(preflight.refundPayment(job),error=>error===reset)
 })
+
+test('refund status lookup rejects malformed successful JSON safely',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+  ok:true,json:async()=>{throw new SyntaxError('bad JSON')}
+ })})
+ await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+})
