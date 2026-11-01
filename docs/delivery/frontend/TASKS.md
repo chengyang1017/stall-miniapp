@@ -280,3 +280,13 @@ P2：非首版必要的增强功能。
 将这套职责分工写入前端 AGENTS.md 和永久进度文档，以后所有 Codex 会话都必须遵守。
 
 现在按原任务书继续执行，先处理尚未 Push 的 4278c40、调查 8 项旧测试失败，并继续推进能够独立完成的开发工作。
+## 2026-10-31 SBX-01
+Partial Sandbox channel foundation implemented; DEVELOPMENT, full lifecycle incomplete. Details, files/variables, commands/evidence, external test steps and remaining implementation: [SANDBOX_PAYMENT_STAGE.md](SANDBOX_PAYMENT_STAGE.md). Backend payment 83/0/0, final frontend 221/0/0; first frontend 170 pass/45 fail preserved and harness fixes documented. Platform WAITING_FOR_OWNER_PREVIEW; no provider/PG runtime, migration or deployment. Baseline main@18f18f7; isolated codex/sandbox-payment-channels branch preserves collaborator state. Next: durable attempt/event ledger, duplicate collection compensation, refunds and receipts.
+
+## 2026-10-31 SBX-02 — durable Sandbox lifecycle
+
+Continues PR #7 on codex/sandbox-payment-channels, baseline cd3097a. Implemented migration 027, single-active durable attempts, signed event audit/provider recovery, full/partial refunds using existing jobs, late/duplicate compensation, immutable receipts and checkout/orders/detail/merchant panels. Current implementation, files, environment/ACL/isolation gates, actual test evidence and owner steps: [SANDBOX_PAYMENT_LIFECYCLE.md](SANDBOX_PAYMENT_LIFECYCLE.md).
+
+Final payment 83 pass/0 fail/0 skip; new WASM PostgreSQL lifecycle 35/0/0; frontend 230/0/0 with three strict TypeScript builds. Additional selected order/Staging regression 140 pass/1 fail/0 skip: P7-39 also fails on read-only cd3097a baseline (62/1/0); original tests and current business policy not weakened. Windows native PGlite directory restart failed; preserved logs, separate persisted-archive fresh-process recovery passed. No Neon/native multi-connection, Stripe Test or WeChat runtime acceptance; WAITING_FOR_OWNER_PREVIEW. DEVELOPMENT retained on evidence, no automatic feature enable/migration/deployment/funds.
+
+Next independent task: owner-reviewed isolated migration/ACL setup and real Neon multi-connection + Stripe Test/channel/WeChat acceptance using the linked steps; resolve existing P7-39 policy/test mismatch before release. Product SHA/remote confirmation appended after commit.

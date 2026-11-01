@@ -105,3 +105,18 @@ FE-02提交已确认：172aa7d254432f97de924ebcf8032361fc29cb22，已push并核�
 7. 页面明确注明只存当前设备、不跨设备同步；清小程序存储会丢失。收藏最多200件，到限额给出移除提示。Merchant构建不含收藏页面/代码。
 
 请负责人回传SHA、目标、工具/基础库/机型系统、具体步骤和脱敏截图/报错；不要提供令牌/密码/AppSecret。功能离线完成不等于整店交付，仍DEVELOPMENT。
+
+## 2026-10-31 SBX-01
+Partial Sandbox channel foundation implemented; DEVELOPMENT, full lifecycle incomplete. Details, files/variables, commands/evidence, external test steps and remaining implementation: [SANDBOX_PAYMENT_STAGE.md](SANDBOX_PAYMENT_STAGE.md). Backend payment 83/0/0, final frontend 221/0/0; first frontend 170 pass/45 fail preserved and harness fixes documented. Platform WAITING_FOR_OWNER_PREVIEW; no provider/PG runtime, migration or deployment. Baseline main@18f18f7; isolated codex/sandbox-payment-channels branch preserves collaborator state. Next: durable attempt/event ledger, duplicate collection compensation, refunds and receipts.
+
+## 2026-10-31 SBX-02 — durable Sandbox lifecycle
+
+Continues PR #7 on codex/sandbox-payment-channels, baseline cd3097a. Implemented migration 027, single-active durable attempts, signed event audit/provider recovery, full/partial refunds using existing jobs, late/duplicate compensation, immutable receipts and checkout/orders/detail/merchant panels. Current implementation, files, environment/ACL/isolation gates, actual test evidence and owner steps: [SANDBOX_PAYMENT_LIFECYCLE.md](SANDBOX_PAYMENT_LIFECYCLE.md).
+
+Final payment 83 pass/0 fail/0 skip; new WASM PostgreSQL lifecycle 35/0/0; frontend 230/0/0 with three strict TypeScript builds. Additional selected order/Staging regression 140 pass/1 fail/0 skip: P7-39 also fails on read-only cd3097a baseline (62/1/0); original tests and current business policy not weakened. Windows native PGlite directory restart failed; preserved logs, separate persisted-archive fresh-process recovery passed. No Neon/native multi-connection, Stripe Test or WeChat runtime acceptance; WAITING_FOR_OWNER_PREVIEW. DEVELOPMENT retained on evidence, no automatic feature enable/migration/deployment/funds.
+
+Next independent task: owner-reviewed isolated migration/ACL setup and real Neon multi-connection + Stripe Test/channel/WeChat acceptance using the linked steps; resolve existing P7-39 policy/test mismatch before release. Product SHA/remote confirmation appended after commit.
+
+## SBX-02 tested product commit
+
+Tested implementation commit: `ef89649b7b79332b1c0c202857d12fb8911b0b85`. Final evidence: payment 83/0/0, lifecycle 35/0/0, frontend 230/0/0 and three TypeScript targets; additional regression 140/1/0 with the same P7-39 baseline failure. PR [#7](https://github.com/chengyang1017/stall-miniapp/pull/7), existing branch codex/sandbox-payment-channels. The following documentation-only commit records this SHA and does not change tested code. Remote verification is reported in the PR/chat after ordinary push. Owner preview paths and steps are in SANDBOX_PAYMENT_LIFECYCLE.md; WAITING_FOR_OWNER_PREVIEW and DEVELOPMENT remain accurate.

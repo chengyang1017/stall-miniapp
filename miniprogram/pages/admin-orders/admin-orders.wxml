@@ -47,6 +47,18 @@
     <view wx:if="{{batchMode}}" class="order-selection" bindtap="toggleOrder" data-id="{{item.id}}"><checkbox checked="{{selectedMap[item.id] || false}}" disabled="{{operationBusy || !item.batchEligible}}" color="#16865d"/><text>{{item.batchEligible ? '勾选此订单' : '该状态不可批量操作'}}</text></view>
     <view class="row"><text class="id">{{item.id}}</text><text class="state">{{item.statusText}}</text></view>
     <view class="muted">{{item.createdText}} · {{item.paymentLabel}}</view><view wx:if="{{item.paymentBlocked}}" class="muted">尚未确认支付，不能接单或推进履约。</view>
+    <button wx:if="{{cloudMode}}" size="mini" data-id="{{item.id}}" bindtap="viewSandboxPayment">Sandbox 支付 / 退款 / 小票</button>
+    <view wx:if="{{sandboxOrderId === item.id}}">
+      <view>{{sandboxError}}</view><view wx:if="{{sandbox.stale}}">渠道未能刷新，显示已保存状态。</view>
+      <view wx:for="{{sandbox.attempts}}" wx:for-item="attempt" wx:key="id">{{attempt.channelText}} · ¥{{attempt.amountText}} · {{attempt.label}}</view>
+      <view wx:for="{{sandbox.refunds}}" wx:for-item="refund" wx:key="id">退款 ¥{{refund.amountText}} · {{refund.label}} · {{refund.refundId}}</view>
+      <view wx:for="{{sandbox.receipts}}" wx:for-item="receipt" wx:key="id">
+        <view>测试小票：{{receipt.notice}}</view><view>{{receipt.orderId}} · {{receipt.channelText}} · ¥{{receipt.totalText}} · {{receipt.paidAt}}</view>
+        <view wx:for="{{receipt.items}}" wx:for-item="line" wx:key="productId">{{line.name}} × {{line.quantity}} · 单价 ¥{{line.unitText}}</view>
+        <view>{{receipt.transactionId}}</view><view>校验摘要 {{receipt.sha256}}</view>
+      </view>
+      <button wx:if="{{sandbox.canRefund}}" size="mini" bindtap="requestSandboxRefund" disabled="{{sandboxRefundBusy}}">申请全额 / 部分测试退款</button>
+    </view>
     <view wx:for="{{item.items}}" wx:for-item="product" wx:key="lineKey" class="row item"><text>{{product.name}} × {{product.quantity}}</text><text>¥{{product.subtotal}}</text></view>
         <!-- stallCancelExceptionV1 -->
     <view wx:if="{{item.issueReason}}" class="muted" style="color:#bf512d;">原因：{{item.issueReason}}</view>

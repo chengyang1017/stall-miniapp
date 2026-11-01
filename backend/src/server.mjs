@@ -12,6 +12,7 @@ import {customerWechatPhoneBindRoute} from './customerWechatPhone.mjs'
 import {customerWechatIdentityLinkRoute} from './customerWechatIdentityLinkRoute.mjs'
 import { storeEntryRoute } from './storeEntry.mjs'
 import { stripeTestPaymentRoute } from './stripeTestPaymentRoute.mjs'
+import { startSandboxPaymentWorker } from './sandboxPaymentWorker.mjs'
 import { stagingPaymentRoute } from './stagingPayments.mjs'
 import {runtimeDeployment,parsedDatabase} from './stagingDeployment.mjs'
 import { productReviewRoute } from './productReviews.mjs'
@@ -235,7 +236,9 @@ const server = http.createServer(async (req, res) => {
 })
 let stopInventoryWorker=async()=>{}
 let stopTrackingRetention=()=>{}
+let stopSandboxPayments=async()=>{}
 server.listen(port, host, () => { console.log(`Stall API listening on ${host}:${port}`);void pool.query("SELECT current_user AS role, current_database() AS database, has_table_privilege(current_user,'public.stores','UPDATE') AS stores_update,has_table_privilege(current_user,'public.categories','UPDATE') AS categories_update").then(({rows})=>{const x=rows[0]||{};console.log('Staging DB role diagnostic',JSON.stringify({role:x.role,database:x.database,storesUpdate:x.stores_update,categoriesUpdate:x.categories_update}))}).catch(e=>console.error('Staging DB role diagnostic failed',e?.code||'unknown'));stopInventoryWorker=startInventoryWorker(pool);stopTrackingRetention=startTrackingRetention(pool) })
-async function shutdown() { server.close(); stopTrackingRetention(); await stopInventoryWorker(); await pool.end() }
+server.on('listening',()=>{stopSandboxPayments=startSandboxPaymentWorker(pool)})
+async function shutdown() { server.close(); stopTrackingRetention(); await stopSandboxPayments(); await stopInventoryWorker(); await pool.end() }
 process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)

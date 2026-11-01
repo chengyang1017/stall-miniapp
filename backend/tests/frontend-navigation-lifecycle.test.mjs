@@ -4,6 +4,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import vm from 'node:vm'
+import { stripTypeScriptTypes } from 'node:module'
 
 const file = new URL('../../miniprogram/pages/order-detail/order-detail.ts',import.meta.url)
 const source = readFileSync(file,'utf8')
@@ -20,7 +21,7 @@ function method(name,next,globals){
     .replace(/\(i\s*:\s*any\)/g,'(i)')
     .replace(/\s+as\s+Record<string,\s*string>/g,'')
     .replace(/\s+as\s+any\[\]/g,'')
-  return vm.runInNewContext(`({${body}}).${name}`,globals,{filename:'order-detail.ts',timeout:1000})
+  return vm.runInNewContext(stripTypeScriptTypes(`({${body}}).${name}`,{mode:'strip'}),globals,{filename:'order-detail.ts',timeout:1000})
 }
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no});return {promise,resolve,reject}}
 function fixture({cloud=true}={}){

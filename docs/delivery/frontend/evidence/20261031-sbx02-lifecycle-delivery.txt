@@ -1,0 +1,44 @@
+
+> stall-miniapp-api@0.1.0 test:payment:lifecycle
+> node --test --test-concurrency=1 tests/sandbox-payment-lifecycle.test.mjs
+
+✔ all 001-027 migrations execute and 027 repeat fails rather than hiding drift (1314.456ms)
+✔ concurrent reservations share one durable attempt and reject another channel (13.5216ms)
+✔ network interruption reuses durable request key, amount and expiry after retry (7.6961ms)
+✔ card verified payment settles and writes immutable receipt (18.9308ms)
+✔ alipay verified payment settles and writes immutable receipt (13.4224ms)
+✔ wechat_pay verified payment settles and writes immutable receipt (14.6517ms)
+✔ duplicates and out-of-order expired callbacks do not reverse trusted payment (20.6535ms)
+✔ failed and expired sessions allow a new attempt without recreating order (13.8744ms)
+✔ late trusted collection queues one compensating refund without resurrecting stock (12.8527ms)
+✔ second distinct paid session is compensated, first receipt and settlement preserved (16.389ms)
+✔ full and partial refund reservations validate amount and idempotency under concurrency (18.2999ms)
+✔ actual Stripe refund adapter sends partial amount with stable per-job idempotency (10.4037ms)
+✔ submitted refund leases allow polling, survive expired lease and preserve receipt (13.3713ms)
+✔ finite held inventory commits once with no second stock decrement (16.1224ms)
+✔ rollback includes receipt, event and status on invalid order snapshot (7.855ms)
+✔ disabled worker performs no provider or database calls (0.6459ms)
+✔ customer status recovery verifies ownership and heals dropped webhook using provider retrieval (17.2712ms)
+✔ merchant receipt read and refund role restrictions use real server membership lookup (31.0378ms)
+✔ signed HTTP webhook persisted once, tampered signature rejected, reordered notification cannot undo payment (14.4625ms)
+✔ trusted provider expiration closes session before switching channel and ignores stale open result (10.2581ms)
+✔ transient refund failure retries same job, then partial and full success preserve original receipt (24.1445ms)
+✔ late payment compensation is consumed by existing refund queue and failed remote refund requires review (9.8866ms)
+✔ provider live result, amount mismatch and unsupported actual payment channel are rejected (3.3633ms)
+✔ payment timing and customer ownership fail before provider creation (4.8732ms)
+✔ enabled recovery worker resumes creating attempt and automatically completes compensating refund (28.2843ms)
+✔ unknown creation past idempotency retention enters review without new provider request (3.9273ms)
+✔ receipt truncate and positive amount/currency constraints are enforced by PostgreSQL (2.4543ms)
+✔ database environment marker binds approved instance, actual DB and runtime role (0.9959ms)
+✔ migration 027 failure rolls back new tables and old refund queue alterations atomically (854.2397ms)
+✔ trusted collection after sixty minute hold window is compensated even for unlimited inventory (8.257ms)
+✔ list projections expose persisted Sandbox attempt state only in explicitly enabled environment (6.2546ms)
+✔ fresh process restores persisted PostgreSQL snapshot and durable request key (839.9389ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3731.5698
