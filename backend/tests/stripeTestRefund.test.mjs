@@ -244,3 +244,14 @@ test('merchant refund rejects invalid payment total before Stripe call',async()=
   assert.equal(calls,0)
  }
 })
+
+test('late-payment refund rejects malformed audit amount without calling Stripe',async()=>{
+ for(const amount_cents of ['', ' ',null,undefined,false,true,{},'abc',0,-1,1.5]){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++;throw Error('unexpected Stripe request')
+  }})
+  await assert.rejects(client.refundLatePayment({...audit,amount_cents}),/invalid_refund_audit/)
+  assert.equal(calls,0)
+ }
+})

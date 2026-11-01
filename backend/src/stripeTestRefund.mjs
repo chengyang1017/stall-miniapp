@@ -58,7 +58,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
   async refundLatePayment(audit){
    if(!audit||audit.provider!=='stripe:sandbox'||audit.event_type!=='refund_required'||
       !orderId.test(audit.order_id||'')||!sessionId.test(audit.provider_event_id||'')||
-      !Number.isSafeInteger(Number(audit.amount_cents))||Number(audit.amount_cents)<=0)fail('invalid_refund_audit')
+      !Number.isSafeInteger(Number(audit.amount_cents))||!['number','string'].includes(typeof audit.amount_cents)||String(audit.amount_cents).trim()===''||Number(audit.amount_cents)<=0)fail('invalid_refund_audit')
    const session=await call('checkout/sessions/'+encodeURIComponent(audit.provider_event_id))
    if(!session||typeof session!=='object'||session.id!==audit.provider_event_id||session.livemode!==false||
       session.payment_status!=='paid'||session.currency!=='cny'||!intentId.test(session.payment_intent||'')||
