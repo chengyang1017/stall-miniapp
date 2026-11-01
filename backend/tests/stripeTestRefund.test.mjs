@@ -149,3 +149,11 @@ test('late-payment refund rejects wrong or missing Checkout Session currency bef
   assert.equal(calls.length,1)
  }
 })
+
+test('late-payment refund rejects numeric-string or fractional Checkout Session amount before POST',async()=>{
+ for(const amount_total of ['1599',1599.5,null]){
+  const {client,calls}=setup({session:{...session,amount_total}})
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_session_mismatch/)
+  assert.equal(calls.length,1)
+ }
+})
