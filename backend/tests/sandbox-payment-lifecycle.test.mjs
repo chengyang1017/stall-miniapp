@@ -500,7 +500,7 @@ test('contradictory provider refund result is quarantined immediately without re
  let calls=0
  const result=await processOneStripeTestRefund(pool,{refundPayment:async()=>{
   calls++
-  return {refundId:'re_contradictory',status:'failed',completed:true}
+  return {refundId:'re_contradictory',amountCents:151,status:'failed',completed:true}
  }})
  assert.equal(result.action,'review')
  assert.equal(calls,1)
