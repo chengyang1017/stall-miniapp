@@ -65,3 +65,12 @@ test('rejects mismatching Stripe refund identity',async()=>{
  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:true,json:async()=>({...refund,id:'re_different'})})})
  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
 })
+
+test('rejects non-integer or non-positive refund amounts from Stripe status lookup',async()=>{
+ for(const amount of [undefined,null,0,-1,'1599',1.5,Number.MAX_SAFE_INTEGER+1]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+   ok:true,json:async()=>({...refund,amount})
+  })})
+  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+ }
+})
