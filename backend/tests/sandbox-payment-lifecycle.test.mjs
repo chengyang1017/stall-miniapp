@@ -379,7 +379,7 @@ test('completed refund persists provider details atomically with final state',as
  const job=await requestSandboxRefund(pool,{orderId:attempt.order_id,subject:'synthetic-owner',amountCents:100,requestKey:randomUUID()})
  const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
  const processed=await processOneStripeTestRefund(pool,{refundPayment:async()=>({
-  completed:true,refundId:'re_atomic_test',paymentIntentId:'pi_atomic_test',status:'succeeded'
+  completed:true,amountCents:100,refundId:'re_atomic_test',paymentIntentId:'pi_atomic_test',status:'succeeded'
  })})
  assert.equal(processed.action,'succeeded')
  const {rows:[saved]}=await pool.query('SELECT status,refund_id,payment_intent_id,provider_status FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
@@ -395,7 +395,7 @@ test('provider-declared failed refund is reviewed immediately, not submitted',as
  const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:125,requestKey:randomUUID()})
  const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
  const processed=await processOneStripeTestRefund(pool,{refundPayment:async()=>({
-  completed:false,refundId:'re_failed_test',paymentIntentId:'pi_failed_test',status:'failed'
+  completed:false,amountCents:125,refundId:'re_failed_test',paymentIntentId:'pi_failed_test',status:'failed'
  })})
  assert.equal(processed.action,'review')
  const {rows:[saved]}=await pool.query('SELECT status,refund_id,provider_status,last_error FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
@@ -447,7 +447,7 @@ test('database finalization failure after Stripe response never requeues refund'
  }}
  await assert.rejects(processOneStripeTestRefund(fake,{refundPayment:async()=>{
   providerCalls++
-  return {completed:true,refundId:'re_test',status:'succeeded'}
+  return {completed:true,amountCents:100,refundId:'re_test',status:'succeeded'}
  }}),/database temporarily unavailable/)
  assert.equal(providerCalls,1)
  assert.equal(requeues,0)
