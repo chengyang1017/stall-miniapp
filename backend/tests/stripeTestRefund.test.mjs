@@ -482,3 +482,12 @@ test('refund POST HTTP 409 idempotency conflict is reviewed, unlike preflight GE
  const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:409})})
  await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
 })
+
+test('refund status rejects array payloads that masquerade as Stripe objects',async()=>{
+ const malformed=[{...refund}]
+ Object.assign(malformed,refund)
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+  ok:true,json:async()=>malformed
+ })})
+ await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+})
