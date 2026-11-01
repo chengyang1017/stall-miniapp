@@ -12,7 +12,7 @@ export async function claimStripeTestRefund(db){
  const result=await db.query(`
  WITH exhausted AS (UPDATE stripe_test_refund_jobs SET status='review',lease_token=NULL,lease_expires_at=NULL,
  last_error='retry_lease_exhausted',updated_at=clock_timestamp()
- WHERE status='processing' AND lease_expires_at<clock_timestamp() AND attempt_count>=5 RETURNING id)
+ WHERE attempt_count>=5 AND ((status='processing' AND lease_expires_at<clock_timestamp()) OR status='pending') RETURNING id)
  UPDATE stripe_test_refund_jobs j SET status='processing',lease_token=gen_random_uuid(),
  lease_expires_at=clock_timestamp()+interval '2 minutes',attempt_count=attempt_count+1,
  updated_at=clock_timestamp()

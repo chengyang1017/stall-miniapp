@@ -371,3 +371,14 @@ test('failed asynchronous notification returns the persisted failure action',asy
  assert.equal(result.action,'failed')
  assert.equal((await readSandboxPayment(pool,attempt.order_id)).attempts[0].status,'failed')
 })
+
+test('exhausted pending refund is marked review instead of remaining pending forever',async()=>{
+ const attempt=await opened(await order(),'card')
+ await pay(attempt)
+ const job=await requestSandboxRefund(pool,{orderId:attempt.order_id,subject:'synthetic-owner',amountCents:100,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='pending',attempt_count=5,next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id])
+ await (await import('../src/stripeTestRefundJobs.mjs')).claimStripeTestRefund(pool)
+ const {rows:[record]}=await pool.query('SELECT status,last_error FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(record.status,'review')
+ assert.equal(record.last_error,'retry_lease_exhausted')
+})
