@@ -50,23 +50,24 @@ export async function failStripeTestRefund(db,job,error){
 export async function processOneStripeTestRefund(db,client){
  const job=await claimStripeTestRefund(db)
  if(!job)return {action:'idle'}
- // A stale lease may retry; Stripe idempotency key uses the checkout Session ID.
  const audit={provider:'stripe:sandbox',event_type:'refund_required',
   order_id:job.order_id,provider_event_id:job.checkout_session_id,amount_cents:job.amount_cents}
+ if(job.created_at&&Date.now()-new Date(job.created_at).getTime()>23*3600000){
+  await db.query(`UPDATE stripe_test_refund_jobs SET status='review',lease_token=NULL,lease_expires_at=NULL,
+   last_error='idempotency_window_review',updated_at=clock_timestamp() WHERE id=$1 AND lease_token=$2`,[job.id,job.lease_token])
+  return {action:'review',jobId:job.id}
+ }
+ let result
  try{
-  if(job.created_at&&Date.now()-new Date(job.created_at).getTime()>23*3600000){
-   await db.query(`UPDATE stripe_test_refund_jobs SET status='review',lease_token=NULL,lease_expires_at=NULL,
-    last_error='idempotency_window_review',updated_at=clock_timestamp() WHERE id=$1 AND lease_token=$2`,[job.id,job.lease_token])
-   return {action:'review',jobId:job.id}
-  }
-  const result=job.kind==='merchant'?await client.refundPayment(job):await client.refundLatePayment(audit)
-  const status=await finishStripeTestRefund(db,job,result)
-  return {action:status,jobId:job.id}
+  result=job.kind==='merchant'?await client.refundPayment(job):await client.refundLatePayment(audit)
  }catch(e){
-  // Errors from the Stripe API are recorded, rather than assumed refunded.
   const status=await failStripeTestRefund(db,job,e)
   return {action:status,jobId:job.id}
  }
+ // Provider returned a refund. Database finalization errors must never
+ // requeue the Stripe operation; leave its lease for guarded recovery.
+ const status=await finishStripeTestRefund(db,job,result)
+ return {action:status,jobId:job.id}
 }
 
 /** Reconcile a previously submitted refund. Never issue a second refund here. */

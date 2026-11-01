@@ -444,3 +444,21 @@ test('refund polling persists verified Stripe status and payment intent',async()
  assert.equal(saved.provider_status,'succeeded')
  assert.equal(saved.payment_intent_id,'pi_polled_status')
 })
+
+test('database finalization failure after Stripe response never requeues refund',async()=>{
+ const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ let providerCalls=0,requeues=0
+ const lease='11111111-1111-4111-8111-111111111111'
+ const fake={async query(sql){
+  if(sql.includes('WITH exhausted'))return {rows:[{id:lease,lease_token:lease,order_id:lease,checkout_session_id:'cs_test_sample',amount_cents:100,kind:'merchant'}]}
+  if(sql.includes('SET status=$3,refund_id=$4'))throw Error('database temporarily unavailable')
+  if(sql.includes("status=CASE WHEN attempt_count>=5"))requeues++
+  throw Error('unexpected SQL: '+sql)
+ }}
+ await assert.rejects(processOneStripeTestRefund(fake,{refundPayment:async()=>{
+  providerCalls++
+  return {completed:true,refundId:'re_test',status:'succeeded'}
+ }}),/database temporarily unavailable/)
+ assert.equal(providerCalls,1)
+ assert.equal(requeues,0)
+})
