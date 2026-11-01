@@ -623,6 +623,18 @@ test('submitted refund with orphaned lease expiry resumes status lookup only',as
  assert.equal(saved.provider_status,'succeeded')
 })
 
+test('refund idempotency-window review requires the current processing lease',async()=>{
+ const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ let providerCalls=0
+ const fake={async query(sql){
+  if(sql.includes('WITH exhausted'))return {rows:[{id:'job',lease_token:'old-lease',kind:'merchant',created_at:new Date(Date.now()-24*3600000)}]}
+  if(sql.includes('idempotency_window_review'))return {rowCount:0,rows:[]}
+  throw Error('unexpected SQL')
+ }}
+ await assert.rejects(processOneStripeTestRefund(fake,{refundPayment:async()=>{providerCalls++}}),/refund_lease_lost/)
+ assert.equal(providerCalls,0)
+})
+
 // Must run last: it closes the shared PGlite instance to verify cold restart.
 test('fresh process restores persisted PostgreSQL snapshot and durable request key',async()=>{
  const o=await order(),a=await reserve(o)

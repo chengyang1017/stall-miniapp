@@ -58,8 +58,10 @@ export async function processOneStripeTestRefund(db,client){
  const audit={provider:'stripe:sandbox',event_type:'refund_required',
   order_id:job.order_id,provider_event_id:job.checkout_session_id,amount_cents:job.amount_cents}
  if(job.created_at&&Date.now()-new Date(job.created_at).getTime()>23*3600000){
-  await db.query(`UPDATE stripe_test_refund_jobs SET status='review',lease_token=NULL,lease_expires_at=NULL,
-   last_error='idempotency_window_review',updated_at=clock_timestamp() WHERE id=$1 AND lease_token=$2`,[job.id,job.lease_token])
+  const reviewed=await db.query(`UPDATE stripe_test_refund_jobs SET status='review',lease_token=NULL,lease_expires_at=NULL,
+   last_error='idempotency_window_review',updated_at=clock_timestamp()
+   WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,[job.id,job.lease_token])
+  if(reviewed.rowCount!==1)fail('refund_lease_lost')
   return {action:'review',jobId:job.id}
  }
  let result
