@@ -557,3 +557,15 @@ test('unknown Stripe refund polling status is quarantined instead of endlessly s
  assert.equal(saved.status,'review')
  assert.equal(saved.last_error,'refund_status_unknown')
 })
+
+test('refund order synchronization never changes a non-Sandbox paid order',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:1000,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='succeeded',refund_id='re_cross_provider' WHERE id=$1",[job.id])
+ await pool.query("UPDATE orders SET payment_source='legacy-other-provider',payment_status='paid' WHERE id=$1",[a.order_id])
+ await syncSandboxRefundOrders(pool)
+ const {rows:[saved]}=await pool.query('SELECT payment_source,payment_status FROM orders WHERE id=$1',[a.order_id])
+ assert.equal(saved.payment_source,'legacy-other-provider')
+ assert.equal(saved.payment_status,'paid')
+})
