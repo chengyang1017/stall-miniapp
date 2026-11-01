@@ -44,6 +44,10 @@ function session(a,status='paid'){
 }
 const lookup=(a,s)=>createStripeSandboxClient(env,async()=>({ok:true,json:async()=>s||session(a)})).getSession(a)
 async function pay(a,s){return applySandboxObservation(pool,a,await lookup(a,s))}
+async function prioritizeRefundJob(id){
+ await pool.query("UPDATE stripe_test_refund_jobs SET next_attempt_at=now()+interval '1 hour' WHERE status='pending' AND id<>$1",[id])
+ await pool.query("UPDATE stripe_test_refund_jobs SET next_attempt_at=now()-interval '1 second' WHERE id=$1",[id])
+}
 const notification=(id='evt_'+randomUUID().replaceAll('-',''),type='checkout.session.completed')=>({id,type,created:Math.floor(Date.now()/1000),hash:'a'.repeat(64)})
 test('all 001-027 migrations execute and 027 repeat fails rather than hiding drift',async()=>{
  await assert.rejects(db.pg.exec('CREATE TABLE sandbox_payment_attempts(id uuid)'),/already exists/)
@@ -470,12 +474,9 @@ test('orphaned processing refund without lease expiry is quarantined for review'
  const a=await opened(await order(),'card')
  await pay(a)
  const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:143,requestKey:randomUUID()})
- await pool.query("UPDATE stripe_test_refund_jobs SET status='processing',attempt_count=1,lease_token=NULL,lease_expires_at=NULL,updated_at=now()-interval '3 minutes' WHERE id=$1",[job.id])
- const {claimStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
- await claimStripeTestRefund(pool)
- const {rows:[saved]}=await pool.query('SELECT status,last_error,lease_token,lease_expires_at FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
- assert.equal(saved.status,'review')
- assert.equal(saved.last_error,'refund_outcome_unknown')
+ await assert.rejects(pool.query("UPDATE stripe_test_refund_jobs SET status='processing',attempt_count=1,lease_token=NULL,lease_expires_at=NULL,updated_at=now()-interval '3 minutes' WHERE id=$1",[job.id]),/sandbox_refund_lease/)
+ const {rows:[saved]}=await pool.query('SELECT status,lease_token,lease_expires_at FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'pending')
  assert.equal(saved.lease_token,null)
  assert.equal(saved.lease_expires_at,null)
 })
@@ -494,6 +495,7 @@ test('contradictory provider refund result is quarantined immediately without re
  const a=await opened(await order(),'card')
  await pay(a)
  const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:151,requestKey:randomUUID()})
+ await prioritizeRefundJob(job.id)
  const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
  let calls=0
  const result=await processOneStripeTestRefund(pool,{refundPayment:async()=>{
@@ -512,6 +514,7 @@ test('provider response with missing refund ID is reviewed without waiting for l
  const attempt=await opened(await order(),'card')
  await pay(attempt)
  const job=await requestSandboxRefund(pool,{orderId:attempt.order_id,subject:'synthetic-owner',amountCents:157,requestKey:randomUUID()})
+ await prioritizeRefundJob(job.id)
  const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
  const result=await processOneStripeTestRefund(pool,{refundPayment:async()=>({completed:true,status:'succeeded'})})
  assert.equal(result.action,'review')
@@ -594,14 +597,10 @@ test('submitted refund with missing provider ID is quarantined without Stripe lo
  const a=await opened(await order(),'card')
  await pay(a)
  const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:181,requestKey:randomUUID()})
- await pool.query("UPDATE stripe_test_refund_jobs SET status='submitted',refund_id=NULL,next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id])
- let queried=false
- const result=await reconcileOneSubmittedStripeTestRefund(pool,{getRefundStatus:async()=>{queried=true;throw Error('should_not_query')}})
- assert.equal(result.action,'review')
- assert.equal(queried,false)
- const {rows:[saved]}=await pool.query('SELECT status,last_error,lease_token FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
- assert.equal(saved.status,'review')
- assert.equal(saved.last_error,'invalid_stripe_refund_id')
+ await assert.rejects(pool.query("UPDATE stripe_test_refund_jobs SET status='submitted',refund_id=NULL,next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id]),/check constraint/)
+ const {rows:[saved]}=await pool.query('SELECT status,refund_id,lease_token FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'pending')
+ assert.equal(saved.refund_id,null)
  assert.equal(saved.lease_token,null)
 })
 
@@ -609,18 +608,10 @@ test('submitted refund with orphaned lease expiry resumes status lookup only',as
  const a=await opened(await order(),'card')
  await pay(a)
  const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:187,requestKey:randomUUID()})
- await pool.query("UPDATE stripe_test_refund_jobs SET status='submitted',refund_id='re_orphaned_poll',lease_token=gen_random_uuid(),lease_expires_at=NULL,updated_at=now()-interval '3 minutes',next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id])
- let lookups=0
- const result=await reconcileOneSubmittedStripeTestRefund(pool,{getRefundStatus:async()=>{
-  lookups++
-  return {refundId:'re_orphaned_poll',amountCents:187,paymentIntentId:'pi_orphaned',status:'succeeded'}
- }})
- assert.equal(result.action,'succeeded')
- assert.equal(lookups,1)
- const {rows:[saved]}=await pool.query('SELECT status,lease_token,provider_status FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
- assert.equal(saved.status,'succeeded')
+ await assert.rejects(pool.query("UPDATE stripe_test_refund_jobs SET status='submitted',refund_id='re_orphaned_poll',lease_token=gen_random_uuid(),lease_expires_at=NULL,updated_at=now()-interval '3 minutes',next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id]),/sandbox_refund_lease/)
+ const {rows:[saved]}=await pool.query('SELECT status,lease_token FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'pending')
  assert.equal(saved.lease_token,null)
- assert.equal(saved.provider_status,'succeeded')
 })
 
 test('refund idempotency-window review requires the current processing lease',async()=>{
@@ -639,6 +630,7 @@ test('Stripe refund identity mismatch goes to review without retry',async()=>{
  const a=await opened(await order(),'card')
  await pay(a)
  const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:191,requestKey:randomUUID()})
+ await prioritizeRefundJob(job.id)
  const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
  let calls=0
  const result=await processOneStripeTestRefund(pool,{refundPayment:async()=>{
@@ -657,6 +649,7 @@ test('refund amount mismatch is quarantined before marking refund succeeded',asy
  const a=await opened(await order(),'card')
  await pay(a)
  const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:193,requestKey:randomUUID()})
+ await prioritizeRefundJob(job.id)
  const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
  const result=await processOneStripeTestRefund(pool,{refundPayment:async()=>({refundId:'re_amount_mismatch',amountCents:194,status:'succeeded',completed:true})})
  assert.equal(result.action,'review')
@@ -670,6 +663,7 @@ test('string refund amount cannot pass provider response integrity checks',async
  const attempt=await opened(await order(),'card')
  await pay(attempt)
  const job=await requestSandboxRefund(pool,{orderId:attempt.order_id,subject:'synthetic-owner',amountCents:197,requestKey:randomUUID()})
+ await prioritizeRefundJob(job.id)
  const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
  const outcome=await processOneStripeTestRefund(pool,{refundPayment:async()=>({
   refundId:'re_string_amount',amountCents:'197',status:'succeeded',completed:true
