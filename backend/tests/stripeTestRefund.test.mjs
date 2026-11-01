@@ -410,3 +410,16 @@ test('merchant refund rejects malformed job identity before any Stripe request',
   assert.equal(calls,0)
  }
 })
+
+test('invalid late-payment audit identity never reaches Stripe',async()=>{
+ for(const changes of [{provider:'stripe:live'},{event_type:'other'},{order_id:'invalid'},
+  {provider_event_id:'cs_live_abc'},{provider_event_id:'cs_test_bad/id'},
+  {amount_cents:0},{amount_cents:-1}]){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++;throw Error('unexpected Stripe request')
+  }})
+  await assert.rejects(client.refundLatePayment({...audit,...changes}),/invalid_refund_audit/)
+  assert.equal(calls,0)
+ }
+})
