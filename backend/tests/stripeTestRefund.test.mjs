@@ -313,7 +313,7 @@ test('late-payment compensation uses stable session idempotency and exact audit 
 test('refund POST HTTP 429 requires review while preflight GET 429 remains retryable',async()=>{
  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>
   url.endsWith('/refunds')?{ok:false,status:429}:{ok:true,json:async()=>session}
- )
+ })
  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
  const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:429})})
  await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
