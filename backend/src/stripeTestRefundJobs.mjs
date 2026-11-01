@@ -13,7 +13,10 @@ export async function claimStripeTestRefund(db){
  WITH exhausted AS (UPDATE stripe_test_refund_jobs SET status='review',lease_token=NULL,lease_expires_at=NULL,
  last_error=CASE WHEN status='processing' THEN 'refund_outcome_unknown' ELSE 'retry_lease_exhausted' END,
  updated_at=clock_timestamp()
- WHERE (status='processing' AND lease_expires_at<clock_timestamp())
+ WHERE (status='processing' AND (
+    lease_expires_at<clock_timestamp() OR
+    ((lease_token IS NULL OR lease_expires_at IS NULL) AND updated_at<clock_timestamp()-interval '2 minutes')
+   ))
     OR (status='pending' AND attempt_count>=5) RETURNING id)
  UPDATE stripe_test_refund_jobs j SET status='processing',lease_token=gen_random_uuid(),
  lease_expires_at=clock_timestamp()+interval '2 minutes',attempt_count=attempt_count+1,

@@ -475,3 +475,17 @@ test('expired processing refund lease requires review instead of issuing a secon
  assert.equal(saved.last_error,'refund_outcome_unknown')
  assert.equal(saved.lease_token,null)
 })
+
+test('orphaned processing refund without lease expiry is quarantined for review',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:143,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='processing',attempt_count=1,lease_token=NULL,lease_expires_at=NULL,updated_at=now()-interval '3 minutes' WHERE id=$1",[job.id])
+ const {claimStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ await claimStripeTestRefund(pool)
+ const {rows:[saved]}=await pool.query('SELECT status,last_error,lease_token,lease_expires_at FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'refund_outcome_unknown')
+ assert.equal(saved.lease_token,null)
+ assert.equal(saved.lease_expires_at,null)
+})
