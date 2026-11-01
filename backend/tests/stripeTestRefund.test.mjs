@@ -130,3 +130,14 @@ test('refund POST timeout is uncertain while preflight timeout remains retryable
  const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{throw timeout}})
  await assert.rejects(preflight.refundLatePayment(audit),error=>error===timeout)
 })
+
+test('refund POST connection reset requires review but GET connection reset propagates',async()=>{
+ const reset=Object.assign(new Error('socket hang up'),{code:'ECONNRESET'})
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  if(url.endsWith('/refunds'))throw reset
+  return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{throw reset}})
+ await assert.rejects(preflight.refundLatePayment(audit),error=>error===reset)
+})

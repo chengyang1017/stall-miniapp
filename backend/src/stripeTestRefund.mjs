@@ -13,7 +13,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
     ...options,signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+secretKey,...options.headers}
    })
   }catch(error){
-   if(options.method==='POST'&&['AbortError','TimeoutError'].includes(error?.name))fail('stripe_refund_unconfirmed')
+   if(options.method==='POST')fail('stripe_refund_unconfirmed')
    throw error
   }
   if(!response.ok){
