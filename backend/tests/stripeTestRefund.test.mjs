@@ -274,3 +274,12 @@ test('refund status lookup rejects malformed provider state and payment intent',
   await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
  }
 })
+
+test('missing HTTP response after refund POST is reviewed, while GET fails safely',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>
+  url.endsWith('/refunds')?null:{ok:true,json:async()=>session}
+ })
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>null})
+ await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
+})

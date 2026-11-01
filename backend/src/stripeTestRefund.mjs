@@ -16,6 +16,10 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
    if(options.method==='POST')fail('stripe_refund_unconfirmed')
    throw error
   }
+  if(!response||typeof response!=='object'){
+   if(options.method==='POST')fail('stripe_refund_unconfirmed')
+   fail('stripe_refund_api_failed')
+  }
   if(!response.ok){
    // A 5xx after refund POST may mean Stripe processed the refund before failing.
    if(options.method==='POST'&&response.status>=500)fail('stripe_refund_unconfirmed')
