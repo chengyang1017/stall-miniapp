@@ -501,3 +501,14 @@ test('refund creation rejects array-shaped provider payloads',async()=>{
   checkout_session_id:session.id,amount_cents:1599,payment_amount_cents:1599}
  await assert.rejects(client.refundPayment(job),/stripe_refund_unconfirmed/)
 })
+
+test('array-shaped Checkout Session cannot authorize either refund path',async()=>{
+ const spoofed=[{...session}]
+ Object.assign(spoofed,session)
+ const {client,calls}=setup({session:spoofed})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_session_mismatch/)
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ await assert.rejects(client.refundPayment(job),/stripe_refund_session_mismatch/)
+ assert.equal(calls.length,2)
+})

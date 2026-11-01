@@ -38,7 +38,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
     !Number.isSafeInteger(Number(job.payment_amount_cents))||!['number','string'].includes(typeof job.payment_amount_cents)||String(job.payment_amount_cents).trim()===''||Number(job.payment_amount_cents)<=0||Number(job.amount_cents)>Number(job.payment_amount_cents)||
     !orderId.test(job.id||''))fail('invalid_refund_request')
    const session=await call('checkout/sessions/'+encodeURIComponent(job.checkout_session_id))
-   if(!session||typeof session!=='object'||session.id!==job.checkout_session_id||session.livemode!==false||session.payment_status!=='paid'||
+   if(!session||typeof session!=='object'||Array.isArray(session)||session.id!==job.checkout_session_id||session.livemode!==false||session.payment_status!=='paid'||
     session.currency!=='cny'||session.client_reference_id!==job.order_id||
     !Number.isSafeInteger(session.amount_total)||session.amount_total!==Number(job.payment_amount_cents)||!intentId.test(session.payment_intent||''))fail('stripe_refund_session_mismatch')
    const body=new URLSearchParams({payment_intent:session.payment_intent,amount:String(job.amount_cents),
@@ -69,7 +69,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
       !orderId.test(audit.order_id||'')||!sessionId.test(audit.provider_event_id||'')||
       !Number.isSafeInteger(Number(audit.amount_cents))||!['number','string'].includes(typeof audit.amount_cents)||String(audit.amount_cents).trim()===''||Number(audit.amount_cents)<=0)fail('invalid_refund_audit')
    const session=await call('checkout/sessions/'+encodeURIComponent(audit.provider_event_id))
-   if(!session||typeof session!=='object'||session.id!==audit.provider_event_id||session.livemode!==false||
+   if(!session||typeof session!=='object'||Array.isArray(session)||session.id!==audit.provider_event_id||session.livemode!==false||
       session.payment_status!=='paid'||session.currency!=='cny'||!intentId.test(session.payment_intent||'')||
       session.client_reference_id!==audit.order_id||
       !Number.isSafeInteger(session.amount_total)||session.amount_total!==Number(audit.amount_cents))fail('stripe_refund_session_mismatch')
