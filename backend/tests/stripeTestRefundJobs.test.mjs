@@ -16,17 +16,17 @@ test('claim uses SKIP LOCKED and recovers only expired leases',async()=>{
 })
 test('completion requires valid refund ID and claimed lease',async()=>{
  const m=fake([{rowCount:1,rows:[{id:job.id}]}])
- assert.equal(await finishStripeTestRefund(m.db,job,{refundId:'re_abc',completed:true}),'succeeded')
+ assert.equal(await finishStripeTestRefund(m.db,job,{refundId:'re_abc',amountCents:1599,status:'succeeded',completed:true}),'succeeded')
  assert.deepEqual(m.calls[0].args.slice(0,2),[job.id,job.lease_token])
  assert.match(m.calls[0].sql,/lease_token=\$2/)
 })
 test('pending Stripe refunds are persisted as submitted, not succeeded',async()=>{
  const m=fake([{rowCount:1,rows:[{id:job.id}]}])
- assert.equal(await finishStripeTestRefund(m.db,job,{refundId:'re_abc',completed:false}),'submitted')
+ assert.equal(await finishStripeTestRefund(m.db,job,{refundId:'re_abc',amountCents:1599,status:'pending',completed:false}),'submitted')
 })
 test('stale lease cannot complete or overwrite current job',async()=>{
  const m=fake([{rowCount:0,rows:[]}])
- await assert.rejects(finishStripeTestRefund(m.db,job,{refundId:'re_abc',completed:true}),/refund_lease_lost/)
+ await assert.rejects(finishStripeTestRefund(m.db,job,{refundId:'re_abc',amountCents:1599,status:'succeeded',completed:true}),/refund_lease_lost/)
 })
 test('transient API error is stored for retry',async()=>{
  const m=fake([{rowCount:1,rows:[{status:'pending'}]}])
@@ -41,7 +41,7 @@ test('five failed attempts go to manual review',async()=>{
 test('processing one job records refund completion',async()=>{
  const m=fake([{rows:[job]},{rowCount:1,rows:[{id:job.id}]}])
  const out=await processOneStripeTestRefund(m.db,{refundLatePayment:async(audit)=>{
-  assert.equal(audit.provider_event_id,'cs_test_abc');return {refundId:'re_abc',completed:true}
+  assert.equal(audit.provider_event_id,'cs_test_abc');return {refundId:'re_abc',amountCents:1599,status:'succeeded',completed:true}
  }})
  assert.equal(out.action,'succeeded')
 })
