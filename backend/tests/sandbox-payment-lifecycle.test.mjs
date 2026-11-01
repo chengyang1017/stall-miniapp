@@ -363,3 +363,11 @@ test('dropped async failure webhook is recovered from verified Stripe session st
  assert.notEqual(retry.id,attempt.id)
  assert.equal(retry.order_id,o.id)
 })
+
+test('failed asynchronous notification returns the persisted failure action',async()=>{
+ const attempt=await opened(await order(),'alipay')
+ const failed=await lookup(attempt,session(attempt,'failed'))
+ const result=await applySandboxObservation(pool,attempt,failed,notification(undefined,'checkout.session.async_payment_failed'))
+ assert.equal(result.action,'failed')
+ assert.equal((await readSandboxPayment(pool,attempt.order_id)).attempts[0].status,'failed')
+})
