@@ -560,6 +560,23 @@ test('refund order synchronization never changes a non-Sandbox paid order',async
  assert.equal(saved.payment_status,'paid')
 })
 
+test('refund synchronization is idempotent and excludes failed refund jobs',async()=>{
+ const attempt=await opened(await order(),'card')
+ await pay(attempt)
+ const accepted=await requestSandboxRefund(pool,{orderId:attempt.order_id,subject:'synthetic-owner',amountCents:250,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='succeeded',refund_id='re_synced_partial' WHERE id=$1",[accepted.id])
+ const failed=await requestSandboxRefund(pool,{orderId:attempt.order_id,subject:'synthetic-owner',amountCents:750,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='review',last_error='stripe_refund_failed' WHERE id=$1",[failed.id])
+ await syncSandboxRefundOrders(pool)
+ const first=(await pool.query('SELECT payment_status,updated_at FROM orders WHERE id=$1',[attempt.order_id])).rows[0]
+ assert.equal(first.payment_status,'partially_refunded')
+ await syncSandboxRefundOrders(pool)
+ const second=(await pool.query('SELECT payment_status,updated_at FROM orders WHERE id=$1',[attempt.order_id])).rows[0]
+ assert.equal(second.payment_status,'partially_refunded')
+ assert.equal(new Date(second.updated_at).getTime(),new Date(first.updated_at).getTime())
+ assert.equal((await readSandboxPayment(pool,attempt.order_id)).receipts.length,1)
+})
+
 // Must run last: it closes the shared PGlite instance to verify cold restart.
 test('fresh process restores persisted PostgreSQL snapshot and durable request key',async()=>{
  const o=await order(),a=await reserve(o)
