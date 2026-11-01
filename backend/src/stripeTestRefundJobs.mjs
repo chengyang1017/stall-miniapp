@@ -85,11 +85,12 @@ export async function processOneStripeTestRefund(db,client){
  const invalidResult=!['succeeded','pending','requires_action','failed','canceled'].includes(result?.status)||
     result.completed!==(result.status==='succeeded')
  const invalidId=!/^re_[a-zA-Z0-9_]+$/.test(result?.refundId||'')
- if(invalidResult||invalidId){
+ const invalidAmount=!Number.isSafeInteger(Number(result?.amountCents))||Number(result.amountCents)!==Number(job.amount_cents)
+ if(invalidResult||invalidId||invalidAmount){
   const reviewed=await db.query(`UPDATE stripe_test_refund_jobs SET status='review',
    lease_token=NULL,lease_expires_at=NULL,last_error=$3,
    updated_at=clock_timestamp() WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,
-   [job.id,job.lease_token,invalidId?'invalid_stripe_refund_id':'refund_provider_result_inconsistent'])
+   [job.id,job.lease_token,invalidId?'invalid_stripe_refund_id':invalidAmount?'refund_amount_mismatch':'refund_provider_result_inconsistent'])
   if(reviewed.rowCount!==1)fail('refund_lease_lost')
   return {action:'review',jobId:job.id}
  }
