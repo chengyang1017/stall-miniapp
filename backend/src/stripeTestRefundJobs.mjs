@@ -92,7 +92,9 @@ export async function reconcileOneSubmittedStripeTestRefund(db,client){
  UPDATE stripe_test_refund_jobs j SET lease_token=gen_random_uuid(),
  lease_expires_at=clock_timestamp()+interval '2 minutes',updated_at=clock_timestamp()
  WHERE j.id=(SELECT id FROM stripe_test_refund_jobs
- WHERE status='submitted' AND (lease_token IS NULL OR lease_expires_at<clock_timestamp()) AND next_attempt_at<=clock_timestamp()
+ WHERE status='submitted' AND (lease_token IS NULL OR lease_expires_at<clock_timestamp() OR
+ (lease_expires_at IS NULL AND updated_at<clock_timestamp()-interval '2 minutes'))
+ AND next_attempt_at<=clock_timestamp()
  ORDER BY next_attempt_at,id FOR UPDATE SKIP LOCKED LIMIT 1)
  RETURNING id,lease_token,refund_id,amount_cents,payment_intent_id`)
  const job=claim.rows[0]

@@ -605,6 +605,24 @@ test('submitted refund with missing provider ID is quarantined without Stripe lo
  assert.equal(saved.lease_token,null)
 })
 
+test('submitted refund with orphaned lease expiry resumes status lookup only',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:187,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='submitted',refund_id='re_orphaned_poll',lease_token=gen_random_uuid(),lease_expires_at=NULL,updated_at=now()-interval '3 minutes',next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id])
+ let lookups=0
+ const result=await reconcileOneSubmittedStripeTestRefund(pool,{getRefundStatus:async()=>{
+  lookups++
+  return {refundId:'re_orphaned_poll',amountCents:187,paymentIntentId:'pi_orphaned',status:'succeeded'}
+ }})
+ assert.equal(result.action,'succeeded')
+ assert.equal(lookups,1)
+ const {rows:[saved]}=await pool.query('SELECT status,lease_token,provider_status FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'succeeded')
+ assert.equal(saved.lease_token,null)
+ assert.equal(saved.provider_status,'succeeded')
+})
+
 // Must run last: it closes the shared PGlite instance to verify cold restart.
 test('fresh process restores persisted PostgreSQL snapshot and durable request key',async()=>{
  const o=await order(),a=await reserve(o)
