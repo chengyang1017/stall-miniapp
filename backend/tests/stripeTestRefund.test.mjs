@@ -255,3 +255,12 @@ test('late-payment refund rejects malformed audit amount without calling Stripe'
   assert.equal(calls,0)
  }
 })
+
+test('refund status lookup rejects null or undefined JSON payload',async()=>{
+ for(const value of [null,undefined]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+   ok:true,json:async()=>value
+  })})
+  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+ }
+})
