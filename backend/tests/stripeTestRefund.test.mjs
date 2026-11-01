@@ -231,3 +231,16 @@ test('merchant refund rejects empty and nonnumeric refund amount before Stripe c
   assert.equal(calls,0)
  }
 })
+
+test('merchant refund rejects invalid payment total before Stripe call',async()=>{
+ const valid={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ for(const payment_amount_cents of ['', ' ',null,undefined,false,true,{},'abc',0,-5,1.5]){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++;throw Error('unexpected Stripe request')
+  }})
+  await assert.rejects(client.refundPayment({...valid,payment_amount_cents}),/invalid_refund_request/)
+  assert.equal(calls,0)
+ }
+})

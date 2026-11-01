@@ -31,7 +31,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
   async refundPayment(job){
    if(!orderId.test(job?.order_id||'')||!sessionId.test(job?.checkout_session_id||'')||
     !Number.isSafeInteger(Number(job.amount_cents))||!['number','string'].includes(typeof job.amount_cents)||String(job.amount_cents).trim()===''||Number(job.amount_cents)<=0||
-    !Number.isSafeInteger(Number(job.payment_amount_cents))||Number(job.amount_cents)>Number(job.payment_amount_cents)||
+    !Number.isSafeInteger(Number(job.payment_amount_cents))||!['number','string'].includes(typeof job.payment_amount_cents)||String(job.payment_amount_cents).trim()===''||Number(job.payment_amount_cents)<=0||Number(job.amount_cents)>Number(job.payment_amount_cents)||
     !orderId.test(job.id||''))fail('invalid_refund_request')
    const session=await call('checkout/sessions/'+encodeURIComponent(job.checkout_session_id))
    if(!session||typeof session!=='object'||session.id!==job.checkout_session_id||session.livemode!==false||session.payment_status!=='paid'||
