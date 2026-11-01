@@ -343,16 +343,6 @@ test('card failure and 3DS verification remain recoverable in the same payable S
  await pay(a);assert.equal((await readSandboxPayment(pool,o.id)).attempts[0].status,'succeeded')
 })
 
-test('fresh process restores persisted PostgreSQL snapshot and durable request key',async()=>{
- const o=await order(),a=await reserve(o)
- const archive=join(dir,'database.tar');writeFileSync(archive,Buffer.from(await (await db.pg.dumpDataDir('none')).arrayBuffer()))
- await db.pg.close();db=null
- const child=spawnSync(process.execPath,[fileURLToPath(new URL('./helpers/sandbox-restart-reader.mjs',import.meta.url)),archive,a.id],{encoding:'utf8'})
- assert.equal(child.status,0,child.stderr)
- const reloaded=JSON.parse(child.stdout)
- assert.equal(reloaded.id,a.id);assert.equal(reloaded.request_key,a.request_key)
-})
-
 test('dropped async failure webhook is recovered from verified Stripe session status',async()=>{
  const o=await order(),attempt=await opened(o,'alipay')
  const failed=await lookup(attempt,session(attempt,'failed'))
@@ -568,4 +558,15 @@ test('refund order synchronization never changes a non-Sandbox paid order',async
  const {rows:[saved]}=await pool.query('SELECT payment_source,payment_status FROM orders WHERE id=$1',[a.order_id])
  assert.equal(saved.payment_source,'legacy-other-provider')
  assert.equal(saved.payment_status,'paid')
+})
+
+// Must run last: it closes the shared PGlite instance to verify cold restart.
+test('fresh process restores persisted PostgreSQL snapshot and durable request key',async()=>{
+ const o=await order(),a=await reserve(o)
+ const archive=join(dir,'database.tar');writeFileSync(archive,Buffer.from(await (await db.pg.dumpDataDir('none')).arrayBuffer()))
+ await db.pg.close();db=null
+ const child=spawnSync(process.execPath,[fileURLToPath(new URL('./helpers/sandbox-restart-reader.mjs',import.meta.url)),archive,a.id],{encoding:'utf8'})
+ assert.equal(child.status,0,child.stderr)
+ const reloaded=JSON.parse(child.stdout)
+ assert.equal(reloaded.id,a.id);assert.equal(reloaded.request_key,a.request_key)
 })
