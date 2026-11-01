@@ -114,7 +114,7 @@ test('successful HTTP refund POST with malformed JSON enters review rather than 
 test('Stripe refund POST server errors require review; preflight GET errors remain retryable',async()=>{
  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>
   url.endsWith('/refunds')?{ok:false,status:500}:{ok:true,json:async()=>session}
- )
+ })
  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
  const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:503})})
  await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
