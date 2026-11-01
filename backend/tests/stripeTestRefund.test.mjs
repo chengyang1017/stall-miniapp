@@ -328,3 +328,22 @@ test('refund POST HTTP 408 requires review while preflight GET 408 remains retry
  const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:408})})
  await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
 })
+
+test('pending merchant refund is not prematurely marked complete',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>({
+  ok:true,json:async()=>url.endsWith('/refunds')?
+   {...refund,amount:250,status:'pending'}:session
+ })})
+ const out=await client.refundPayment(job)
+ assert.equal(out.status,'pending')
+ assert.equal(out.completed,false)
+ assert.equal(out.amountCents,250)
+})
+test('pending late-payment compensation remains incomplete',async()=>{
+ const {client}=setup({refund:{...refund,status:'pending'}})
+ const out=await client.refundLatePayment(audit)
+ assert.equal(out.status,'pending')
+ assert.equal(out.completed,false)
+})
