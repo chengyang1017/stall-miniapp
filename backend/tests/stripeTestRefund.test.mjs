@@ -91,3 +91,12 @@ test('late refund creation rejects live-mode or wrong-currency Stripe response',
   assert.equal(calls.length,2)
  }
 })
+
+test('empty Stripe refund creation response is never treated as a retryable network error',async()=>{
+ for(const value of [null,undefined]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>({
+   ok:true,json:async()=>url.endsWith('/refunds')?value:session
+  })})
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ }
+})
