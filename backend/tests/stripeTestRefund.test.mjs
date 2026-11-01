@@ -365,3 +365,23 @@ test('failed late-payment compensation is not acknowledged as a successful refun
  const {client}=setup({refund:{...refund,status:'failed'}})
  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
 })
+
+test('refund status polling never completes non-success states',async()=>{
+ for(const status of ['pending','requires_action','failed','canceled']){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+   ok:true,json:async()=>({...refund,status})
+  })})
+  const result=await client.getRefundStatus('re_abc123')
+  assert.equal(result.status,status)
+  assert.equal(result.completed,false)
+  assert.equal(result.amountCents,1599)
+ }
+})
+test('refund status polling marks only succeeded state complete',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+  ok:true,json:async()=>({...refund,status:'succeeded'})
+ })})
+ const result=await client.getRefundStatus('re_abc123')
+ assert.equal(result.completed,true)
+ assert.equal(result.paymentIntentId,'pi_abc123')
+})
