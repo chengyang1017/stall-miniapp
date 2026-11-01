@@ -94,13 +94,17 @@ export async function reconcileOneSubmittedStripeTestRefund(db,client){
   if(updated.rowCount!==1)throw fail('refund_lease_lost')
   return {action:state,jobId:job.id}
  }catch(error){
+  // Mismatched provider identity or amount is an integrity incident, not a transient outage.
+  const mismatch=error?.message==='refund_status_mismatch'
   const updated=await db.query(`
- UPDATE stripe_test_refund_jobs SET lease_token=NULL,lease_expires_at=NULL,
+ UPDATE stripe_test_refund_jobs SET status=CASE WHEN $3 THEN 'review' ELSE 'submitted' END,
+ lease_token=NULL,lease_expires_at=NULL,
  next_attempt_at=clock_timestamp()+interval '5 minutes',
- last_error=$3,updated_at=clock_timestamp()
+ last_error=CASE WHEN $3 THEN 'refund_status_mismatch' ELSE 'refund_status_unavailable' END,
+ updated_at=clock_timestamp()
  WHERE id=$1 AND lease_token=$2 AND status='submitted' RETURNING id`,
- [job.id,job.lease_token,'refund_status_unavailable'])
+ [job.id,job.lease_token,mismatch])
   if(updated.rowCount!==1)throw fail('refund_lease_lost')
-  return {action:'submitted',jobId:job.id,lookupFailed:true}
+  return {action:mismatch?'review':'submitted',jobId:job.id,lookupFailed:!mismatch}
  }
 }

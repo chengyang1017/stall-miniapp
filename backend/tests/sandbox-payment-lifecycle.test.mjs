@@ -414,3 +414,18 @@ test('provider-declared failed refund is reviewed immediately, not submitted',as
  assert.equal(saved.provider_status,'failed')
  assert.equal(saved.last_error,'stripe_refund_failed')
 })
+
+test('submitted refund with mismatched Stripe amount goes directly to manual review',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:175,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='submitted',refund_id='re_mismatch',next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id])
+ const result=await reconcileOneSubmittedStripeTestRefund(pool,{getRefundStatus:async()=>({
+  refundId:'re_mismatch',amountCents:176,paymentIntentId:'pi_test',status:'succeeded'
+ })})
+ assert.equal(result.action,'review')
+ const {rows:[saved]}=await pool.query('SELECT status,last_error,lease_token FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'refund_status_mismatch')
+ assert.equal(saved.lease_token,null)
+})
