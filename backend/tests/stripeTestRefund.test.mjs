@@ -423,3 +423,9 @@ test('invalid late-payment audit identity never reaches Stripe',async()=>{
   assert.equal(calls,0)
  }
 })
+
+test('refund client rejects malformed or live credentials at construction',()=>{
+ for(const secretKey of [undefined,null,'','sk_live_abc','pk_test_abc','sk_test_','sk_test_bad-key','sk_test_bad key']){
+  assert.throws(()=>createStripeTestRefundClient({secretKey}),/stripe_test_key_required/)
+ }
+})
