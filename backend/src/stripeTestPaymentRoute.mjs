@@ -96,8 +96,8 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
     if(changed.rows.length!==1)throw Error('payment_cancellation_state_changed')
    }else{
     // A paid attempt is no longer active; do not mistake its absence for a successful cancel.
-    const {rows:[last]}=await pool.query("SELECT status FROM sandbox_payment_attempts WHERE order_id=$1 ORDER BY created_at DESC,id DESC LIMIT 1",[orderId])
-    if(last?.status==='succeeded'||last?.status==='refund_required')throw Error('payment_already_collected')
+    const {rows:[collected]}=await pool.query("SELECT 1 FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('succeeded','refund_required') LIMIT 1",[orderId])
+    if(collected)throw Error('payment_already_collected')
    }
    reply(res,200,await readSandboxPayment(pool,orderId));return true
   }
