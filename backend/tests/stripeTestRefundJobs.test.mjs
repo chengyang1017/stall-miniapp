@@ -96,3 +96,10 @@ test('polling rejects string refund amount as an integrity mismatch',async()=>{
  assert.equal(m.calls[1].args[2],true)
  assert.equal(m.calls[1].args[3],'refund_status_mismatch')
 })
+
+test('missing refund status data requires review',async()=>{
+ const m=fake([{rows:[{id:'job-1',lease_token:'lease',refund_id:'re_abc',amount_cents:'1599'}]},{rowCount:1,rows:[{id:'job-1'}]}])
+ const out=await reconcileOneSubmittedStripeTestRefund(m.db,{getRefundStatus:async()=>null})
+ assert.equal(out.action,'review')
+ assert.equal(m.calls[1].args[3],'stripe_refund_status_invalid')
+})

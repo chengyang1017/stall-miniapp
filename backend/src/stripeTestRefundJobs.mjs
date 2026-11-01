@@ -116,6 +116,7 @@ export async function reconcileOneSubmittedStripeTestRefund(db,client){
  try{
   if(!/^re_[A-Za-z0-9_]+$/.test(job.refund_id||''))throw fail('invalid_stripe_refund_id')
   const result=await client.getRefundStatus(job.refund_id)
+  if(result==null)throw fail('stripe_refund_status_invalid')
   if(result.refundId!==job.refund_id||!Number.isSafeInteger(result.amountCents)||result.amountCents!==Number(job.amount_cents)||job.payment_intent_id&&result.paymentIntentId!==job.payment_intent_id)
    throw fail('refund_status_mismatch')
   if(!['succeeded','pending','requires_action','failed','canceled'].includes(result.status))
