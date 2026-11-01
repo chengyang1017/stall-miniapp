@@ -69,8 +69,17 @@ export async function processOneStripeTestRefund(db,client){
   const status=await failStripeTestRefund(db,job,e)
   return {action:status,jobId:job.id}
  }
- // Provider returned a refund. Database finalization errors must never
- // requeue the Stripe operation; leave its lease for guarded recovery.
+ // Provider has answered: contradictory data must be reviewed, never retried.
+ if(!['succeeded','pending','requires_action','failed','canceled'].includes(result?.status)||
+    result.completed!==(result.status==='succeeded')){
+  const reviewed=await db.query(`UPDATE stripe_test_refund_jobs SET status='review',
+   lease_token=NULL,lease_expires_at=NULL,last_error='refund_provider_result_inconsistent',
+   updated_at=clock_timestamp() WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,
+   [job.id,job.lease_token])
+  if(reviewed.rowCount!==1)fail('refund_lease_lost')
+  return {action:'review',jobId:job.id}
+ }
+ // Database finalization failures must never requeue the Stripe operation.
  const status=await finishStripeTestRefund(db,job,result)
  return {action:status,jobId:job.id}
 }

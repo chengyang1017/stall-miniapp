@@ -499,3 +499,21 @@ test('conflicting provider refund completion flag cannot mark a failed refund su
  await assert.rejects(finishStripeTestRefund(fake,lease,{refundId:'re_conflict',status:'succeeded',completed:false}),/refund_provider_result_inconsistent/)
  assert.equal(writes,0)
 })
+
+test('contradictory provider refund result is quarantined immediately without retry',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:151,requestKey:randomUUID()})
+ const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ let calls=0
+ const result=await processOneStripeTestRefund(pool,{refundPayment:async()=>{
+  calls++
+  return {refundId:'re_contradictory',status:'failed',completed:true}
+ }})
+ assert.equal(result.action,'review')
+ assert.equal(calls,1)
+ const {rows:[saved]}=await pool.query('SELECT status,last_error,lease_token FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'refund_provider_result_inconsistent')
+ assert.equal(saved.lease_token,null)
+})
