@@ -385,3 +385,14 @@ test('refund status polling marks only succeeded state complete',async()=>{
  assert.equal(result.completed,true)
  assert.equal(result.paymentIntentId,'pi_abc123')
 })
+
+test('invalid refund status lookup IDs make no Stripe requests',async()=>{
+ for(const id of [null,undefined,'','re_','pi_abc123','re_bad-id',123,{},'re_abc/def']){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++;throw Error('unexpected Stripe request')
+  }})
+  await assert.rejects(client.getRefundStatus(id),/invalid_stripe_refund_id/)
+  assert.equal(calls,0)
+ }
+})
