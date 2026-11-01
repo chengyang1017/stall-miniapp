@@ -92,3 +92,24 @@ test('merchant staff cannot submit refunds',async()=>{
  assert.equal(response.status,403)
  assert.equal(response.body.error,'forbidden')
 })
+
+test('cancellation rejects unresolved Stripe Session creation instead of reporting success',async()=>{
+ const cancelUrl=new URL(url.href.replace('/stripe-test-checkout','/sandbox-cancel'))
+ for(const status of ['creating','review']){
+  let providerCalled=false
+  const pool={async query(sql){
+   if(sql.includes('sandbox_payment_environment'))return {rows:[{one:1}]}
+   if(sql.includes('SELECT o.id FROM orders'))return {rows:[{id:'11111111-1111-4111-8111-111111111111'}]}
+   if(sql.includes('FROM sandbox_payment_attempts WHERE order_id'))return {rows:[{id:'attempt',status,session_id:null}]}
+   throw Error('unexpected query: '+sql)
+  }}
+  const response=res()
+  await stripeTestPaymentRoute(requestJson({}),response,cancelUrl,pool,isolatedEnv,{
+   authenticate:async()=> 'test-customer',
+   client:{async getSession(){providerCalled=true;throw Error('should not fetch unknown session')}}
+  })
+  assert.equal(response.status,409,status)
+  assert.equal(response.body.error,'payment_cancellation_requires_review')
+  assert.equal(providerCalled,false)
+ }
+})
