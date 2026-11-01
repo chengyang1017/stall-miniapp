@@ -166,3 +166,25 @@ test('expired provider session must still transition the stored attempt before a
  assert.equal(response.body.error,'payment_cancellation_state_changed')
  assert.equal(reads,0)
 })
+
+test('manual-review payment status is stale and never calls Stripe again',async()=>{
+ const statusUrl=new URL(url.href.replace('/stripe-test-checkout','/sandbox-payment'))
+ let providerCalls=0
+ const pool={async query(sql){
+  if(sql.includes('sandbox_payment_environment'))return {rows:[{one:1}]}
+  if(sql.includes('SELECT o.id FROM orders'))return {rows:[{id:'11111111-1111-4111-8111-111111111111'}]}
+  if(sql.includes("status IN ('creating','open','processing','review')"))return {rows:[{id:'synthetic',status:'review',session_id:null}]}
+  if(sql.includes('FROM sandbox_payment_attempts WHERE order_id'))return {rows:[]}
+  if(sql.includes('FROM stripe_test_refund_jobs WHERE order_id'))return {rows:[]}
+  if(sql.includes('FROM sandbox_payment_receipts WHERE order_id'))return {rows:[]}
+  throw Error('unexpected query: '+sql)
+ }}
+ const response=res()
+ await stripeTestPaymentRoute({method:'GET',headers:{}},response,statusUrl,pool,isolatedEnv,{
+  authenticate:async()=> 'test-customer',
+  client:{async create(){providerCalls++},async getSession(){providerCalls++}}
+ })
+ assert.equal(response.status,200)
+ assert.equal(response.body.stale,true)
+ assert.equal(providerCalls,0)
+})

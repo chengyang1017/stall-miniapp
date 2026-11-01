@@ -62,8 +62,9 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   if(!scoped.rows.length){reply(res,404,{error:'order_not_found'});return true}
   if(action==='sandbox-payment'&&req.method==='GET'){
    let stale=false
-   const {rows}=await pool.query(`SELECT * FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('creating','open','processing') ORDER BY created_at DESC LIMIT 1`,[orderId])
-   if(rows[0])try{const a=await materializeSandboxAttempt(pool,client,rows[0]);await applySandboxObservation(pool,a,await client.getSession(a))}catch{stale=true}
+   const {rows}=await pool.query(`SELECT * FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('creating','open','processing','review') ORDER BY created_at DESC LIMIT 1`,[orderId])
+   if(rows[0]?.status==='review')stale=true
+   else if(rows[0])try{const a=await materializeSandboxAttempt(pool,client,rows[0]);await applySandboxObservation(pool,a,await client.getSession(a))}catch{stale=true}
    reply(res,200,{...await readSandboxPayment(pool,orderId),stale,canRefund:!!store&&['owner','manager'].includes(store.role)});return true
   }
   if(req.method!=='POST'){reply(res,405,{error:'method_not_allowed'});return true}
