@@ -10,7 +10,11 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
   const response=await fetchImpl('https://api.stripe.com/v1/'+path,{
    ...options,signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+secretKey,...options.headers}
   })
-  if(!response.ok)fail('stripe_refund_api_failed')
+  if(!response.ok){
+   // A 5xx after refund POST may mean Stripe processed the refund before failing.
+   if(options.method==='POST'&&response.status>=500)fail('stripe_refund_unconfirmed')
+   fail('stripe_refund_api_failed')
+  }
   try{return await response.json()}
   catch(error){
    if(options.method==='POST')fail('stripe_refund_unconfirmed')
