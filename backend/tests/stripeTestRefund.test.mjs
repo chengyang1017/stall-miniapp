@@ -4,7 +4,7 @@ import {createStripeTestRefundClient} from '../src/stripeTestRefund.mjs'
 const audit={provider:'stripe:sandbox',event_type:'refund_required',
  order_id:'11111111-1111-4111-8111-111111111111',provider_event_id:'cs_test_abc',amount_cents:'1599'}
 const session={id:'cs_test_abc',livemode:false,payment_status:'paid',
- payment_intent:'pi_abc123',client_reference_id:audit.order_id,amount_total:1599}
+ payment_intent:'pi_abc123',client_reference_id:audit.order_id,amount_total:1599,currency:'cny'}
 const refund={id:'re_abc123',payment_intent:'pi_abc123',amount:1599,status:'succeeded',livemode:false,currency:'cny'}
 function setup(overrides={}){
  const calls=[];const client=createStripeTestRefundClient({secretKey:'sk_test_123',
@@ -140,4 +140,12 @@ test('refund POST connection reset requires review but GET connection reset prop
  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
  const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{throw reset}})
  await assert.rejects(preflight.refundLatePayment(audit),error=>error===reset)
+})
+
+test('late-payment refund rejects wrong or missing Checkout Session currency before POST',async()=>{
+ for(const currency of ['usd',undefined]){
+  const {client,calls}=setup({session:{...session,currency}})
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_session_mismatch/)
+  assert.equal(calls.length,1)
+ }
 })

@@ -61,7 +61,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
       !Number.isSafeInteger(Number(audit.amount_cents))||Number(audit.amount_cents)<=0)fail('invalid_refund_audit')
    const session=await call('checkout/sessions/'+encodeURIComponent(audit.provider_event_id))
    if(session.id!==audit.provider_event_id||session.livemode!==false||
-      session.payment_status!=='paid'||!intentId.test(session.payment_intent||'')||
+      session.payment_status!=='paid'||session.currency!=='cny'||!intentId.test(session.payment_intent||'')||
       session.client_reference_id!==audit.order_id||
       Number(session.amount_total)!==Number(audit.amount_cents))fail('stripe_refund_session_mismatch')
    const body=new URLSearchParams({payment_intent:session.payment_intent,
