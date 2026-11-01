@@ -7,6 +7,7 @@ import {sandboxEnabled,assertSandboxDatabase} from './sandboxPaymentWorker.mjs'
 import {reserveSandboxAttempt,materializeSandboxAttempt,applySandboxObservation,requestSandboxRefund,readSandboxPayment} from './sandboxPaymentStore.mjs'
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const key=/^[A-Za-z0-9_-]{10,100}$/
+export const sandboxCancellationPending=observation=>observation.session.status==='complete'&&!observation.event
 const reply=(res,status,body)=>{res.writeHead(status,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify(body))}
 async function read(req){let n=0;const parts=[];for await(const part of req){n+=part.length;if(n>262144)throw Error('too_large');parts.push(Buffer.from(part))}return Buffer.concat(parts)}
 async function json(req){try{const b=await read(req);return b.length?JSON.parse(b):{}}catch(e){if(e.message==='too_large')throw e;throw Error('invalid_json')}}
@@ -85,7 +86,7 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
     await applySandboxObservation(pool,a,observation)
     // An asynchronous method can complete Checkout while payment is still pending.
     // Do not let the customer switch channels until provider settlement is resolved.
-    if(observation.session.status==='complete'&&!observation.event)throw Error('payment_cancellation_pending')
+    if(sandboxCancellationPending(observation))throw Error('payment_cancellation_pending')
     if(observation.session.status==='expired')await pool.query("UPDATE sandbox_payment_attempts SET status='cancelled' WHERE id=$1 AND status='expired'",[a.id])
    }
    reply(res,200,await readSandboxPayment(pool,orderId));return true
