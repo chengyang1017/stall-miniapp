@@ -202,3 +202,19 @@ test('merchant refund rejects mismatched paid session before making refund POST'
   assert.equal(calls.length,1)
  }
 })
+
+test('merchant refund rejects unconfirmed Stripe refund identity and amount',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ for(const changes of [{id:'invalid'},{payment_intent:'pi_other'},{amount:251},
+  {currency:'usd'},{livemode:true},{status:'unknown'},{status:'succeeded',amount:'250'}]){
+  const calls=[]
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+   calls.push(url)
+   return {ok:true,json:async()=>url.endsWith('/refunds')?
+    {...refund,amount:250,...changes}:session}
+  }})
+  await assert.rejects(client.refundPayment(job),/stripe_refund_unconfirmed/)
+  assert.equal(calls.length,2)
+ }
+})
