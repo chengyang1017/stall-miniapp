@@ -87,10 +87,13 @@ export async function reconcileOneSubmittedStripeTestRefund(db,client){
   const state=result.status==='succeeded'?'succeeded':
     ['failed','canceled'].includes(result.status)?'review':'submitted'
   const updated=await db.query(`
- UPDATE stripe_test_refund_jobs SET status=$3,lease_token=NULL,lease_expires_at=NULL,
+ UPDATE stripe_test_refund_jobs SET status=$3,provider_status=$4,
+ payment_intent_id=COALESCE(payment_intent_id,$5),
+ lease_token=NULL,lease_expires_at=NULL,
  next_attempt_at=clock_timestamp()+interval '5 minutes',
  last_error=CASE WHEN $3='review' THEN 'stripe_refund_failed' ELSE NULL END,updated_at=clock_timestamp()
- WHERE id=$1 AND lease_token=$2 AND status='submitted' RETURNING id`,[job.id,job.lease_token,state])
+ WHERE id=$1 AND lease_token=$2 AND status='submitted' RETURNING id`,
+ [job.id,job.lease_token,state,result.status,result.paymentIntentId||null])
   if(updated.rowCount!==1)throw fail('refund_lease_lost')
   return {action:state,jobId:job.id}
  }catch(error){

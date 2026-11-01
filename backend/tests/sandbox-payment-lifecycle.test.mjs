@@ -429,3 +429,18 @@ test('submitted refund with mismatched Stripe amount goes directly to manual rev
  assert.equal(saved.last_error,'refund_status_mismatch')
  assert.equal(saved.lease_token,null)
 })
+
+test('refund polling persists verified Stripe status and payment intent',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:195,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='submitted',refund_id='re_polled_status',next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id])
+ const result=await reconcileOneSubmittedStripeTestRefund(pool,{getRefundStatus:async()=>({
+  refundId:'re_polled_status',amountCents:195,paymentIntentId:'pi_polled_status',status:'succeeded'
+ })})
+ assert.equal(result.action,'succeeded')
+ const {rows:[saved]}=await pool.query('SELECT status,provider_status,payment_intent_id FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'succeeded')
+ assert.equal(saved.provider_status,'succeeded')
+ assert.equal(saved.payment_intent_id,'pi_polled_status')
+})
