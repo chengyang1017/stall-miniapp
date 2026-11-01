@@ -5,7 +5,7 @@ const audit={provider:'stripe:sandbox',event_type:'refund_required',
  order_id:'11111111-1111-4111-8111-111111111111',provider_event_id:'cs_test_abc',amount_cents:'1599'}
 const session={id:'cs_test_abc',livemode:false,payment_status:'paid',
  payment_intent:'pi_abc123',client_reference_id:audit.order_id,amount_total:1599}
-const refund={id:'re_abc123',payment_intent:'pi_abc123',amount:1599,status:'succeeded'}
+const refund={id:'re_abc123',payment_intent:'pi_abc123',amount:1599,status:'succeeded',livemode:false,currency:'cny'}
 function setup(overrides={}){
  const calls=[];const client=createStripeTestRefundClient({secretKey:'sk_test_123',
  fetchImpl:async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>url.endsWith('/refunds')?(overrides.refund||refund):(overrides.session||session)}}})
@@ -70,6 +70,15 @@ test('rejects non-integer or non-positive refund amounts from Stripe status look
  for(const amount of [undefined,null,0,-1,'1599',1.5,Number.MAX_SAFE_INTEGER+1]){
   const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
    ok:true,json:async()=>({...refund,amount})
+  })})
+  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+ }
+})
+
+test('status lookup rejects live-mode or wrong-currency refunds',async()=>{
+ for(const change of [{livemode:true},{livemode:undefined},{currency:'usd'},{currency:undefined}]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+   ok:true,json:async()=>({...refund,...change})
   })})
   await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
  }
