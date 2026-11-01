@@ -666,6 +666,20 @@ test('refund amount mismatch is quarantined before marking refund succeeded',asy
  assert.equal(saved.lease_token,null)
 })
 
+test('string refund amount cannot pass provider response integrity checks',async()=>{
+ const attempt=await opened(await order(),'card')
+ await pay(attempt)
+ const job=await requestSandboxRefund(pool,{orderId:attempt.order_id,subject:'synthetic-owner',amountCents:197,requestKey:randomUUID()})
+ const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ const outcome=await processOneStripeTestRefund(pool,{refundPayment:async()=>({
+  refundId:'re_string_amount',amountCents:'197',status:'succeeded',completed:true
+ })})
+ assert.equal(outcome.action,'review')
+ const {rows:[saved]}=await pool.query('SELECT status,last_error FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'refund_amount_mismatch')
+})
+
 // Must run last: it closes the shared PGlite instance to verify cold restart.
 test('fresh process restores persisted PostgreSQL snapshot and durable request key',async()=>{
  const o=await order(),a=await reserve(o)
