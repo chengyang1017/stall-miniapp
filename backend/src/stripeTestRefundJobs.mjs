@@ -98,6 +98,7 @@ export async function reconcileOneSubmittedStripeTestRefund(db,client){
  const job=claim.rows[0]
  if(!job)return {action:'idle'}
  try{
+  if(!/^re_[A-Za-z0-9_]+$/.test(job.refund_id||''))throw fail('invalid_stripe_refund_id')
   const result=await client.getRefundStatus(job.refund_id)
   if(result.refundId!==job.refund_id||result.amountCents!==Number(job.amount_cents)||job.payment_intent_id&&result.paymentIntentId!==job.payment_intent_id)
    throw fail('refund_status_mismatch')
@@ -108,7 +109,7 @@ export async function reconcileOneSubmittedStripeTestRefund(db,client){
   return await finalizeSubmittedRefund(db,job,result,state)
  }catch(error){
   if(error?.message==='refund_persist_failed')throw error
-  const mismatch=['refund_status_mismatch','refund_status_unknown','stripe_refund_status_invalid'].includes(error?.message)
+  const mismatch=['refund_status_mismatch','refund_status_unknown','stripe_refund_status_invalid','invalid_stripe_refund_id'].includes(error?.message)
   const updated=await db.query(`
  UPDATE stripe_test_refund_jobs SET status=CASE WHEN $3 THEN 'review' ELSE 'submitted' END,
  lease_token=NULL,lease_expires_at=NULL,

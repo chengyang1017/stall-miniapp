@@ -590,6 +590,21 @@ test('invalid Stripe refund status payload enters review rather than polling ind
  assert.equal(saved.lease_token,null)
 })
 
+test('submitted refund with missing provider ID is quarantined without Stripe lookup',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:181,requestKey:randomUUID()})
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='submitted',refund_id=NULL,next_attempt_at=now()-interval '1 minute' WHERE id=$1",[job.id])
+ let queried=false
+ const result=await reconcileOneSubmittedStripeTestRefund(pool,{getRefundStatus:async()=>{queried=true;throw Error('should_not_query')}})
+ assert.equal(result.action,'review')
+ assert.equal(queried,false)
+ const {rows:[saved]}=await pool.query('SELECT status,last_error,lease_token FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'invalid_stripe_refund_id')
+ assert.equal(saved.lease_token,null)
+})
+
 // Must run last: it closes the shared PGlite instance to verify cold restart.
 test('fresh process restores persisted PostgreSQL snapshot and durable request key',async()=>{
  const o=await order(),a=await reserve(o)
