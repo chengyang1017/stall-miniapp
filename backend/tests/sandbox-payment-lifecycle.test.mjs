@@ -7,7 +7,7 @@ import {join} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {sandboxDatabase} from './helpers/sandbox-pglite.mjs'
-import {reserveSandboxAttempt,materializeSandboxAttempt,applySandboxObservation,requestSandboxRefund,readSandboxPayment} from '../src/sandboxPaymentStore.mjs'
+import {reserveSandboxAttempt,materializeSandboxAttempt,applySandboxObservation,requestSandboxRefund,readSandboxPayment,sandboxSessionState} from '../src/sandboxPaymentStore.mjs'
 import {createStripeSandboxClient} from '../src/stripeSandboxClient.mjs'
 import {createStripeTestRefundClient} from '../src/stripeTestRefund.mjs'
 import {processOneStripeTestRefund,reconcileOneSubmittedStripeTestRefund} from '../src/stripeTestRefundJobs.mjs'
@@ -351,4 +351,15 @@ test('fresh process restores persisted PostgreSQL snapshot and durable request k
  assert.equal(child.status,0,child.stderr)
  const reloaded=JSON.parse(child.stdout)
  assert.equal(reloaded.id,a.id);assert.equal(reloaded.request_key,a.request_key)
+})
+
+test('dropped async failure webhook is recovered from verified Stripe session status',async()=>{
+ const o=await order(),attempt=await opened(o,'alipay')
+ const failed=await lookup(attempt,session(attempt,'failed'))
+ assert.equal(sandboxSessionState(failed.session),'failed')
+ await applySandboxObservation(pool,attempt,failed)
+ assert.equal((await readSandboxPayment(pool,o.id)).attempts[0].status,'failed')
+ const retry=await reserve(o,'card')
+ assert.notEqual(retry.id,attempt.id)
+ assert.equal(retry.order_id,o.id)
 })

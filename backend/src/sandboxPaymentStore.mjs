@@ -52,7 +52,7 @@ export async function materializeSandboxAttempt(pool,client,attempt){
 export function sandboxSessionState(session){
  if(session.payment_status==='paid')return 'succeeded'
  if(session.status==='expired')return 'expired'
- if(session.status==='complete')return session.payment_intent?.status==='canceled'?'failed':'processing'
+ if(session.status==='complete')return ['canceled','requires_payment_method'].includes(session.payment_intent?.status)?'failed':'processing'
  if(session.payment_intent?.status==='requires_action')return 'processing'
  return 'open'
 }
