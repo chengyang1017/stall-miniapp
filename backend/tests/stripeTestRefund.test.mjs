@@ -100,3 +100,13 @@ test('empty Stripe refund creation response is never treated as a retryable netw
   await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
  }
 })
+
+test('successful HTTP refund POST with malformed JSON enters review rather than retry',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>({
+  ok:true,json:async()=>{
+   if(url.endsWith('/refunds'))throw new SyntaxError('Unexpected end of JSON input')
+   return session
+  }
+ })})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+})

@@ -11,7 +11,11 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
    ...options,signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+secretKey,...options.headers}
   })
   if(!response.ok)fail('stripe_refund_api_failed')
-  return response.json()
+  try{return await response.json()}
+  catch(error){
+   if(options.method==='POST')fail('stripe_refund_unconfirmed')
+   throw error
+  }
  }
  return Object.freeze({
   async refundPayment(job){
