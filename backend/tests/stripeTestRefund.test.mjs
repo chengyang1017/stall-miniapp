@@ -429,3 +429,14 @@ test('refund client rejects malformed or live credentials at construction',()=>{
   assert.throws(()=>createStripeTestRefundClient({secretKey}),/stripe_test_key_required/)
  }
 })
+
+test('refund requests authenticate only with test secret and use Stripe HTTPS API',async()=>{
+ const {client,calls}=setup()
+ await client.refundLatePayment(audit)
+ assert.equal(calls.length,2)
+ for(const call of calls){
+  assert.match(call.url,/^https:\/\/api\.stripe\.com\/v1\//)
+  assert.equal(call.options.headers.Authorization,'Bearer sk_test_123')
+  assert.equal(call.options.signal instanceof AbortSignal,true)
+ }
+})
