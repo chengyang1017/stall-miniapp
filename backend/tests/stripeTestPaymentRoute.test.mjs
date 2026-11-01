@@ -129,3 +129,11 @@ test('cancellation distinguishes already collected, pending, and expired Stripe 
  assert.equal(sandboxCancellationConflict(pending),'payment_cancellation_pending')
  assert.equal(sandboxCancellationConflict(expired),null)
 })
+
+test('only provider-confirmed expiry permits cancellation and channel switching',()=>{
+ for(const status of ['open','complete']){
+  const observation={session:{status,payment_status:'unpaid'},event:null}
+  assert.equal(sandboxCancellationConflict(observation),status==='complete'?'payment_cancellation_pending':'payment_cancellation_unconfirmed')
+ }
+ assert.equal(sandboxCancellationConflict({session:{status:'expired',payment_status:'unpaid'},event:null}),null)
+})
