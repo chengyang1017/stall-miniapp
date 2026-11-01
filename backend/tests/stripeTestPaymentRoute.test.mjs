@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {stripeTestPaymentRoute,sandboxCancellationPending,sandboxCancellationConflict} from '../src/stripeTestPaymentRoute.mjs'
+import {stripeTestPaymentRoute,sandboxCancellationPending,sandboxCancellationConflict,sandboxCheckoutStillOpen} from '../src/stripeTestPaymentRoute.mjs'
 const url=new URL('http://localhost/v1/stores/demo/orders/11111111-1111-4111-8111-111111111111/stripe-test-checkout')
 const callback=new URL('http://localhost/v1/payments/stripe-test/webhook')
 const res=()=>({status:null,body:null,writeHead(s){this.status=s},end(s){this.body=JSON.parse(s)}})
@@ -187,4 +187,14 @@ test('manual-review payment status is stale and never calls Stripe again',async(
  assert.equal(response.status,200)
  assert.equal(response.body.stale,true)
  assert.equal(providerCalls,0)
+})
+
+
+test('checkout only returns persisted open session URL for the same attempt',()=>{
+ const attempt={session_id:'cs_test_good',checkout_url:'https://checkout.stripe.com/c/pay/test'}
+ assert.equal(sandboxCheckoutStillOpen(attempt,{status:'open',...attempt}),true)
+ assert.equal(sandboxCheckoutStillOpen(attempt,{status:'cancelled',...attempt}),false)
+ assert.equal(sandboxCheckoutStillOpen(attempt,{status:'open',session_id:'cs_test_other',checkout_url:attempt.checkout_url}),false)
+ assert.equal(sandboxCheckoutStillOpen(attempt,{status:'open',session_id:attempt.session_id,checkout_url:'https://checkout.stripe.com/other'}),false)
+ assert.equal(sandboxCheckoutStillOpen(attempt,null),false)
 })

@@ -9,6 +9,7 @@ const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const key=/^[A-Za-z0-9_-]{10,100}$/
 export const sandboxCancellationPending=observation=>observation.session.status==='complete'&&!observation.event
 export const sandboxCancellationConflict=observation=>observation.event?'payment_already_collected':sandboxCancellationPending(observation)?'payment_cancellation_pending':observation.session.status!=='expired'?'payment_cancellation_unconfirmed':null
+export const sandboxCheckoutStillOpen=(attempt,persisted)=>persisted?.status==='open'&&persisted.session_id===attempt.session_id&&persisted.checkout_url===attempt.checkout_url
 const reply=(res,status,body)=>{res.writeHead(status,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify(body))}
 async function read(req){let n=0;const parts=[];for await(const part of req){n+=part.length;if(n>262144)throw Error('too_large');parts.push(Buffer.from(part))}return Buffer.concat(parts)}
 async function json(req){try{const b=await read(req);return b.length?JSON.parse(b):{}}catch(e){if(e.message==='too_large')throw e;throw Error('invalid_json')}}
@@ -109,6 +110,8 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   const observation=await client.getSession(a)
   await applySandboxObservation(pool,a,observation)
   if(observation.session.status!=='open'||observation.event)throw Error('payment_not_open_refresh')
+  const {rows:[persisted]}=await pool.query("SELECT status,session_id,checkout_url FROM sandbox_payment_attempts WHERE id=$1",[a.id])
+  if(!sandboxCheckoutStillOpen(a,persisted))throw Error('payment_not_open_refresh')
   reply(res,200,{sessionId:a.session_id,url:a.checkout_url,channel:a.channel,provider:'stripe',testMode:true,nativePayment:false})
  }catch(e){
   const invalid=new Set(['invalid_json','invalid_payment_channel','invalid_refund_request','invalid_idempotency_key','stripe_signature_missing','stripe_signature_invalid','invalid_test_event','invalid_order_reference','stripe_session_mismatch','stripe_paid_intent_mismatch'])
