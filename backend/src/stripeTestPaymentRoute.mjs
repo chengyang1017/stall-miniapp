@@ -90,7 +90,8 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
     // Do not let the customer switch channels until provider settlement is resolved.
     const conflict=sandboxCancellationConflict(observation)
     if(conflict)throw Error(conflict)
-    await pool.query("UPDATE sandbox_payment_attempts SET status='cancelled' WHERE id=$1 AND status='expired'",[a.id])
+    const changed=await pool.query("UPDATE sandbox_payment_attempts SET status='cancelled' WHERE id=$1 AND status='expired' RETURNING id",[a.id])
+    if(changed.rows.length!==1)throw Error('payment_cancellation_state_changed')
    }
    reply(res,200,await readSandboxPayment(pool,orderId));return true
   }
@@ -110,7 +111,7 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   reply(res,200,{sessionId:a.session_id,url:a.checkout_url,channel:a.channel,provider:'stripe',testMode:true,nativePayment:false})
  }catch(e){
   const invalid=new Set(['invalid_json','invalid_payment_channel','invalid_refund_request','invalid_idempotency_key','stripe_signature_missing','stripe_signature_invalid','invalid_test_event','invalid_order_reference','stripe_session_mismatch','stripe_paid_intent_mismatch'])
-  const conflict=new Set(['active_payment_channel_conflict','payment_not_open_refresh','refund_amount_exceeds_remaining','refund_idempotency_conflict','payment_order_not_payable','payment_manual_review_required','payment_cancellation_requires_review','payment_cancellation_pending','payment_already_collected','payment_cancellation_unconfirmed','trusted_payment_required'])
+  const conflict=new Set(['active_payment_channel_conflict','payment_not_open_refresh','refund_amount_exceeds_remaining','refund_idempotency_conflict','payment_order_not_payable','payment_manual_review_required','payment_cancellation_requires_review','payment_cancellation_pending','payment_already_collected','payment_cancellation_unconfirmed','payment_cancellation_state_changed','trusted_payment_required'])
   const status=e.message==='too_large'?413:invalid.has(e.message)?400:conflict.has(e.message)?409:503
   reply(res,status,{error:status===503?'payment_test_unavailable':e.message})
  }

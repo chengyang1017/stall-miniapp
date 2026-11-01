@@ -137,3 +137,32 @@ test('only provider-confirmed expiry permits cancellation and channel switching'
  }
  assert.equal(sandboxCancellationConflict({session:{status:'expired',payment_status:'unpaid'},event:null}),null)
 })
+
+test('expired provider session must still transition the stored attempt before acknowledging cancel',async()=>{
+ const cancelUrl=new URL(url.href.replace('/stripe-test-checkout','/sandbox-cancel'))
+ let reads=0
+ const attempt={id:'attempt-1',order_id:'11111111-1111-4111-8111-111111111111',status:'open',session_id:'cs_test_synthetic'}
+ const pool={connect:async()=>({
+  async query(sql){
+   if(sql==='BEGIN'||sql==='COMMIT'||sql==='ROLLBACK'||sql.startsWith('SET LOCAL'))return {rows:[]}
+   if(sql.includes('FROM orders WHERE id=$1 FOR UPDATE'))return {rows:[{id:attempt.order_id}]}
+   if(sql.includes('FROM sandbox_payment_attempts WHERE id=$1 FOR UPDATE'))return {rows:[attempt]}
+   if(sql.startsWith('UPDATE sandbox_payment_attempts SET status=$2'))return {rows:[]}
+   throw Error('unexpected transaction query: '+sql)
+  },release(){}
+ }),async query(sql){
+  if(sql.includes('sandbox_payment_environment'))return {rows:[{one:1}]}
+  if(sql.includes('SELECT o.id FROM orders'))return {rows:[{id:attempt.order_id}]}
+  if(sql.includes('FROM sandbox_payment_attempts WHERE order_id'))return {rows:[attempt]}
+  if(sql.includes("SET status='cancelled'"))return {rows:[]}
+  reads++;throw Error('unexpected query: '+sql)
+ }}
+ const observation={session:{id:attempt.session_id,status:'expired',payment_status:'unpaid'},event:null,actualChannel:null,paymentIntentId:null,failureCode:null}
+ const response=res()
+ await stripeTestPaymentRoute(requestJson({}),response,cancelUrl,pool,isolatedEnv,{
+  authenticate:async()=> 'test-customer',client:{getSession:async()=>observation}
+ })
+ assert.equal(response.status,409)
+ assert.equal(response.body.error,'payment_cancellation_state_changed')
+ assert.equal(reads,0)
+})
