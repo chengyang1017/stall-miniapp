@@ -292,3 +292,20 @@ test('refund POST with malformed HTTP failure status is treated as uncertain',as
   await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
  }
 })
+
+test('late-payment compensation uses stable session idempotency and exact audit amount',async()=>{
+ const {client,calls}=setup()
+ const result=await client.refundLatePayment(audit)
+ assert.equal(result.refundId,refund.id)
+ assert.equal(result.amountCents,1599)
+ assert.equal(calls.length,2)
+ const post=calls[1].options
+ assert.equal(post.method,'POST')
+ assert.equal(post.headers['Idempotency-Key'],'late-refund:'+session.id)
+ const body=new URLSearchParams(post.body)
+ assert.equal(body.get('payment_intent'),session.payment_intent)
+ assert.equal(body.get('amount'),'1599')
+ assert.equal(body.get('reason'),'requested_by_customer')
+ assert.equal(body.get('metadata[orderId]'),audit.order_id)
+ assert.equal(body.get('metadata[checkoutSessionId]'),session.id)
+})
