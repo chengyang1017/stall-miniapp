@@ -489,3 +489,13 @@ test('orphaned processing refund without lease expiry is quarantined for review'
  assert.equal(saved.lease_token,null)
  assert.equal(saved.lease_expires_at,null)
 })
+
+test('conflicting provider refund completion flag cannot mark a failed refund succeeded',async()=>{
+ const {finishStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ let writes=0
+ const fake={async query(){writes++;throw Error('unexpected write')}}
+ const lease={id:'11111111-1111-4111-8111-111111111111',lease_token:'22222222-2222-4222-8222-222222222222'}
+ await assert.rejects(finishStripeTestRefund(fake,lease,{refundId:'re_conflict',status:'failed',completed:true}),/refund_provider_result_inconsistent/)
+ await assert.rejects(finishStripeTestRefund(fake,lease,{refundId:'re_conflict',status:'succeeded',completed:false}),/refund_provider_result_inconsistent/)
+ assert.equal(writes,0)
+})
