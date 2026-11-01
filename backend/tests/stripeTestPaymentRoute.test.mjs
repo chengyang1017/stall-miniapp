@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {stripeTestPaymentRoute} from '../src/stripeTestPaymentRoute.mjs'
+import {stripeTestPaymentRoute,sandboxCancellationPending} from '../src/stripeTestPaymentRoute.mjs'
 const url=new URL('http://localhost/v1/stores/demo/orders/11111111-1111-4111-8111-111111111111/stripe-test-checkout')
 const callback=new URL('http://localhost/v1/payments/stripe-test/webhook')
 const res=()=>({status:null,body:null,writeHead(s){this.status=s},end(s){this.body=JSON.parse(s)}})
@@ -112,4 +112,11 @@ test('cancellation rejects unresolved Stripe Session creation instead of reporti
   assert.equal(response.body.error,'payment_cancellation_requires_review')
   assert.equal(providerCalled,false)
  }
+})
+
+test('asynchronous checkout cannot be treated as canceled while unpaid',()=>{
+ assert.equal(sandboxCancellationPending({session:{status:'complete',payment_status:'unpaid'},event:null}),true)
+ assert.equal(sandboxCancellationPending({session:{status:'complete',payment_status:'paid'},event:{status:'succeeded'}}),false)
+ assert.equal(sandboxCancellationPending({session:{status:'expired',payment_status:'unpaid'},event:null}),false)
+ assert.equal(sandboxCancellationPending({session:{status:'open',payment_status:'unpaid'},event:null}),false)
 })
