@@ -635,6 +635,24 @@ test('refund idempotency-window review requires the current processing lease',as
  assert.equal(providerCalls,0)
 })
 
+test('Stripe refund identity mismatch goes to review without retry',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:191,requestKey:randomUUID()})
+ const {processOneStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ let calls=0
+ const result=await processOneStripeTestRefund(pool,{refundPayment:async()=>{
+  calls++
+  throw Error('stripe_refund_session_mismatch')
+ }})
+ assert.equal(result.action,'review')
+ assert.equal(calls,1)
+ const {rows:[saved]}=await pool.query('SELECT status,last_error,lease_token FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'stripe_refund_session_mismatch')
+ assert.equal(saved.lease_token,null)
+})
+
 // Must run last: it closes the shared PGlite instance to verify cold restart.
 test('fresh process restores persisted PostgreSQL snapshot and durable request key',async()=>{
  const o=await order(),a=await reserve(o)

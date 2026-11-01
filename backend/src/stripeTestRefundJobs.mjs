@@ -68,6 +68,16 @@ export async function processOneStripeTestRefund(db,client){
  try{
   result=job.kind==='merchant'?await client.refundPayment(job):await client.refundLatePayment(audit)
  }catch(e){
+  // A provider identity mismatch or invalid refund response is not a transient
+  // network outage. Reissuing a refund could duplicate an uncertain outcome.
+  if(['stripe_refund_session_mismatch','stripe_refund_unconfirmed','invalid_refund_request','invalid_refund_audit'].includes(e?.message)){
+   const reviewed=await db.query(`UPDATE stripe_test_refund_jobs SET status='review',
+    lease_token=NULL,lease_expires_at=NULL,last_error=$3,updated_at=clock_timestamp()
+    WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,
+    [job.id,job.lease_token,e.message])
+   if(reviewed.rowCount!==1)fail('refund_lease_lost')
+   return {action:'review',jobId:job.id}
+  }
   const status=await failStripeTestRefund(db,job,e)
   return {action:status,jobId:job.id}
  }
