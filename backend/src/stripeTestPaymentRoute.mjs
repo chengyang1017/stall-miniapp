@@ -75,7 +75,10 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   }
   if(merchant){reply(res,403,{error:'customer_payment_only'});return true}
   if(action==='sandbox-cancel'){
-   const {rows:[a]}=await pool.query(`SELECT * FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('open','processing') ORDER BY created_at DESC LIMIT 1`,[orderId])
+   const {rows:[a]}=await pool.query(`SELECT * FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('creating','open','processing','review') ORDER BY created_at DESC LIMIT 1`,[orderId])
+   // A creating/review attempt may have reached Stripe without a persisted Session ID.
+   // Never claim cancellation before that provider outcome can be verified.
+   if(a?.status==='creating'||a?.status==='review'||a&&!a.session_id)throw Error('payment_cancellation_requires_review')
    if(a){
     const current=await client.getSession(a)
     const observation=current.session.status==='open'?await client.expire(a):current
@@ -100,7 +103,7 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   reply(res,200,{sessionId:a.session_id,url:a.checkout_url,channel:a.channel,provider:'stripe',testMode:true,nativePayment:false})
  }catch(e){
   const invalid=new Set(['invalid_json','invalid_payment_channel','invalid_refund_request','invalid_idempotency_key','stripe_signature_missing','stripe_signature_invalid','invalid_test_event','invalid_order_reference','stripe_session_mismatch','stripe_paid_intent_mismatch'])
-  const conflict=new Set(['active_payment_channel_conflict','payment_not_open_refresh','refund_amount_exceeds_remaining','refund_idempotency_conflict','payment_order_not_payable','payment_manual_review_required','trusted_payment_required'])
+  const conflict=new Set(['active_payment_channel_conflict','payment_not_open_refresh','refund_amount_exceeds_remaining','refund_idempotency_conflict','payment_order_not_payable','payment_manual_review_required','payment_cancellation_requires_review','trusted_payment_required'])
   const status=e.message==='too_large'?413:invalid.has(e.message)?400:conflict.has(e.message)?409:503
   reply(res,status,{error:status===503?'payment_test_unavailable':e.message})
  }
