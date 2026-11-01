@@ -1,0 +1,43 @@
+name: Sandbox payment regression tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/src/**'
+      - 'backend/tests/**'
+      - 'backend/sql/**'
+      - 'backend/package.json'
+      - 'backend/package-lock.json'
+      - 'miniprogram/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/sandbox-payment.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sandbox-payments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
+      - name: Payment unit and route tests
+        run: npm run test:payment --prefix backend
+      - name: Sandbox lifecycle integration tests (isolated PGlite)
+        run: npm run test:payment:lifecycle --prefix backend
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Frontend validation
+        run: npm run verify:frontend
