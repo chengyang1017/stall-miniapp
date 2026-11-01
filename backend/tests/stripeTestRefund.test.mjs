@@ -318,3 +318,13 @@ test('refund POST HTTP 429 requires review while preflight GET 429 remains retry
  const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:429})})
  await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
 })
+
+test('refund POST HTTP 408 requires review while preflight GET 408 remains retryable',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  if(url.endsWith('/refunds'))return {ok:false,status:408}
+  return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:408})})
+ await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
+})
