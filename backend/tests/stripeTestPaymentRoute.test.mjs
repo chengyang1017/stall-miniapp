@@ -198,3 +198,22 @@ test('checkout only returns persisted open session URL for the same attempt',()=
  assert.equal(sandboxCheckoutStillOpen(attempt,{status:'open',session_id:attempt.session_id,checkout_url:'https://checkout.stripe.com/other'}),false)
  assert.equal(sandboxCheckoutStillOpen(attempt,null),false)
 })
+
+test('cancel rejects a settled order with no active attempt',async()=>{
+ const cancelUrl=new URL(url.href.replace('/stripe-test-checkout','/sandbox-cancel'))
+ for(const status of ['succeeded','refund_required']){
+  const pool={async query(sql){
+   if(sql.includes('sandbox_payment_environment'))return {rows:[{one:1}]}
+   if(sql.includes('SELECT o.id FROM orders'))return {rows:[{id:'11111111-1111-4111-8111-111111111111'}]}
+   if(sql.includes("status IN ('creating','open','processing','review')"))return {rows:[]}
+   if(sql.includes('SELECT status FROM sandbox_payment_attempts'))return {rows:[{status}]}
+   throw Error('unexpected query: '+sql)
+  }}
+  const response=res()
+  await stripeTestPaymentRoute(requestJson({}),response,cancelUrl,pool,isolatedEnv,{
+   authenticate:async()=> 'test-customer',client:{}
+  })
+  assert.equal(response.status,409,status)
+  assert.equal(response.body.error,'payment_already_collected')
+ }
+})

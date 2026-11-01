@@ -94,6 +94,10 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
     if(conflict)throw Error(conflict)
     const changed=await pool.query("UPDATE sandbox_payment_attempts SET status='cancelled' WHERE id=$1 AND status='expired' RETURNING id",[a.id])
     if(changed.rows.length!==1)throw Error('payment_cancellation_state_changed')
+   }else{
+    // A paid attempt is no longer active; do not mistake its absence for a successful cancel.
+    const {rows:[last]}=await pool.query("SELECT status FROM sandbox_payment_attempts WHERE order_id=$1 ORDER BY created_at DESC,id DESC LIMIT 1",[orderId])
+    if(last?.status==='succeeded'||last?.status==='refund_required')throw Error('payment_already_collected')
    }
    reply(res,200,await readSandboxPayment(pool,orderId));return true
   }
