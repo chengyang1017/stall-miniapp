@@ -46,7 +46,9 @@ export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,
    // Filter the dynamically eligible methods to the customer-selected channel.
    // A payment-method configuration alone does not restrict a Session to one channel.
    body.append('allowed_payment_method_types[0]',channel)
-   if(paymentMethodConfiguration)body.set('payment_method_configuration',paymentMethodConfiguration)
+   // Stripe rejects supplying both allowed_payment_method_types and
+   // payment_method_configuration. Keep the config ID as an eligibility
+   // preflight input, but use the explicit one-channel filter in the request.
    const response=await fetchImpl('https://api.stripe.com/v1/checkout/sessions',{
     method:'POST',signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+secretKey,'Idempotency-Key':'checkout:'+request.orderId+':'+channel+':'+request.requestKey,
      'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()
