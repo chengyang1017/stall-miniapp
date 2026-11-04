@@ -1,0 +1,16 @@
+✔ native acceptance refuses absent acknowledgement and production environment (1.1966ms)
+✔ native acceptance requires separate URL and exact host database role allowlist (0.3245ms)
+✔ native external connection uses verified TLS and bounded connections (0.8098ms)
+✔ environment check reports only names and status, never values (0.4963ms)
+✔ missing configuration cannot claim runtime acceptance (0.2251ms)
+✔ Stripe read-only tool refuses missing consent before network (0.3196ms)
+✔ captured webhook verifies signature but does not claim ledger acceptance (0.9663ms)
+✔ Stripe retrieval verifies expected paid channel without writing (1.6371ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 704.5768

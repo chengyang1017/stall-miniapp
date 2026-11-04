@@ -1,0 +1,13 @@
+✔ native acceptance refuses absent acknowledgement and production environment (1.009ms)
+✔ native acceptance requires separate URL and exact host database role allowlist (0.2609ms)
+✔ native external connection uses verified TLS and bounded connections (0.5764ms)
+✔ environment check reports only names and status, never values (1.2278ms)
+✔ missing configuration cannot claim runtime acceptance (0.1988ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 668.8507

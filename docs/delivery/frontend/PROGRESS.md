@@ -124,3 +124,7 @@ Next independent task: owner-reviewed isolated migration/ACL setup and real Neon
 ## 2026-11-04 SBX-03 local main
 Local-only main consolidation and refund evidence/currency fixes; no push/PR/remote change. Actual results, failures, acceptance steps and boundaries: [SANDBOX_LOCAL_MAIN.md](SANDBOX_LOCAL_MAIN.md). DEVELOPMENT; WAITING_FOR_OWNER_PREVIEW. P7-39 remains unresolved without changing business policy. This supersedes earlier push instructions for this round.
 
+
+## 2026-11-04 SBX-03 集成验收准备
+本轮仅本地 main 工具及文档，无远程操作。结果及限制：[SBX03_TOOLING_RESULTS.md](SBX03_TOOLING_RESULTS.md)；商家/技术负责人操作手册：[SBX03_ACCEPTANCE_GUIDE.md](SBX03_ACCEPTANCE_GUIDE.md)。真实 PostgreSQL/Stripe NOT_RUN，微信 WAITING_FOR_OWNER_PREVIEW；DEVELOPMENT，P7-39 原失败保留。下一步由负责人独立授权测试环境并回传脱敏验收证据。
+

@@ -1,0 +1,76 @@
+
+> stall-miniapp-api@0.1.0 sandbox:check
+> node scripts/sandbox-environment-check.mjs
+
+{
+  "kind": "LOCAL_CONFIGURATION_ONLY",
+  "networkUsed": false,
+  "ready": false,
+  "checks": [
+    {
+      "name": "APP_ENV",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "PAYMENT_DB_ENV",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "STRIPE_TEST_PAYMENTS_ENABLED",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "SANDBOX_PAYMENT_LIFECYCLE_ENABLED",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "SANDBOX_PAYMENT_WORKER_ENABLED",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "STRIPE_TEST_REFUNDS_ENABLED",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "SANDBOX_PAYMENT_INSTANCE_ID",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "STRIPE_TEST_SECRET_KEY",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "STRIPE_TEST_WEBHOOK_SECRET",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "STRIPE_TEST_CARD_CONFIGURATION",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "STRIPE_TEST_ALIPAY_CONFIGURATION",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "STRIPE_TEST_WECHAT_PAY_CONFIGURATION",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "STRIPE_TEST_SUCCESS_URL",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "STRIPE_TEST_CANCEL_URL",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "DATABASE_URL",
+      "status": "NEEDS_CONFIGURATION"
+    },
+    {
+      "name": "PG_SSL",
+      "status": "NEEDS_CONFIGURATION"
+    }
+  ],
+  "note": "Syntax only. Does not prove sandbox ownership, account eligibility, TLS, migrations, grants, webhook delivery or enabled feature switches."
+}
