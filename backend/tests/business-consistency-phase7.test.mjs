@@ -365,10 +365,25 @@ run('P7-38 missing or malformed idempotency key is rejected before any transacti
   assert.equal(db.clients.length, 0); assert.deepEqual(snapshot(db), before)
 })
 
-run('P7-39 business closing while waiting for product read is rechecked before inserting order', async () => {
+run('P7-39 outside business hours still permits a valid future delivery slot after lock wait', async () => {
+  const db = fixture(), gate = db.pauseOnce(s => s.includes('FROM products p WHERE'))
+  const pending = checkout(db); await gate.entered
+  // 23:59 local time on Oct 26; the selected delivery slot is on Oct 27.
+  db.now = new Date('2026-10-26T15:59:00Z'); gate.release()
+  const res = await pending
+  assert.equal(res.code, 201); assert.equal(res.body.paymentStatus, 'unpaid')
+  assert.equal(db.trace.filter(q => q.sql === 'SELECT clock_timestamp() AS now').length, 2)
+  assert.equal(db.rows('orders')[0].delivery_slot_snapshot.date, '2026-10-27')
+  counts(db, { orders: 1 })
+})
+
+run('P7-39b future slot expiring during product lock wait is rejected before order creation', async () => {
   const db = fixture(), gate = db.pauseOnce(s => s.includes('FROM products p WHERE')), before = snapshot(db)
-  const pending = checkout(db); await gate.entered; db.now = new Date('2026-10-26T15:59:00Z'); gate.release()
-  const res = await pending; assert.equal(res.code, 409); assert.equal(res.body.error, 'store_closed')
+  const pending = checkout(db); await gate.entered
+  // 20:00 local time on Oct 27; the selected Oct 27 slot ends at 20:00.
+  db.now = new Date('2026-10-27T12:00:00Z'); gate.release()
+  const res = await pending
+  assert.equal(res.code, 409); assert.equal(res.body.error, 'delivery_slot_unavailable')
   assert.equal(db.trace.filter(q => q.sql === 'SELECT clock_timestamp() AS now').length, 2)
   assert.deepEqual(snapshot(db), before); db.assertClosed()
 })
