@@ -43,6 +43,9 @@ export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,
     expires_at:String(expiresAt??Math.floor(Date.now()/1000)+1800),
     success_url:successUrl,cancel_url:cancelUrl
    })
+   // Filter the dynamically eligible methods to the customer-selected channel.
+   // A payment-method configuration alone does not restrict a Session to one channel.
+   body.append('allowed_payment_method_types[0]',channel)
    if(paymentMethodConfiguration)body.set('payment_method_configuration',paymentMethodConfiguration)
    const response=await fetchImpl('https://api.stripe.com/v1/checkout/sessions',{
     method:'POST',signal:AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+secretKey,'Idempotency-Key':'checkout:'+request.orderId+':'+channel+':'+request.requestKey,
