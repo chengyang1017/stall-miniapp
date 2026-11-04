@@ -57,7 +57,7 @@ for(const channel of ['card','alipay','wechat_pay']){
   }})
   const result=await gateway.create({...request,currency:'CNY'})
   const body=new URLSearchParams(options.body)
-  assert.equal(body.get('payment_method_configuration'),'pmc_Test123')
+  assert.equal(body.has('payment_method_configuration'),false)
   assert.equal(body.get('metadata[channel]'),channel)
   assert.equal(body.get('line_items[0][price_data][currency]'),'cny')
   assert.equal(body.has('payment_method_types[0]'),false)
