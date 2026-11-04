@@ -99,3 +99,7 @@ Local-only main consolidation and refund evidence/currency fixes; no push/PR/rem
 ## 2026-11-04 SBX-03 集成验收准备
 本轮仅本地 main 工具及文档，无远程操作。结果及限制：[SBX03_TOOLING_RESULTS.md](SBX03_TOOLING_RESULTS.md)；商家/技术负责人操作手册：[SBX03_ACCEPTANCE_GUIDE.md](SBX03_ACCEPTANCE_GUIDE.md)。真实 PostgreSQL/Stripe NOT_RUN，微信 WAITING_FOR_OWNER_PREVIEW；DEVELOPMENT，P7-39 原失败保留。下一步由负责人独立授权测试环境并回传脱敏验收证据。
 
+
+## main 推送前同步验证
+用户追加授权推送。fetch 发现 origin/main=78bd01d，比共同基线新增98提交；本地有2提交。以保留双方历史的 merge 整合，未 force/reset。支付业务采用远端最新安全修复，保留本地验收工具及原币种/原子证据断言；合成原生PG夹具补齐远端新增 amountCents 合约。最终支付156通过/0失败/0跳过；完整verify前端230/0/0、后端356/1/0（合计586/1/0），三目标构建通过。唯一失败P7-39保留，不改营业政策。证据 evidence/20261104-main-sync-payment-final.txt、20261104-main-sync-verify-final.txt。真实PG/Stripe/微信仍未验收，DEVELOPMENT；远端SHA以推送后chat核验为准。未触碰.local备份。
+

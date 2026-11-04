@@ -52,7 +52,7 @@ test('native PG independent connections: reservation, locks, rollback, settlemen
   assert.equal(Number((await pool.query('SELECT stock_quantity FROM products WHERE id=$1',[p])).rows[0].stock_quantity),7)
   await requestSandboxRefund(pool,{orderId:o,subject:'sbx-owner',amountCents:250,requestKey:'sbx_'+randomUUID()})
   let calls=0
-  const client={refundPayment:async()=>{calls++;return {refundId:'re_synthetic',paymentIntentId:'pi_synthetic',status:'succeeded',completed:true}}}
+  const client={refundPayment:async()=>{calls++;return {refundId:'re_synthetic',amountCents:250,paymentIntentId:'pi_synthetic',status:'succeeded',completed:true}}}
   await Promise.all(Array.from({length:4},()=>processOneStripeTestRefund(pool,client)))
   assert.equal(calls,1);assert.equal((await pool.query('SELECT status FROM stripe_test_refund_jobs')).rows[0].status,'succeeded')
   console.log('NATIVE_POSTGRES_SYNTHETIC_PROVIDER: passed; no Stripe transaction. Synthetic rows retained; use a fresh dedicated DB for rerun.')

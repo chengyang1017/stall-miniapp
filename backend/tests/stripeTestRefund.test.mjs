@@ -3,9 +3,9 @@ import assert from 'node:assert/strict'
 import {createStripeTestRefundClient} from '../src/stripeTestRefund.mjs'
 const audit={provider:'stripe:sandbox',event_type:'refund_required',
  order_id:'11111111-1111-4111-8111-111111111111',provider_event_id:'cs_test_abc',amount_cents:'1599'}
-const session={currency:'cny',id:'cs_test_abc',livemode:false,payment_status:'paid',
- payment_intent:'pi_abc123',client_reference_id:audit.order_id,amount_total:1599}
-const refund={currency:'cny',id:'re_abc123',payment_intent:'pi_abc123',amount:1599,status:'succeeded'}
+const session={id:'cs_test_abc',livemode:false,payment_status:'paid',
+ payment_intent:'pi_abc123',client_reference_id:audit.order_id,amount_total:1599,currency:'cny'}
+const refund={id:'re_abc123',payment_intent:'pi_abc123',amount:1599,status:'succeeded',livemode:false,currency:'cny'}
 function setup(overrides={}){
  const calls=[];const client=createStripeTestRefundClient({secretKey:'sk_test_123',
  fetchImpl:async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>url.endsWith('/refunds')?(overrides.refund||refund):(overrides.session||session)}}})
@@ -64,6 +64,453 @@ test('fetches Stripe refund state without issuing another refund',async()=>{
 test('rejects mismatching Stripe refund identity',async()=>{
  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:true,json:async()=>({...refund,id:'re_different'})})})
  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+})
+
+test('rejects non-integer or non-positive refund amounts from Stripe status lookup',async()=>{
+ for(const amount of [undefined,null,0,-1,'1599',1.5,Number.MAX_SAFE_INTEGER+1]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+   ok:true,json:async()=>({...refund,amount})
+  })})
+  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+ }
+})
+
+test('status lookup rejects live-mode or wrong-currency refunds',async()=>{
+ for(const change of [{livemode:true},{livemode:undefined},{currency:'usd'},{currency:undefined}]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+   ok:true,json:async()=>({...refund,...change})
+  })})
+  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+ }
+})
+
+test('late refund creation rejects live-mode or wrong-currency Stripe response',async()=>{
+ for(const change of [{livemode:true},{livemode:undefined},{currency:'usd'},{currency:undefined}]){
+  const {client,calls}=setup({refund:{...refund,...change}})
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+  assert.equal(calls.length,2)
+ }
+})
+
+test('empty Stripe refund creation response is never treated as a retryable network error',async()=>{
+ for(const value of [null,undefined]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>({
+   ok:true,json:async()=>url.endsWith('/refunds')?value:session
+  })})
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ }
+})
+
+test('successful HTTP refund POST with malformed JSON enters review rather than retry',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>({
+  ok:true,json:async()=>{
+   if(url.endsWith('/refunds'))throw new SyntaxError('Unexpected end of JSON input')
+   return session
+  }
+ })})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+})
+
+test('Stripe refund POST server errors require review; preflight GET errors remain retryable',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>
+  url.endsWith('/refunds')?{ok:false,status:500}:{ok:true,json:async()=>session}
+ })
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:503})})
+ await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
+})
+
+test('refund POST timeout is uncertain while preflight timeout remains retryable',async()=>{
+ const timeout=Object.assign(new Error('timeout'),{name:'TimeoutError'})
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  if(url.endsWith('/refunds'))throw timeout
+  return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{throw timeout}})
+ await assert.rejects(preflight.refundLatePayment(audit),error=>error===timeout)
+})
+
+test('refund POST connection reset requires review but GET connection reset propagates',async()=>{
+ const reset=Object.assign(new Error('socket hang up'),{code:'ECONNRESET'})
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  if(url.endsWith('/refunds'))throw reset
+  return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{throw reset}})
+ await assert.rejects(preflight.refundLatePayment(audit),error=>error===reset)
+})
+
+test('late-payment refund rejects wrong or missing Checkout Session currency before POST',async()=>{
+ for(const currency of ['usd',undefined]){
+  const {client,calls}=setup({session:{...session,currency}})
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_session_mismatch/)
+  assert.equal(calls.length,1)
+ }
+})
+
+test('late-payment refund rejects numeric-string or fractional Checkout Session amount before POST',async()=>{
+ for(const amount_total of ['1599',1599.5,null]){
+  const {client,calls}=setup({session:{...session,amount_total}})
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_session_mismatch/)
+  assert.equal(calls.length,1)
+ }
+})
+
+test('empty Checkout Session data is rejected before any refund POST',async()=>{
+ for(const value of [null,undefined]){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++
+   return {ok:true,json:async()=>value}
+  }})
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_session_mismatch/)
+  assert.equal(calls,1)
+ }
+})
+
+test('merchant partial refund uses durable job idempotency key and exact amount',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ const calls=[]
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async(url,options)=>{
+  calls.push({url,options})
+  return {ok:true,json:async()=>url.endsWith('/refunds')?
+   {...refund,amount:250}:session}
+ }})
+ const result=await client.refundPayment(job)
+ assert.equal(result.refundId,refund.id)
+ assert.equal(result.amountCents,250)
+ assert.equal(calls.length,2)
+ assert.equal(calls[1].options.headers['Idempotency-Key'],'sandbox-refund:'+job.id)
+ const params=new URLSearchParams(calls[1].options.body)
+ assert.equal(params.get('payment_intent'),session.payment_intent)
+ assert.equal(params.get('amount'),'250')
+ assert.equal(params.get('metadata[orderId]'),job.order_id)
+ assert.equal(params.get('metadata[refundJobId]'),job.id)
+})
+test('merchant refund rejects mismatched paid session before making refund POST',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ for(const override of [{currency:'usd'},{amount_total:'1599'},{livemode:true},{client_reference_id:'wrong'}]){
+  const calls=[]
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+   calls.push(url);return {ok:true,json:async()=>({...session,...override})}
+  }})
+  await assert.rejects(client.refundPayment(job),/stripe_refund_session_mismatch/)
+  assert.equal(calls.length,1)
+ }
+})
+
+test('merchant refund rejects unconfirmed Stripe refund identity and amount',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ for(const changes of [{id:'invalid'},{payment_intent:'pi_other'},{amount:251},
+  {currency:'usd'},{livemode:true},{status:'unknown'},{status:'succeeded',amount:'250'}]){
+  const calls=[]
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+   calls.push(url)
+   return {ok:true,json:async()=>url.endsWith('/refunds')?
+    {...refund,amount:250,...changes}:session}
+  }})
+  await assert.rejects(client.refundPayment(job),/stripe_refund_unconfirmed/)
+  assert.equal(calls.length,2)
+ }
+})
+
+test('merchant refund rejects empty and nonnumeric refund amount before Stripe call',async()=>{
+ const valid={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ for(const amount_cents of ['', ' ',null,undefined,false,{},'abc']){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++;throw Error('unexpected Stripe request')
+  }})
+  await assert.rejects(client.refundPayment({...valid,amount_cents}),/invalid_refund_request/)
+  assert.equal(calls,0)
+ }
+})
+
+test('merchant refund rejects invalid payment total before Stripe call',async()=>{
+ const valid={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ for(const payment_amount_cents of ['', ' ',null,undefined,false,true,{},'abc',0,-5,1.5]){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++;throw Error('unexpected Stripe request')
+  }})
+  await assert.rejects(client.refundPayment({...valid,payment_amount_cents}),/invalid_refund_request/)
+  assert.equal(calls,0)
+ }
+})
+
+test('late-payment refund rejects malformed audit amount without calling Stripe',async()=>{
+ for(const amount_cents of ['', ' ',null,undefined,false,true,{},'abc',0,-1,1.5]){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++;throw Error('unexpected Stripe request')
+  }})
+  await assert.rejects(client.refundLatePayment({...audit,amount_cents}),/invalid_refund_audit/)
+  assert.equal(calls,0)
+ }
+})
+
+test('refund status lookup rejects null or undefined JSON payload',async()=>{
+ for(const value of [null,undefined]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+   ok:true,json:async()=>value
+  })})
+  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+ }
+})
+
+test('refund status lookup rejects malformed provider state and payment intent',async()=>{
+ for(const changes of [{status:undefined},{status:'unexpected'},{payment_intent:undefined},
+  {payment_intent:'invalid'},{amount:0},{currency:undefined},{livemode:undefined}]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+   ok:true,json:async()=>({...refund,...changes})
+  })})
+  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+ }
+})
+
+test('missing HTTP response after refund POST is reviewed, while GET fails safely',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>
+  url.endsWith('/refunds')?null:{ok:true,json:async()=>session}
+ })
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>null})
+ await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
+})
+
+test('refund POST with malformed HTTP failure status is treated as uncertain',async()=>{
+ for(const status of [undefined,null,'500',0,200]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>
+   url.endsWith('/refunds')?{ok:false,status}:{ok:true,json:async()=>session}
+  })
+  await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ }
+})
+
+test('late-payment compensation uses stable session idempotency and exact audit amount',async()=>{
+ const {client,calls}=setup()
+ const result=await client.refundLatePayment(audit)
+ assert.equal(result.refundId,refund.id)
+ assert.equal(result.amountCents,1599)
+ assert.equal(calls.length,2)
+ const post=calls[1].options
+ assert.equal(post.method,'POST')
+ assert.equal(post.headers['Idempotency-Key'],'late-refund:'+session.id)
+ const body=new URLSearchParams(post.body)
+ assert.equal(body.get('payment_intent'),session.payment_intent)
+ assert.equal(body.get('amount'),'1599')
+ assert.equal(body.get('reason'),'requested_by_customer')
+ assert.equal(body.get('metadata[orderId]'),audit.order_id)
+ assert.equal(body.get('metadata[checkoutSessionId]'),session.id)
+})
+
+test('refund POST HTTP 429 requires review while preflight GET 429 remains retryable',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>
+  url.endsWith('/refunds')?{ok:false,status:429}:{ok:true,json:async()=>session}
+ })
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:429})})
+ await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
+})
+
+test('refund POST HTTP 408 requires review while preflight GET 408 remains retryable',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  if(url.endsWith('/refunds'))return {ok:false,status:408}
+  return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:408})})
+ await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
+})
+
+test('pending merchant refund is not prematurely marked complete',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>({
+  ok:true,json:async()=>url.endsWith('/refunds')?
+   {...refund,amount:250,status:'pending'}:session
+ })})
+ const out=await client.refundPayment(job)
+ assert.equal(out.status,'pending')
+ assert.equal(out.completed,false)
+ assert.equal(out.amountCents,250)
+})
+test('pending late-payment compensation remains incomplete',async()=>{
+ const {client}=setup({refund:{...refund,status:'pending'}})
+ const out=await client.refundLatePayment(audit)
+ assert.equal(out.status,'pending')
+ assert.equal(out.completed,false)
+})
+
+test('failed or canceled merchant refunds are never marked complete',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ for(const status of ['failed','canceled','requires_action']){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>({
+   ok:true,json:async()=>url.endsWith('/refunds')?
+    {...refund,amount:250,status}:session
+  })})
+  const out=await client.refundPayment(job)
+  assert.equal(out.status,status)
+  assert.equal(out.completed,false)
+ }
+})
+test('failed late-payment compensation is not acknowledged as a successful refund',async()=>{
+ const {client}=setup({refund:{...refund,status:'failed'}})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+})
+
+test('refund status polling never completes non-success states',async()=>{
+ for(const status of ['pending','requires_action','failed','canceled']){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+   ok:true,json:async()=>({...refund,status})
+  })})
+  const result=await client.getRefundStatus('re_abc123')
+  assert.equal(result.status,status)
+  assert.equal(result.completed,false)
+  assert.equal(result.amountCents,1599)
+ }
+})
+test('refund status polling marks only succeeded state complete',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+  ok:true,json:async()=>({...refund,status:'succeeded'})
+ })})
+ const result=await client.getRefundStatus('re_abc123')
+ assert.equal(result.completed,true)
+ assert.equal(result.paymentIntentId,'pi_abc123')
+})
+
+test('invalid refund status lookup IDs make no Stripe requests',async()=>{
+ for(const id of [null,undefined,'','re_','pi_abc123','re_bad-id',123,{},'re_abc/def']){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++;throw Error('unexpected Stripe request')
+  }})
+  await assert.rejects(client.getRefundStatus(id),/invalid_stripe_refund_id/)
+  assert.equal(calls,0)
+ }
+})
+
+test('merchant refund rejects malformed job identity before any Stripe request',async()=>{
+ const valid={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ for(const changes of [{id:'invalid'},{order_id:'invalid'},{checkout_session_id:'cs_live_abc'},
+  {checkout_session_id:'cs_test_bad/id'},{amount_cents:1600},{amount_cents:0}]){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++;throw Error('unexpected Stripe request')
+  }})
+  await assert.rejects(client.refundPayment({...valid,...changes}),/invalid_refund_request/)
+  assert.equal(calls,0)
+ }
+})
+
+test('invalid late-payment audit identity never reaches Stripe',async()=>{
+ for(const changes of [{provider:'stripe:live'},{event_type:'other'},{order_id:'invalid'},
+  {provider_event_id:'cs_live_abc'},{provider_event_id:'cs_test_bad/id'},
+  {amount_cents:0},{amount_cents:-1}]){
+  let calls=0
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+   calls++;throw Error('unexpected Stripe request')
+  }})
+  await assert.rejects(client.refundLatePayment({...audit,...changes}),/invalid_refund_audit/)
+  assert.equal(calls,0)
+ }
+})
+
+test('refund client rejects malformed or live credentials at construction',()=>{
+ for(const secretKey of [undefined,null,'','sk_live_abc','pk_test_abc','sk_test_','sk_test_bad-key','sk_test_bad key']){
+  assert.throws(()=>createStripeTestRefundClient({secretKey}),/stripe_test_key_required/)
+ }
+})
+
+test('refund requests authenticate only with test secret and use Stripe HTTPS API',async()=>{
+ const {client,calls}=setup()
+ await client.refundLatePayment(audit)
+ assert.equal(calls.length,2)
+ for(const call of calls){
+  assert.match(call.url,/^https:\/\/api\.stripe\.com\/v1\//)
+  assert.equal(call.options.headers.Authorization,'Bearer sk_test_123')
+  assert.equal(call.options.signal instanceof AbortSignal,true)
+ }
+})
+
+test('merchant refund HTTP success with unreadable JSON requires review',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>({
+  ok:true,json:async()=>{
+   if(url.endsWith('/refunds'))throw new SyntaxError('invalid JSON')
+   return session
+  }
+ })})
+ await assert.rejects(client.refundPayment(job),/stripe_refund_unconfirmed/)
+})
+
+test('merchant refund POST transport failure is uncertain but preflight failures propagate',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ const reset=Object.assign(new Error('socket hang up'),{code:'ECONNRESET'})
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  if(url.endsWith('/refunds'))throw reset
+  return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(client.refundPayment(job),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{throw reset}})
+ await assert.rejects(preflight.refundPayment(job),error=>error===reset)
+})
+
+test('refund status lookup rejects malformed successful JSON safely',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+  ok:true,json:async()=>{throw new SyntaxError('bad JSON')}
+ })})
+ await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+})
+
+test('refund POST HTTP 409 idempotency conflict is reviewed, unlike preflight GET',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  if(url.endsWith('/refunds'))return {ok:false,status:409}
+  return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const preflight=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:false,status:409})})
+ await assert.rejects(preflight.refundLatePayment(audit),/stripe_refund_api_failed/)
+})
+
+test('refund status rejects array payloads that masquerade as Stripe objects',async()=>{
+ const malformed=[{...refund}]
+ Object.assign(malformed,refund)
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({
+  ok:true,json:async()=>malformed
+ })})
+ await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+})
+
+test('refund creation rejects array-shaped provider payloads',async()=>{
+ const spoofed=[{...refund}]
+ Object.assign(spoofed,refund)
+ const {client}=setup({refund:spoofed})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_unconfirmed/)
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:1599,payment_amount_cents:1599}
+ await assert.rejects(client.refundPayment(job),/stripe_refund_unconfirmed/)
+})
+
+test('array-shaped Checkout Session cannot authorize either refund path',async()=>{
+ const spoofed=[{...session}]
+ Object.assign(spoofed,session)
+ const {client,calls}=setup({session:spoofed})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_session_mismatch/)
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ await assert.rejects(client.refundPayment(job),/stripe_refund_session_mismatch/)
+ assert.equal(calls.length,2)
 })
 
 test('compensation rejects non-CNY session before submitting refund',async()=>{

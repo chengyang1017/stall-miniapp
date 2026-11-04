@@ -16,17 +16,17 @@ test('claim uses SKIP LOCKED and recovers only expired leases',async()=>{
 })
 test('completion requires valid refund ID and claimed lease',async()=>{
  const m=fake([{rowCount:1,rows:[{id:job.id}]}])
- assert.equal(await finishStripeTestRefund(m.db,job,{refundId:'re_abc',completed:true}),'succeeded')
+ assert.equal(await finishStripeTestRefund(m.db,job,{refundId:'re_abc',amountCents:1599,status:'succeeded',completed:true}),'succeeded')
  assert.deepEqual(m.calls[0].args.slice(0,2),[job.id,job.lease_token])
  assert.match(m.calls[0].sql,/lease_token=\$2/)
 })
 test('pending Stripe refunds are persisted as submitted, not succeeded',async()=>{
  const m=fake([{rowCount:1,rows:[{id:job.id}]}])
- assert.equal(await finishStripeTestRefund(m.db,job,{refundId:'re_abc',completed:false}),'submitted')
+ assert.equal(await finishStripeTestRefund(m.db,job,{refundId:'re_abc',amountCents:1599,status:'pending',completed:false}),'submitted')
 })
 test('stale lease cannot complete or overwrite current job',async()=>{
  const m=fake([{rowCount:0,rows:[]}])
- await assert.rejects(finishStripeTestRefund(m.db,job,{refundId:'re_abc',completed:true}),/refund_lease_lost/)
+ await assert.rejects(finishStripeTestRefund(m.db,job,{refundId:'re_abc',amountCents:1599,status:'succeeded',completed:true}),/refund_lease_lost/)
 })
 test('transient API error is stored for retry',async()=>{
  const m=fake([{rowCount:1,rows:[{status:'pending'}]}])
@@ -41,7 +41,7 @@ test('five failed attempts go to manual review',async()=>{
 test('processing one job records refund completion',async()=>{
  const m=fake([{rows:[job]},{rowCount:1,rows:[{id:job.id}]}])
  const out=await processOneStripeTestRefund(m.db,{refundLatePayment:async(audit)=>{
-  assert.equal(audit.provider_event_id,'cs_test_abc');return {refundId:'re_abc',completed:true}
+  assert.equal(audit.provider_event_id,'cs_test_abc');return {refundId:'re_abc',amountCents:1599,status:'succeeded',completed:true}
  }})
  assert.equal(out.action,'succeeded')
 })
@@ -73,10 +73,42 @@ test('refund lookup failure keeps submitted status for retry',async()=>{
  assert.equal(out.lookupFailed,true);assert.equal(out.action,'submitted')
 })
 
+test('refund finalization rejects invalid amount and conflicting completion without writing',async()=>{
+ for(const result of [
+  {refundId:'re_abc',amountCents:1598,status:'succeeded',completed:true},
+  {refundId:'re_abc',amountCents:'1599',status:'succeeded',completed:true},
+  {refundId:'re_abc',amountCents:1599,status:'failed',completed:true},
+  {refundId:'re_abc',amountCents:1599,status:'succeeded',completed:false}
+ ]){
+  const m=fake([])
+  await assert.rejects(finishStripeTestRefund(m.db,job,result),/refund_amount_mismatch|refund_provider_result_inconsistent/)
+  assert.equal(m.calls.length,0)
+ }
+})
+
+test('polling rejects string refund amount as an integrity mismatch',async()=>{
+ const m=fake([{rows:[{id:'job-1',lease_token:'lease',refund_id:'re_abc',amount_cents:'1599'}]},{rowCount:1,rows:[{id:'job-1'}]}])
+ const out=await reconcileOneSubmittedStripeTestRefund(m.db,{getRefundStatus:async()=>({
+  refundId:'re_abc',status:'succeeded',amountCents:'1599'
+ })})
+ assert.equal(out.action,'review')
+ assert.equal(out.lookupFailed,false)
+ assert.equal(m.calls[1].args[2],true)
+ assert.equal(m.calls[1].args[3],'refund_status_mismatch')
+})
+
+test('missing refund status data requires review',async()=>{
+ const m=fake([{rows:[{id:'job-1',lease_token:'lease',refund_id:'re_abc',amount_cents:'1599'}]},{rowCount:1,rows:[{id:'job-1'}]}])
+ const out=await reconcileOneSubmittedStripeTestRefund(m.db,{getRefundStatus:async()=>null})
+ assert.equal(out.action,'review')
+ assert.equal(m.calls[1].args[3],'stripe_refund_status_invalid')
+})
+
+
 test('refund evidence is persisted atomically before releasing the lease',async()=>{
  const m=fake([{rowCount:1,rows:[{id:job.id}]}])
- await finishStripeTestRefund(m.db,job,{refundId:'re_abc',completed:false,paymentIntentId:'pi_expected',status:'pending'})
- assert.match(m.calls[0].sql,/payment_intent_id=\$5/)
- assert.match(m.calls[0].sql,/provider_status=\$6/)
+ await finishStripeTestRefund(m.db,job,{refundId:'re_abc',amountCents:1599,completed:false,paymentIntentId:'pi_expected',status:'pending'})
+ assert.match(m.calls[0].sql,/payment_intent_id=COALESCE\(\$5,payment_intent_id\)/)
+ assert.match(m.calls[0].sql,/provider_status=COALESCE\(\$6,provider_status\)/)
  assert.deepEqual(m.calls[0].args.slice(4),['pi_expected','pending'])
 })

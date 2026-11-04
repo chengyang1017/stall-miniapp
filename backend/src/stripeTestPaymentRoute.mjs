@@ -7,6 +7,9 @@ import {sandboxEnabled,assertSandboxDatabase} from './sandboxPaymentWorker.mjs'
 import {reserveSandboxAttempt,materializeSandboxAttempt,applySandboxObservation,requestSandboxRefund,readSandboxPayment} from './sandboxPaymentStore.mjs'
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const key=/^[A-Za-z0-9_-]{10,100}$/
+export const sandboxCancellationPending=observation=>observation.session.status==='complete'&&!observation.event
+export const sandboxCancellationConflict=observation=>observation.event?'payment_already_collected':sandboxCancellationPending(observation)?'payment_cancellation_pending':observation.session.status!=='expired'?'payment_cancellation_unconfirmed':null
+export const sandboxCheckoutStillOpen=(attempt,persisted)=>persisted?.status==='open'&&persisted.session_id===attempt.session_id&&persisted.checkout_url===attempt.checkout_url
 const reply=(res,status,body)=>{res.writeHead(status,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify(body))}
 async function read(req){let n=0;const parts=[];for await(const part of req){n+=part.length;if(n>262144)throw Error('too_large');parts.push(Buffer.from(part))}return Buffer.concat(parts)}
 async function json(req){try{const b=await read(req);return b.length?JSON.parse(b):{}}catch(e){if(e.message==='too_large')throw e;throw Error('invalid_json')}}
@@ -60,27 +63,42 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   if(!scoped.rows.length){reply(res,404,{error:'order_not_found'});return true}
   if(action==='sandbox-payment'&&req.method==='GET'){
    let stale=false
-   const {rows}=await pool.query(`SELECT * FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('creating','open','processing') ORDER BY created_at DESC LIMIT 1`,[orderId])
-   if(rows[0])try{const a=await materializeSandboxAttempt(pool,client,rows[0]);await applySandboxObservation(pool,a,await client.getSession(a))}catch{stale=true}
-   reply(res,200,{...await readSandboxPayment(pool,orderId),stale,canRefund:!!store&&['owner','manager'].includes(store.role)});return true
+   const {rows}=await pool.query(`SELECT * FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('creating','open','processing','review') ORDER BY created_at DESC LIMIT 1`,[orderId])
+   if(rows[0]?.status==='review')stale=true
+   else if(rows[0])try{const a=await materializeSandboxAttempt(pool,client,rows[0]);await applySandboxObservation(pool,a,await client.getSession(a))}catch{stale=true}
+   reply(res,200,{...await readSandboxPayment(pool,orderId),stale,canRefund:env.STRIPE_TEST_REFUNDS_ENABLED==='true'&&!!store&&['owner','manager'].includes(store.role)});return true
   }
   if(req.method!=='POST'){reply(res,405,{error:'method_not_allowed'});return true}
   if(action==='sandbox-refund'){
    if(!store||!['owner','manager'].includes(store.role)){reply(res,403,{error:'forbidden'});return true}
    if(env.STRIPE_TEST_REFUNDS_ENABLED!=='true'){reply(res,503,{error:'sandbox_refunds_disabled'});return true}
    const body=await json(req)
-   if(!body||Object.keys(body).some(k=>k!=='amountCents'))throw Error('invalid_refund_request')
+   if(!body||Array.isArray(body)||typeof body!=='object'||Object.keys(body).some(k=>k!=='amountCents')||
+    !Number.isSafeInteger(body.amountCents)||body.amountCents<=0||!key.test(req.headers['idempotency-key']||''))throw Error('invalid_refund_request')
    const job=await requestSandboxRefund(pool,{orderId,subject,amountCents:body.amountCents,requestKey:req.headers['idempotency-key']})
    reply(res,202,{sandbox:true,refund:{id:job.id,status:job.status,amountCents:Number(job.amount_cents)}});return true
   }
   if(merchant){reply(res,403,{error:'customer_payment_only'});return true}
   if(action==='sandbox-cancel'){
-   const {rows:[a]}=await pool.query(`SELECT * FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('open','processing') ORDER BY created_at DESC LIMIT 1`,[orderId])
+   const {rows:[a]}=await pool.query(`SELECT * FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('creating','open','processing','review') ORDER BY created_at DESC LIMIT 1`,[orderId])
+   // A creating/review attempt may have reached Stripe without a persisted Session ID.
+   // Never claim cancellation before that provider outcome can be verified.
+   if(a?.status==='creating'||a?.status==='review'||a&&!a.session_id)throw Error('payment_cancellation_requires_review')
    if(a){
     const current=await client.getSession(a)
     const observation=current.session.status==='open'?await client.expire(a):current
     await applySandboxObservation(pool,a,observation)
-    if(observation.session.status==='expired')await pool.query("UPDATE sandbox_payment_attempts SET status='cancelled' WHERE id=$1 AND status='expired'",[a.id])
+    // A confirmed collection must settle, but cancellation must not return success.
+    // An asynchronous method can complete Checkout while payment is still pending.
+    // Do not let the customer switch channels until provider settlement is resolved.
+    const conflict=sandboxCancellationConflict(observation)
+    if(conflict)throw Error(conflict)
+    const changed=await pool.query("UPDATE sandbox_payment_attempts SET status='cancelled' WHERE id=$1 AND status='expired' RETURNING id",[a.id])
+    if(changed.rows.length!==1)throw Error('payment_cancellation_state_changed')
+   }else{
+    // A paid attempt is no longer active; do not mistake its absence for a successful cancel.
+    const {rows:[collected]}=await pool.query("SELECT 1 FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('succeeded','refund_required') LIMIT 1",[orderId])
+    if(collected)throw Error('payment_already_collected')
    }
    reply(res,200,await readSandboxPayment(pool,orderId));return true
   }
@@ -88,18 +106,21 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   if(!key.test(req.headers['idempotency-key']||''))throw Error('invalid_idempotency_key')
   const input=await json(req)
   if(!input||Array.isArray(input)||typeof input!=='object'||Object.keys(input).some(k=>k!=='channel'))throw Error('invalid_payment_channel')
-  const channel=input.channel||'card'
-  if(!env['STRIPE_TEST_'+String(channel).toUpperCase()+'_CONFIGURATION'])throw Error('stripe_channel_configuration_required')
+  const channel=input.channel===undefined?'card':input.channel
+  if(!['card','alipay','wechat_pay'].includes(channel))throw Error('invalid_payment_channel')
+  if(!env['STRIPE_TEST_'+channel.toUpperCase()+'_CONFIGURATION'])throw Error('stripe_channel_configuration_required')
   let a=await reserveSandboxAttempt(pool,{orderId,subject,channel,providerOptions:{
    methodConfiguration:env['STRIPE_TEST_'+String(channel).toUpperCase()+'_CONFIGURATION'],successUrl:env.STRIPE_TEST_SUCCESS_URL,cancelUrl:env.STRIPE_TEST_CANCEL_URL}})
   a=await materializeSandboxAttempt(pool,client,a)
   const observation=await client.getSession(a)
   await applySandboxObservation(pool,a,observation)
   if(observation.session.status!=='open'||observation.event)throw Error('payment_not_open_refresh')
+  const {rows:[persisted]}=await pool.query("SELECT status,session_id,checkout_url FROM sandbox_payment_attempts WHERE id=$1",[a.id])
+  if(!sandboxCheckoutStillOpen(a,persisted))throw Error('payment_not_open_refresh')
   reply(res,200,{sessionId:a.session_id,url:a.checkout_url,channel:a.channel,provider:'stripe',testMode:true,nativePayment:false})
  }catch(e){
   const invalid=new Set(['invalid_json','invalid_payment_channel','invalid_refund_request','invalid_idempotency_key','stripe_signature_missing','stripe_signature_invalid','invalid_test_event','invalid_order_reference','stripe_session_mismatch','stripe_paid_intent_mismatch'])
-  const conflict=new Set(['active_payment_channel_conflict','payment_not_open_refresh','refund_amount_exceeds_remaining','refund_idempotency_conflict','payment_order_not_payable','payment_manual_review_required','trusted_payment_required'])
+  const conflict=new Set(['active_payment_channel_conflict','payment_not_open_refresh','refund_amount_exceeds_remaining','refund_idempotency_conflict','payment_order_not_payable','payment_manual_review_required','payment_cancellation_requires_review','payment_cancellation_pending','payment_already_collected','payment_cancellation_unconfirmed','payment_cancellation_state_changed','trusted_payment_required'])
   const status=e.message==='too_large'?413:invalid.has(e.message)?400:conflict.has(e.message)?409:503
   reply(res,status,{error:status===503?'payment_test_unavailable':e.message})
  }

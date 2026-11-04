@@ -14,7 +14,7 @@ export async function syncSandboxRefundOrders(pool){
  await pool.query(`UPDATE orders o SET payment_status=CASE WHEN r.total>=o.total_cents THEN 'refunded' ELSE 'partially_refunded' END,
   updated_at=clock_timestamp() FROM (SELECT order_id,SUM(amount_cents) AS total FROM stripe_test_refund_jobs
   WHERE kind='merchant' AND status='succeeded' GROUP BY order_id) r
-  WHERE o.id=r.order_id AND o.payment_status IN ('paid','partially_refunded')
+  WHERE o.id=r.order_id AND o.payment_source='stripe:sandbox' AND o.payment_status IN ('paid','partially_refunded')
   AND o.payment_status IS DISTINCT FROM CASE WHEN r.total>=o.total_cents THEN 'refunded' ELSE 'partially_refunded' END`)
 }
 export async function runSandboxMaintenance(pool,env,{client,refundClient}={}){

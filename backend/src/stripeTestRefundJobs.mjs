@@ -11,26 +11,33 @@ export async function enqueueStripeTestRefunds(db){
 export async function claimStripeTestRefund(db){
  const result=await db.query(`
  WITH exhausted AS (UPDATE stripe_test_refund_jobs SET status='review',lease_token=NULL,lease_expires_at=NULL,
- last_error='retry_lease_exhausted',updated_at=clock_timestamp()
- WHERE status='processing' AND lease_expires_at<clock_timestamp() AND attempt_count>=5 RETURNING id)
+ last_error=CASE WHEN status='processing' THEN 'refund_outcome_unknown' ELSE 'retry_lease_exhausted' END,
+ updated_at=clock_timestamp()
+ WHERE (status='processing' AND (
+    lease_expires_at<clock_timestamp() OR
+    ((lease_token IS NULL OR lease_expires_at IS NULL) AND updated_at<clock_timestamp()-interval '2 minutes')
+   ))
+    OR (status='pending' AND attempt_count>=5) RETURNING id)
  UPDATE stripe_test_refund_jobs j SET status='processing',lease_token=gen_random_uuid(),
  lease_expires_at=clock_timestamp()+interval '2 minutes',attempt_count=attempt_count+1,
  updated_at=clock_timestamp()
  WHERE j.id=(SELECT id FROM stripe_test_refund_jobs WHERE
-   (status='pending' AND next_attempt_at<=clock_timestamp() OR
-    status='processing' AND lease_expires_at<clock_timestamp())
-   AND attempt_count<5
+   status='pending' AND next_attempt_at<=clock_timestamp() AND attempt_count<5
    ORDER BY next_attempt_at,id FOR UPDATE SKIP LOCKED LIMIT 1)
  RETURNING id,order_id,checkout_session_id,amount_cents,lease_token,attempt_count,kind,payment_amount_cents,created_at`)
  return result.rows[0]||null
 }
 export async function finishStripeTestRefund(db,job,result){
  if(!job?.id||!job?.lease_token)fail('refund_lease_required')
- const status=result?.completed===true?'succeeded':'submitted'
+ if(!['succeeded','pending','requires_action','failed','canceled'].includes(result?.status)||
+   result.completed!==(result.status==='succeeded'))fail('refund_provider_result_inconsistent')
+ const status=result.status==='succeeded'?'succeeded':['failed','canceled'].includes(result.status)?'review':'submitted'
  if(!/^re_[a-zA-Z0-9_]+$/.test(result?.refundId||''))fail('invalid_stripe_refund_id')
+ if(!Number.isSafeInteger(result?.amountCents)||result.amountCents!==Number(job.amount_cents))fail('refund_amount_mismatch')
  const row=await db.query(`UPDATE stripe_test_refund_jobs SET status=$3,refund_id=$4,
-  payment_intent_id=$5,provider_status=$6,
-  lease_token=NULL,lease_expires_at=NULL,last_error=NULL,updated_at=clock_timestamp()
+  payment_intent_id=COALESCE($5,payment_intent_id),provider_status=COALESCE($6,provider_status),
+  lease_token=NULL,lease_expires_at=NULL,
+  last_error=CASE WHEN $3='review' THEN 'stripe_refund_failed' ELSE NULL END,updated_at=clock_timestamp()
  WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,
  [job.id,job.lease_token,status,result.refundId,result.paymentIntentId||null,result.status||null])
  if(row.rowCount!==1)fail('refund_lease_lost')
@@ -49,23 +56,48 @@ export async function failStripeTestRefund(db,job,error){
 export async function processOneStripeTestRefund(db,client){
  const job=await claimStripeTestRefund(db)
  if(!job)return {action:'idle'}
- // A stale lease may retry; Stripe idempotency key uses the checkout Session ID.
  const audit={provider:'stripe:sandbox',event_type:'refund_required',
   order_id:job.order_id,provider_event_id:job.checkout_session_id,amount_cents:job.amount_cents}
+ if(job.created_at&&Date.now()-new Date(job.created_at).getTime()>23*3600000){
+  const reviewed=await db.query(`UPDATE stripe_test_refund_jobs SET status='review',lease_token=NULL,lease_expires_at=NULL,
+   last_error='idempotency_window_review',updated_at=clock_timestamp()
+   WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,[job.id,job.lease_token])
+  if(reviewed.rowCount!==1)fail('refund_lease_lost')
+  return {action:'review',jobId:job.id}
+ }
+ let result
  try{
-  if(job.created_at&&Date.now()-new Date(job.created_at).getTime()>23*3600000){
-   await db.query(`UPDATE stripe_test_refund_jobs SET status='review',lease_token=NULL,lease_expires_at=NULL,
-    last_error='idempotency_window_review',updated_at=clock_timestamp() WHERE id=$1 AND lease_token=$2`,[job.id,job.lease_token])
+  result=job.kind==='merchant'?await client.refundPayment(job):await client.refundLatePayment(audit)
+ }catch(e){
+  // A provider identity mismatch or invalid refund response is not a transient
+  // network outage. Reissuing a refund could duplicate an uncertain outcome.
+  if(['stripe_refund_session_mismatch','stripe_refund_unconfirmed','invalid_refund_request','invalid_refund_audit'].includes(e?.message)){
+   const reviewed=await db.query(`UPDATE stripe_test_refund_jobs SET status='review',
+    lease_token=NULL,lease_expires_at=NULL,last_error=$3,updated_at=clock_timestamp()
+    WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,
+    [job.id,job.lease_token,e.message])
+   if(reviewed.rowCount!==1)fail('refund_lease_lost')
    return {action:'review',jobId:job.id}
   }
-  const result=job.kind==='merchant'?await client.refundPayment(job):await client.refundLatePayment(audit)
-  const status=await finishStripeTestRefund(db,job,result)
-  return {action:status,jobId:job.id}
- }catch(e){
-  // Errors from the Stripe API are recorded, rather than assumed refunded.
   const status=await failStripeTestRefund(db,job,e)
   return {action:status,jobId:job.id}
  }
+ // Provider has answered: contradictory data must be reviewed, never retried.
+ const invalidResult=!['succeeded','pending','requires_action','failed','canceled'].includes(result?.status)||
+    result.completed!==(result.status==='succeeded')
+ const invalidId=!/^re_[a-zA-Z0-9_]+$/.test(result?.refundId||'')
+ const invalidAmount=!Number.isSafeInteger(result?.amountCents)||result.amountCents!==Number(job.amount_cents)
+ if(invalidResult||invalidId||invalidAmount){
+  const reviewed=await db.query(`UPDATE stripe_test_refund_jobs SET status='review',
+   lease_token=NULL,lease_expires_at=NULL,last_error=$3,
+   updated_at=clock_timestamp() WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,
+   [job.id,job.lease_token,invalidId?'invalid_stripe_refund_id':invalidAmount?'refund_amount_mismatch':'refund_provider_result_inconsistent'])
+  if(reviewed.rowCount!==1)fail('refund_lease_lost')
+  return {action:'review',jobId:job.id}
+ }
+ // Database finalization failures must never requeue the Stripe operation.
+ const status=await finishStripeTestRefund(db,job,result)
+ return {action:status,jobId:job.id}
 }
 
 /** Reconcile a previously submitted refund. Never issue a second refund here. */
@@ -74,32 +106,52 @@ export async function reconcileOneSubmittedStripeTestRefund(db,client){
  UPDATE stripe_test_refund_jobs j SET lease_token=gen_random_uuid(),
  lease_expires_at=clock_timestamp()+interval '2 minutes',updated_at=clock_timestamp()
  WHERE j.id=(SELECT id FROM stripe_test_refund_jobs
- WHERE status='submitted' AND (lease_token IS NULL OR lease_expires_at<clock_timestamp()) AND next_attempt_at<=clock_timestamp()
+ WHERE status='submitted' AND (lease_token IS NULL OR lease_expires_at<clock_timestamp() OR
+ (lease_expires_at IS NULL AND updated_at<clock_timestamp()-interval '2 minutes'))
+ AND next_attempt_at<=clock_timestamp()
  ORDER BY next_attempt_at,id FOR UPDATE SKIP LOCKED LIMIT 1)
  RETURNING id,lease_token,refund_id,amount_cents,payment_intent_id`)
  const job=claim.rows[0]
  if(!job)return {action:'idle'}
  try{
+  if(!/^re_[A-Za-z0-9_]+$/.test(job.refund_id||''))throw fail('invalid_stripe_refund_id')
   const result=await client.getRefundStatus(job.refund_id)
-  if(result.refundId!==job.refund_id||result.amountCents!==Number(job.amount_cents)||job.payment_intent_id&&result.paymentIntentId!==job.payment_intent_id)
+  if(result==null)throw fail('stripe_refund_status_invalid')
+  if(result.refundId!==job.refund_id||!Number.isSafeInteger(result.amountCents)||result.amountCents!==Number(job.amount_cents)||job.payment_intent_id&&result.paymentIntentId!==job.payment_intent_id)
    throw fail('refund_status_mismatch')
+  if(!['succeeded','pending','requires_action','failed','canceled'].includes(result.status))
+   throw fail('refund_status_unknown')
   const state=result.status==='succeeded'?'succeeded':
     ['failed','canceled'].includes(result.status)?'review':'submitted'
+  return await finalizeSubmittedRefund(db,job,result,state)
+ }catch(error){
+  if(error?.message==='refund_persist_failed')throw error
+  const mismatch=['refund_status_mismatch','refund_status_unknown','stripe_refund_status_invalid','invalid_stripe_refund_id'].includes(error?.message)
   const updated=await db.query(`
- UPDATE stripe_test_refund_jobs SET status=$3,lease_token=NULL,lease_expires_at=NULL,
+ UPDATE stripe_test_refund_jobs SET status=CASE WHEN $3 THEN 'review' ELSE 'submitted' END,
+ lease_token=NULL,lease_expires_at=NULL,
+ next_attempt_at=clock_timestamp()+interval '5 minutes',
+ last_error=CASE WHEN $3 THEN $4 ELSE 'refund_status_unavailable' END,
+ updated_at=clock_timestamp()
+ WHERE id=$1 AND lease_token=$2 AND status='submitted' RETURNING id`,
+ [job.id,job.lease_token,mismatch,error?.message||null])
+  if(updated.rowCount!==1)fail('refund_lease_lost')
+  return {action:mismatch?'review':'submitted',jobId:job.id,lookupFailed:!mismatch}
+ }
+}
+async function finalizeSubmittedRefund(db,job,result,state){
+ try{
+  const updated=await db.query(`
+ UPDATE stripe_test_refund_jobs SET status=$3,provider_status=$4,
+ payment_intent_id=COALESCE(payment_intent_id,$5),
+ lease_token=NULL,lease_expires_at=NULL,
  next_attempt_at=clock_timestamp()+interval '5 minutes',
  last_error=CASE WHEN $3='review' THEN 'stripe_refund_failed' ELSE NULL END,updated_at=clock_timestamp()
- WHERE id=$1 AND lease_token=$2 AND status='submitted' RETURNING id`,[job.id,job.lease_token,state])
+ WHERE id=$1 AND lease_token=$2 AND status='submitted' RETURNING id`,
+ [job.id,job.lease_token,state,result.status,result.paymentIntentId||null])
   if(updated.rowCount!==1)throw fail('refund_lease_lost')
   return {action:state,jobId:job.id}
  }catch(error){
-  const updated=await db.query(`
- UPDATE stripe_test_refund_jobs SET lease_token=NULL,lease_expires_at=NULL,
- next_attempt_at=clock_timestamp()+interval '5 minutes',
- last_error=$3,updated_at=clock_timestamp()
- WHERE id=$1 AND lease_token=$2 AND status='submitted' RETURNING id`,
- [job.id,job.lease_token,'refund_status_unavailable'])
-  if(updated.rowCount!==1)throw fail('refund_lease_lost')
-  return {action:'submitted',jobId:job.id,lookupFailed:true}
+  throw new Error('refund_persist_failed',{cause:error})
  }
 }
