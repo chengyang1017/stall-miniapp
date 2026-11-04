@@ -22,6 +22,12 @@
     <view class="customer-order-top"><text class="customer-order-number">{{item.id}}</text><text class="customer-order-state">{{item.statusText}}</text></view>
     <view class="customer-order-items">{{item.itemSummary}}</view>
     <view class="customer-order-info">{{item.createdText}}</view>
+    <view wx:if="{{cloudMode && item.paymentStatus === 'unpaid'}}">
+      <button size="mini" data-id="{{item.id}}" data-channel="wechat_pay" catchtap="openSandboxOrder">微信 · Stripe 外部测试</button>
+      <button size="mini" data-id="{{item.id}}" data-channel="alipay" catchtap="openSandboxOrder">支付宝 Sandbox</button>
+      <button size="mini" data-id="{{item.id}}" data-channel="card" catchtap="openSandboxOrder">银行卡 Sandbox</button>
+    </view>
+    <view wx:if="{{cloudMode}}" class="customer-order-info">查看详情：支付状态 / 测试重试 / 退款 / 电子小票 ›</view>
     <view wx:if="{{item.showEta}}" class="customer-order-info">预计送达：{{item.etaText}}</view>
     <view wx:if="{{item.other}}" class="customer-order-reason">原因：{{item.issueReason || '详情中查看'}}</view>
     <view class="customer-order-bottom"><text class="customer-order-payment">{{item.paymentText}}</text><view class="customer-order-total">¥{{item.totalText}}　<text class="customer-order-arrow">›</text></view></view>

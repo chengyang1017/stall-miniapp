@@ -72,3 +72,11 @@ test('refund lookup failure keeps submitted status for retry',async()=>{
  const out=await reconcileOneSubmittedStripeTestRefund(m.db,{getRefundStatus:async()=>{throw Error('network')}})
  assert.equal(out.lookupFailed,true);assert.equal(out.action,'submitted')
 })
+
+test('refund evidence is persisted atomically before releasing the lease',async()=>{
+ const m=fake([{rowCount:1,rows:[{id:job.id}]}])
+ await finishStripeTestRefund(m.db,job,{refundId:'re_abc',completed:false,paymentIntentId:'pi_expected',status:'pending'})
+ assert.match(m.calls[0].sql,/payment_intent_id=\$5/)
+ assert.match(m.calls[0].sql,/provider_status=\$6/)
+ assert.deepEqual(m.calls[0].args.slice(4),['pi_expected','pending'])
+})

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict'
 import {createStripeTestRefundClient} from '../src/stripeTestRefund.mjs'
 const audit={provider:'stripe:sandbox',event_type:'refund_required',
  order_id:'11111111-1111-4111-8111-111111111111',provider_event_id:'cs_test_abc',amount_cents:'1599'}
-const session={id:'cs_test_abc',livemode:false,payment_status:'paid',
+const session={currency:'cny',id:'cs_test_abc',livemode:false,payment_status:'paid',
  payment_intent:'pi_abc123',client_reference_id:audit.order_id,amount_total:1599}
-const refund={id:'re_abc123',payment_intent:'pi_abc123',amount:1599,status:'succeeded'}
+const refund={currency:'cny',id:'re_abc123',payment_intent:'pi_abc123',amount:1599,status:'succeeded'}
 function setup(overrides={}){
  const calls=[];const client=createStripeTestRefundClient({secretKey:'sk_test_123',
  fetchImpl:async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>url.endsWith('/refunds')?(overrides.refund||refund):(overrides.session||session)}}})
@@ -63,5 +63,15 @@ test('fetches Stripe refund state without issuing another refund',async()=>{
 })
 test('rejects mismatching Stripe refund identity',async()=>{
  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:true,json:async()=>({...refund,id:'re_different'})})})
+ await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
+})
+
+test('compensation rejects non-CNY session before submitting refund',async()=>{
+ const {client,calls}=setup({session:{...session,currency:'usd'}})
+ await assert.rejects(client.refundLatePayment(audit),/stripe_refund_session_mismatch/)
+ assert.equal(calls.length,1)
+})
+test('refund polling rejects wrong currency',async()=>{
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:true,json:async()=>({...refund,currency:'usd'})})})
  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
 })

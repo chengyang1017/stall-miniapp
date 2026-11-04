@@ -1,0 +1,50 @@
+✔ refuses production credentials (1.2265ms)
+✔ refuses anything except a tracked late-payment audit row (0.6133ms)
+✔ retrieves paid Checkout Session and sends idempotent full refund (0.6015ms)
+✔ session amount mismatch fails before refund (0.231ms)
+✔ live session is never refunded (0.1711ms)
+✔ pending refund is not reported as completed (0.2051ms)
+✔ rejected or failed refund is never claimed successful (0.2291ms)
+✔ network failure propagates so refund remains unresolved (0.2081ms)
+✔ fetches Stripe refund state without issuing another refund (0.4058ms)
+✔ rejects mismatching Stripe refund identity (0.3606ms)
+✖ compensation rejects non-CNY session before submitting refund (0.6262ms)
+✖ refund polling rejects wrong currency (0.2403ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 10
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 752.3795
+
+✖ failing tests:
+
+test at backend\tests\stripeTestRefund.test.mjs:69:1
+✖ compensation rejects non-CNY session before submitting refund (0.6262ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/stripeTestRefund.test.mjs:71:2)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /stripe_refund_session_mismatch/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at backend\tests\stripeTestRefund.test.mjs:74:1
+✖ refund polling rejects wrong currency (0.2403ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/stripeTestRefund.test.mjs:76:2)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /stripe_refund_status_invalid/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

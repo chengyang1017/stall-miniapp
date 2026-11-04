@@ -40,6 +40,13 @@
     <textarea class="note-input" maxlength="200" placeholder="有需要交代给商家的事项？" value="{{note}}" bindinput="updateNote" auto-height />
   </view>
   <view class="checkout-bottom-space"></view>
+  <view wx:if="{{cloudMode}}" class="checkout-section">
+    <view>Sandbox 测试支付方式（下单后确认外部测试入口）</view>
+    <button size="mini" data-channel="wechat_pay" bindtap="chooseSandboxChannel">{{sandboxChannel === 'wechat_pay' ? '✓ ' : ''}}微信 · Stripe 外部测试</button>
+    <button size="mini" data-channel="alipay" bindtap="chooseSandboxChannel">{{sandboxChannel === 'alipay' ? '✓ ' : ''}}支付宝</button>
+    <button size="mini" data-channel="card" bindtap="chooseSandboxChannel">{{sandboxChannel === 'card' ? '✓ ' : ''}}银行卡</button>
+    <view>仅独立测试服务配置后可用。非微信原生支付；提交订单不会扣款。</view>
+  </view>
   <view class="checkout-bottom">
     <view class="bottom-amount"><view class="bottom-caption">合计</view><view class="bottom-price">¥{{totalText}}</view></view>
     <button wx:if="{{cloudMode}}" class="place-order" loading="{{cloudBusy || orderSubmitting}}" disabled="{{totalCount === 0 || orderSubmitting || cloudBusy || cloudError !== '' || deliveryError !== '' || !minimumReached || !selectedSlotId || !hasAddress}}" bindtap="confirmOrder">提交订单</button>

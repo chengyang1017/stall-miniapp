@@ -46,3 +46,36 @@ test('timestamp outside 5 minute window rejected',async()=>{
  const gateway=make();const msg=signed(payload,1699999000)
  await assert.rejects(gateway.verifyNotification(msg.raw,{request,headers:msg.headers}),/stripe_signature_invalid/)
 })
+
+for(const channel of ['card','alipay','wechat_pay']){
+ test(channel+' uses configured hosted Checkout and isolated idempotency',async()=>{
+  let options
+  const gateway=make({channel,paymentMethodConfiguration:'pmc_Test123',fetchImpl:async(_,o)=>{
+   options=o;return {ok:true,json:async()=>checkout}
+  }})
+  const result=await gateway.create({...request,currency:'CNY'})
+  const body=new URLSearchParams(options.body)
+  assert.equal(body.get('payment_method_configuration'),'pmc_Test123')
+  assert.equal(body.get('metadata[channel]'),channel)
+  assert.equal(body.get('line_items[0][price_data][currency]'),'cny')
+  assert.equal(body.has('payment_method_types[0]'),false)
+  assert.ok(options.headers['Idempotency-Key'].includes(':'+channel+':'))
+  assert.equal(result.channel,channel)
+ })
+ test(channel+' async signed success settles through common verified contract',async()=>{
+  const gateway=make({channel,paymentMethodConfiguration:'pmc_Test123'})
+  const msg=signed({...payload,type:'checkout.session.async_payment_succeeded'})
+  const result=await gateway.verifyNotification(msg.raw,{request,headers:msg.headers})
+  assert.equal(result.status,'succeeded')
+ })
+}
+test('wallets require explicit configuration and invalid channels fail closed',()=>{
+ assert.throws(()=>make({channel:'alipay'}),/stripe_channel_configuration_required/)
+ assert.throws(()=>make({channel:'wechat_pay'}),/stripe_channel_configuration_required/)
+ assert.throws(()=>make({channel:'fake'}),/stripe_invalid_channel/)
+ assert.throws(()=>make({paymentMethodConfiguration:'not-a-config'}),/stripe_invalid_method_configuration/)
+})
+test('untrusted hosted URL rejected before returning to client',async()=>{
+ const gateway=make({fetchImpl:async()=>({ok:true,json:async()=>({...checkout,url:'https://example.com/phishing'})})})
+ await assert.rejects(gateway.create(request),/stripe_invalid_checkout_session/)
+})

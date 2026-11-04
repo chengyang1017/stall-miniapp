@@ -1,0 +1,43 @@
+✔ queue only verified refund-required audit events and prevent duplicates (2.2692ms)
+✔ claim uses SKIP LOCKED and recovers only expired leases (0.4886ms)
+✔ completion requires valid refund ID and claimed lease (0.579ms)
+✔ pending Stripe refunds are persisted as submitted, not succeeded (0.2045ms)
+✔ stale lease cannot complete or overwrite current job (0.4352ms)
+✔ transient API error is stored for retry (0.1846ms)
+✔ five failed attempts go to manual review (0.1481ms)
+✔ processing one job records refund completion (0.2178ms)
+✔ processing error schedules retry without claiming refund was completed (0.2565ms)
+✔ submitted refund reconciles succeeded without creating a new refund (0.4134ms)
+✔ pending refund remains submitted with next poll scheduled (0.237ms)
+✔ failed remote refund moves to manual review (0.1961ms)
+✔ refund lookup failure keeps submitted status for retry (0.2127ms)
+✖ refund evidence is persisted atomically before releasing the lease (0.879ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 13
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 729.6601
+
+✖ failing tests:
+
+test at backend\tests\stripeTestRefundJobs.test.mjs:76:1
+✖ refund evidence is persisted atomically before releasing the lease (0.879ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /payment_intent_id=\$5/. Input:
+  
+  'UPDATE stripe_test_refund_jobs SET status=$3,refund_id=$4,\n' +
+    '  lease_token=NULL,lease_expires_at=NULL,last_error=NULL,updated_at=clock_timestamp()\n' +
+    " WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id"
+  
+      at TestContext.<anonymous> (file:///C:/Users/USER/WeChatProjects/miniprogram-1/backend/tests/stripeTestRefundJobs.test.mjs:79:9)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "UPDATE stripe_test_refund_jobs SET status=$3,refund_id=$4,\n  lease_token=NULL,lease_expires_at=NULL,last_error=NULL,updated_at=clock_timestamp()\n WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id",
+    expected: /payment_intent_id=\$5/,
+    operator: 'match',
+    diff: 'simple'
+  }
