@@ -14,7 +14,7 @@ const reply=(res,status,body)=>{res.writeHead(status,{'content-type':'applicatio
 async function read(req){let n=0;const parts=[];for await(const part of req){n+=part.length;if(n>262144)throw Error('too_large');parts.push(Buffer.from(part))}return Buffer.concat(parts)}
 async function json(req){try{const b=await read(req);return b.length?JSON.parse(b):{}}catch(e){if(e.message==='too_large')throw e;throw Error('invalid_json')}}
 export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,deps={}){
- const match=/^\/v1\/(merchant\/)?stores\/([a-z0-9][a-z0-9-]{1,62})\/orders\/([a-f0-9-]{36})\/(stripe-test-checkout|sandbox-payment|sandbox-refund|sandbox-cancel|sandbox-review)$/.exec(url.pathname)
+ const match=/^\/v1\/(merchant\/)?stores\/([a-z0-9][a-z0-9-]{1,62})\/orders\/([a-f0-9-]{36})\/(stripe-test-checkout|sandbox-payment|sandbox-refund|sandbox-cancel|sandbox-review|sandbox-review-verify)$/.exec(url.pathname)
  const webhook=url.pathname==='/v1/payments/stripe-test/webhook'
  if(!match&&!webhook)return false
  if(env.STRIPE_TEST_PAYMENTS_ENABLED!=='true'){reply(res,404,{error:'not_found'});return true}
@@ -65,6 +65,18 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   const scoped=await pool.query(`SELECT o.id FROM orders o JOIN stores s ON s.id=o.store_id
    WHERE s.slug=$1 AND s.is_active=true AND o.id=$2 AND ($3::boolean OR o.customer_subject=$4)`,[slug,orderId,!!merchant,subject])
   if(!scoped.rows.length){reply(res,404,{error:'order_not_found'});return true}
+  if(action==='sandbox-review-verify'){
+   if(req.method!=='GET'){reply(res,405,{error:'method_not_allowed'});return true}
+   if(!store||!['owner','manager'].includes(store.role)){reply(res,403,{error:'forbidden'});return true}
+   const {rows:[attempt]}=await pool.query(`SELECT * FROM sandbox_payment_attempts
+    WHERE order_id=$1 AND status='review' ORDER BY created_at DESC LIMIT 1`,[orderId])
+   if(!attempt){reply(res,404,{error:'payment_review_not_found'});return true}
+   if(!attempt.session_id){reply(res,200,{sandbox:true,readOnly:true,requiresManualReview:true,
+    providerVerified:false,verificationUnavailable:'session_not_recorded',resolutionAllowed:false});return true}
+   const evidence=await client.inspectReview(attempt)
+   reply(res,200,{sandbox:true,readOnly:true,requiresManualReview:true,
+    evidence,resolutionAllowed:false});return true
+  }
   if(action==='sandbox-review'){
    // Read-only operator evidence; never manually assert collection or release a hold.
    if(req.method!=='GET'){reply(res,405,{error:'method_not_allowed'});return true}

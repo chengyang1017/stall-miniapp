@@ -131,6 +131,44 @@ test('sandbox-review is read-only and limited to store owner or manager',async()
  assert.equal(providerCalls,0)
 })
 
+test('review verification requires owner or manager and never mutates or resolves payments',async()=>{
+ const verifyUrl=new URL(url.href.replace('/v1/stores/','/v1/merchant/stores/').replace('/stripe-test-checkout','/sandbox-review-verify'))
+ const attempt={id:'attempt-1',order_id:'11111111-1111-4111-8111-111111111111',channel:'alipay',status:'review',session_id:'cs_test_review',amount_cents:1000}
+ let inspections=0,writes=0
+ const pool={async query(sql){
+  if(sql.includes('sandbox_payment_environment'))return {rows:[{one:1}]}
+  if(sql.includes('SELECT o.id FROM orders'))return {rows:[{id:attempt.order_id}]}
+  if(sql.includes("status='review' ORDER BY"))return {rows:[attempt]}
+  writes++;throw Error('unexpected database query: '+sql)
+ }}
+ for(const role of ['owner','manager']){
+  const response=res()
+  await stripeTestPaymentRoute({method:'GET',headers:{}},response,verifyUrl,pool,isolatedEnv,{
+   authenticate:async()=> 'merchant',permittedStore:async()=>({role}),client:{inspectReview:async a=>{
+    inspections++;assert.equal(a.id,attempt.id);return {providerVerified:true,readOnly:true,channelMismatch:true}
+   }}
+  })
+  assert.equal(response.status,200)
+  assert.equal(response.body.resolutionAllowed,false)
+  assert.equal(response.body.evidence.channelMismatch,true)
+ }
+ for(const role of ['staff',null]){
+  const response=res()
+  await stripeTestPaymentRoute({method:'GET',headers:{}},response,verifyUrl,pool,isolatedEnv,{
+   authenticate:async()=> 'merchant',permittedStore:async()=>role?{role}:null,client:{inspectReview:async()=>{inspections++}}
+  })
+  assert.equal(response.status,403)
+ }
+ const customer=res()
+ await stripeTestPaymentRoute({method:'GET',headers:{}},customer,new URL(url.href.replace('/stripe-test-checkout','/sandbox-review-verify')),pool,isolatedEnv,{authenticate:async()=> 'customer',client:{}})
+ assert.equal(customer.status,403)
+ const write=res()
+ await stripeTestPaymentRoute(requestJson({paymentStatus:'paid'}),write,verifyUrl,pool,isolatedEnv,{authenticate:async()=> 'merchant',permittedStore:async()=>({role:'owner'}),client:{}})
+ assert.equal(write.status,405)
+ assert.equal(inspections,2)
+ assert.equal(writes,0)
+})
+
 test('sandbox-review refuses customer routes and absent review attempts',async()=>{
  const merchantUrl=new URL(url.href.replace('/v1/stores/','/v1/merchant/stores/').replace('/stripe-test-checkout','/sandbox-review'))
  const customerUrl=new URL(url.href.replace('/stripe-test-checkout','/sandbox-review'))

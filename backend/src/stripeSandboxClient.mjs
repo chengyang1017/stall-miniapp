@@ -45,6 +45,24 @@ export function createStripeSandboxClient(env,fetchImpl=fetch){
     expiresAt:Math.floor(new Date(attempt.expires_at).getTime()/1000)}).create({orderId:attempt.order_id,amountCents:Number(attempt.amount_cents),currency:'CNY',requestKey:attempt.request_key})
   },
   getSession,
+  async inspectReview(attempt){
+   // A paid channel mismatch intentionally blocks normal getSession settlement.
+   // Review reads Stripe only and returns a restricted, identity-validated snapshot.
+   if(!/^cs_test_[A-Za-z0-9_]+$/.test(attempt?.session_id||''))fail('invalid_sandbox_session')
+   const s=await call('checkout/sessions/'+encodeURIComponent(attempt.session_id)+'?expand[]=payment_intent.latest_charge')
+   if(!s||Array.isArray(s)||s.id!==attempt.session_id||s.object!=='checkout.session'||s.livemode!==false||s.mode!=='payment'||
+    s.client_reference_id!==attempt.order_id||s.metadata?.orderId!==attempt.order_id||
+    s.currency!=='cny'||s.amount_total!==Number(attempt.amount_cents)||
+    !['open','complete','expired'].includes(s.status)||!['paid','unpaid','no_payment_required'].includes(s.payment_status))fail('stripe_session_mismatch')
+   const pi=s.payment_intent,actual=pi&&typeof pi==='object'?pi.latest_charge?.payment_method_details?.type:null
+   if(s.payment_status==='paid'&&(s.status!=='complete'||pi?.livemode!==false||pi.status!=='succeeded'||
+    !/^pi_[A-Za-z0-9_]+$/.test(pi.id||'')||pi.amount!==s.amount_total||pi.currency!=='cny'||
+    !Number.isSafeInteger(pi.latest_charge?.created)||!['card','alipay','wechat_pay'].includes(actual)))fail('stripe_paid_intent_mismatch')
+   return Object.freeze({sessionId:s.id,sessionStatus:s.status,paymentStatus:s.payment_status,
+    requestedChannel:attempt.channel,actualChannel:actual||null,channelMismatch:s.payment_status==='paid'&&actual!==attempt.channel,
+    paymentIntentId:typeof pi==='object'&&/^pi_[A-Za-z0-9_]+$/.test(pi?.id||'')?pi.id:null,
+    amountCents:s.amount_total,currency:'CNY',providerVerified:true,readOnly:true,checkedAt:new Date().toISOString()})
+  },
   async expire(attempt){
    await call('checkout/sessions/'+encodeURIComponent(attempt.session_id)+'/expire',{method:'POST',headers:{'Idempotency-Key':'expire:'+attempt.id}})
    return getSession(attempt)

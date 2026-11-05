@@ -41,3 +41,13 @@ test('Sandbox merchant review stays a read-only GET and never exposes resolution
  assert.match(view,/核查模式：只读/)
  assert.doesNotMatch(view,/bindtap="resolveSandboxReview"/)
 })
+
+test('merchant review verification uses read-only Stripe evidence and never renders settlement controls',()=>{
+ const api=read('miniprogram/modules/shared/api/sandboxPayment.ts')
+ const page=read('miniprogram/pages/admin-orders/admin-orders.ts')
+ const view=read('miniprogram/pages/admin-orders/admin-orders.wxml')
+ assert.match(api,/sandbox-review-verify/)
+ assert.match(page,/sandboxPaymentRequest\(cfg,id,true,'sandbox-review-verify'\)/)
+ assert.match(view,/bindtap="verifySandboxReview"/)
+ assert.match(view,/仅供人工判断，不改变订单/)
+})
