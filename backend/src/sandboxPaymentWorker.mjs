@@ -39,6 +39,28 @@ export async function runSandboxMaintenance(pool,env,{client,refundClient}={}){
   a=await materializeSandboxAttempt(pool,client,a)
   await applySandboxObservation(pool,a,await observeSandboxSession(pool,client,a));recovered++
  }catch{unavailable++}
+ // A terminal-looking Checkout can still acquire a late asynchronous payment,
+ // even if Stripe's webhook was lost. Reconcile a bounded recent cohort without
+ // reopening unpaid sessions; a verified late collection is settled or refunded
+ // through the same idempotent transaction as normal webhooks.
+ const {rows:late}=await pool.query(`SELECT * FROM sandbox_payment_attempts
+  WHERE status IN ('failed','expired','cancelled') AND session_id IS NOT NULL
+    AND created_at>clock_timestamp()-interval '48 hours'
+    AND updated_at<clock_timestamp()-interval '10 minutes'
+  ORDER BY updated_at,id LIMIT 5`)
+ let lateRecovered=0,lateUnavailable=0
+ for(const a of late){
+  try{
+   const observation=await observeSandboxSession(pool,client,a)
+   const outcome=await applySandboxObservation(pool,a,observation)
+   if(outcome.action==='succeeded'||outcome.action==='refund_required'||outcome.action==='already_settled')lateRecovered++
+  }catch{lateUnavailable++}
+  // Move this attempt to the end of the periodic reconciliation queue, even
+  // when Stripe is temporarily unavailable, to avoid starving other orders.
+  // Do not touch terminal state or suppress future signed webhooks.
+  await pool.query(`UPDATE sandbox_payment_attempts SET updated_at=clock_timestamp()
+    WHERE id=$1 AND status IN ('failed','expired','cancelled')`,[a.id])
+ }
  let refund='disabled'
  if(env.STRIPE_TEST_REFUNDS_ENABLED==='true'){
   refundClient||=createStripeTestRefundClient({secretKey:env.STRIPE_TEST_SECRET_KEY})
@@ -48,7 +70,7 @@ export async function runSandboxMaintenance(pool,env,{client,refundClient}={}){
   await reconcileOneUncertainStripeTestRefund(pool,refundClient)
   await syncSandboxRefundOrders(pool)
  }
- return {recovered,unavailable,refund}
+ return {recovered,unavailable,lateRecovered,lateUnavailable,refund}
 }
 export function startSandboxPaymentWorker(pool,env=process.env){
  if(!sandboxEnabled(env)||env.SANDBOX_PAYMENT_WORKER_ENABLED!=='true')return async()=>{}
