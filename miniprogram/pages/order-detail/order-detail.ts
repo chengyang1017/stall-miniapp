@@ -1,7 +1,7 @@
 import { paymentLabel } from '../../modules/shared/domain/payment'
 import { createSandboxCheckout, SandboxChannel } from '../../modules/customer/api/sandboxPayment'
 import { sandboxPaymentRequest } from '../../modules/shared/api/sandboxPayment'
-import { sandboxPaymentView } from '../../modules/shared/domain/sandboxPayment'
+import { sandboxPaymentView, sandboxReceiptText } from '../../modules/shared/domain/sandboxPayment'
 import { supportKey } from '../../modules/shared/domain/support'
 import { proofUrl } from '../../modules/customer/api/proof' // PHASE38_PROOF_READ
 import { customerOrdersConfig, customerOrdersRequest,stagingOrderPayment } from '../../modules/customer/api/orders' // PHASE35_CUSTOMER_ORDERS
@@ -12,6 +12,14 @@ function workflowText(st: string): string {
   return labels[st] || '待接单'
 }
 Page({
+  copySandboxReceipt(e:any){
+    if(!this.detailVisible||this.phoneReadOnly)return
+    const id=String(e.currentTarget.dataset.id||'')
+    const receipt=this.data.sandbox?.receipts?.find((r:any)=>r.id===id&&r.orderId===this.data.order.id)
+    const content=receipt?sandboxReceiptText(receipt):''
+    if(!content)return
+    wx.setClipboardData({data:content,fail:()=>wx.showToast({title:'复制小票失败，请重试',icon:'none'})})
+  },
   async loadSandboxPayment(){
     const cfg=customerOrdersConfig(),serial=this.detailSerial,identity=supportIdentity(),id=String(this.data.order.id)
     if(!cfg||this.phoneReadOnly)return

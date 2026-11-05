@@ -5,7 +5,7 @@ import {saveDemoOrders} from '../../modules/merchant/demo/orders'
 import { merchantOrderConfig, merchantOrderContextKey, fetchMerchantOrderPage, updateMerchantOrder, saveMerchantOrderNote, MerchantOrderCounts, MerchantOrderQuery } from '../../modules/merchant/api/orders'
 import {saveMerchantEta} from '../../utils/merchantEtaCloud'
 import {sandboxPaymentRequest} from '../../modules/shared/api/sandboxPayment'
-import {sandboxPaymentView} from '../../modules/shared/domain/sandboxPayment'
+import {sandboxPaymentView,sandboxReceiptText} from '../../modules/shared/domain/sandboxPayment'
 const tabs=[{key:'latest',label:'全部订单'},{key:'unpaid',label:'待支付'},{key:'new',label:'待接单'},{key:'accepted',label:'已接单'},{key:'preparing',label:'备货中'},{key:'delivering',label:'配送中'},{key:'delivered',label:'已送达'},{key:'cancelled',label:'已取消'},{key:'abnormal',label:'配送异常'},{key:'other',label:'取消 / 异常'}]
 const labels:Record<string,string>={new:'新订单',accepted:'已接单',preparing:'备货中',delivering:'配送中',delivered:'已送达',cancelled:'已取消',abnormal:'配送异常'}
 function state(o:any):string{const s=String(o.fulfillmentStatus||'new');return ['canceled','refunded'].includes(s)?'cancelled':s==='exception'?'abnormal':s}
@@ -15,6 +15,14 @@ function validRange(from:string,to:string):boolean{if(!from&&!to)return true;con
 function emptyCounts():MerchantOrderCounts{return {all:0,new:0,accepted:0,preparing:0,delivering:0,delivered:0,cancelled:0,abnormal:0,other:0}}
 function errorMessage(e:unknown):string{const s=String(e);if(/orders_changed|cursor/.test(s))return '订单数据已变化或分页已过期，请刷新后继续加载';if(/401|403|not_logged_in/.test(s))return '登录已失效或无操作权限，请重新登录有权限的商家账号';if(s.includes('payment_not_confirmed'))return '尚未确认支付，现有支付或库存预留规则禁止此操作';if(s.includes('inventory_reservation_expired'))return '库存预留已过期，服务器已处理，请刷新核对';if(/invalid_transition|state_changed|inventory_released/.test(s))return '订单状态或库存预留已变化，请刷新核对';if(s.includes('400'))return '查询条件或操作参数无效，请检查日期范围和输入';return '请求失败或结果未能确认，请检查网络后刷新核对，勿重复操作'}
 Page({
+ copySandboxReceipt(e:any){
+  if(!this.visible)return
+  const id=String(e.currentTarget.dataset.id||'')
+  const receipt=this.data.sandbox?.receipts?.find((r:any)=>r.id===id&&r.orderId===this.data.sandboxOrderId)
+  const content=receipt?sandboxReceiptText(receipt):''
+  if(!content)return
+  wx.setClipboardData({data:content,fail:()=>wx.showToast({title:'复制小票失败，请重试',icon:'none'})})
+ },
  async viewSandboxPayment(e:any){
   const cfg=merchantOrderConfig(),id=String(e.currentTarget.dataset.id||''),context=merchantOrderContextKey(),serial=this.serial
   if(!cfg||!this.visible)return
