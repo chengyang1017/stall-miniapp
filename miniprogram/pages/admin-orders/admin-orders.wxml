@@ -69,6 +69,7 @@
             <view>Stripe 付款状态：{{sandboxEvidence.paymentStatus}} · Session：{{sandboxEvidence.sessionStatus}}</view>
             <view>实际渠道：{{sandboxEvidence.actualChannel || '未确认'}} · 与选择不一致：{{sandboxEvidence.channelMismatch ? '是' : '否'}}</view>
             <view>核验时间：{{sandboxEvidence.checkedAt}}（仅供人工判断，不改变订单）</view>
+            <view wx:if="{{sandboxEvidenceMeta}}">审计记录：{{sandboxEvidenceMeta.id}} · 核验人：{{sandboxEvidenceMeta.reviewedBy || '已记录'}} · 保存时间：{{sandboxEvidenceMeta.createdAt}}</view>
           </view>
           <view>选择渠道：{{sandboxReview.attempt.channel}} · 实际记录：{{sandboxReview.attempt.actualChannel || '待核实'}}</view>
           <view>金额（分）：{{sandboxReview.attempt.amountCents}} {{sandboxReview.attempt.currency}}</view>

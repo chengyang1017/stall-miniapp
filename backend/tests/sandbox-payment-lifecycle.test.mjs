@@ -49,7 +49,7 @@ async function prioritizeRefundJob(id){
  await pool.query("UPDATE stripe_test_refund_jobs SET next_attempt_at=now()-interval '1 second' WHERE id=$1",[id])
 }
 const notification=(id='evt_'+randomUUID().replaceAll('-',''),type='checkout.session.completed')=>({id,type,created:Math.floor(Date.now()/1000),hash:'a'.repeat(64)})
-test('all 001-027 migrations execute and 027 repeat fails rather than hiding drift',async()=>{
+test('all 001-028 migrations execute and 027 repeat fails rather than hiding drift',async()=>{
  await assert.rejects(db.pg.exec('CREATE TABLE sandbox_payment_attempts(id uuid)'),/already exists/)
  assert.ok((await pool.query("SELECT indexname FROM pg_indexes WHERE indexname='sandbox_payment_one_active_order'")).rows.length)
 })

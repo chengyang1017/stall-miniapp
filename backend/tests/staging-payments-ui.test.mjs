@@ -51,3 +51,22 @@ test('merchant review verification uses read-only Stripe evidence and never rend
  assert.match(view,/bindtap="verifySandboxReview"/)
  assert.match(view,/仅供人工判断，不改变订单/)
 })
+
+test('merchant review reloads immutable saved verification rather than relying on a transient Stripe response',async()=>{
+ const saved={sandbox:true,readOnly:true,requiresManualReview:true,attempt:{orderId:id,status:'review'},latestVerification:{id:'audit1',reviewedBy:'owner',createdAt:'2026-11-05T00:00:00Z',evidence:{readOnly:true,providerVerified:true,paymentStatus:'paid'}}}
+ const calls=[]
+ const p=page('miniprogram/pages/admin-orders/admin-orders.ts',{merchantOrderConfig:()=>({apiBase:'https://unit.invalid',storeSlug:'alpha'}),merchantOrderContextKey:()=> 'A',sandboxPaymentRequest:async(_cfg,_id,_merchant,action='sandbox-payment')=>{
+  calls.push(action);return action==='sandbox-review-verify'?{sandbox:true,auditId:'audit1'}:saved
+ }})
+ p.visible=true;p.context='A';p.data.sandboxOrderId=id;p.data.sandbox={attempts:[{status:'review'}]}
+ await p.viewSandboxReview()
+ assert.equal(p.data.sandboxEvidenceMeta.id,'audit1')
+ assert.equal(p.data.sandboxEvidence.paymentStatus,'paid')
+ await p.verifySandboxReview()
+ assert.deepEqual(calls,['sandbox-review','sandbox-review-verify','sandbox-review'])
+ assert.equal(p.data.sandboxEvidenceMeta.reviewedBy,'owner')
+ assert.equal(p.data.sandboxReviewError,'')
+ const view=read('miniprogram/pages/admin-orders/admin-orders.wxml')
+ assert.match(view,/sandboxEvidenceMeta\.reviewedBy/)
+ assert.match(view,/审计记录/)
+})

@@ -18,7 +18,7 @@ Page({
  async viewSandboxPayment(e:any){
   const cfg=merchantOrderConfig(),id=String(e.currentTarget.dataset.id||''),context=merchantOrderContextKey(),serial=this.serial
   if(!cfg||!this.visible)return
-  this.setData({sandboxOrderId:id,sandbox:null,sandboxError:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null})
+  this.setData({sandboxOrderId:id,sandbox:null,sandboxError:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null})
   try{const r=await sandboxPaymentRequest(cfg,id,true)
    if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({sandbox:sandboxPaymentView(r)})
   }catch(_){if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({sandboxError:'Sandbox 未启用、无权限或网络不可用，无法确认最新结果'})}
@@ -26,11 +26,13 @@ Page({
  async viewSandboxReview(){
   const cfg=merchantOrderConfig(),id=this.data.sandboxOrderId,context=merchantOrderContextKey(),serial=this.serial
   if(!cfg||!id||!this.visible||this.data.sandboxReviewBusy||!this.data.sandbox?.attempts?.some((a:any)=>a.status==='review'))return
-  this.setData({sandboxReview:null,sandboxEvidence:null,sandboxReviewError:'',sandboxReviewBusy:true})
+  this.setData({sandboxReview:null,sandboxEvidence:null,sandboxEvidenceMeta:null,sandboxReviewError:'',sandboxReviewBusy:true})
   try{
    const result=await sandboxPaymentRequest(cfg,id,true,'sandbox-review')
    if(this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&id===this.data.sandboxOrderId)
     this.setData({sandboxReview:result.readOnly===true&&result.requiresManualReview===true?result:null,
+     sandboxEvidence:result.readOnly===true&&result.requiresManualReview===true?result.latestVerification?.evidence||null:null,
+     sandboxEvidenceMeta:result.readOnly===true&&result.requiresManualReview===true?result.latestVerification||null:null,
      sandboxReviewError:result.readOnly===true&&result.requiresManualReview===true?'':'核查信息未获确认'})
   }catch(error){
    if(this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&id===this.data.sandboxOrderId)
@@ -42,11 +44,22 @@ Page({
  async verifySandboxReview(){
   const cfg=merchantOrderConfig(),id=this.data.sandboxOrderId,context=merchantOrderContextKey(),serial=this.serial
   if(!cfg||!id||!this.visible||this.data.sandboxReviewBusy||this.data.sandboxReview?.attempt?.orderId!==id)return
-  this.setData({sandboxReviewBusy:true,sandboxEvidence:null,sandboxReviewError:''})
+  this.setData({sandboxReviewBusy:true,sandboxReviewError:''})
   try{
-   const evidence=await sandboxPaymentRequest(cfg,id,true,'sandbox-review-verify')
-   if(this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&id===this.data.sandboxOrderId)
-    this.setData({sandboxEvidence:evidence.evidence||null,sandboxReviewError:evidence.verificationUnavailable?'Stripe Session 尚未保存，须线下核查':''})
+   const verification=await sandboxPaymentRequest(cfg,id,true,'sandbox-review-verify')
+   if(!this.visible||serial!==this.serial||context!==merchantOrderContextKey()||id!==this.data.sandboxOrderId)return
+   if(verification.verificationUnavailable){
+    this.setData({sandboxReviewError:'Stripe Session 尚未保存，须线下核查'});return
+   }
+   // Re-read the persisted, integrity-checked audit. Do not display an uncommitted result.
+   const saved=await sandboxPaymentRequest(cfg,id,true,'sandbox-review')
+   if(this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&id===this.data.sandboxOrderId){
+    const verified=saved.readOnly===true&&saved.requiresManualReview===true&&saved.latestVerification?.id===verification.auditId
+    this.setData({sandboxReview:verified?saved:this.data.sandboxReview,
+     sandboxEvidence:verified?saved.latestVerification.evidence:this.data.sandboxEvidence,
+     sandboxEvidenceMeta:verified?saved.latestVerification:this.data.sandboxEvidenceMeta,
+     sandboxReviewError:verified?'':'核验结果已提交，但保存记录未能再次确认，请刷新核查信息'})
+   }
   }catch(error){
    if(this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&id===this.data.sandboxOrderId)
     this.setData({sandboxReviewError:'Stripe 实时核验未成功，不能认定已收款；请稍后重试'})
@@ -71,17 +84,17 @@ Page({
   }})
  },
  loaded:[] as any[],localRows:[] as any[],localFiltered:[] as any[],counts:emptyCounts(),context:'',serial:0,nextCursor:'',localOffset:0,visible:false,
- data:{sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
+ data:{sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,sandboxEvidenceMeta:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
   orderTabs:tabs.map(t=>({...t,count:0})),countsKnown:false,globalTotal:0,globalPending:0,matchingCount:0,
   noteInputs:{} as Record<string,string>,etaInputs:{} as Record<string,string>,cloudMode:false,cloudBusy:false,loadingMore:false,cloudError:'',moreError:'',hasMore:false,refreshRequired:false,canManage:true,
   batchMode:false,selectedIds:[] as string[],selectedMap:{} as Record<string,boolean>,selectedCount:0,allSelected:false,operationBusy:false,operationProgress:'',batchResult:'',batchFailures:[] as Array<{id:string;reason:string}>},
- onShow(){this.visible=true;this.setData({sandbox:null,sandboxOrderId:'',sandboxError:'',sandboxRefundBusy:false,sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null});this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
+ onShow(){this.visible=true;this.setData({sandbox:null,sandboxOrderId:'',sandboxError:'',sandboxRefundBusy:false,sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null});this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
  onHide(){this.visible=false;this.serial++;this.setData({cloudBusy:false,loadingMore:false})},
  onUnload(){this.visible=false;this.serial++;this.loaded=[];this.localRows=[];this.localFiltered=[]},
  async onPullDownRefresh(){try{if(!this.data.operationBusy)await this.refresh()}finally{wx.stopPullDownRefresh()}},
  onReachBottom(){this.loadMore()},
  query():MerchantOrderQuery{return {q:this.data.orderSearchText.trim(),state:this.data.currentTab,from:this.data.dateFrom,to:this.data.dateTo}},
- syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({sandbox:null,sandboxOrderId:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
+ syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({sandbox:null,sandboxOrderId:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null,dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
  setCounts(counts:MerchantOrderCounts){this.counts=counts;this.setData({countsKnown:true,globalTotal:counts.all,globalPending:counts.new,orderTabs:tabs.map(t=>({...t,count:Number((counts as any)[t.key==='latest'?'all':t.key]||0)}))})},
  setSelection(ids:string[]){const map:Record<string,boolean>={};ids.forEach(id=>{map[id]=true});const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o))&&(!this.data.cloudMode||fulfillmentPaymentReady(o)));this.setData({selectedIds:ids,selectedMap:map,selectedCount:ids.length,allSelected:!!eligible.length&&ids.length===eligible.length})},
  changedQuery(){this.serial++;this.setSelection([]);this.setData({batchMode:false,queryDirty:true,cloudBusy:false,loadingMore:false,refreshRequired:false,batchResult:'',batchFailures:[],moreError:''})},
