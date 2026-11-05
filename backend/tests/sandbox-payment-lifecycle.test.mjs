@@ -11,7 +11,7 @@ import {reserveSandboxAttempt,materializeSandboxAttempt,applySandboxObservation,
 import {createStripeSandboxClient} from '../src/stripeSandboxClient.mjs'
 import {createStripeTestRefundClient} from '../src/stripeTestRefund.mjs'
 import {processOneStripeTestRefund,reconcileOneSubmittedStripeTestRefund} from '../src/stripeTestRefundJobs.mjs'
-import {syncSandboxRefundOrders,runSandboxMaintenance,assertSandboxDatabase} from '../src/sandboxPaymentWorker.mjs'
+import {syncSandboxRefundOrders,runSandboxMaintenance,assertSandboxDatabase,observeSandboxSession} from '../src/sandboxPaymentWorker.mjs'
 import {sandboxOrderColumns,verifiedFulfillmentPayment} from '../src/sandboxPaymentQuery.mjs'
 import {createSession} from '../src/auth.mjs'
 import {stripeTestPaymentRoute} from '../src/stripeTestPaymentRoute.mjs'
@@ -85,6 +85,22 @@ test('paid Stripe Session using a different channel never settles the order',asy
  assert.equal(state.attempts[0].status,'open')
  assert.equal(state.receipts.length,0)
  assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+})
+test('mismatched paid channel is quarantined for manual review without settling',async()=>{
+ const a=await opened(await order(),'wechat_pay')
+ const mismatch=session(a)
+ mismatch.payment_intent.latest_charge.payment_method_details.type='card'
+ const client=createStripeSandboxClient(env,async()=>({ok:true,json:async()=>mismatch}))
+ await assert.rejects(observeSandboxSession(pool,client,a),/stripe_paid_channel_mismatch/)
+ const state=await readSandboxPayment(pool,a.order_id)
+ assert.equal(state.attempts[0].status,'review')
+ assert.equal(state.receipts.length,0)
+ assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+ await assert.rejects(reserve({id:a.order_id},'card'),/active_payment_channel_conflict/)
+ let fetched=false
+ await assert.rejects(observeSandboxSession(pool,{getSession:async()=>{fetched=true;throw Error('offline')}},a),/offline/)
+ assert.equal(fetched,true)
+ assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'review')
 })
 test('duplicates and out-of-order expired callbacks do not reverse trusted payment',async()=>{
  const a=await opened(await order()),n=notification(),ob=await lookup(a)

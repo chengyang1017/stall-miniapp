@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto'
 import {authenticate,permittedStore} from './auth.mjs'
 import {verifyStripeSignature} from './stripeCheckoutGateway.mjs'
 import {createStripeSandboxClient} from './stripeSandboxClient.mjs'
-import {sandboxEnabled,assertSandboxDatabase} from './sandboxPaymentWorker.mjs'
+import {sandboxEnabled,assertSandboxDatabase,observeSandboxSession} from './sandboxPaymentWorker.mjs'
 import {reserveSandboxAttempt,materializeSandboxAttempt,applySandboxObservation,requestSandboxRefund,readSandboxPayment} from './sandboxPaymentStore.mjs'
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const key=/^[A-Za-z0-9_-]{10,100}$/
@@ -48,7 +48,7 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
      [order.id,channel,order.total_cents,'legacy:'+s.id,s.id])
     attempt=q.rows[0]
    }
-   const observation=await client.getSession(attempt)
+   const observation=await observeSandboxSession(pool,client,attempt)
    const result=await applySandboxObservation(pool,attempt,observation,{id:signed.id,type:signed.type,created:signed.created,hash:createHash('sha256').update(raw).digest('hex')})
    reply(res,200,{received:true,action:result.action});return true
   }
@@ -65,7 +65,7 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
    let stale=false
    const {rows}=await pool.query(`SELECT * FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('creating','open','processing','review') ORDER BY created_at DESC LIMIT 1`,[orderId])
    if(rows[0]?.status==='review')stale=true
-   else if(rows[0])try{const a=await materializeSandboxAttempt(pool,client,rows[0]);await applySandboxObservation(pool,a,await client.getSession(a))}catch{stale=true}
+   else if(rows[0])try{const a=await materializeSandboxAttempt(pool,client,rows[0]);await applySandboxObservation(pool,a,await observeSandboxSession(pool,client,a))}catch{stale=true}
    reply(res,200,{...await readSandboxPayment(pool,orderId),stale,canRefund:env.STRIPE_TEST_REFUNDS_ENABLED==='true'&&!!store&&['owner','manager'].includes(store.role)});return true
   }
   if(req.method!=='POST'){reply(res,405,{error:'method_not_allowed'});return true}
@@ -85,7 +85,7 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
    // Never claim cancellation before that provider outcome can be verified.
    if(a?.status==='creating'||a?.status==='review'||a&&!a.session_id)throw Error('payment_cancellation_requires_review')
    if(a){
-    const current=await client.getSession(a)
+    const current=await observeSandboxSession(pool,client,a)
     const observation=current.session.status==='open'?await client.expire(a):current
     await applySandboxObservation(pool,a,observation)
     // A confirmed collection must settle, but cancellation must not return success.
@@ -112,7 +112,7 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   let a=await reserveSandboxAttempt(pool,{orderId,subject,channel,providerOptions:{
    methodConfiguration:env['STRIPE_TEST_'+String(channel).toUpperCase()+'_CONFIGURATION'],successUrl:env.STRIPE_TEST_SUCCESS_URL,cancelUrl:env.STRIPE_TEST_CANCEL_URL}})
   a=await materializeSandboxAttempt(pool,client,a)
-  const observation=await client.getSession(a)
+  const observation=await observeSandboxSession(pool,client,a)
   await applySandboxObservation(pool,a,observation)
   if(observation.session.status!=='open'||observation.event)throw Error('payment_not_open_refresh')
   const {rows:[persisted]}=await pool.query("SELECT status,session_id,checkout_url FROM sandbox_payment_attempts WHERE id=$1",[a.id])

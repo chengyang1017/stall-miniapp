@@ -17,6 +17,18 @@ export async function syncSandboxRefundOrders(pool){
   WHERE o.id=r.order_id AND o.payment_source='stripe:sandbox' AND o.payment_status IN ('paid','partially_refunded')
   AND o.payment_status IS DISTINCT FROM CASE WHEN r.total>=o.total_cents THEN 'refunded' ELSE 'partially_refunded' END`)
 }
+// A paid session on an unexpected channel needs operator review, not endless retries.
+// Preserve the attempt and its Stripe identifiers for manual reconciliation.
+export async function observeSandboxSession(pool,client,attempt){
+ try{return await client.getSession(attempt)}
+ catch(error){
+  if(error?.message==='stripe_paid_channel_mismatch'){
+   await pool.query(`UPDATE sandbox_payment_attempts SET status='review',updated_at=clock_timestamp()
+    WHERE id=$1 AND session_id=$2 AND status IN ('open','processing')`,[attempt.id,attempt.session_id])
+  }
+  throw error
+ }
+}
 export async function runSandboxMaintenance(pool,env,{client,refundClient}={}){
  if(!sandboxEnabled(env))return {disabled:true}
  await assertSandboxDatabase(pool,env)
@@ -25,7 +37,7 @@ export async function runSandboxMaintenance(pool,env,{client,refundClient}={}){
  let recovered=0,unavailable=0
  for(let a of rows)try{
   a=await materializeSandboxAttempt(pool,client,a)
-  await applySandboxObservation(pool,a,await client.getSession(a));recovered++
+  await applySandboxObservation(pool,a,await observeSandboxSession(pool,client,a));recovered++
  }catch{unavailable++}
  let refund='disabled'
  if(env.STRIPE_TEST_REFUNDS_ENABLED==='true'){
