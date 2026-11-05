@@ -28,6 +28,7 @@
     "pages/store-hours/store-hours",
     "pages/delivery-proof/delivery-proof",
     "pages/order-detail/order-detail",
+    "pages/sandbox-receipts/sandbox-receipts",
     "pages/profile/profile",
     "pages/customer-account/customer-account",
     "pages/customer-settings/customer-settings",

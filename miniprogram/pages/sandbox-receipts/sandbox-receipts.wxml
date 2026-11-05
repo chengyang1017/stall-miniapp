@@ -1,0 +1,27 @@
+<view class="receipt-history">
+  <view class="receipt-intro">
+    <view class="receipt-title">我的测试电子小票</view>
+    <view class="receipt-hint">仅显示当前登录顾客在当前店铺的 Stripe Sandbox 测试小票，不代表真实收款。原始记录保存在服务端。</view>
+    <button size="mini" bindtap="loadMore" wx:if="{{hasMore}}" disabled="{{loading}}">读取更多订单</button>
+  </view>
+  <view wx:if="{{error}}" class="receipt-error">{{error}}</view>
+  <view wx:if="{{loading}}" class="receipt-hint">正在读取已保存的测试小票…</view>
+  <view wx:if="{{!loading && !receipts.length && !hasMore && !error}}" class="receipt-empty">暂无测试电子小票</view>
+  <view wx:if="{{!loading && !receipts.length && hasMore}}" class="receipt-empty">当前已加载订单暂无小票，可继续读取历史订单</view>
+  <view wx:for="{{receipts}}" wx:key="id" wx:for-item="receipt" class="receipt-card">
+    <view class="receipt-head"><text>{{receipt.channelText}}</text><text>¥{{receipt.totalText}}</text></view>
+    <view class="receipt-hint">{{receipt.paidAt}} · Stripe TEST</view>
+    <view class="receipt-hint">订单：{{receipt.orderId}}</view>
+    <view wx:for="{{receipt.items}}" wx:key="productId" wx:for-item="line" class="receipt-line"><text>{{line.name}} × {{line.quantity}}</text><text>¥{{line.lineTotalText}}</text></view>
+    <view class="receipt-line"><text>商品小计</text><text>¥{{receipt.subtotalText}}</text></view>
+    <view class="receipt-line"><text>配送费</text><text>¥{{receipt.deliveryFeeText}}</text></view>
+    <view class="receipt-hint">交易参考：{{receipt.transactionId}}</view>
+    <view class="receipt-hint">校验摘要：{{receipt.sha256}}</view>
+    <view class="receipt-actions">
+      <button size="mini" data-id="{{receipt.id}}" bindtap="copyReceipt">复制小票</button>
+      <button size="mini" data-order="{{receipt.orderId}}" bindtap="openOrder">查看订单</button>
+    </view>
+  </view>
+  <button wx:if="{{hasMore}}" class="receipt-more" disabled="{{loading}}" loading="{{loading}}" bindtap="loadMore">加载更多订单与小票</button>
+  <view wx:if="{{!hasMore && receipts.length}}" class="receipt-hint receipt-finish">已读取全部订单</view>
+</view>

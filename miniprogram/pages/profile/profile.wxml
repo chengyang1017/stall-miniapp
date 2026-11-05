@@ -58,6 +58,9 @@
 <view class="service-row" bindtap="openHistory">
 <text class="service-icon">◷</text>浏览记录<text class="value">{{historyCount === null ? '—' : historyCount}} ›</text>
 </view>
+<navigator class="service-row" url="/pages/sandbox-receipts/sandbox-receipts">
+<text class="service-icon">▤</text>我的测试电子小票<text class="value">›</text>
+</navigator>
 <navigator class="service-row" url="/pages/customer-reviews/customer-reviews">
 <text class="service-icon">☆</text>我的商品评价<text class="value">›</text>
 </navigator>
