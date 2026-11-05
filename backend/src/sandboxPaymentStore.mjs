@@ -158,3 +158,36 @@ export async function releaseExpiredSandboxReview(pool,{attempt,evidence,subject
   return {action:'expired_unpaid_released',auditId:audit.id}
  })
 }
+
+export async function queueSandboxMismatchRefund(pool,{attempt,evidence,subject}){
+ if(!attempt?.id||!attempt.order_id||!attempt.session_id||typeof subject!=='string'||!subject.length||subject.length>256)throw Error('invalid_review_refund')
+ if(evidence?.providerVerified!==true||evidence.readOnly!==true||
+  evidence.sessionId!==attempt.session_id||evidence.amountCents!==Number(attempt.amount_cents)||
+  evidence.currency!=='CNY'||evidence.sessionStatus!=='complete'||evidence.paymentStatus!=='paid'||
+  evidence.paymentIntentStatus!=='succeeded'||evidence.channelMismatch!==true||
+  evidence.requestedChannel!==attempt.channel||
+  !['card','alipay','wechat_pay'].includes(evidence.actualChannel)||evidence.actualChannel===attempt.channel||
+  !/^pi_[A-Za-z0-9_]+$/.test(evidence.paymentIntentId||''))throw Error('payment_review_refund_not_verified')
+ return sandboxTransaction(pool,async db=>{
+  await db.query('SELECT id FROM orders WHERE id=$1 FOR UPDATE',[attempt.order_id])
+  const {rows:[current]}=await db.query('SELECT * FROM sandbox_payment_attempts WHERE id=$1 FOR UPDATE',[attempt.id])
+  if(!current||current.status!=='review'||current.order_id!==attempt.order_id||current.session_id!==attempt.session_id||
+   Number(current.amount_cents)!==Number(attempt.amount_cents)||current.channel!==attempt.channel)throw Error('payment_review_state_changed')
+  const {rows:[existing]}=await db.query('SELECT id,kind,status FROM stripe_test_refund_jobs WHERE checkout_session_id=$1 ORDER BY created_at LIMIT 1',[current.session_id])
+  if(existing){
+   if(existing.kind==='review_compensation')return {action:'already_queued',jobId:existing.id,status:existing.status}
+   throw Error('payment_review_refund_conflict')
+  }
+  const {rows:[paid]}=await db.query(`SELECT 1 FROM payment_events WHERE order_id=$1 AND provider='stripe:sandbox'
+   AND provider_event_id=$2 AND event_type IN ('payment_succeeded','refund_required') LIMIT 1`,[current.order_id,current.session_id])
+  if(paid)throw Error('payment_review_refund_conflict')
+  const document=JSON.stringify({...evidence,resolution:'mismatch_refund_queued'})
+  const {rows:[audit]}=await db.query(`INSERT INTO sandbox_payment_review_evidence(attempt_id,order_id,reviewed_by,session_id,document_text,sha256)
+   VALUES($1,$2,$3,$4,$5,$6) RETURNING id`,[current.id,current.order_id,subject,current.session_id,document,sha(document)])
+  const {rows:[job]}=await db.query(`INSERT INTO stripe_test_refund_jobs(
+   payment_event_id,order_id,checkout_session_id,amount_cents,kind,request_key,requested_by,payment_amount_cents,payment_intent_id)
+   VALUES(NULL,$1,$2,$3,'review_compensation',$4,$5,$3,$6) RETURNING id,status`,
+   [current.order_id,current.session_id,current.amount_cents,'review-mismatch:'+current.id,subject,evidence.paymentIntentId])
+  return {action:'refund_queued',jobId:job.id,status:job.status,auditId:audit.id}
+ })
+}

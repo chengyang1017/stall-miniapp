@@ -59,7 +59,7 @@ export function createStripeSandboxClient(env,fetchImpl=fetch){
     !/^pi_[A-Za-z0-9_]+$/.test(pi.id||'')||pi.amount!==s.amount_total||pi.currency!=='cny'||
     !Number.isSafeInteger(pi.latest_charge?.created)||!['card','alipay','wechat_pay'].includes(actual)))fail('stripe_paid_intent_mismatch')
    return Object.freeze({sessionId:s.id,sessionStatus:s.status,paymentStatus:s.payment_status,
-    requestedChannel:attempt.channel,actualChannel:actual||null,channelMismatch:s.payment_status==='paid'&&actual!==attempt.channel,
+    requestedChannel:attempt.channel,actualChannel:actual||null,paymentIntentStatus:typeof pi==='object'?pi?.status||null:null,channelMismatch:s.payment_status==='paid'&&actual!==attempt.channel,
     paymentIntentId:typeof pi==='object'&&/^pi_[A-Za-z0-9_]+$/.test(pi?.id||'')?pi.id:null,
     amountCents:s.amount_total,currency:'CNY',providerVerified:true,readOnly:true,checkedAt:new Date().toISOString()})
   },

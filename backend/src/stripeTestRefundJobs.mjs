@@ -67,7 +67,7 @@ export async function processOneStripeTestRefund(db,client){
  }
  let result
  try{
-  result=job.kind==='merchant'?await client.refundPayment(job):await client.refundLatePayment(audit)
+  result=['merchant','review_compensation'].includes(job.kind)?await client.refundPayment(job):await client.refundLatePayment(audit)
  }catch(e){
   // A provider identity mismatch or invalid refund response is not a transient
   // network outage. Reissuing a refund could duplicate an uncertain outcome.

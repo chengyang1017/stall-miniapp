@@ -49,7 +49,7 @@ async function prioritizeRefundJob(id){
  await pool.query("UPDATE stripe_test_refund_jobs SET next_attempt_at=now()-interval '1 second' WHERE id=$1",[id])
 }
 const notification=(id='evt_'+randomUUID().replaceAll('-',''),type='checkout.session.completed')=>({id,type,created:Math.floor(Date.now()/1000),hash:'a'.repeat(64)})
-test('all 001-028 migrations execute and 027 repeat fails rather than hiding drift',async()=>{
+test('all 001-029 migrations execute and 027 repeat fails rather than hiding drift',async()=>{
  await assert.rejects(db.pg.exec('CREATE TABLE sandbox_payment_attempts(id uuid)'),/already exists/)
  assert.ok((await pool.query("SELECT indexname FROM pg_indexes WHERE indexname='sandbox_payment_one_active_order'")).rows.length)
 })
@@ -275,6 +275,30 @@ test('owner review verification appends immutable Stripe evidence without changi
  assert.equal(review.body.latestVerification.evidence.paymentStatus,'paid')
  await assert.rejects(pool.query("DELETE FROM sandbox_payment_review_evidence WHERE id=$1",[auditId]),/immutable/i)
  await assert.rejects(pool.query("UPDATE sandbox_payment_review_evidence SET reviewed_by='other' WHERE id=$1",[auditId]),/immutable/i)
+ assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'review')
+ assert.equal((await readSandboxPayment(pool,a.order_id)).receipts.length,0)
+ assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+})
+test('mismatch compensation is idempotently queued and never settles an unpaid order',async()=>{
+ const a=await opened(await order(),'alipay')
+ await pool.query("UPDATE sandbox_payment_attempts SET status='review' WHERE id=$1",[a.id])
+ const paid=session(a);paid.payment_intent.latest_charge.payment_method_details.type='card'
+ const client=createStripeSandboxClient(env,async()=>({ok:true,json:async()=>paid}))
+ const path='/v1/merchant/stores/sandbox-test/orders/'+a.order_id+'/sandbox-review-refund'
+ assert.equal((await route(path,{who:'synthetic-staff',method:'POST',body:{},client})).status,403)
+ const first=await route(path,{who:'synthetic-owner',method:'POST',body:{},client})
+ assert.equal(first.status,202);assert.equal(first.body.action,'refund_queued')
+ const repeated=await route(path,{who:'synthetic-owner',method:'POST',body:{},client})
+ assert.equal(repeated.status,202);assert.equal(repeated.body.jobId,first.body.jobId)
+ const {rows:jobs}=await pool.query("SELECT * FROM stripe_test_refund_jobs WHERE checkout_session_id=$1 AND kind='review_compensation'",[a.session_id])
+ assert.equal(jobs.length,1);assert.equal(jobs[0].payment_event_id,null)
+ const {rows:[audit]}=await pool.query('SELECT document_text FROM sandbox_payment_review_evidence WHERE id=$1',[first.body.auditId])
+ assert.equal(JSON.parse(audit.document_text).resolution,'mismatch_refund_queued')
+ await prioritizeRefundJob(first.body.jobId)
+ const processed=await processOneStripeTestRefund(pool,{refundPayment:async job=>{
+  assert.equal(job.kind,'review_compensation');return {refundId:'re_mismatch',status:'succeeded',amountCents:1000,completed:true,paymentIntentId:paid.payment_intent.id}
+ }})
+ assert.equal(processed.action,'succeeded')
  assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'review')
  assert.equal((await readSandboxPayment(pool,a.order_id)).receipts.length,0)
  assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
