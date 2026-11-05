@@ -25,3 +25,14 @@ page{background:#f5f6f8}.page{padding:28rpx;padding-bottom:100rpx}.heading{font-
 .order-store-counts{padding:16rpx 0;font-size:27rpx;color:var(--brand-primary);font-weight:600}.admin-order-date-bar{flex-wrap:wrap}.admin-order-date-bar button{margin:0}.order-query-actions{display:flex;flex-wrap:wrap;gap:12rpx;margin:16rpx 0}.order-query-actions button{margin:0;font-size:24rpx}.order-batch-panel{position:sticky;top:0;z-index:5;background:var(--brand-background);border-radius:14rpx;padding:20rpx;margin:18rpx 0}.order-selected{box-shadow:inset 0 0 0 2rpx var(--brand-primary)}.order-selection{display:flex;align-items:center;padding:10rpx 0 18rpx;font-size:25rpx}.order-selection checkbox{pointer-events:none;transform:scale(.85)}.order-batch-failure{font-size:23rpx;color:#9b592a;overflow-wrap:anywhere;padding:8rpx 0}.order-action-disabled{pointer-events:none;opacity:.5}.order-page-footer{display:flex;flex-direction:column;align-items:center;gap:18rpx;padding:24rpx 8rpx 60rpx;font-size:24rpx;color:var(--brand-muted)}.order-page-footer button{width:100%}.id{overflow-wrap:anywhere;word-break:break-all}
 
 @import "../../styles/merchant-theme.wxss";
+
+/* Compact operational order cards; details remain available on demand. */
+.order-card-summary{font-size:27rpx;color:var(--brand-text);line-height:1.55;margin-top:15rpx}
+.order-card-keyline{display:flex;justify-content:space-between;gap:18rpx;align-items:baseline;margin-top:12rpx;font-size:27rpx;font-weight:600;color:var(--brand-text)}
+.order-card-keyline text:last-child{font-size:30rpx;color:var(--brand-primary);flex-shrink:0}
+.order-payment-pending{font-size:23rpx;color:#a15c25;margin-top:12rpx}
+.order-card-toolbar{display:flex;gap:12rpx;flex-wrap:wrap;margin-top:18rpx}
+.order-card-toolbar button{margin:0;font-size:24rpx}
+.order-details,.order-payment-panel{margin-top:16rpx;padding-top:16rpx;border-top:1rpx solid #ecefec}
+.order-details .eta{margin-top:22rpx}
+.next{width:100%}

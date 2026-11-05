@@ -15,6 +15,14 @@ function validRange(from:string,to:string):boolean{if(!from&&!to)return true;con
 function emptyCounts():MerchantOrderCounts{return {all:0,new:0,accepted:0,preparing:0,delivering:0,delivered:0,cancelled:0,abnormal:0,other:0}}
 function errorMessage(e:unknown):string{const s=String(e);if(/orders_changed|cursor/.test(s))return '订单数据已变化或分页已过期，请刷新后继续加载';if(/401|403|not_logged_in/.test(s))return '登录已失效或无操作权限，请重新登录有权限的商家账号';if(s.includes('payment_not_confirmed'))return '尚未确认支付，现有支付或库存预留规则禁止此操作';if(s.includes('inventory_reservation_expired'))return '库存预留已过期，服务器已处理，请刷新核对';if(/invalid_transition|state_changed|inventory_released/.test(s))return '订单状态或库存预留已变化，请刷新核对';if(s.includes('400'))return '查询条件或操作参数无效，请检查日期范围和输入';return '请求失败或结果未能确认，请检查网络后刷新核对，勿重复操作'}
 Page({
+ toggleOrderDetails(e:any){
+  const id=String(e.currentTarget.dataset.id||'')
+  if(!this.data.dateResults.some((o:any)=>o.id===id))return
+  const expanded={...this.data.expandedOrderIds}
+  if(expanded[id])delete expanded[id]
+  else expanded[id]=true
+  this.setData({expandedOrderIds:expanded})
+ },
  copySandboxReceipt(e:any){
   if(!this.visible)return
   const id=String(e.currentTarget.dataset.id||'')
@@ -193,7 +201,7 @@ Page({
   }})
  },
  loaded:[] as any[],localRows:[] as any[],localFiltered:[] as any[],counts:emptyCounts(),context:'',serial:0,nextCursor:'',localOffset:0,visible:false,
- data:{sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,sandboxEvidenceMeta:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
+ data:{expandedOrderIds:{} as Record<string,boolean>,sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,sandboxEvidenceMeta:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
   orderTabs:tabs.map(t=>({...t,count:0})),countsKnown:false,globalTotal:0,globalPending:0,matchingCount:0,
   noteInputs:{} as Record<string,string>,etaInputs:{} as Record<string,string>,cloudMode:false,cloudBusy:false,loadingMore:false,cloudError:'',moreError:'',hasMore:false,refreshRequired:false,canManage:true,
   batchMode:false,selectedIds:[] as string[],selectedMap:{} as Record<string,boolean>,selectedCount:0,allSelected:false,operationBusy:false,operationProgress:'',batchResult:'',batchFailures:[] as Array<{id:string;reason:string}>},
@@ -203,7 +211,7 @@ Page({
  async onPullDownRefresh(){try{if(!this.data.operationBusy)await this.refresh()}finally{wx.stopPullDownRefresh()}},
  onReachBottom(){this.loadMore()},
  query():MerchantOrderQuery{return {q:this.data.orderSearchText.trim(),state:this.data.currentTab,from:this.data.dateFrom,to:this.data.dateTo}},
- syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({sandbox:null,sandboxOrderId:'',sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null,dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
+ syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({expandedOrderIds:{},sandbox:null,sandboxOrderId:'',sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null,dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
  setCounts(counts:MerchantOrderCounts){this.counts=counts;this.setData({countsKnown:true,globalTotal:counts.all,globalPending:counts.new,orderTabs:tabs.map(t=>({...t,count:Number((counts as any)[t.key==='latest'?'all':t.key]||0)}))})},
  setSelection(ids:string[]){const map:Record<string,boolean>={};ids.forEach(id=>{map[id]=true});const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o))&&(!this.data.cloudMode||fulfillmentPaymentReady(o)));this.setData({selectedIds:ids,selectedMap:map,selectedCount:ids.length,allSelected:!!eligible.length&&ids.length===eligible.length})},
  changedQuery(){this.serial++;this.setSelection([]);this.setData({batchMode:false,queryDirty:true,cloudBusy:false,loadingMore:false,refreshRequired:false,batchResult:'',batchFailures:[],moreError:''})},
@@ -219,7 +227,9 @@ Page({
    const s=state(o),cloud=this.data.cloudMode,c=o.contactSnapshot||{},slot=o.deliverySlotSnapshot||{},next=({new:'accepted',accepted:'preparing',preparing:'delivering'} as Record<string,string>)[s]||''
    return {...o,statusText:labels[s]||s,totalText:cloud?(Number(o.totalCents)/100).toFixed(2):o.totalText,receiverName:cloud?String(c.receiverName||''):o.receiverName||'',phone:cloud?String(c.phone||''):o.phone||'',
     area:cloud?String(c.areaName||slot.areaName||c.areaId||''):o.area||'',detail:cloud?String(c.detail||''):o.detail||'',note:cloud?String(c.note||''):o.note||'',slotText:cloud?[slot.date,slot.label,slot.start&&slot.end?slot.start+'–'+slot.end:''].filter(Boolean).join(' '):o.slotText||'',
-    items:(o.items||[]).map((i:any,index:number)=>({...i,lineKey:i.lineId||o.id+':'+index,subtotal:i.subtotal==null?'':String(i.subtotal)})),createdText:chinaTime(o.createdAt),deliveredText:o.deliveredAt?chinaTime(o.deliveredAt):'',
+    items:(o.items||[]).map((i:any,index:number)=>({...i,lineKey:i.lineId||o.id+':'+index,subtotal:i.subtotal==null?'':String(i.subtotal)})),
+    itemSummary:(o.items||[]).slice(0,2).map((i:any)=>String(i.name||i.productName||'商品')+' × '+String(i.quantity||1)).join('、')+((o.items||[]).length>2?' 等':''),
+    createdText:chinaTime(o.createdAt),deliveredText:o.deliveredAt?chinaTime(o.deliveredAt):'',
     issueReason:o.issueReason||'',issueTimeText:o.issueTime?chinaTime(o.issueTime):'',nextStatus:next,nextLabel:({accepted:'接单',preparing:'开始备货',delivering:'开始配送'} as Record<string,string>)[next]||'',
     allowCancel:cloud?['new','accepted','preparing'].includes(s):!['delivered','cancelled','abnormal'].includes(s),allowAbnormal:s==='delivering',allowEta:['accepted','preparing','delivering'].includes(s),
     merchantNote:o.merchantNote||'',merchantNoteVersion:o.merchantNoteVersion||1,noteDraft:this.data.noteInputs[o.id]!==undefined?this.data.noteInputs[o.id]:o.merchantNote||'',
