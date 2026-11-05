@@ -40,7 +40,8 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
    const session=await call('checkout/sessions/'+encodeURIComponent(job.checkout_session_id))
    if(!session||typeof session!=='object'||Array.isArray(session)||session.id!==job.checkout_session_id||session.livemode!==false||session.payment_status!=='paid'||
     session.currency!=='cny'||session.client_reference_id!==job.order_id||
-    !Number.isSafeInteger(session.amount_total)||session.amount_total!==Number(job.payment_amount_cents)||!intentId.test(session.payment_intent||''))fail('stripe_refund_session_mismatch')
+    !Number.isSafeInteger(session.amount_total)||session.amount_total!==Number(job.payment_amount_cents)||!intentId.test(session.payment_intent||'')||
+    job.payment_intent_id&&session.payment_intent!==job.payment_intent_id)fail('stripe_refund_session_mismatch')
    const body=new URLSearchParams({payment_intent:session.payment_intent,amount:String(job.amount_cents),
     'metadata[orderId]':job.order_id,'metadata[refundJobId]':job.id})
    const refund=await call('refunds',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded',

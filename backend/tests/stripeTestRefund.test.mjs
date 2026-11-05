@@ -190,6 +190,16 @@ test('merchant partial refund uses durable job idempotency key and exact amount'
  assert.equal(params.get('metadata[orderId]'),job.order_id)
  assert.equal(params.get('metadata[refundJobId]'),job.id)
 })
+test('refund adapter refuses a Checkout Session whose PaymentIntent differs from bound job',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599,payment_intent_id:'pi_other'}
+ let calls=0
+ const testClient=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+  calls++;return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(testClient.refundPayment(job),/stripe_refund_session_mismatch/)
+ assert.equal(calls,1)
+})
 test('merchant refund rejects mismatched paid session before making refund POST',async()=>{
  const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
   checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}

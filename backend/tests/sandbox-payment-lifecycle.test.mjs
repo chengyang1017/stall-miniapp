@@ -841,6 +841,39 @@ test('Stripe refund identity mismatch goes to review without retry',async()=>{
  assert.equal(saved.lease_token,null)
 })
 
+test('review compensation rejects a wrong PaymentIntent without a second refund request',async()=>{
+ const attempt=await opened(await order(),'alipay')
+ await pool.query("UPDATE sandbox_payment_attempts SET status='review' WHERE id=$1",[attempt.id])
+ const paid=session(attempt);paid.payment_intent.latest_charge.payment_method_details.type='card'
+ const stripe=createStripeSandboxClient(env,async()=>({ok:true,json:async()=>paid}))
+ const queued=await route('/v1/merchant/stores/sandbox-test/orders/'+attempt.order_id+'/sandbox-review-refund',{who:'synthetic-owner',method:'POST',body:{},client:stripe})
+ assert.equal(queued.status,202)
+ await prioritizeRefundJob(queued.body.jobId)
+ let called=0
+ const result=await processOneStripeTestRefund(pool,{refundPayment:async()=>{called++;return {
+  refundId:'re_wrong_intent',status:'succeeded',completed:true,amountCents:1000,paymentIntentId:'pi_unrelated'
+ }}})
+ assert.equal(result.action,'review')
+ assert.equal(called,1)
+ const {rows:[saved]}=await pool.query('SELECT status,last_error,payment_intent_id,refund_id FROM stripe_test_refund_jobs WHERE id=$1',[queued.body.jobId])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.last_error,'refund_payment_intent_mismatch')
+ assert.equal(saved.payment_intent_id,paid.payment_intent.id)
+ assert.equal(saved.refund_id,null)
+ assert.equal((await readSandboxPayment(pool,attempt.order_id)).attempts[0].status,'review')
+ assert.equal((await readSandboxPayment(pool,attempt.order_id)).receipts.length,0)
+ assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[attempt.order_id])).rows[0].payment_status,'unpaid')
+})
+test('finalizer never overwrites a persisted PaymentIntent on contradictory refund results',async()=>{
+ const {finishStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ let writes=0
+ const db={async query(){writes++;throw Error('unexpected write')}}
+ const job={id:randomUUID(),lease_token:randomUUID(),kind:'review_compensation',amount_cents:1000,payment_intent_id:'pi_expected'}
+ for(const paymentIntentId of [undefined,'pi_other']){
+  await assert.rejects(finishStripeTestRefund(db,job,{refundId:'re_verified',status:'succeeded',completed:true,amountCents:1000,paymentIntentId}),/refund_payment_intent_mismatch/)
+ }
+ assert.equal(writes,0)
+})
 test('refund amount mismatch is quarantined before marking refund succeeded',async()=>{
  const a=await opened(await order(),'card')
  await pay(a)

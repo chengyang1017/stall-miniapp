@@ -24,7 +24,7 @@ export async function claimStripeTestRefund(db){
  WHERE j.id=(SELECT id FROM stripe_test_refund_jobs WHERE
    status='pending' AND next_attempt_at<=clock_timestamp() AND attempt_count<5
    ORDER BY next_attempt_at,id FOR UPDATE SKIP LOCKED LIMIT 1)
- RETURNING id,order_id,checkout_session_id,amount_cents,lease_token,attempt_count,kind,payment_amount_cents,created_at`)
+ RETURNING id,order_id,checkout_session_id,amount_cents,lease_token,attempt_count,kind,payment_amount_cents,payment_intent_id,created_at`)
  return result.rows[0]||null
 }
 export async function finishStripeTestRefund(db,job,result){
@@ -34,8 +34,10 @@ export async function finishStripeTestRefund(db,job,result){
  const status=result.status==='succeeded'?'succeeded':['failed','canceled'].includes(result.status)?'review':'submitted'
  if(!/^re_[a-zA-Z0-9_]+$/.test(result?.refundId||''))fail('invalid_stripe_refund_id')
  if(!Number.isSafeInteger(result?.amountCents)||result.amountCents!==Number(job.amount_cents))fail('refund_amount_mismatch')
+ if(job.payment_intent_id&&result.paymentIntentId!==job.payment_intent_id)fail('refund_payment_intent_mismatch')
+ if(job.kind==='review_compensation'&&(!/^pi_[A-Za-z0-9_]+$/.test(job.payment_intent_id||'')||result.paymentIntentId!==job.payment_intent_id))fail('refund_payment_intent_mismatch')
  const row=await db.query(`UPDATE stripe_test_refund_jobs SET status=$3,refund_id=$4,
-  payment_intent_id=COALESCE($5,payment_intent_id),provider_status=COALESCE($6,provider_status),
+  payment_intent_id=COALESCE(payment_intent_id,$5),provider_status=COALESCE($6,provider_status),
   lease_token=NULL,lease_expires_at=NULL,
   last_error=CASE WHEN $3='review' THEN 'stripe_refund_failed' ELSE NULL END,updated_at=clock_timestamp()
  WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,
@@ -87,11 +89,13 @@ export async function processOneStripeTestRefund(db,client){
     result.completed!==(result.status==='succeeded')
  const invalidId=!/^re_[a-zA-Z0-9_]+$/.test(result?.refundId||'')
  const invalidAmount=!Number.isSafeInteger(result?.amountCents)||result.amountCents!==Number(job.amount_cents)
- if(invalidResult||invalidId||invalidAmount){
+ const invalidIntent=job.kind==='review_compensation'&&(!/^pi_[A-Za-z0-9_]+$/.test(job.payment_intent_id||'')||result?.paymentIntentId!==job.payment_intent_id)||
+  !!job.payment_intent_id&&result?.paymentIntentId!==job.payment_intent_id
+ if(invalidResult||invalidId||invalidAmount||invalidIntent){
   const reviewed=await db.query(`UPDATE stripe_test_refund_jobs SET status='review',
    lease_token=NULL,lease_expires_at=NULL,last_error=$3,
    updated_at=clock_timestamp() WHERE id=$1 AND lease_token=$2 AND status='processing' RETURNING id`,
-   [job.id,job.lease_token,invalidId?'invalid_stripe_refund_id':invalidAmount?'refund_amount_mismatch':'refund_provider_result_inconsistent'])
+   [job.id,job.lease_token,invalidId?'invalid_stripe_refund_id':invalidAmount?'refund_amount_mismatch':invalidIntent?'refund_payment_intent_mismatch':'refund_provider_result_inconsistent'])
   if(reviewed.rowCount!==1)fail('refund_lease_lost')
   return {action:'review',jobId:job.id}
  }
