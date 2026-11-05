@@ -18,7 +18,7 @@ Page({
  async viewSandboxPayment(e:any){
   const cfg=merchantOrderConfig(),id=String(e.currentTarget.dataset.id||''),context=merchantOrderContextKey(),serial=this.serial
   if(!cfg||!this.visible)return
-  this.setData({sandboxOrderId:id,sandbox:null,sandboxError:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null})
+  this.setData({sandboxOrderId:id,sandbox:null,sandboxError:'',sandboxReleaseMessage:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null})
   try{const r=await sandboxPaymentRequest(cfg,id,true)
    if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({sandbox:sandboxPaymentView(r)})
   }catch(_){if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({sandboxError:'Sandbox 未启用、无权限或网络不可用，无法确认最新结果'})}
@@ -67,6 +67,39 @@ Page({
    if(this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&id===this.data.sandboxOrderId)this.setData({sandboxReviewBusy:false})
   }
  },
+ async releaseSandboxReview(){
+  const cfg=merchantOrderConfig(),id=this.data.sandboxOrderId,context=merchantOrderContextKey(),serial=this.serial
+  if(!cfg||!id||!this.visible||this.data.sandboxReviewBusy||this.data.sandboxReleaseBusy||this.data.sandboxReview?.attempt?.orderId!==id)return
+  const evidence=this.data.sandboxEvidence
+  // Saved audit is only a hint to show the control. The backend independently
+  // retrieves Stripe and checks expired/unpaid before changing the review hold.
+  if(!this.data.sandboxEvidenceMeta||evidence?.providerVerified!==true||evidence.sessionStatus!=='expired'||evidence.paymentStatus!=='unpaid')return
+  const current=()=>this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&id===this.data.sandboxOrderId
+  this.setData({sandboxReleaseBusy:true,sandboxReviewError:''})
+  try{
+   const confirmed=await new Promise<boolean>(resolve=>wx.showModal({
+    title:'解除 Sandbox 支付异常',
+    content:'服务器将再次向 Stripe 核实会话已过期且未收款，才释放付款锁定。本操作不能确认收款，也不会退款。是否继续？',
+    confirmText:'核验并解除',success:(r:any)=>resolve(r.confirm===true),fail:()=>resolve(false)
+   }))
+   if(!confirmed||!current())return
+   const result=await sandboxPaymentRequest(cfg,id,true,'sandbox-review-release',{})
+   if(!current())return
+   if(result.action!=='expired_unpaid_released'||result.paymentConfirmed!==false||!result.auditId){
+    this.setData({sandboxReviewError:'解除响应未确认，请刷新支付记录核实'});return
+   }
+   // Requery the server to establish the new state rather than assuming success.
+   const payment=await sandboxPaymentRequest(cfg,id,true)
+   if(!current())return
+   const latest=sandboxPaymentView(payment)
+   const stillHeld=latest.attempts.some((a:any)=>a.id===this.data.sandboxReview?.attempt?.id&&a.status==='review')
+   if(stillHeld){this.setData({sandboxReviewError:'解除后的状态仍待核对，请刷新重试'});return}
+   this.setData({sandbox:latest,sandboxReview:null,sandboxEvidence:null,sandboxEvidenceMeta:null,sandboxReviewError:'',
+    sandboxReleaseMessage:'已核对并解除过期未收款的测试支付会话；订单仍未付款'})
+  }catch(_){
+   if(current())this.setData({sandboxReviewError:'解除结果未确认；不要重复操作，请先刷新支付记录核对'})
+  }finally{if(current())this.setData({sandboxReleaseBusy:false})}
+ },
  requestSandboxRefund(){
   const cfg=merchantOrderConfig(),id=this.data.sandboxOrderId,s=this.data.sandbox,context=merchantOrderContextKey(),serial=this.serial
   if(!cfg||!s?.canRefund||this.data.sandboxRefundBusy||!this.visible)return
@@ -84,17 +117,17 @@ Page({
   }})
  },
  loaded:[] as any[],localRows:[] as any[],localFiltered:[] as any[],counts:emptyCounts(),context:'',serial:0,nextCursor:'',localOffset:0,visible:false,
- data:{sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,sandboxEvidenceMeta:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
+ data:{sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,sandboxEvidenceMeta:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
   orderTabs:tabs.map(t=>({...t,count:0})),countsKnown:false,globalTotal:0,globalPending:0,matchingCount:0,
   noteInputs:{} as Record<string,string>,etaInputs:{} as Record<string,string>,cloudMode:false,cloudBusy:false,loadingMore:false,cloudError:'',moreError:'',hasMore:false,refreshRequired:false,canManage:true,
   batchMode:false,selectedIds:[] as string[],selectedMap:{} as Record<string,boolean>,selectedCount:0,allSelected:false,operationBusy:false,operationProgress:'',batchResult:'',batchFailures:[] as Array<{id:string;reason:string}>},
- onShow(){this.visible=true;this.setData({sandbox:null,sandboxOrderId:'',sandboxError:'',sandboxRefundBusy:false,sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null});this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
+ onShow(){this.visible=true;this.setData({sandbox:null,sandboxOrderId:'',sandboxError:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null});this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
  onHide(){this.visible=false;this.serial++;this.setData({cloudBusy:false,loadingMore:false})},
  onUnload(){this.visible=false;this.serial++;this.loaded=[];this.localRows=[];this.localFiltered=[]},
  async onPullDownRefresh(){try{if(!this.data.operationBusy)await this.refresh()}finally{wx.stopPullDownRefresh()}},
  onReachBottom(){this.loadMore()},
  query():MerchantOrderQuery{return {q:this.data.orderSearchText.trim(),state:this.data.currentTab,from:this.data.dateFrom,to:this.data.dateTo}},
- syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({sandbox:null,sandboxOrderId:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null,dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
+ syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({sandbox:null,sandboxOrderId:'',sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null,dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
  setCounts(counts:MerchantOrderCounts){this.counts=counts;this.setData({countsKnown:true,globalTotal:counts.all,globalPending:counts.new,orderTabs:tabs.map(t=>({...t,count:Number((counts as any)[t.key==='latest'?'all':t.key]||0)}))})},
  setSelection(ids:string[]){const map:Record<string,boolean>={};ids.forEach(id=>{map[id]=true});const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o))&&(!this.data.cloudMode||fulfillmentPaymentReady(o)));this.setData({selectedIds:ids,selectedMap:map,selectedCount:ids.length,allSelected:!!eligible.length&&ids.length===eligible.length})},
  changedQuery(){this.serial++;this.setSelection([]);this.setData({batchMode:false,queryDirty:true,cloudBusy:false,loadingMore:false,refreshRequired:false,batchResult:'',batchFailures:[],moreError:''})},

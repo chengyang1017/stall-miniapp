@@ -70,3 +70,41 @@ test('merchant review reloads immutable saved verification rather than relying o
  assert.match(view,/sandboxEvidenceMeta\.reviewedBy/)
  assert.match(view,/审计记录/)
 })
+
+test('merchant review release requires saved expired/unpaid evidence and reconfirms server state',async()=>{
+ const calls=[],modals=[]
+ const review={attempt:{id:'attempt1',orderId:id,status:'review'},latestVerification:{id:'audit1'}}
+ const p=page('miniprogram/pages/admin-orders/admin-orders.ts',{merchantOrderConfig:()=>({apiBase:'https://unit.invalid',storeSlug:'alpha'}),
+  merchantOrderContextKey:()=> 'A',sandboxPaymentView:x=>x,
+  sandboxPaymentRequest:async(_c,_id,_m,action='sandbox-payment')=>{
+   calls.push(action)
+   if(action==='sandbox-review-release')return {sandbox:true,action:'expired_unpaid_released',paymentConfirmed:false,auditId:'audit2'}
+   return {attempts:[{id:'attempt1',status:'expired'}],refunds:[],receipts:[],stale:false}
+  },wx:{showModal:x=>modals.push(x)}})
+ p.visible=true;p.context='A';p.data.sandboxOrderId=id;p.data.sandboxReview=review
+ p.data.sandboxEvidenceMeta={id:'audit1'}
+ p.data.sandboxEvidence={providerVerified:true,sessionStatus:'complete',paymentStatus:'paid'}
+ await p.releaseSandboxReview();assert.equal(modals.length,0);assert.equal(calls.length,0)
+ p.data.sandboxEvidence={providerVerified:true,sessionStatus:'expired',paymentStatus:'unpaid'}
+ const pending=p.releaseSandboxReview();assert.equal(modals.length,1)
+ modals[0].success({confirm:true});await pending
+ assert.deepEqual(calls,['sandbox-review-release','sandbox-payment'])
+ assert.equal(p.data.sandboxReview,null)
+ assert.equal(p.data.sandbox.attempts[0].status,'expired')
+ assert.match(p.data.sandboxReleaseMessage,/仍未付款/)
+ assert.equal(p.data.sandboxReleaseBusy,false)
+})
+test('review release cancellation and invalid status never call the provider',async()=>{
+ const calls=[],modals=[]
+ const p=page('miniprogram/pages/admin-orders/admin-orders.ts',{merchantOrderConfig:()=>({apiBase:'https://unit.invalid',storeSlug:'alpha'}),
+  merchantOrderContextKey:()=> 'A',sandboxPaymentRequest:async()=>{calls.push(1)},wx:{showModal:x=>modals.push(x)}})
+ p.visible=true;p.context='A';p.data.sandboxOrderId=id
+ p.data.sandboxReview={attempt:{orderId:id}}
+ p.data.sandboxEvidenceMeta={id:'audit'}
+ p.data.sandboxEvidence={providerVerified:true,sessionStatus:'expired',paymentStatus:'unpaid'}
+ const op=p.releaseSandboxReview();modals[0].success({confirm:false});await op
+ assert.equal(calls.length,0)
+ assert.equal(p.data.sandboxReleaseBusy,false)
+ assert.match(read('miniprogram/pages/admin-orders/admin-orders.wxml'),/bindtap="releaseSandboxReview"/)
+ assert.match(read('miniprogram/modules/shared/api/sandboxPayment.ts'),/sandbox-review-release/)
+})
