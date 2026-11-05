@@ -75,6 +75,10 @@
             <button wx:if="{{!sandbox.refunds.length || sandbox.refunds[0].kind !== 'review_compensation'}}" size="mini" bindtap="requestSandboxMismatchRefund" disabled="{{sandboxMismatchBusy || sandboxReviewBusy || sandboxReleaseBusy}}">{{sandboxMismatchBusy ? '正在核验退款申请…' : '核验并申请渠道异常全额测试退款'}}</button>
             <view wx:else>已存在渠道异常补偿退款任务，请核对下方退款状态，不要再次申请。</view>
           </view>
+          <view wx:if="{{sandbox.refunds.length && sandbox.refunds[0].kind === 'review_compensation' && sandbox.refunds[0].status === 'succeeded' && sandbox.refunds[0].refundId}}">
+            <view>数据库显示渠道异常补偿退款成功。解除前服务器仍须向 Stripe 重新核验退款 ID、金额和 PaymentIntent。</view>
+            <button size="mini" bindtap="releaseRefundedSandboxReview" disabled="{{sandboxRefundReleaseBusy || sandboxReviewBusy || sandboxReleaseBusy || sandboxMismatchBusy}}">{{sandboxRefundReleaseBusy ? '正在核对退款…' : '核验全额退款并解除异常锁定'}}</button>
+          </view>
           <view wx:if="{{sandboxEvidence && sandboxEvidence.readOnly}}">
             <view>Stripe 核验：{{sandboxEvidence.providerVerified ? '已向测试接口核对' : '未确认'}}</view>
             <view>Stripe 付款状态：{{sandboxEvidence.paymentStatus}} · Session：{{sandboxEvidence.sessionStatus}}</view>

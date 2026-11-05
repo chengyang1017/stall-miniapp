@@ -144,3 +144,39 @@ test('channel compensation is never initiated without verified paid mismatch or 
  assert.match(xml,/bindtap="requestSandboxMismatchRefund"/)
  assert.match(read('miniprogram/modules/shared/api/sandboxPayment.ts'),/sandbox-review-refund/)
 })
+
+test('successful mismatch refund release requires confirmed job and verifies refreshed server state',async()=>{
+ const calls=[],modals=[]
+ const p=page('miniprogram/pages/admin-orders/admin-orders.ts',{merchantOrderConfig:()=>({apiBase:'https://unit.invalid',storeSlug:'alpha'}),
+  merchantOrderContextKey:()=> 'A',sandboxPaymentView:x=>x,
+  sandboxPaymentRequest:async(_cfg,_id,_merchant,action='sandbox-payment')=>{
+   calls.push(action)
+   if(action==='sandbox-review-refund-release')return {sandbox:true,action:'refund_verified_released',paymentConfirmed:false,auditId:'audit3'}
+   return {attempts:[{id:'attempt1',status:'refunded'}],refunds:[{id:'job1',kind:'review_compensation',status:'succeeded',refundId:'re_1'}],receipts:[]}
+  },wx:{showModal:o=>modals.push(o)}})
+ p.visible=true;p.context='A';p.data.sandboxOrderId=id;p.data.sandboxReview={attempt:{id:'attempt1',orderId:id,status:'review'}}
+ p.data.sandbox={attempts:[{id:'attempt1',status:'review'}],refunds:[{id:'job1',kind:'review_compensation',status:'submitted',refundId:'re_1'}]}
+ await p.releaseRefundedSandboxReview();assert.equal(modals.length,0);assert.equal(calls.length,0)
+ p.data.sandbox.refunds[0].status='succeeded'
+ const pending=p.releaseRefundedSandboxReview();assert.equal(modals.length,1)
+ modals[0].success({confirm:true});await pending
+ assert.deepEqual(calls,['sandbox-review-refund-release','sandbox-payment'])
+ assert.equal(p.data.sandboxReview,null)
+ assert.equal(p.data.sandbox.attempts[0].status,'refunded')
+ assert.match(p.data.sandboxMismatchMessage,/仍未付款/)
+ assert.equal(p.data.sandboxRefundReleaseBusy,false)
+ assert.match(read('miniprogram/pages/admin-orders/admin-orders.wxml'),/bindtap="releaseRefundedSandboxReview"/)
+})
+test('mismatch refund release cancellation and unknown refund ID never submit',async()=>{
+ const calls=[],modals=[]
+ const p=page('miniprogram/pages/admin-orders/admin-orders.ts',{merchantOrderConfig:()=>({apiBase:'https://unit.invalid',storeSlug:'alpha'}),
+  merchantOrderContextKey:()=> 'A',sandboxPaymentRequest:async()=>calls.push('request'),wx:{showModal:o=>modals.push(o)}})
+ p.visible=true;p.context='A';p.data.sandboxOrderId=id;p.data.sandboxReview={attempt:{id:'attempt1',orderId:id,status:'review'}}
+ p.data.sandbox={refunds:[{kind:'review_compensation',status:'succeeded',refundId:null}]}
+ await p.releaseRefundedSandboxReview();assert.equal(modals.length,0)
+ p.data.sandbox.refunds[0].refundId='re_valid'
+ const pending=p.releaseRefundedSandboxReview()
+ modals[0].success({confirm:false});await pending
+ assert.equal(calls.length,0);assert.equal(p.data.sandboxRefundReleaseBusy,false)
+ assert.match(read('miniprogram/modules/shared/api/sandboxPayment.ts'),/sandbox-review-refund-release/)
+})

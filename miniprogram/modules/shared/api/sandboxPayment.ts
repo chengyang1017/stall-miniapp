@@ -1,7 +1,7 @@
 import { cloudIdentity, getSessionToken } from '../runtime/context'
 export function sandboxPaymentRequest(cfg:{apiBase:string;storeSlug:string},id:string,merchant=false,action='sandbox-payment',data?:any,requestKey?:string):Promise<any>{
  const identity=cloudIdentity(),token=getSessionToken()
- if(!token||! /^[0-9a-f-]{36}$/i.test(id)||!['sandbox-payment','sandbox-refund','sandbox-cancel','sandbox-review','sandbox-review-verify','sandbox-review-release','sandbox-review-refund'].includes(action))return Promise.reject(Error('invalid_payment_context'))
+ if(!token||! /^[0-9a-f-]{36}$/i.test(id)||!['sandbox-payment','sandbox-refund','sandbox-cancel','sandbox-review','sandbox-review-verify','sandbox-review-release','sandbox-review-refund','sandbox-review-refund-release'].includes(action))return Promise.reject(Error('invalid_payment_context'))
  return new Promise((resolve,reject)=>wx.request({url:cfg.apiBase+'/v1/'+(merchant?'merchant/':'')+'stores/'+cfg.storeSlug+'/orders/'+id+'/'+action,
   method:['sandbox-payment','sandbox-review','sandbox-review-verify'].includes(action)?'GET':'POST',data:data||{},timeout:20000,
   header:{Authorization:'Bearer '+token,'content-type':'application/json',...(requestKey?{'Idempotency-Key':requestKey}:{})},
