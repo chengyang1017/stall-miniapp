@@ -150,11 +150,21 @@ Page({
       if(r.confirm&&current())wx.setClipboardData({data:url})
     }})
   },
+  retrySandboxCheckout(){
+    const channel=this.data.sandbox?.retryChannel
+    if(!['card','alipay','wechat_pay'].includes(channel))return
+    this.openSandboxCheckout({currentTarget:{dataset:{channel}}})
+  },
   async openSandboxCheckout(e:any){
     const cfg=customerOrdersConfig(),channel=e.currentTarget.dataset.channel as SandboxChannel
     if(!cfg||this.phoneReadOnly||this.sandboxBusy||this.data.sandboxActionBusy||!this.detailVisible||this.data.order.paymentStatus!=='unpaid')return
     if(this.data.sandbox?.resumeCheckout){
       wx.showToast({title:'请先继续原付款或更换渠道',icon:'none'});return
+    }
+    // After a failed, expired or cancelled Checkout create a new attempt.
+    // A processing or review attempt is never a safe retry point.
+    if(this.data.sandbox?.requiresPaymentReview){
+      wx.showToast({title:'付款状态待核对，暂不可重试',icon:'none'});return
     }
     const attempt=(this.data.sandbox?.attempts||[]).slice(-1)[0]
     if(this.data.sandbox?.stale||attempt&&['creating','open','processing','review'].includes(attempt.status)){

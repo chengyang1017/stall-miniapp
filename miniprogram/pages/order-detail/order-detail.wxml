@@ -21,9 +21,15 @@
         <view class="order-detail-muted">当前付款请求尚未确认结束。请先刷新支付状态，不要新建或重复付款。</view>
       </view>
       <view wx:else>
-        <button size="mini" data-channel="wechat_pay" bindtap="openSandboxCheckout">微信支付测试链接</button>
-        <button size="mini" data-channel="alipay" bindtap="openSandboxCheckout">支付宝测试链接</button>
-        <button size="mini" data-channel="card" bindtap="openSandboxCheckout">银行卡测试链接</button>
+        <view wx:if="{{sandbox.retryChannel}}" class="order-detail-muted">
+          {{sandbox.retryLabel}}。上次选择：{{sandbox.retryChannelText}}。
+          重新尝试会创建新的 Stripe Sandbox 测试付款会话，不会自动扣款。
+        </view>
+        <button wx:if="{{sandbox.retryChannel}}" type="primary" disabled="{{sandboxActionBusy}}" bindtap="retrySandboxCheckout">重新尝试 {{sandbox.retryChannelText}}</button>
+        <view wx:if="{{sandbox.retryChannel}}" class="order-detail-muted">也可以改选其他支付方式：</view>
+        <button size="mini" data-channel="wechat_pay" disabled="{{sandboxActionBusy}}" bindtap="openSandboxCheckout">微信支付测试链接</button>
+        <button size="mini" data-channel="alipay" disabled="{{sandboxActionBusy}}" bindtap="openSandboxCheckout">支付宝测试链接</button>
+        <button size="mini" data-channel="card" disabled="{{sandboxActionBusy}}" bindtap="openSandboxCheckout">银行卡测试链接</button>
       </view>
     </view>
     <view wx:if="{{cloudMode && !phoneReadOnly}}" class="order-detail-card">

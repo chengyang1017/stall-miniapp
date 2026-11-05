@@ -6,10 +6,15 @@ export function sandboxPaymentView(data:any){
  const refunds=(data.refunds||[]).map((r:any)=>({...r,kindText:r.kind==='review_compensation'?'渠道异常补偿退款':r.kind==='merchant'?'商家退款':'补偿退款',label:refundNames[r.status]||'待核对',amountText:(Number(r.amountCents)/100).toFixed(2)}))
  const receipts=(data.receipts||[]).map((r:any)=>({...r,totalText:(Number(r.totalCents)/100).toFixed(2),subtotalText:(Number(r.subtotalCents)/100).toFixed(2),deliveryFeeText:(Number(r.deliveryFeeCents)/100).toFixed(2),channelText:channels[r.channel]||'待核对',items:(r.items||[]).map((i:any)=>({...i,unitText:(Number(i.unitPriceCents)/100).toFixed(2),lineTotalText:(Number(i.lineTotalCents)/100).toFixed(2)}))}))
  const mismatchRefunds=refunds.filter((r:any)=>r.kind==='review_compensation')
+ const latestAttempt=attempts.length?attempts[attempts.length-1]:null
+ const retryChannel=latestAttempt&&['failed','expired','cancelled'].includes(latestAttempt.status)&&['card','alipay','wechat_pay'].includes(latestAttempt.channel)?latestAttempt.channel:null
+ const retryLabel=latestAttempt?.status==='failed'?'上次付款未成功，可重新尝试':latestAttempt?.status==='expired'?'上次付款已过期，可重新尝试':latestAttempt?.status==='cancelled'?'上次付款已取消，可重新选择':''
  const resumed=data.resumeCheckout
  const resumeCheckout=resumed&&['card','alipay','wechat_pay'].includes(resumed.channel)&&typeof resumed.url==='string'&&/^https:\/\/checkout\.stripe\.com\//.test(resumed.url)
   ?{channel:resumed.channel,channelText:channels[resumed.channel],url:resumed.url}:null
- return {attempts,refunds,receipts,resumeCheckout,
+ return {attempts,refunds,receipts,resumeCheckout,retryChannel,retryLabel,
+  retryChannelText:retryChannel?channels[retryChannel]:'',
+  requiresPaymentReview:latestAttempt?.status==='review'||latestAttempt?.status==='processing'||latestAttempt?.status==='creating',
   hasMismatchRefund:mismatchRefunds.length>0,
   hasSuccessfulMismatchRefund:mismatchRefunds.some((r:any)=>r.status==='succeeded'&&!!r.refundId),
   stale:data.stale===true,canRefund:data.canRefund===true}
