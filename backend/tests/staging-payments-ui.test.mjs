@@ -28,3 +28,16 @@ test('customer failed confirmation preserves key and retry never sends amount or
 test('successful simulation only displays server-refreshed order; same card stays found while loading',async()=>{const f=detail();await f.p.onShow();f.capabilities[0].resolve({eligible:true});await tick();const pending=f.p.confirmSimulation();f.modal[0].success({confirm:true});await tick();f.order({paymentStatus:'paid',paymentSource:'staging_simulated'});const start=f.p.patches.length;f.confirms[0].resolve({ok:true,simulated:true,orderId:id});await pending;assert.equal(f.p.data.found,true);assert.ok(f.p.patches.slice(start).every(p=>p.found!==false));assert.match(f.p.data.paymentText,/模拟支付已确认/);assert.equal(f.p.simulationKey,'');assert.equal(f.p.data.simulationBusy,false)})
 for(const lifecycle of ['hide','unload','identity'])test('obsolete simulation confirmation does not publish after '+lifecycle,async()=>{const f=detail();await f.p.onShow();f.capabilities[0].resolve({eligible:true});await tick();const pending=f.p.confirmSimulation();f.modal[0].success({confirm:true});await tick();if(lifecycle==='identity')f.identity('B');else f.p[lifecycle==='hide'?'onHide':'onUnload']();const start=f.p.patches.length;f.confirms[0].resolve({ok:true});await pending;assert.ok(f.p.patches.slice(start).every(p=>!p.order&&!p.paymentText));assert.equal(f.p.data.order.paymentStatus,'unpaid')})
 test('actual customer API binds response to current identity and refuses unconfirmed POST success',async()=>{let identity='A';const requests=[];const api=evaluate('miniprogram/modules/customer/api/orders.ts',{supportIdentity:()=>identity,getCloudContext:()=>({}),wx:{getStorageSync:()=> 'test-token',request:o=>requests.push(o)}},['stagingOrderPayment']);const cfg={apiBase:'https://unit.invalid',storeSlug:'alpha'};const first=api.stagingOrderPayment(cfg,id,key);assert.deepEqual(clone(requests[0].data),{requestKey:key});identity='B';requests[0].success({statusCode:200,data:{ok:true,simulated:true,orderId:id}});await assert.rejects(first,/identity_changed/);const second=api.stagingOrderPayment(cfg,id,key);requests[1].success({statusCode:200,data:{ok:true,simulated:false,orderId:id}});await assert.rejects(second,/unconfirmed_response/)})
+
+test('Sandbox merchant review stays a read-only GET and never exposes resolution controls',()=>{
+ const api=read('miniprogram/modules/shared/api/sandboxPayment.ts')
+ const page=read('miniprogram/pages/admin-orders/admin-orders.ts')
+ const view=read('miniprogram/pages/admin-orders/admin-orders.wxml')
+ assert.match(api,/sandbox-review/)
+ assert.match(api,/\['sandbox-payment','sandbox-review'\]\.includes\(action\)\?'GET':'POST'/)
+ assert.match(page,/sandboxPaymentRequest\(cfg,id,true,'sandbox-review'\)/)
+ assert.match(page,/merchantOrderContextKey\(\)/)
+ assert.match(view,/bindtap="viewSandboxReview"/)
+ assert.match(view,/核查模式：只读/)
+ assert.doesNotMatch(view,/bindtap="resolveSandboxReview"/)
+})

@@ -57,6 +57,19 @@
         <view wx:for="{{receipt.items}}" wx:for-item="line" wx:key="productId">{{line.name}} × {{line.quantity}} · 单价 ¥{{line.unitText}}</view>
         <view>{{receipt.transactionId}}</view><view>校验摘要 {{receipt.sha256}}</view>
       </view>
+      <view wx:if="{{sandbox.attempts.length && sandbox.attempts[sandbox.attempts.length-1].status === 'review'}}" class="notice">
+        <view>支付异常待人工核查；请勿重复发起付款或直接认定收款成功。</view>
+        <button size="mini" bindtap="viewSandboxReview" disabled="{{sandboxReviewBusy}}">{{sandboxReviewBusy ? '读取核查信息中…' : '查看人工核查信息'}}</button>
+        <view wx:if="{{sandboxReviewError}}">{{sandboxReviewError}}</view>
+        <view wx:if="{{sandboxReview && sandboxReview.attempt.orderId === item.id}}">
+          <view>核查模式：只读，不能在此确认收款或退款。</view>
+          <view>选择渠道：{{sandboxReview.attempt.channel}} · 实际记录：{{sandboxReview.attempt.actualChannel || '待核实'}}</view>
+          <view>金额（分）：{{sandboxReview.attempt.amountCents}} {{sandboxReview.attempt.currency}}</view>
+          <view>Stripe Session：{{sandboxReview.attempt.sessionId || '尚未绑定'}}</view>
+          <view>PaymentIntent：{{sandboxReview.attempt.paymentIntentId || '尚未记录'}}</view>
+          <view>已保存通知：{{sandboxReview.notificationCount}} · 最近通知：{{sandboxReview.lastNotificationAt || '暂无'}}</view>
+        </view>
+      </view>
       <button wx:if="{{sandbox.canRefund}}" size="mini" bindtap="requestSandboxRefund" disabled="{{sandboxRefundBusy}}">申请全额 / 部分测试退款</button>
     </view>
     <view wx:for="{{item.items}}" wx:for-item="product" wx:key="lineKey" class="row item"><text>{{product.name}} × {{product.quantity}}</text><text>¥{{product.subtotal}}</text></view>
