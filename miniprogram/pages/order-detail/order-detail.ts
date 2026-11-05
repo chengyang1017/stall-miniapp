@@ -74,54 +74,112 @@ Page({
     if(typeof url!=='string'||!/^https:\/\/checkout\.stripe\.com\//.test(url))return
     wx.setClipboardData({data:url,fail:()=>wx.showToast({title:'复制付款链接失败',icon:'none'})})
   },
-  async cancelSandboxPayment(){
-    const cfg=customerOrdersConfig(),serial=this.detailSerial,identity=supportIdentity()
-    if(!cfg||this.phoneReadOnly||this.sandboxBusy)return
-    this.sandboxBusy=true
-    try{
-      const result=await sandboxPaymentRequest(cfg,String(this.data.order.id),false,'sandbox-cancel')
-      if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()){
-        const state=sandboxPaymentView(result)
-        this.setData({sandbox:state,sandboxError:''})
-        await this.loadSandboxPayment()
-      }
-    }catch(_){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({sandboxError:'取消结果未确认，请刷新状态后再试'})}
-    finally{this.sandboxBusy=false}
-  },
   sandboxKeys:{} as Record<string,string>,sandboxBusy:false,
-  async openSandboxCheckout(e:any){
-    const cfg=customerOrdersConfig(),channel=e.currentTarget.dataset.channel as SandboxChannel
-    if(!cfg||this.phoneReadOnly||this.sandboxBusy||!this.detailVisible||this.data.order.paymentStatus!=='unpaid')return
-    if(this.data.sandbox?.resumeCheckout){
-      wx.showToast({title:'已有付款链接，请继续原付款或先取消',icon:'none'});return
-    }
-    const currentAttempt=(this.data.sandbox?.attempts||[]).slice(-1)[0]
-    if(currentAttempt&&['creating','processing','review'].includes(currentAttempt.status)){
-      wx.showToast({title:'原支付结果待核对，请先刷新',icon:'none'});return
-    }
-    const identity=supportIdentity(),serial=this.detailSerial,id=String(this.data.order.id)
-    const current=()=>this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()
-    const key=[identity,id,channel].join(':')
-    if(!this.sandboxKeys[key])this.sandboxKeys[key]='sandbox_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)
+  async confirmSandboxChange(){
+    return new Promise<boolean>(resolve=>wx.showModal({
+      title:'更换测试支付方式',
+      content:'将先向 Stripe 核验并取消当前未付款会话。只有确认取消后才能创建新渠道的测试链接；若已收款或结果未确认，不会再次发起付款。',
+      confirmText:'确认更换',cancelText:'返回',
+      success:(r:any)=>resolve(r.confirm===true),fail:()=>resolve(false)
+    }))
+  },
+  async cancelSandboxPayment(){
+    const cfg=customerOrdersConfig(),serial=this.detailSerial,identity=supportIdentity(),id=String(this.data.order.id)
+    if(!cfg||this.phoneReadOnly||this.sandboxBusy||!this.detailVisible)return
+    const confirmed=await this.confirmSandboxChange()
+    if(!confirmed||!this.detailVisible||serial!==this.detailSerial||identity!==supportIdentity())return
     this.stopSandboxPolling()
     this.sandboxBusy=true
+    const current=()=>this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()&&id===String(this.data.order.id)
+    this.setData({sandboxActionBusy:true,sandboxError:'',sandboxActionText:'正在核验并取消原测试付款…'})
     try{
-      const url=await createSandboxCheckout(cfg,id,channel,this.sandboxKeys[key])
+      await sandboxPaymentRequest(cfg,id,false,'sandbox-cancel')
       if(!current())return
-      wx.showModal({title:'Stripe Sandbox 外部测试',content:'链接仅用于外部浏览器测试，不是小程序原生付款。完成或取消后返回并刷新订单；付款结果以服务器核验为准。',confirmText:'复制链接',success:(r:any)=>{
-        if(r.confirm&&current())wx.setClipboardData({data:url})
-      }})
-    }catch(_){if(current())wx.showToast({title:'测试入口不可用，或结果未知；请刷新订单后重试',icon:'none'})}
-    finally{
+      await this.loadSandboxPayment()
+      if(!current())return
+      if(this.data.sandbox?.resumeCheckout||this.data.sandbox?.stale||this.data.order.paymentStatus!=='unpaid'){
+        this.setData({sandboxActionText:'付款状态已变化，请查看最新结果后再操作'})
+        return
+      }
+      this.setData({sandboxActionText:'原测试付款已取消，现在可选择其他方式'})
+    }catch(_){
+      if(current())this.setData({sandboxActionText:'',sandboxError:'取消结果未确认，不能更换渠道。请先刷新付款状态'})
+    }finally{
+      this.sandboxBusy=false
+      if(current())this.setData({sandboxActionBusy:false})
+    }
+  },
+  async switchSandboxChannel(e:any){
+    const cfg=customerOrdersConfig(),id=String(this.data.order.id),channel=String(e.currentTarget.dataset.channel||'') as SandboxChannel
+    const serial=this.detailSerial,identity=supportIdentity()
+    if(!cfg||!['card','alipay','wechat_pay'].includes(channel)||this.phoneReadOnly||!this.detailVisible||this.sandboxBusy||this.data.order.paymentStatus!=='unpaid'||!this.data.sandbox?.resumeCheckout)return
+    if(channel===this.data.sandbox.resumeCheckout.channel){this.copyActiveSandboxCheckout();return}
+    if(!await this.confirmSandboxChange())return
+    const current=()=>this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()&&id===String(this.data.order.id)
+    if(!current())return
+    this.stopSandboxPolling()
+    this.sandboxBusy=true
+    this.setData({sandboxActionBusy:true,sandboxError:'',sandboxActionText:'正在核验并取消原测试付款…'})
+    try{
+      await sandboxPaymentRequest(cfg,id,false,'sandbox-cancel')
+      if(!current())return
+      await this.loadSandboxPayment()
+      if(!current())return
+      if(this.data.sandbox?.stale||this.data.sandbox?.resumeCheckout||this.data.order.paymentStatus!=='unpaid'||
+         (this.data.sandbox?.attempts||[]).some((a:any)=>['creating','open','processing','review'].includes(a.status))){
+        this.setData({sandboxActionText:'付款状态仍待核对，未创建新付款链接'})
+        return
+      }
+      this.setData({sandboxActionText:'原付款已取消，正在准备新渠道…'})
+      // Keep the same operation lock while switching to prevent double taps.
+      await this.createSandboxCheckoutLink(cfg,id,channel,current)
+    }catch(_){
+      if(current())this.setData({sandboxActionText:'',sandboxError:'更换结果未确认，请先刷新状态，不要重复付款'})
+    }finally{
+      this.sandboxBusy=false
+      if(current())this.setData({sandboxActionBusy:false})
+    }
+  },
+  async createSandboxCheckoutLink(cfg:any,id:string,channel:SandboxChannel,current:()=>boolean){
+    const identity=supportIdentity(),key=[identity,id,channel].join(':')
+    if(!this.sandboxKeys[key])this.sandboxKeys[key]='sandbox_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)
+    const url=await createSandboxCheckout(cfg,id,channel,this.sandboxKeys[key])
+    if(!current())return
+    this.setData({sandboxActionText:'测试链接已准备，复制后请使用外部浏览器打开'})
+    wx.showModal({title:'Stripe Sandbox 外部测试',content:'这不是小程序原生付款。请复制链接至外部浏览器测试，返回订单页后以服务端查询结果为准。',confirmText:'复制链接',success:(r:any)=>{
+      if(r.confirm&&current())wx.setClipboardData({data:url})
+    }})
+  },
+  async openSandboxCheckout(e:any){
+    const cfg=customerOrdersConfig(),channel=e.currentTarget.dataset.channel as SandboxChannel
+    if(!cfg||this.phoneReadOnly||this.sandboxBusy||this.data.sandboxActionBusy||!this.detailVisible||this.data.order.paymentStatus!=='unpaid')return
+    if(this.data.sandbox?.resumeCheckout){
+      wx.showToast({title:'请先继续原付款或更换渠道',icon:'none'});return
+    }
+    const attempt=(this.data.sandbox?.attempts||[]).slice(-1)[0]
+    if(this.data.sandbox?.stale||attempt&&['creating','open','processing','review'].includes(attempt.status)){
+      wx.showToast({title:'原付款结果待核对，请先刷新',icon:'none'});return
+    }
+    const identity=supportIdentity(),serial=this.detailSerial,id=String(this.data.order.id)
+    const current=()=>this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()&&id===String(this.data.order.id)
+    this.stopSandboxPolling()
+    this.sandboxBusy=true
+    this.setData({sandboxActionBusy:true,sandboxActionText:'正在准备测试付款链接…'})
+    try{
+      await this.createSandboxCheckoutLink(cfg,id,channel,current)
+    }catch(_){
+      if(current())this.setData({sandboxActionText:'',sandboxError:'测试入口不可用或结果未知，请刷新订单再试'})
+    }finally{
       this.sandboxBusy=false
       if(current()){
+        this.setData({sandboxActionBusy:false})
         this.sandboxPollRemaining=12
         await this.loadSandboxPayment()
       }
     }
   },
   phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
-  data: { sandbox:null as any,sandboxError:'',sandboxPollText:'',sandboxChannel:'card',phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
+  data: { sandbox:null as any,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
     this.phoneReadOnly=options.phone==='1'
     this.setData({phoneReadOnly:this.phoneReadOnly})
@@ -134,7 +192,7 @@ Page({
     this.detailVisible=true;const serial=++this.detailSerial,identity=supportIdentity()
     const id = String(this.data.order.id || '')
     const cloud=customerOrdersConfig()
-    if(this.detailContext!==JSON.stringify([identity,id])){this.detailContext=JSON.stringify([identity,id]);this.simulationKey='';this.simulationOperation++;this.setData({sandbox:null,sandboxError:'',found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:''})}
+    if(this.detailContext!==JSON.stringify([identity,id])){this.detailContext=JSON.stringify([identity,id]);this.simulationKey='';this.simulationOperation++;this.setData({sandbox:null,sandboxError:'',sandboxActionText:'',found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:''})}
     this.setData({cloudMode:!!cloud,proofImage:'',proofError:'',proofLoading:false})
     if(this.loadSandboxPayment)this.loadSandboxPayment()
     if(cloud&&this.phoneReadOnly){
@@ -193,7 +251,7 @@ Page({
       proofImage: String(o.deliveryPhoto || o.deliveryPhotoPath || o.proofImage || o.proofImageUrl || o.proofPhoto || o.deliveredPhoto || '')
     })
   },
-  onHide(){this.stopSandboxPolling();this.detailVisible=false;this.detailSerial++;this.setData({sandbox:null,sandboxError:'',proofImage:'',proofLoading:false,proofError:''})},
+  onHide(){this.stopSandboxPolling();this.detailVisible=false;this.detailSerial++;this.setData({sandbox:null,sandboxError:'',sandboxActionBusy:false,sandboxActionText:'',proofImage:'',proofLoading:false,proofError:''})},
   onUnload(){this.stopSandboxPolling();this.detailVisible=false;this.detailSerial++;this.simulationOperation++},
   async loadSimulationCapability(serial:number,identity:string,id:string){
     const cfg=customerOrdersConfig();if(!cfg)return
