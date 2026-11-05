@@ -176,6 +176,20 @@ test('review verification requires owner or manager and never mutates or resolve
  assert.equal(writes,0)
 })
 
+test('review release rejects customer, staff, malformed payload and GET without Stripe access',async()=>{
+ const path=new URL(url.href.replace('/v1/stores/','/v1/merchant/stores/').replace('/stripe-test-checkout','/sandbox-review-release'))
+ let lookups=0
+ const deps={authenticate:async()=> 'merchant',permittedStore:async()=>({role:'staff'}),client:{inspectReview(){lookups++}}}
+ const a=res();await stripeTestPaymentRoute(requestJson({}),a,path,mockPool,isolatedEnv,deps)
+ assert.equal(a.status,403)
+ const b=res();await stripeTestPaymentRoute({method:'GET',headers:{}},b,path,mockPool,isolatedEnv,{...deps,permittedStore:async()=>({role:'owner'})})
+ assert.equal(b.status,405)
+ const c=res();await stripeTestPaymentRoute(requestJson({forcePaid:true}),c,path,mockPool,isolatedEnv,{...deps,permittedStore:async()=>({role:'owner'})})
+ assert.equal(c.status,400)
+ const d=res();await stripeTestPaymentRoute(requestJson({}),d,new URL(url.href.replace('/stripe-test-checkout','/sandbox-review-release')),mockPool,isolatedEnv,{authenticate:async()=> 'customer',client:{inspectReview(){lookups++}}})
+ assert.equal(d.status,403)
+ assert.equal(lookups,0)
+})
 test('sandbox-review refuses customer routes and absent review attempts',async()=>{
  const merchantUrl=new URL(url.href.replace('/v1/stores/','/v1/merchant/stores/').replace('/stripe-test-checkout','/sandbox-review'))
  const customerUrl=new URL(url.href.replace('/stripe-test-checkout','/sandbox-review'))

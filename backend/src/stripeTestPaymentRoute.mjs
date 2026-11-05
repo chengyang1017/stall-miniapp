@@ -4,7 +4,7 @@ import {authenticate,permittedStore} from './auth.mjs'
 import {verifyStripeSignature} from './stripeCheckoutGateway.mjs'
 import {createStripeSandboxClient} from './stripeSandboxClient.mjs'
 import {sandboxEnabled,assertSandboxDatabase,observeSandboxSession} from './sandboxPaymentWorker.mjs'
-import {reserveSandboxAttempt,materializeSandboxAttempt,applySandboxObservation,requestSandboxRefund,readSandboxPayment} from './sandboxPaymentStore.mjs'
+import {reserveSandboxAttempt,materializeSandboxAttempt,applySandboxObservation,requestSandboxRefund,readSandboxPayment,releaseExpiredSandboxReview} from './sandboxPaymentStore.mjs'
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const key=/^[A-Za-z0-9_-]{10,100}$/
 export const sandboxCancellationPending=observation=>observation.session.status==='complete'&&!observation.event
@@ -14,7 +14,7 @@ const reply=(res,status,body)=>{res.writeHead(status,{'content-type':'applicatio
 async function read(req){let n=0;const parts=[];for await(const part of req){n+=part.length;if(n>262144)throw Error('too_large');parts.push(Buffer.from(part))}return Buffer.concat(parts)}
 async function json(req){try{const b=await read(req);return b.length?JSON.parse(b):{}}catch(e){if(e.message==='too_large')throw e;throw Error('invalid_json')}}
 export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,deps={}){
- const match=/^\/v1\/(merchant\/)?stores\/([a-z0-9][a-z0-9-]{1,62})\/orders\/([a-f0-9-]{36})\/(stripe-test-checkout|sandbox-payment|sandbox-refund|sandbox-cancel|sandbox-review|sandbox-review-verify)$/.exec(url.pathname)
+ const match=/^\/v1\/(merchant\/)?stores\/([a-z0-9][a-z0-9-]{1,62})\/orders\/([a-f0-9-]{36})\/(stripe-test-checkout|sandbox-payment|sandbox-refund|sandbox-cancel|sandbox-review|sandbox-review-verify|sandbox-review-release)$/.exec(url.pathname)
  const webhook=url.pathname==='/v1/payments/stripe-test/webhook'
  if(!match&&!webhook)return false
  if(env.STRIPE_TEST_PAYMENTS_ENABLED!=='true'){reply(res,404,{error:'not_found'});return true}
@@ -65,6 +65,19 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   const scoped=await pool.query(`SELECT o.id FROM orders o JOIN stores s ON s.id=o.store_id
    WHERE s.slug=$1 AND s.is_active=true AND o.id=$2 AND ($3::boolean OR o.customer_subject=$4)`,[slug,orderId,!!merchant,subject])
   if(!scoped.rows.length){reply(res,404,{error:'order_not_found'});return true}
+  if(action==='sandbox-review-release'){
+   if(req.method!=='POST'){reply(res,405,{error:'method_not_allowed'});return true}
+   if(!store||!['owner','manager'].includes(store.role)){reply(res,403,{error:'forbidden'});return true}
+   const payload=await json(req)
+   if(!payload||Array.isArray(payload)||typeof payload!=='object'||Object.keys(payload).length!==0)throw Error('invalid_review_release')
+   const {rows:[attempt]}=await pool.query(`SELECT * FROM sandbox_payment_attempts
+    WHERE order_id=$1 AND status='review' ORDER BY created_at DESC LIMIT 1`,[orderId])
+   if(!attempt){reply(res,404,{error:'payment_review_not_found'});return true}
+   if(!attempt.session_id)throw Error('payment_manual_review_required')
+   const evidence=await client.inspectReview(attempt)
+   const result=await releaseExpiredSandboxReview(pool,{attempt,evidence,subject})
+   reply(res,200,{sandbox:true,readOnly:false,action:result.action,auditId:result.auditId,paymentConfirmed:false});return true
+  }
   if(action==='sandbox-review-verify'){
    if(req.method!=='GET'){reply(res,405,{error:'method_not_allowed'});return true}
    if(!store||!['owner','manager'].includes(store.role)){reply(res,403,{error:'forbidden'});return true}
@@ -165,8 +178,8 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   if(!sandboxCheckoutStillOpen(a,persisted))throw Error('payment_not_open_refresh')
   reply(res,200,{sessionId:a.session_id,url:a.checkout_url,channel:a.channel,provider:'stripe',testMode:true,nativePayment:false})
  }catch(e){
-  const invalid=new Set(['invalid_json','invalid_payment_channel','invalid_refund_request','invalid_idempotency_key','stripe_signature_missing','stripe_signature_invalid','invalid_test_event','invalid_order_reference','stripe_session_mismatch','stripe_paid_intent_mismatch'])
-  const conflict=new Set(['active_payment_channel_conflict','payment_not_open_refresh','refund_amount_exceeds_remaining','refund_idempotency_conflict','payment_order_not_payable','payment_manual_review_required','payment_cancellation_requires_review','payment_cancellation_pending','payment_already_collected','payment_cancellation_unconfirmed','payment_cancellation_state_changed','payment_review_state_changed','trusted_payment_required'])
+  const invalid=new Set(['invalid_json','invalid_payment_channel','invalid_refund_request','invalid_idempotency_key','stripe_signature_missing','stripe_signature_invalid','invalid_test_event','invalid_order_reference','invalid_review_release','stripe_session_mismatch','stripe_paid_intent_mismatch'])
+  const conflict=new Set(['active_payment_channel_conflict','payment_not_open_refresh','refund_amount_exceeds_remaining','refund_idempotency_conflict','payment_order_not_payable','payment_manual_review_required','payment_cancellation_requires_review','payment_cancellation_pending','payment_already_collected','payment_cancellation_unconfirmed','payment_cancellation_state_changed','payment_review_state_changed','payment_review_not_expired_unpaid','trusted_payment_required'])
   const status=e.message==='too_large'?413:invalid.has(e.message)?400:conflict.has(e.message)?409:503
   reply(res,status,{error:status===503?'payment_test_unavailable':e.message})
  }

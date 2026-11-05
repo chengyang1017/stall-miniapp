@@ -130,3 +130,31 @@ export async function readSandboxPayment(pool,orderId){
  const receipts=records.map(r=>{if(sha(r.document_text)!==r.sha256)fail('receipt_integrity_failed');return {id:r.id,sha256:r.sha256,...JSON.parse(r.document_text)}})
  return {sandbox:true,attempts,refunds,receipts}
 }
+
+/** Release a review hold only for a provider-verified expired/unpaid Checkout.
+ * The provider lookup happens before entering this transaction; expired is terminal.
+ * Preserve immutable evidence and never alter order payment or issue a refund. */
+export async function releaseExpiredSandboxReview(pool,{attempt,evidence,subject}){
+ if(!attempt?.id||!attempt.order_id||!attempt.session_id||typeof subject!=='string'||!subject.length||subject.length>256)fail('invalid_review_release')
+ if(evidence?.providerVerified!==true||evidence.readOnly!==true||
+    evidence.sessionId!==attempt.session_id||evidence.amountCents!==Number(attempt.amount_cents)||
+    evidence.currency!=='CNY'||evidence.sessionStatus!=='expired'||evidence.paymentStatus!=='unpaid'||
+    evidence.paymentIntentStatus==='succeeded')fail('payment_review_not_expired_unpaid')
+ return sandboxTransaction(pool,async db=>{
+  await db.query('SELECT id FROM orders WHERE id=$1 FOR UPDATE',[attempt.order_id])
+  const {rows:[current]}=await db.query('SELECT * FROM sandbox_payment_attempts WHERE id=$1 FOR UPDATE',[attempt.id])
+  if(!current||current.status!=='review'||current.order_id!==attempt.order_id||current.session_id!==attempt.session_id||
+     current.amount_cents!=attempt.amount_cents||current.channel!==attempt.channel)fail('payment_review_state_changed')
+  const {rows:[existing]}=await db.query(`SELECT 1 FROM payment_events
+   WHERE order_id=$1 AND provider='stripe:sandbox' AND provider_event_id=$2
+    AND event_type IN ('payment_succeeded','refund_required') LIMIT 1`,[attempt.order_id,attempt.session_id])
+  if(existing)fail('payment_review_state_changed')
+  const document=JSON.stringify({...evidence,resolution:'expired_unpaid_released'})
+  const {rows:[audit]}=await db.query(`INSERT INTO sandbox_payment_review_evidence(attempt_id,order_id,reviewed_by,session_id,document_text,sha256)
+   VALUES($1,$2,$3,$4,$5,$6) RETURNING id`,[current.id,current.order_id,subject,current.session_id,document,sha(document)])
+  const changed=await db.query(`UPDATE sandbox_payment_attempts SET status='expired',updated_at=clock_timestamp()
+   WHERE id=$1 AND status='review' RETURNING id`,[current.id])
+  if(changed.rows.length!==1)fail('payment_review_state_changed')
+  return {action:'expired_unpaid_released',auditId:audit.id}
+ })
+}

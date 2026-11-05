@@ -279,6 +279,29 @@ test('owner review verification appends immutable Stripe evidence without changi
  assert.equal((await readSandboxPayment(pool,a.order_id)).receipts.length,0)
  assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
 })
+test('authorized merchant releases only Stripe-expired unpaid review with immutable audit',async()=>{
+ const a=await opened(await order(),'card')
+ await pool.query("UPDATE sandbox_payment_attempts SET status='review' WHERE id=$1",[a.id])
+ const evidence={sessionId:a.session_id,sessionStatus:'expired',paymentStatus:'unpaid',paymentIntentStatus:'canceled',requestedChannel:'card',actualChannel:null,
+  amountCents:Number(a.amount_cents),currency:'CNY',providerVerified:true,readOnly:true,checkedAt:new Date().toISOString()}
+ const path='/v1/merchant/stores/sandbox-test/orders/'+a.order_id+'/sandbox-review-release'
+ assert.equal((await route(path,{who:'synthetic-staff',method:'POST',body:{},client:{inspectReview:async()=>evidence}})).status,403)
+ const denied=await route(path,{who:'synthetic-owner',method:'POST',body:{},client:{inspectReview:async()=>({...evidence,sessionStatus:'complete',paymentStatus:'paid'})}})
+ assert.equal(denied.status,409)
+ assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'review')
+ const accepted=await route(path,{who:'synthetic-owner',method:'POST',body:{},client:{inspectReview:async()=>evidence}})
+ assert.equal(accepted.status,200)
+ assert.equal(accepted.body.action,'expired_unpaid_released')
+ const {rows:[audit]}=await pool.query('SELECT document_text FROM sandbox_payment_review_evidence WHERE id=$1',[accepted.body.auditId])
+ assert.equal(JSON.parse(audit.document_text).resolution,'expired_unpaid_released')
+ await assert.rejects(pool.query("DELETE FROM sandbox_payment_review_evidence WHERE id=$1",[accepted.body.auditId]),/immutable/i)
+ const latest=await readSandboxPayment(pool,a.order_id)
+ assert.equal(latest.attempts[0].status,'expired')
+ assert.equal(latest.receipts.length,0)
+ assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+ assert.equal((await route(path,{who:'synthetic-owner',method:'POST',body:{},client:{inspectReview:async()=>evidence}})).status,404)
+ assert.notEqual((await reserve({id:a.order_id},'alipay')).id,a.id)
+})
 test('trusted provider expiration closes session before switching channel and ignores stale open result',async()=>{
  const a=await opened(await order()),path='/v1/stores/sandbox-test/orders/'+a.order_id+'/sandbox-cancel'
  const r=await route(path,{method:'POST',client:{getSession:async()=>lookup(a,session(a,'open')),expire:async()=>lookup(a,session(a,'expired'))}})
