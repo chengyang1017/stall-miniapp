@@ -12,6 +12,7 @@ import {customerWechatPhoneBindRoute} from './customerWechatPhone.mjs'
 import {customerWechatIdentityLinkRoute} from './customerWechatIdentityLinkRoute.mjs'
 import { storeEntryRoute } from './storeEntry.mjs'
 import { stripeTestPaymentRoute } from './stripeTestPaymentRoute.mjs'
+import { stripeTestReturnRoute } from './stripeTestReturnRoute.mjs'
 import { startSandboxPaymentWorker } from './sandboxPaymentWorker.mjs'
 import { stagingPaymentRoute } from './stagingPayments.mjs'
 import {runtimeDeployment,parsedDatabase} from './stagingDeployment.mjs'
@@ -71,6 +72,7 @@ const server = http.createServer(async (req, res) => {
   try { url = new URL(req.url || '/', 'http://localhost') }
   catch { return reply(res, 400, { error: 'invalid_url' }) }
   try {
+    if (stripeTestReturnRoute(req,res,url)) return
     if (await stripeTestPaymentRoute(req,res,url,pool)) return
     if (await stagingPaymentRoute(req,res,url,pool)) return
     if (await productReviewRoute(req,res,url,pool)) return
