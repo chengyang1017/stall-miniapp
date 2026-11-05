@@ -11,6 +11,7 @@
     "check": "node --check src/server.mjs",
     "preflight": "node scripts/preflight.mjs",
     "migrate:dev": "node scripts/migrate-dev.mjs",
+    "migrate:local:sandbox": "node scripts/migrate-dev.mjs",
     "test:catalog-sync:dev": "node scripts/test-catalog-sync-dev.mjs",
     "test:merchant-permissions:dev": "node scripts/test-merchant-permissions-dev.mjs",
     "test:tenant-catalog:dev": "node scripts/test-tenant-catalog-dev.mjs",

@@ -32,7 +32,7 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
   }
  }
  return Object.freeze({
-  async refundPayment(job){
+  async refundPayment(job,persistIntent=async()=>{}){
    if(!orderId.test(job?.order_id||'')||!sessionId.test(job?.checkout_session_id||'')||
     !Number.isSafeInteger(Number(job.amount_cents))||!['number','string'].includes(typeof job.amount_cents)||String(job.amount_cents).trim()===''||Number(job.amount_cents)<=0||
     !Number.isSafeInteger(Number(job.payment_amount_cents))||!['number','string'].includes(typeof job.payment_amount_cents)||String(job.payment_amount_cents).trim()===''||Number(job.payment_amount_cents)<=0||Number(job.amount_cents)>Number(job.payment_amount_cents)||
@@ -42,6 +42,10 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
     session.currency!=='cny'||session.client_reference_id!==job.order_id||
     !Number.isSafeInteger(session.amount_total)||session.amount_total!==Number(job.payment_amount_cents)||!intentId.test(session.payment_intent||'')||
     job.payment_intent_id&&session.payment_intent!==job.payment_intent_id)fail('stripe_refund_session_mismatch')
+   // The first POST may be accepted even if its response is lost. Persist the
+   // trusted PaymentIntent under the worker lease BEFORE sending it to Stripe.
+   // If persistence fails, never send the refund request.
+   await persistIntent(session.payment_intent)
    const body=new URLSearchParams({payment_intent:session.payment_intent,amount:String(job.amount_cents),
     'metadata[orderId]':job.order_id,'metadata[refundJobId]':job.id})
    const refund=await call('refunds',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded',

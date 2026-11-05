@@ -561,3 +561,29 @@ test('unknown refund recovery refuses duplicates, pagination and wrong identity'
  const absent=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:true,json:async()=>({object:'list',data:[],has_more:false})})})
  assert.equal(await absent.findRefundForJob(job),null)
 })
+
+test('merchant refund persists trusted PaymentIntent before first Stripe refund POST',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ const calls=[],events=[]
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  calls.push(url);events.push(url.endsWith('/refunds')?'refund-post':'checkout-get')
+  return {ok:true,json:async()=>url.endsWith('/refunds')?{...refund,amount:250}:session}
+ }})
+ const outcome=await client.refundPayment(job,async intent=>{
+  events.push('intent-persisted');assert.equal(intent,session.payment_intent)
+ })
+ assert.equal(outcome.status,'succeeded')
+ assert.deepEqual(events,['checkout-get','intent-persisted','refund-post'])
+ assert.equal(calls.length,2)
+})
+test('failed PaymentIntent persistence blocks Stripe refund POST',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,amount_cents:250,payment_amount_cents:1599}
+ let calls=0
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>{
+  calls++;return {ok:true,json:async()=>session}
+ }})
+ await assert.rejects(client.refundPayment(job,async()=>{throw Error('refund_intent_persist_failed')}),/refund_intent_persist_failed/)
+ assert.equal(calls,1)
+})

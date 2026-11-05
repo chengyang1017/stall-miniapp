@@ -958,6 +958,29 @@ test('stale uncertain refund lookup cannot overwrite a newer recovery claim',asy
  assert.equal(saved.status,'review')
  assert.equal(saved.refund_id,null)
 })
+test('merchant refund records PaymentIntent before refund POST so uncertain outcome can recover',async()=>{
+ const a=await opened(await order(),'card')
+ await pay(a)
+ const job=await requestSandboxRefund(pool,{orderId:a.order_id,subject:'synthetic-owner',amountCents:210,requestKey:randomUUID()})
+ await prioritizeRefundJob(job.id)
+ const intent='pi_persist_before_refund'
+ let persisted=false
+ const result=await processOneStripeTestRefund(pool,{refundPayment:async (claimed,persist)=>{
+  assert.equal(claimed.id,job.id)
+  await persist(intent)
+  const {rows:[saved]}=await pool.query('SELECT payment_intent_id FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+  assert.equal(saved.payment_intent_id,intent)
+  persisted=true
+  throw Error('stripe_refund_unconfirmed')
+ }})
+ assert.equal(result.action,'review')
+ assert.equal(persisted,true)
+ const {rows:[after]}=await pool.query('SELECT status,refund_id,payment_intent_id,last_error FROM stripe_test_refund_jobs WHERE id=$1',[job.id])
+ assert.equal(after.status,'review')
+ assert.equal(after.refund_id,null)
+ assert.equal(after.payment_intent_id,intent)
+ assert.equal(after.last_error,'stripe_refund_unconfirmed')
+})
 test('refund amount mismatch is quarantined before marking refund succeeded',async()=>{
  const a=await opened(await order(),'card')
  await pay(a)
