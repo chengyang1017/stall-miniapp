@@ -58,7 +58,16 @@ export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,
    })
    if(!response.ok)fail('stripe_checkout_creation_failed')
    const session=await response.json()
-   if(!session||!/^cs_test_/.test(session.id||'')||!validUrl(session.url)||new URL(session.url).hostname!=='checkout.stripe.com')fail('stripe_invalid_checkout_session')
+   if(!session||!/^cs_test_[A-Za-z0-9_]+$/.test(session.id||'')||
+    !validUrl(session.url)||new URL(session.url).hostname!=='checkout.stripe.com'||
+    session.object!=='checkout.session'||session.livemode!==false||session.mode!=='payment'||
+    session.status!=='open'||session.payment_status!=='unpaid'||
+    session.client_reference_id!==request.orderId||session.metadata?.orderId!==request.orderId||
+    session.metadata?.channel!==channel||session.metadata?.paymentAttemptKey!==request.requestKey||
+    session.amount_total!==request.amountCents||session.currency!==request.currency.toLowerCase()||
+    !Array.isArray(session.payment_method_types)||!session.payment_method_types.includes(channel)||
+    session.payment_method_types.some(type=>type!==channel))
+    fail('stripe_invalid_checkout_session')
    return Object.freeze({provider:'stripe',mode:'sandbox',channel,sessionId:session.id,url:session.url})
   },
   async verifyNotification(raw,headers={}){
