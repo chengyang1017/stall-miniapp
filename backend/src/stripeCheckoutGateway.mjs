@@ -46,6 +46,9 @@ export function createStripeCheckoutGateway({secretKey,webhookSecret,successUrl,
    // Filter the dynamically eligible methods to the customer-selected channel.
    // A payment-method configuration alone does not restrict a Session to one channel.
    body.append('allowed_payment_method_types[0]',channel)
+   // This is hosted Checkout in an external browser, NOT WeChat Mini Program
+   // native payments. Stripe requires the web client for WeChat Pay sessions.
+   if(channel==='wechat_pay')body.set('payment_method_options[wechat_pay][client]','web')
    // Stripe rejects supplying both allowed_payment_method_types and
    // payment_method_configuration. Keep the config ID as an eligibility
    // preflight input, but use the explicit one-channel filter in the request.
