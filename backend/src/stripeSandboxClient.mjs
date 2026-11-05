@@ -64,7 +64,20 @@ export function createStripeSandboxClient(env,fetchImpl=fetch){
     amountCents:s.amount_total,currency:'CNY',providerVerified:true,readOnly:true,checkedAt:new Date().toISOString()})
   },
   async expire(attempt){
-   await call('checkout/sessions/'+encodeURIComponent(attempt.session_id)+'/expire',{method:'POST',headers:{'Idempotency-Key':'expire:'+attempt.id}})
+   // The Session may expire or complete between the initial read and Stripe's
+   // expire request. In either case re-read Stripe's authoritative state.
+   // Never infer cancellation from an unsuccessful expire POST alone.
+   try{
+    await call('checkout/sessions/'+encodeURIComponent(attempt.session_id)+'/expire',{
+     method:'POST',headers:{'Idempotency-Key':'expire:'+attempt.id}
+    })
+   }catch(error){
+    const latest=await getSession(attempt)
+    if(latest.session.status==='expired'&&latest.session.payment_status==='unpaid'&&!latest.event)return latest
+    // If the POST outcome was uncertain, the caller must not claim cancellation.
+    // A completed payment, pending result or still-open session stays blocked.
+    throw error
+   }
    return getSession(attempt)
   }
  }
