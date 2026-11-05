@@ -34,7 +34,26 @@ export async function reserveSandboxAttempt(pool,{orderId,subject,channel,provid
 }
 export async function materializeSandboxAttempt(pool,client,attempt){
  if(attempt.status==='review')fail('payment_manual_review_required')
- if(attempt.session_id)return attempt
+ if(attempt.session_id){
+  // A signed webhook can bind a Session before the create request persists its
+  // URL. Recover the SAME verified Stripe session; never create a replacement.
+  if(attempt.status==='open'&&!attempt.checkout_url){
+   const observation=await client.getSession(attempt)
+   const session=observation.session
+   if(session.status==='open'&&session.payment_status==='unpaid'&&
+    typeof session.url==='string'&&/^https:\/\/checkout\.stripe\.com\//.test(session.url)){
+    const {rows:[restored]}=await pool.query(`UPDATE sandbox_payment_attempts
+     SET checkout_url=$2,updated_at=clock_timestamp()
+     WHERE id=$1 AND session_id=$3 AND status='open' AND checkout_url IS NULL RETURNING *`,
+     [attempt.id,session.url,attempt.session_id])
+    if(restored)return restored
+    const {rows:[current]}=await pool.query('SELECT * FROM sandbox_payment_attempts WHERE id=$1',[attempt.id])
+    if(current?.session_id!==attempt.session_id)fail('payment_attempt_conflict')
+    return current
+   }
+  }
+  return attempt
+ }
  // Unknown provider creation is retried with exactly the durable key/body. Never
  // retry past Stripe's idempotency retention window; block for manual review.
  if(Date.now()-new Date(attempt.created_at).getTime()>23*3600000){
