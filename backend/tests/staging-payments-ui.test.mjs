@@ -108,3 +108,39 @@ test('review release cancellation and invalid status never call the provider',as
  assert.match(read('miniprogram/pages/admin-orders/admin-orders.wxml'),/bindtap="releaseSandboxReview"/)
  assert.match(read('miniprogram/modules/shared/api/sandboxPayment.ts'),/sandbox-review-release/)
 })
+
+test('mismatched paid Stripe evidence creates only one compensation job and confirms persisted refund state',async()=>{
+ const calls=[],modals=[]
+ const p=page('miniprogram/pages/admin-orders/admin-orders.ts',{merchantOrderConfig:()=>({apiBase:'https://unit.invalid',storeSlug:'alpha'}),
+  merchantOrderContextKey:()=> 'A',sandboxPaymentView:x=>x,
+  sandboxPaymentRequest:async(_cfg,_id,_merchant,action='sandbox-payment')=>{
+   calls.push(action)
+   if(action==='sandbox-review-refund')return {sandbox:true,action:'refund_queued',jobId:'job1',paymentConfirmed:false}
+   return {attempts:[{status:'review'}],refunds:[{id:'job1',kind:'review_compensation',label:'退款申请已保存'}],receipts:[]}
+  },wx:{showModal:options=>modals.push(options)}})
+ p.visible=true;p.context='A';p.data.sandboxOrderId=id;p.data.sandboxReview={attempt:{orderId:id}}
+ p.data.sandboxEvidenceMeta={id:'audit1'}
+ p.data.sandboxEvidence={providerVerified:true,readOnly:true,paymentStatus:'paid',sessionStatus:'complete',channelMismatch:true,paymentIntentStatus:'succeeded',paymentIntentId:'pi_test'}
+ const pending=p.requestSandboxMismatchRefund();assert.equal(modals.length,1)
+ modals[0].success({confirm:true});await pending
+ assert.deepEqual(calls,['sandbox-review-refund','sandbox-payment'])
+ assert.equal(p.data.sandbox.refunds[0].kind,'review_compensation')
+ assert.match(p.data.sandboxMismatchMessage,/任务已保存/)
+ assert.equal(p.data.sandboxMismatchBusy,false)
+ await p.requestSandboxMismatchRefund()
+ assert.equal(modals.length,1)
+})
+test('channel compensation is never initiated without verified paid mismatch or when canceled',async()=>{
+ const calls=[],modals=[]
+ const p=page('miniprogram/pages/admin-orders/admin-orders.ts',{merchantOrderConfig:()=>({apiBase:'https://unit.invalid',storeSlug:'alpha'}),
+  merchantOrderContextKey:()=> 'A',sandboxPaymentRequest:async()=>{calls.push(1)},wx:{showModal:o=>modals.push(o)}})
+ p.visible=true;p.context='A';p.data.sandboxOrderId=id;p.data.sandboxReview={attempt:{orderId:id}};p.data.sandboxEvidenceMeta={id:'audit1'}
+ p.data.sandboxEvidence={providerVerified:true,readOnly:true,paymentStatus:'unpaid',sessionStatus:'expired',channelMismatch:false}
+ await p.requestSandboxMismatchRefund();assert.equal(modals.length,0)
+ p.data.sandboxEvidence={providerVerified:true,readOnly:true,paymentStatus:'paid',sessionStatus:'complete',channelMismatch:true,paymentIntentStatus:'succeeded',paymentIntentId:'pi_ok'}
+ const pending=p.requestSandboxMismatchRefund();modals[0].success({confirm:false});await pending
+ assert.equal(calls.length,0);assert.equal(p.data.sandboxMismatchBusy,false)
+ const xml=read('miniprogram/pages/admin-orders/admin-orders.wxml')
+ assert.match(xml,/bindtap="requestSandboxMismatchRefund"/)
+ assert.match(read('miniprogram/modules/shared/api/sandboxPayment.ts'),/sandbox-review-refund/)
+})

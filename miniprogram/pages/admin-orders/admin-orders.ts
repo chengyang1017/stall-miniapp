@@ -18,7 +18,7 @@ Page({
  async viewSandboxPayment(e:any){
   const cfg=merchantOrderConfig(),id=String(e.currentTarget.dataset.id||''),context=merchantOrderContextKey(),serial=this.serial
   if(!cfg||!this.visible)return
-  this.setData({sandboxOrderId:id,sandbox:null,sandboxError:'',sandboxReleaseMessage:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null})
+  this.setData({sandboxOrderId:id,sandbox:null,sandboxError:'',sandboxReleaseMessage:'',sandboxMismatchMessage:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null})
   try{const r=await sandboxPaymentRequest(cfg,id,true)
    if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({sandbox:sandboxPaymentView(r)})
   }catch(_){if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({sandboxError:'Sandbox 未启用、无权限或网络不可用，无法确认最新结果'})}
@@ -100,6 +100,39 @@ Page({
    if(current())this.setData({sandboxReviewError:'解除结果未确认；不要重复操作，请先刷新支付记录核对'})
   }finally{if(current())this.setData({sandboxReleaseBusy:false})}
  },
+ async requestSandboxMismatchRefund(){
+  const cfg=merchantOrderConfig(),id=this.data.sandboxOrderId,context=merchantOrderContextKey(),serial=this.serial
+  if(!cfg||!id||!this.visible||this.data.sandboxReviewBusy||this.data.sandboxReleaseBusy||this.data.sandboxMismatchBusy||
+    this.data.sandboxReview?.attempt?.orderId!==id)return
+  const evidence=this.data.sandboxEvidence
+  const prior=this.data.sandbox?.refunds?.some((r:any)=>r.kind==='review_compensation')
+  if(prior||!this.data.sandboxEvidenceMeta||evidence?.providerVerified!==true||evidence.readOnly!==true||
+    evidence.paymentStatus!=='paid'||evidence.sessionStatus!=='complete'||evidence.channelMismatch!==true||
+    evidence.paymentIntentStatus!=='succeeded'||!evidence.paymentIntentId)return
+  const current=()=>this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&id===this.data.sandboxOrderId
+  this.setData({sandboxMismatchBusy:true,sandboxReviewError:'',sandboxMismatchMessage:''})
+  try{
+   const approved=await new Promise<boolean>(resolve=>wx.showModal({
+    title:'渠道异常测试退款',
+    content:'Stripe 测试交易的实际渠道与所选渠道不一致。确认后由服务器重新核验，并仅创建一笔全额补偿退款任务。退款成功需等待服务端确认，订单不会变为已付款。是否继续？',
+    confirmText:'申请测试退款',success:(r:any)=>resolve(r.confirm===true),fail:()=>resolve(false)
+   }))
+   if(!approved||!current())return
+   const result=await sandboxPaymentRequest(cfg,id,true,'sandbox-review-refund',{})
+   if(!current())return
+   if(result.paymentConfirmed!==false||!result.jobId||!['refund_queued','already_queued'].includes(result.action)){
+    this.setData({sandboxReviewError:'退款申请结果未确认，请刷新支付和退款记录后核对'});return
+   }
+   const payment=await sandboxPaymentRequest(cfg,id,true)
+   if(!current())return
+   const updated=sandboxPaymentView(payment)
+   const job=updated.refunds.find((r:any)=>r.id===result.jobId&&r.kind==='review_compensation')
+   if(!job){this.setData({sandboxReviewError:'退款任务已提交但记录未确认，请刷新核对，不要重复申请'});return}
+   this.setData({sandbox:updated,sandboxMismatchMessage:'补偿退款任务已保存（'+job.label+'）；请等待服务端核验退款结果，订单不视为已付款'})
+  }catch(_){
+   if(current())this.setData({sandboxReviewError:'退款申请结果未知；请先刷新支付记录，不要重复发起'})
+  }finally{if(current())this.setData({sandboxMismatchBusy:false})}
+ },
  requestSandboxRefund(){
   const cfg=merchantOrderConfig(),id=this.data.sandboxOrderId,s=this.data.sandbox,context=merchantOrderContextKey(),serial=this.serial
   if(!cfg||!s?.canRefund||this.data.sandboxRefundBusy||!this.visible)return
@@ -117,17 +150,17 @@ Page({
   }})
  },
  loaded:[] as any[],localRows:[] as any[],localFiltered:[] as any[],counts:emptyCounts(),context:'',serial:0,nextCursor:'',localOffset:0,visible:false,
- data:{sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,sandboxEvidenceMeta:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
+ data:{sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,sandboxEvidenceMeta:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
   orderTabs:tabs.map(t=>({...t,count:0})),countsKnown:false,globalTotal:0,globalPending:0,matchingCount:0,
   noteInputs:{} as Record<string,string>,etaInputs:{} as Record<string,string>,cloudMode:false,cloudBusy:false,loadingMore:false,cloudError:'',moreError:'',hasMore:false,refreshRequired:false,canManage:true,
   batchMode:false,selectedIds:[] as string[],selectedMap:{} as Record<string,boolean>,selectedCount:0,allSelected:false,operationBusy:false,operationProgress:'',batchResult:'',batchFailures:[] as Array<{id:string;reason:string}>},
- onShow(){this.visible=true;this.setData({sandbox:null,sandboxOrderId:'',sandboxError:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null});this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
+ onShow(){this.visible=true;this.setData({sandbox:null,sandboxOrderId:'',sandboxError:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null});this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
  onHide(){this.visible=false;this.serial++;this.setData({cloudBusy:false,loadingMore:false})},
  onUnload(){this.visible=false;this.serial++;this.loaded=[];this.localRows=[];this.localFiltered=[]},
  async onPullDownRefresh(){try{if(!this.data.operationBusy)await this.refresh()}finally{wx.stopPullDownRefresh()}},
  onReachBottom(){this.loadMore()},
  query():MerchantOrderQuery{return {q:this.data.orderSearchText.trim(),state:this.data.currentTab,from:this.data.dateFrom,to:this.data.dateTo}},
- syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({sandbox:null,sandboxOrderId:'',sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null,dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
+ syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({sandbox:null,sandboxOrderId:'',sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null,dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
  setCounts(counts:MerchantOrderCounts){this.counts=counts;this.setData({countsKnown:true,globalTotal:counts.all,globalPending:counts.new,orderTabs:tabs.map(t=>({...t,count:Number((counts as any)[t.key==='latest'?'all':t.key]||0)}))})},
  setSelection(ids:string[]){const map:Record<string,boolean>={};ids.forEach(id=>{map[id]=true});const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o))&&(!this.data.cloudMode||fulfillmentPaymentReady(o)));this.setData({selectedIds:ids,selectedMap:map,selectedCount:ids.length,allSelected:!!eligible.length&&ids.length===eligible.length})},
  changedQuery(){this.serial++;this.setSelection([]);this.setData({batchMode:false,queryDirty:true,cloudBusy:false,loadingMore:false,refreshRequired:false,batchResult:'',batchFailures:[],moreError:''})},
