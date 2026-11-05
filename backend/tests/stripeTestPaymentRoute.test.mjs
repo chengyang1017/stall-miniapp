@@ -93,6 +93,61 @@ test('merchant staff cannot submit refunds',async()=>{
  assert.equal(response.body.error,'forbidden')
 })
 
+test('sandbox-review is read-only and limited to store owner or manager',async()=>{
+ const reviewUrl=new URL(url.href.replace('/v1/stores/','/v1/merchant/stores/').replace('/stripe-test-checkout','/sandbox-review'))
+ let providerCalls=0
+ const attempt={id:'attempt-1',orderId:'11111111-1111-4111-8111-111111111111',channel:'alipay',status:'review',sessionId:'cs_test_review',amountCents:1000,currency:'CNY'}
+ const pool={async query(sql){
+  if(sql.includes('sandbox_payment_environment'))return {rows:[{one:1}]}
+  if(sql.includes('SELECT o.id FROM orders'))return {rows:[{id:attempt.orderId}]}
+  if(sql.includes("status='review' ORDER BY"))return {rows:[attempt]}
+  if(sql.includes('FROM sandbox_payment_notifications'))return {rows:[{notificationCount:2,lastNotificationAt:null}]}
+  throw Error('unexpected query: '+sql)
+ }}
+ for(const role of ['owner','manager']){
+  const response=res()
+  await stripeTestPaymentRoute({method:'GET',headers:{}},response,reviewUrl,pool,isolatedEnv,{
+   authenticate:async()=> 'merchant',permittedStore:async()=>({role}),
+   client:{getSession(){providerCalls++}}
+  })
+  assert.equal(response.status,200)
+  assert.equal(response.body.attempt.status,'review')
+  assert.equal(response.body.notificationCount,2)
+  assert.equal(response.body.readOnly,true)
+  assert.equal(response.body.resolutionAllowed,false)
+ }
+ for(const role of ['staff',null]){
+  const response=res()
+  await stripeTestPaymentRoute({method:'GET',headers:{}},response,reviewUrl,pool,isolatedEnv,{
+   authenticate:async()=> 'merchant',permittedStore:async()=>role?{role}:null,client:{}
+  })
+  assert.equal(response.status,403)
+ }
+ const write=res()
+ await stripeTestPaymentRoute(requestJson({status:'paid'}),write,reviewUrl,pool,isolatedEnv,{
+  authenticate:async()=> 'merchant',permittedStore:async()=>({role:'owner'}),client:{}
+ })
+ assert.equal(write.status,405)
+ assert.equal(providerCalls,0)
+})
+
+test('sandbox-review refuses customer routes and absent review attempts',async()=>{
+ const merchantUrl=new URL(url.href.replace('/v1/stores/','/v1/merchant/stores/').replace('/stripe-test-checkout','/sandbox-review'))
+ const customerUrl=new URL(url.href.replace('/stripe-test-checkout','/sandbox-review'))
+ const pool={async query(sql){
+  if(sql.includes('sandbox_payment_environment'))return {rows:[{one:1}]}
+  if(sql.includes('SELECT o.id FROM orders'))return {rows:[{id:'11111111-1111-4111-8111-111111111111'}]}
+  if(sql.includes("status='review' ORDER BY"))return {rows:[]}
+  throw Error('unexpected query: '+sql)
+ }}
+ const deps={authenticate:async()=> 'subject',permittedStore:async()=>({role:'owner'}),client:{}}
+ const missing=res();await stripeTestPaymentRoute({method:'GET',headers:{}},missing,merchantUrl,pool,isolatedEnv,deps)
+ assert.equal(missing.status,404)
+ assert.equal(missing.body.error,'payment_review_not_found')
+ const customer=res();await stripeTestPaymentRoute({method:'GET',headers:{}},customer,customerUrl,pool,isolatedEnv,deps)
+ assert.equal(customer.status,403)
+})
+
 test('cancellation rejects unresolved Stripe Session creation instead of reporting success',async()=>{
  const cancelUrl=new URL(url.href.replace('/stripe-test-checkout','/sandbox-cancel'))
  for(const status of ['creating','review']){
