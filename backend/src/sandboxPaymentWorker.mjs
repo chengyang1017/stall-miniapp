@@ -1,6 +1,6 @@
 import {createStripeSandboxClient} from './stripeSandboxClient.mjs'
 import {createStripeTestRefundClient} from './stripeTestRefund.mjs'
-import {enqueueStripeTestRefunds,processOneStripeTestRefund,reconcileOneSubmittedStripeTestRefund} from './stripeTestRefundJobs.mjs'
+import {enqueueStripeTestRefunds,processOneStripeTestRefund,reconcileOneSubmittedStripeTestRefund,reconcileOneUncertainStripeTestRefund} from './stripeTestRefundJobs.mjs'
 import {materializeSandboxAttempt,applySandboxObservation} from './sandboxPaymentStore.mjs'
 export const sandboxEnabled=env=>env.STRIPE_TEST_PAYMENTS_ENABLED==='true'&&env.SANDBOX_PAYMENT_LIFECYCLE_ENABLED==='true'&&env.PAYMENT_DB_ENV==='isolated-test'&&env.APP_ENV!=='production'
 export async function assertSandboxDatabase(pool,env){
@@ -45,6 +45,7 @@ export async function runSandboxMaintenance(pool,env,{client,refundClient}={}){
   await enqueueStripeTestRefunds(pool)
   refund=(await processOneStripeTestRefund(pool,refundClient)).action
   await reconcileOneSubmittedStripeTestRefund(pool,refundClient)
+  await reconcileOneUncertainStripeTestRefund(pool,refundClient)
   await syncSandboxRefundOrders(pool)
  }
  return {recovered,unavailable,refund}

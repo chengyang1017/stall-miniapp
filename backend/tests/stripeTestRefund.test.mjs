@@ -532,3 +532,32 @@ test('refund polling rejects wrong currency',async()=>{
  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:true,json:async()=>({...refund,currency:'usd'})})})
  await assert.rejects(client.getRefundStatus('re_abc123'),/stripe_refund_status_invalid/)
 })
+
+test('unknown refund recovery reads Stripe by PaymentIntent and exact job metadata only',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,kind:'review_compensation',payment_intent_id:session.payment_intent,amount_cents:250}
+ const calls=[]
+ const refundEntry={...refund,amount:250,metadata:{orderId:job.order_id,refundJobId:job.id}}
+ const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async url=>{
+  calls.push(url);return {ok:true,json:async()=>({object:'list',data:[refundEntry],has_more:false})}
+ }})
+ const found=await client.findRefundForJob(job)
+ assert.equal(found.refundId,refundEntry.id)
+ assert.equal(found.paymentIntentId,session.payment_intent)
+ assert.equal(calls.length,1)
+ assert.match(calls[0],/refunds\?payment_intent=/)
+ assert.ok(!calls[0].includes('/refunds/'))
+})
+test('unknown refund recovery refuses duplicates, pagination and wrong identity',async()=>{
+ const job={id:'22222222-2222-4222-8222-222222222222',order_id:audit.order_id,
+  checkout_session_id:session.id,kind:'review_compensation',payment_intent_id:session.payment_intent,amount_cents:250}
+ const item={...refund,amount:250,metadata:{orderId:job.order_id,refundJobId:job.id}}
+ for(const response of [{object:'list',data:[item,item],has_more:false},
+  {object:'list',data:[],has_more:true},
+  {object:'list',data:[{...item,amount:251}],has_more:false}]){
+  const client=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:true,json:async()=>response})})
+  await assert.rejects(client.findRefundForJob(job),/stripe_refund_lookup_(ambiguous|mismatch)/)
+ }
+ const absent=createStripeTestRefundClient({secretKey:'sk_test_123',fetchImpl:async()=>({ok:true,json:async()=>({object:'list',data:[],has_more:false})})})
+ assert.equal(await absent.findRefundForJob(job),null)
+})

@@ -159,3 +159,33 @@ async function finalizeSubmittedRefund(db,job,result,state){
   throw new Error('refund_persist_failed',{cause:error})
  }
 }
+
+/** Read-only Stripe recovery for a refund POST with unknown outcome.
+ * No second POST is made. A unique provider record can be reattached to the
+ * persisted job; unresolved or conflicting results remain quarantined. */
+export async function reconcileOneUncertainStripeTestRefund(db,client){
+ const {rows:[job]}=await db.query(`SELECT id,order_id,checkout_session_id,amount_cents,payment_intent_id,kind
+  FROM stripe_test_refund_jobs WHERE status='review' AND refund_id IS NULL
+  AND last_error IN ('stripe_refund_unconfirmed','refund_outcome_unknown')
+  AND payment_intent_id IS NOT NULL AND kind IN ('merchant','review_compensation')
+  ORDER BY updated_at,id LIMIT 1`)
+ if(!job)return {action:'idle'}
+ let found
+ try{found=await client.findRefundForJob(job)}
+ catch{return {action:'review',jobId:job.id,lookupFailed:true}}
+ if(!found)return {action:'review',jobId:job.id,notFound:true}
+ if(found.paymentIntentId!==job.payment_intent_id||found.amountCents!==Number(job.amount_cents)||
+    found.completed!==(found.status==='succeeded')||!/^re_[A-Za-z0-9_]+$/.test(found.refundId||''))
+  return {action:'review',jobId:job.id,mismatch:true}
+ const state=found.status==='succeeded'?'succeeded':
+  ['failed','canceled'].includes(found.status)?'review':'submitted'
+ const result=await db.query(`UPDATE stripe_test_refund_jobs SET
+  refund_id=$2,provider_status=$3,status=$4,updated_at=clock_timestamp(),
+  last_error=CASE WHEN $4='review' THEN 'stripe_refund_failed' ELSE NULL END
+  WHERE id=$1 AND status='review' AND refund_id IS NULL
+  AND last_error IN ('stripe_refund_unconfirmed','refund_outcome_unknown')
+  AND payment_intent_id=$5 AND amount_cents=$6
+  RETURNING id`,[job.id,found.refundId,found.status,state,job.payment_intent_id,job.amount_cents])
+ if(result.rows.length!==1)return {action:'review',jobId:job.id,stateChanged:true}
+ return {action:state,jobId:job.id,refundId:found.refundId,recovered:true}
+}

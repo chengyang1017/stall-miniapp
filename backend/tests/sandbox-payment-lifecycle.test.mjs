@@ -874,6 +874,35 @@ test('finalizer never overwrites a persisted PaymentIntent on contradictory refu
  }
  assert.equal(writes,0)
 })
+test('uncertain refund recovery only attaches verified provider refund; never sends another POST',async()=>{
+ const {reconcileOneUncertainStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ const a=await opened(await order(),'alipay')
+ await pool.query("UPDATE sandbox_payment_attempts SET status='review' WHERE id=$1",[a.id])
+ const paid=session(a);paid.payment_intent.latest_charge.payment_method_details.type='card'
+ const stripe=createStripeSandboxClient(env,async()=>({ok:true,json:async()=>paid}))
+ const queued=await route('/v1/merchant/stores/sandbox-test/orders/'+a.order_id+'/sandbox-review-refund',{who:'synthetic-owner',method:'POST',body:{},client:stripe})
+ assert.equal(queued.status,202)
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='review',last_error='stripe_refund_unconfirmed' WHERE id=$1",[queued.body.jobId])
+ const first=await reconcileOneUncertainStripeTestRefund(pool,{findRefundForJob:async job=>{
+  assert.equal(job.id,queued.body.jobId);return null
+ }})
+ assert.equal(first.action,'review')
+ const {rows:[still]}=await pool.query('SELECT status,refund_id FROM stripe_test_refund_jobs WHERE id=$1',[queued.body.jobId])
+ assert.equal(still.refund_id,null)
+ let calls=0
+ const recovered=await reconcileOneUncertainStripeTestRefund(pool,{findRefundForJob:async job=>{
+  calls++;return {refundId:'re_recovered_refund',status:'succeeded',amountCents:1000,paymentIntentId:paid.payment_intent.id,completed:true}
+ }})
+ assert.equal(calls,1)
+ assert.equal(recovered.action,'succeeded')
+ const {rows:[saved]}=await pool.query('SELECT status,refund_id,payment_intent_id FROM stripe_test_refund_jobs WHERE id=$1',[queued.body.jobId])
+ assert.equal(saved.status,'succeeded')
+ assert.equal(saved.refund_id,'re_recovered_refund')
+ assert.equal(saved.payment_intent_id,paid.payment_intent.id)
+ assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'review')
+ assert.equal((await readSandboxPayment(pool,a.order_id)).receipts.length,0)
+ assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+})
 test('refund amount mismatch is quarantined before marking refund succeeded',async()=>{
  const a=await opened(await order(),'card')
  await pay(a)

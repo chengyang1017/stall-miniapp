@@ -50,6 +50,28 @@ export function createStripeTestRefundClient({secretKey,fetchImpl=fetch}){
     !['pending','requires_action','succeeded','failed','canceled'].includes(refund.status)||refund.currency!=='cny'||refund.livemode!==false)fail('stripe_refund_unconfirmed')
    return {refundId:refund.id,status:refund.status,paymentIntentId:session.payment_intent,amountCents:refund.amount,completed:refund.status==='succeeded'}
   },
+  /** Read-only recovery of a refund POST whose response was lost.
+   * An exact metadata match is required; absence and pagination ambiguity never
+   * authorize another POST or a successful refund claim. */
+  async findRefundForJob(job){
+   if(!orderId.test(job?.id||'')||!orderId.test(job.order_id||'')||
+      !intentId.test(job.payment_intent_id||'')||!sessionId.test(job.checkout_session_id||'')||
+      !['merchant','review_compensation'].includes(job.kind)||
+      !Number.isSafeInteger(Number(job.amount_cents))||Number(job.amount_cents)<=0)fail('invalid_refund_lookup')
+   const list=await call('refunds?payment_intent='+encodeURIComponent(job.payment_intent_id)+'&limit=100')
+   if(!list||list.object!=='list'||!Array.isArray(list.data)||list.has_more!==false)fail('stripe_refund_lookup_ambiguous')
+   const matching=list.data.filter(r=>r?.metadata?.refundJobId===job.id)
+   if(matching.length>1)fail('stripe_refund_lookup_ambiguous')
+   if(!matching.length)return null
+   const refund=matching[0]
+   if(!refundId.test(refund.id||'')||refund.metadata?.orderId!==job.order_id||
+      refund.payment_intent!==job.payment_intent_id||refund.amount!==Number(job.amount_cents)||
+      refund.currency!=='cny'||refund.livemode!==false||
+      !['succeeded','pending','requires_action','failed','canceled'].includes(refund.status))
+    fail('stripe_refund_lookup_mismatch')
+   return Object.freeze({refundId:refund.id,status:refund.status,amountCents:refund.amount,
+     paymentIntentId:refund.payment_intent,completed:refund.status==='succeeded'})
+  },
   async getRefundStatus(refundId){
    if(typeof refundId!=='string'||!/^re_[A-Za-z0-9_]+$/.test(refundId))fail('invalid_stripe_refund_id')
    let refund
