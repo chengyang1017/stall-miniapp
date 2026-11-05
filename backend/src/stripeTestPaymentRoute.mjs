@@ -48,7 +48,11 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
      [order.id,channel,order.total_cents,'legacy:'+s.id,s.id])
     attempt=q.rows[0]
    }
-   const observation=await observeSandboxSession(pool,client,attempt)
+   // A review hold must remain immutable even if a signed event is delivered again.
+   // Audit the event by its already-bound Session without retrying a provider lookup
+   // that may repeatedly fail on the known channel mismatch.
+   if(attempt.status==='review'&&(s.client_reference_id!==attempt.order_id||s.metadata?.orderId!==attempt.order_id))throw Error('invalid_order_reference')
+   const observation=attempt.status==='review'?{session:{id:attempt.session_id}}:await observeSandboxSession(pool,client,attempt)
    const result=await applySandboxObservation(pool,attempt,observation,{id:signed.id,type:signed.type,created:signed.created,hash:createHash('sha256').update(raw).digest('hex')})
    reply(res,200,{received:true,action:result.action});return true
   }

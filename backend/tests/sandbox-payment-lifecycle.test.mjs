@@ -233,6 +233,30 @@ test('signed HTTP webhook persisted once, tampered signature rejected, reordered
  assert.equal((await pool.query("SELECT * FROM sandbox_payment_notifications WHERE event_id='evt_http_test'")).rows.length,1)
  assert.equal((await route(path,{method:'POST',body:raw+' ',signature})).status,400)
 })
+test('signed callbacks on review attempts are audited once without provider lookups or settlement',async()=>{
+ const a=await opened(await order(),'alipay')
+ await pool.query("UPDATE sandbox_payment_attempts SET status='review' WHERE id=$1",[a.id])
+ const eventId='evt_review_'+randomUUID().replaceAll('-','')
+ const payload={id:eventId,livemode:false,created:Math.floor(Date.now()/1000),type:'checkout.session.completed',data:{object:session(a)}}
+ const timestamp=Math.floor(Date.now()/1000)
+ const send=async value=>{
+  const raw=JSON.stringify(value)
+  const signature='t='+timestamp+',v1='+createHmac('sha256',env.STRIPE_TEST_WEBHOOK_SECRET).update(timestamp+'.'+raw).digest('hex')
+  return route('/v1/payments/stripe-test/webhook',{method:'POST',body:raw,signature,client:{getSession(){throw Error('review_must_not_lookup_provider')}}})
+ }
+ const first=await send(payload)
+ assert.equal(first.status,200)
+ assert.equal(first.body.action,'review')
+ assert.equal((await send(payload)).status,200)
+ const {rows:[audit]}=await pool.query('SELECT COUNT(*)::integer AS count FROM sandbox_payment_notifications WHERE event_id=$1',[eventId])
+ assert.equal(audit.count,1)
+ const invalid={...payload,id:'evt_review_other_'+randomUUID().replaceAll('-',''),data:{object:{...payload.data.object,client_reference_id:randomUUID()}}}
+ assert.equal((await send(invalid)).status,400)
+ assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'review')
+ assert.equal((await readSandboxPayment(pool,a.order_id)).receipts.length,0)
+ assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+ assert.equal((await pool.query('SELECT COUNT(*)::integer AS count FROM payment_events WHERE order_id=$1',[a.order_id])).rows[0].count,0)
+})
 test('trusted provider expiration closes session before switching channel and ignores stale open result',async()=>{
  const a=await opened(await order()),path='/v1/stores/sandbox-test/orders/'+a.order_id+'/sandbox-cancel'
  const r=await route(path,{method:'POST',client:{getSession:async()=>lookup(a,session(a,'open')),expire:async()=>lookup(a,session(a,'expired'))}})
