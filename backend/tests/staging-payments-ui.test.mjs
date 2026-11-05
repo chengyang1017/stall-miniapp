@@ -34,7 +34,7 @@ test('Sandbox merchant review stays a read-only GET and never exposes resolution
  const page=read('miniprogram/pages/admin-orders/admin-orders.ts')
  const view=read('miniprogram/pages/admin-orders/admin-orders.wxml')
  assert.match(api,/sandbox-review/)
- assert.match(api,/\['sandbox-payment','sandbox-review'\]\.includes\(action\)\?'GET':'POST'/)
+ assert.match(api,/\['sandbox-payment','sandbox-review','sandbox-review-verify'\]\.includes\(action\)\?'GET':'POST'/)
  assert.match(page,/sandboxPaymentRequest\(cfg,id,true,'sandbox-review'\)/)
  assert.match(page,/merchantOrderContextKey\(\)/)
  assert.match(view,/bindtap="viewSandboxReview"/)
