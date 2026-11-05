@@ -5,5 +5,9 @@ export function sandboxPaymentView(data:any){
  const attempts=(data.attempts||[]).map((a:any)=>({...a,label:a.status==='open'&&a.failureCode?'付款失败，可在原会话重试':paymentNames[a.status]||'待核对',channelText:channels[a.actualChannel||a.channel]||'待核对',amountText:(Number(a.amountCents)/100).toFixed(2)}))
  const refunds=(data.refunds||[]).map((r:any)=>({...r,kindText:r.kind==='review_compensation'?'渠道异常补偿退款':r.kind==='merchant'?'商家退款':'补偿退款',label:refundNames[r.status]||'待核对',amountText:(Number(r.amountCents)/100).toFixed(2)}))
  const receipts=(data.receipts||[]).map((r:any)=>({...r,totalText:(Number(r.totalCents)/100).toFixed(2),channelText:channels[r.channel]||'待核对',items:(r.items||[]).map((i:any)=>({...i,unitText:(Number(i.unitPriceCents)/100).toFixed(2)}))}))
- return {attempts,refunds,receipts,stale:data.stale===true,canRefund:data.canRefund===true}
+ const mismatchRefunds=refunds.filter((r:any)=>r.kind==='review_compensation')
+ return {attempts,refunds,receipts,
+  hasMismatchRefund:mismatchRefunds.length>0,
+  hasSuccessfulMismatchRefund:mismatchRefunds.some((r:any)=>r.status==='succeeded'&&!!r.refundId),
+  stale:data.stale===true,canRefund:data.canRefund===true}
 }

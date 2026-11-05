@@ -180,3 +180,25 @@ test('mismatch refund release cancellation and unknown refund ID never submit',a
  assert.equal(calls.length,0);assert.equal(p.data.sandboxRefundReleaseBusy,false)
  assert.match(read('miniprogram/modules/shared/api/sandboxPayment.ts'),/sandbox-review-refund-release/)
 })
+
+test('sandbox merchant refund controls inspect all records instead of only first record',()=>{
+ const fn=evaluate('miniprogram/modules/shared/domain/sandboxPayment.ts',{},['sandboxPaymentView']).sandboxPaymentView
+ const view=fn({attempts:[],refunds:[
+  {id:'regular',kind:'merchant',status:'succeeded',amountCents:100},
+  {id:'mismatch',kind:'review_compensation',status:'succeeded',refundId:'re_verified',amountCents:1000}
+ ],receipts:[]})
+ assert.equal(view.hasMismatchRefund,true)
+ assert.equal(view.hasSuccessfulMismatchRefund,true)
+ const waiting=fn({refunds:[
+  {kind:'merchant',status:'succeeded',amountCents:100},
+  {kind:'review_compensation',status:'submitted',refundId:'re_pending',amountCents:1000}
+ ]})
+ assert.equal(waiting.hasMismatchRefund,true)
+ assert.equal(waiting.hasSuccessfulMismatchRefund,false)
+ const none=fn({refunds:[{kind:'merchant',status:'succeeded',amountCents:100}]})
+ assert.equal(none.hasMismatchRefund,false)
+ const wxml=read('miniprogram/pages/admin-orders/admin-orders.wxml')
+ assert.match(wxml,/sandbox\.hasMismatchRefund/)
+ assert.match(wxml,/sandbox\.hasSuccessfulMismatchRefund/)
+ assert.doesNotMatch(wxml,/sandbox\.refunds\[0\]/)
+})

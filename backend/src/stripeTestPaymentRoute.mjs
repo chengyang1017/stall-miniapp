@@ -163,7 +163,17 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
    const {rows}=await pool.query(`SELECT * FROM sandbox_payment_attempts WHERE order_id=$1 AND status IN ('creating','open','processing','review') ORDER BY created_at DESC LIMIT 1`,[orderId])
    if(rows[0]?.status==='review')stale=true
    else if(rows[0])try{const a=await materializeSandboxAttempt(pool,client,rows[0]);await applySandboxObservation(pool,a,await observeSandboxSession(pool,client,a))}catch{stale=true}
-   reply(res,200,{...await readSandboxPayment(pool,orderId),stale,canRefund:env.STRIPE_TEST_REFUNDS_ENABLED==='true'&&!!store&&['owner','manager'].includes(store.role)});return true
+   const state=await readSandboxPayment(pool,orderId)
+   let canRefund=false
+   if(env.STRIPE_TEST_REFUNDS_ENABLED==='true'&&store&&['owner','manager'].includes(store.role)){
+    const {rows:[balance]}=await pool.query(`SELECT EXISTS (
+     SELECT 1 FROM payment_events e
+     WHERE e.order_id=$1 AND e.provider='stripe:sandbox' AND e.event_type='payment_succeeded'
+     AND e.amount_cents>COALESCE((SELECT SUM(j.amount_cents) FROM stripe_test_refund_jobs j
+      WHERE j.order_id=$1 AND j.kind='merchant'),0)) AS "canRefund"`,[orderId])
+    canRefund=balance?.canRefund===true
+   }
+   reply(res,200,{...state,stale,canRefund});return true
   }
   if(req.method!=='POST'){reply(res,405,{error:'method_not_allowed'});return true}
   if(action==='sandbox-refund'){

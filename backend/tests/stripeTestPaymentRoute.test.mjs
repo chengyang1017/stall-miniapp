@@ -371,6 +371,28 @@ test('malformed refund amount or idempotency key returns 400 before touching the
  assert.equal(response.body.error,'invalid_refund_request')
 })
 
+test('merchant refund button eligibility requires trusted unreserved collected balance',async()=>{
+ const statusUrl=new URL(url.href.replace('/v1/stores/','/v1/merchant/stores/').replace('/stripe-test-checkout','/sandbox-payment'))
+ for(const eligible of [false,true]){
+  let balanceQueries=0
+  const pool={async query(sql){
+   if(sql.includes('sandbox_payment_environment'))return {rows:[{one:1}]}
+   if(sql.includes('SELECT o.id FROM orders'))return {rows:[{id:'11111111-1111-4111-8111-111111111111'}]}
+   if(sql.includes('FROM sandbox_payment_attempts WHERE order_id'))return {rows:[]}
+   if(sql.includes('FROM stripe_test_refund_jobs WHERE order_id'))return {rows:[]}
+   if(sql.includes('FROM sandbox_payment_receipts WHERE order_id'))return {rows:[]}
+   if(sql.includes('FROM payment_events e')&&sql.includes('AS "canRefund"')){balanceQueries++;return {rows:[{canRefund:eligible}]}}
+   throw Error('unexpected query: '+sql)
+  }}
+  const response=res()
+  await stripeTestPaymentRoute({method:'GET',headers:{}},response,statusUrl,pool,
+   {...isolatedEnv,STRIPE_TEST_REFUNDS_ENABLED:'true'},
+   {authenticate:async()=> 'test-manager',permittedStore:async()=>({role:'manager'}),client:{}})
+  assert.equal(response.status,200)
+  assert.equal(response.body.canRefund,eligible)
+  assert.equal(balanceQueries,1)
+ }
+})
 test('merchant status does not advertise refunds when Sandbox refund feature is disabled',async()=>{
  const statusUrl=new URL(url.href.replace('/v1/stores/','/v1/merchant/stores/').replace('/stripe-test-checkout','/sandbox-payment'))
  for(const enabled of [false,true]){
@@ -380,6 +402,7 @@ test('merchant status does not advertise refunds when Sandbox refund feature is 
    if(sql.includes('FROM sandbox_payment_attempts WHERE order_id'))return {rows:[]}
    if(sql.includes('FROM stripe_test_refund_jobs WHERE order_id'))return {rows:[]}
    if(sql.includes('FROM sandbox_payment_receipts WHERE order_id'))return {rows:[]}
+   if(sql.includes('FROM payment_events e')&&sql.includes('AS "canRefund"'))return {rows:[{canRefund:false}]}
    throw Error('unexpected query: '+sql)
   }}
   const response=res()
@@ -389,6 +412,6 @@ test('merchant status does not advertise refunds when Sandbox refund feature is 
    authenticate:async()=> 'test-manager',permittedStore:async()=>({role:'manager'}),client:{}
   })
   assert.equal(response.status,200)
-  assert.equal(response.body.canRefund,enabled)
+  assert.equal(response.body.canRefund,false)
  }
 })
