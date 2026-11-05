@@ -49,7 +49,7 @@ async function prioritizeRefundJob(id){
  await pool.query("UPDATE stripe_test_refund_jobs SET next_attempt_at=now()-interval '1 second' WHERE id=$1",[id])
 }
 const notification=(id='evt_'+randomUUID().replaceAll('-',''),type='checkout.session.completed')=>({id,type,created:Math.floor(Date.now()/1000),hash:'a'.repeat(64)})
-test('all 001-029 migrations execute and 027 repeat fails rather than hiding drift',async()=>{
+test('all 001-030 migrations execute and 027 repeat fails rather than hiding drift',async()=>{
  await assert.rejects(db.pg.exec('CREATE TABLE sandbox_payment_attempts(id uuid)'),/already exists/)
  assert.ok((await pool.query("SELECT indexname FROM pg_indexes WHERE indexname='sandbox_payment_one_active_order'")).rows.length)
 })
@@ -198,11 +198,11 @@ test('disabled worker performs no provider or database calls',async()=>{
  assert.deepEqual(await runSandboxMaintenance({query(){throw Error('access')}},{}),{disabled:true})
 })
 
-async function route(path,{who='synthetic-customer',method='GET',body,client,signature}={}){
+async function route(path,{who='synthetic-customer',method='GET',body,client,refundClient,signature}={}){
  const auth=await createSession(pool,who),raw=typeof body==='string'?body:JSON.stringify(body||{})
  const req={method,headers:{authorization:'Bearer '+auth.token,'idempotency-key':'synthetic_route_key_123',...(signature?{'stripe-signature':signature}:{})},async *[Symbol.asyncIterator](){yield Buffer.from(raw)}}
  const res={writeHead(status){this.status=status},end(data){this.body=JSON.parse(data)}}
- await stripeTestPaymentRoute(req,res,new URL('https://test.invalid'+path),pool,env,{client:client||{getSession:async a=>lookup(a)}})
+ await stripeTestPaymentRoute(req,res,new URL('https://test.invalid'+path),pool,env,{client:client||{getSession:async a=>lookup(a)},refundClient})
  return res
 }
 test('customer status recovery verifies ownership and heals dropped webhook using provider retrieval',async()=>{
@@ -302,6 +302,36 @@ test('mismatch compensation is idempotently queued and never settles an unpaid o
  assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'review')
  assert.equal((await readSandboxPayment(pool,a.order_id)).receipts.length,0)
  assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+})
+test('paid mismatch review closes only after independently verified refund',async()=>{
+ const a=await opened(await order(),'alipay')
+ await pool.query("UPDATE sandbox_payment_attempts SET status='review' WHERE id=$1",[a.id])
+ const paid=session(a);paid.payment_intent.latest_charge.payment_method_details.type='card'
+ const stripe=createStripeSandboxClient(env,async()=>({ok:true,json:async()=>paid}))
+ const root='/v1/merchant/stores/sandbox-test/orders/'+a.order_id
+ const queued=await route(root+'/sandbox-review-refund',{who:'synthetic-owner',method:'POST',body:{},client:stripe})
+ assert.equal(queued.status,202)
+ const endpoint=root+'/sandbox-review-refund-release'
+ let lookups=0
+ const refundClient={getRefundStatus:async refundId=>{lookups++;return {refundId,status:'succeeded',amountCents:1000,paymentIntentId:paid.payment_intent.id,completed:true}}}
+ assert.equal((await route(endpoint,{who:'synthetic-staff',method:'POST',body:{},refundClient})).status,403)
+ assert.equal((await route(endpoint,{who:'synthetic-owner',method:'POST',body:{},refundClient})).status,409)
+ assert.equal(lookups,0)
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='succeeded',refund_id='re_mismatch_verified',provider_status='succeeded' WHERE id=$1",[queued.body.jobId])
+ const wrong={getRefundStatus:async()=>({refundId:'re_mismatch_verified',status:'pending',amountCents:1000,paymentIntentId:paid.payment_intent.id,completed:false})}
+ assert.equal((await route(endpoint,{who:'synthetic-owner',method:'POST',body:{},refundClient:wrong})).status,409)
+ assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'review')
+ const released=await route(endpoint,{who:'synthetic-owner',method:'POST',body:{},refundClient})
+ assert.equal(released.status,200)
+ assert.equal(released.body.action,'refund_verified_released')
+ const {rows:[audit]}=await pool.query('SELECT document_text FROM sandbox_payment_review_evidence WHERE id=$1',[released.body.auditId])
+ assert.equal(JSON.parse(audit.document_text).resolution,'mismatch_refund_verified')
+ assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'refunded')
+ assert.equal((await readSandboxPayment(pool,a.order_id)).receipts.length,0)
+ assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+ assert.equal((await route(endpoint,{who:'synthetic-owner',method:'POST',body:{},refundClient})).status,404)
+ const next=await reserve({id:a.order_id},'card')
+ assert.notEqual(next.id,a.id)
 })
 test('authorized merchant releases only Stripe-expired unpaid review with immutable audit',async()=>{
  const a=await opened(await order(),'card')
