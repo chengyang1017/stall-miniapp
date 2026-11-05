@@ -76,6 +76,16 @@ for(const channel of ['card','alipay','wechat_pay'])test(channel+' verified paym
  await assert.rejects(pool.query("UPDATE sandbox_payment_receipts SET document_text='{}' WHERE order_id=$1",[o.id]),/immutable/)
  await assert.rejects(pool.query('DELETE FROM sandbox_payment_receipts WHERE order_id=$1',[o.id]),/immutable/)
 })
+test('paid Stripe Session using a different channel never settles the order',async()=>{
+ const a=await opened(await order(),'alipay')
+ const mismatched=session(a)
+ mismatched.payment_intent.latest_charge.payment_method_details.type='card'
+ await assert.rejects(lookup(a,mismatched),/stripe_paid_channel_mismatch/)
+ const state=await readSandboxPayment(pool,a.order_id)
+ assert.equal(state.attempts[0].status,'open')
+ assert.equal(state.receipts.length,0)
+ assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+})
 test('duplicates and out-of-order expired callbacks do not reverse trusted payment',async()=>{
  const a=await opened(await order()),n=notification(),ob=await lookup(a)
  await applySandboxObservation(pool,a,ob,n);await applySandboxObservation(pool,a,ob,n)

@@ -22,6 +22,9 @@ export function createStripeSandboxClient(env,fetchImpl=fetch){
   if(s.payment_status==='paid'){
    if(s.status!=='complete'||pi?.livemode!==false||pi?.status!=='succeeded'||!/^pi_/.test(pi?.id||'')||
     pi.amount!==s.amount_total||pi.currency!=='cny'||!Number.isSafeInteger(pi.latest_charge?.created)||!['card','alipay','wechat_pay'].includes(actualChannel))fail('stripe_paid_intent_mismatch')
+   // A provider-confirmed payment must also match the channel reserved for this order.
+   // Do not settle, issue a receipt or mark an order paid for another channel.
+   if(actualChannel!==attempt.channel)fail('stripe_paid_channel_mismatch')
    // Brand only the result obtained using authenticated Stripe retrieval.
    const gateway=createPaymentGateway({provider:'stripe',mode:'sandbox',createPayment:async()=>{},verifyNotification:async()=>({
     verifiedByProvider:true,provider:'stripe',mode:'sandbox',orderId:attempt.order_id,amountCents:s.amount_total,
