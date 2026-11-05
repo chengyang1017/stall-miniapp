@@ -102,6 +102,22 @@ test('mismatched paid channel is quarantined for manual review without settling'
  assert.equal(fetched,true)
  assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'review')
 })
+test('review hold survives later paid and expired callbacks without payment settlement',async()=>{
+ const a=await opened(await order(),'alipay')
+ const wrong=session(a)
+ wrong.payment_intent.latest_charge.payment_method_details.type='card'
+ const client=createStripeSandboxClient(env,async()=>({ok:true,json:async()=>wrong}))
+ await assert.rejects(observeSandboxSession(pool,client,a),/stripe_paid_channel_mismatch/)
+ const verified=await lookup(a)
+ assert.equal((await applySandboxObservation(pool,a,verified,notification())).action,'review')
+ assert.equal((await applySandboxObservation(pool,a,await lookup(a,session(a,'expired')),notification())).action,'review')
+ const state=await readSandboxPayment(pool,a.order_id)
+ assert.equal(state.attempts[0].status,'review')
+ assert.equal(state.receipts.length,0)
+ assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+ assert.equal((await pool.query('SELECT COUNT(*)::integer AS n FROM payment_events WHERE order_id=$1',[a.order_id])).rows[0].n,0)
+ await assert.rejects(reserve({id:a.order_id},'card'),/active_payment_channel_conflict/)
+})
 test('duplicates and out-of-order expired callbacks do not reverse trusted payment',async()=>{
  const a=await opened(await order()),n=notification(),ob=await lookup(a)
  await applySandboxObservation(pool,a,ob,n);await applySandboxObservation(pool,a,ob,n)

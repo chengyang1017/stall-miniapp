@@ -83,6 +83,10 @@ export async function applySandboxObservation(pool,attempt,observation,notificat
    const persisted=await db.query('SELECT payload_sha256,order_id,session_id FROM sandbox_payment_notifications WHERE event_id=$1',[notification.id])
    if(persisted.rows[0]?.payload_sha256!==notification.hash||persisted.rows[0]?.order_id!==current.order_id||persisted.rows[0]?.session_id!==current.session_id)fail('webhook_event_conflict')
   }
+  // Manual review is a durable safety hold. A delayed/replayed webhook must not
+  // clear it, settle the order, generate a paid receipt or release the active slot.
+  // Notification identity was audited above; resolution needs a separate reviewed path.
+  if(current.status==='review')return {action:'review'}
   let state=sandboxSessionState(observation.session),action=state
   if(observation.event){
    const result=await settleVerifiedOrderPayment(pool,{event:observation.event,expectedProvider:'stripe',expectedMode:'sandbox',transaction:db})
