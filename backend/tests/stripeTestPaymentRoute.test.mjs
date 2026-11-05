@@ -102,6 +102,7 @@ test('sandbox-review is read-only and limited to store owner or manager',async()
   if(sql.includes('SELECT o.id FROM orders'))return {rows:[{id:attempt.orderId}]}
   if(sql.includes("status='review' ORDER BY"))return {rows:[attempt]}
   if(sql.includes('FROM sandbox_payment_notifications'))return {rows:[{notificationCount:2,lastNotificationAt:null}]}
+  if(sql.includes('FROM sandbox_payment_review_evidence'))return {rows:[]}
   throw Error('unexpected query: '+sql)
  }}
  for(const role of ['owner','manager']){
@@ -135,22 +136,28 @@ test('review verification requires owner or manager and never mutates or resolve
  const verifyUrl=new URL(url.href.replace('/v1/stores/','/v1/merchant/stores/').replace('/stripe-test-checkout','/sandbox-review-verify'))
  const attempt={id:'attempt-1',order_id:'11111111-1111-4111-8111-111111111111',channel:'alipay',status:'review',session_id:'cs_test_review',amount_cents:1000}
  let inspections=0,writes=0
- const pool={async query(sql){
+ const pool={async query(sql,args){
   if(sql.includes('sandbox_payment_environment'))return {rows:[{one:1}]}
   if(sql.includes('SELECT o.id FROM orders'))return {rows:[{id:attempt.order_id}]}
   if(sql.includes("status='review' ORDER BY"))return {rows:[attempt]}
+  if(sql.includes('INSERT INTO sandbox_payment_review_evidence')){
+   assert.equal(args[0],attempt.id)
+   assert.equal(args[2],'merchant')
+   return {rows:[{id:'audit-1',createdAt:'2026-11-05T00:00:00Z'}]}
+  }
   writes++;throw Error('unexpected database query: '+sql)
  }}
  for(const role of ['owner','manager']){
   const response=res()
   await stripeTestPaymentRoute({method:'GET',headers:{}},response,verifyUrl,pool,isolatedEnv,{
    authenticate:async()=> 'merchant',permittedStore:async()=>({role}),client:{inspectReview:async a=>{
-    inspections++;assert.equal(a.id,attempt.id);return {providerVerified:true,readOnly:true,channelMismatch:true}
+    inspections++;assert.equal(a.id,attempt.id);return {providerVerified:true,readOnly:true,channelMismatch:true,sessionId:attempt.session_id,amountCents:1000,currency:'CNY'}
    }}
   })
   assert.equal(response.status,200)
   assert.equal(response.body.resolutionAllowed,false)
   assert.equal(response.body.evidence.channelMismatch,true)
+  assert.equal(response.body.auditId,'audit-1')
  }
  for(const role of ['staff',null]){
   const response=res()

@@ -74,8 +74,18 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
    if(!attempt.session_id){reply(res,200,{sandbox:true,readOnly:true,requiresManualReview:true,
     providerVerified:false,verificationUnavailable:'session_not_recorded',resolutionAllowed:false});return true}
    const evidence=await client.inspectReview(attempt)
+   // Store only identity-validated, provider-retrieved evidence. No browser claims.
+   if(evidence.providerVerified!==true||evidence.readOnly!==true||evidence.sessionId!==attempt.session_id||
+    evidence.amountCents!==Number(attempt.amount_cents)||evidence.currency!=='CNY')throw Error('stripe_review_evidence_invalid')
+   const document=JSON.stringify(evidence)
+   const saved=await pool.query(`INSERT INTO sandbox_payment_review_evidence(
+    attempt_id,order_id,reviewed_by,session_id,document_text,sha256)
+    SELECT id,order_id,$3,session_id,$4,$5 FROM sandbox_payment_attempts
+    WHERE id=$1 AND order_id=$2 AND status='review' AND session_id=$6 RETURNING id,created_at AS "createdAt"`,
+    [attempt.id,orderId,subject,document,createHash('sha256').update(document).digest('hex'),attempt.session_id])
+   if(saved.rows.length!==1)throw Error('payment_review_state_changed')
    reply(res,200,{sandbox:true,readOnly:true,requiresManualReview:true,
-    evidence,resolutionAllowed:false});return true
+    evidence,auditId:saved.rows[0].id,auditedAt:saved.rows[0].createdAt,resolutionAllowed:false});return true
   }
   if(action==='sandbox-review'){
    // Read-only operator evidence; never manually assert collection or release a hold.
@@ -89,8 +99,12 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
    const {rows:[audit]}=await pool.query(`SELECT COUNT(*)::integer AS "notificationCount",
     MAX(received_at) AS "lastNotificationAt" FROM sandbox_payment_notifications
     WHERE order_id=$1 AND session_id=$2`,[orderId,attempt.sessionId||''])
+   const {rows:[latest]}=await pool.query(`SELECT id,created_at AS "createdAt",reviewed_by AS "reviewedBy",document_text AS "documentText",sha256
+    FROM sandbox_payment_review_evidence WHERE attempt_id=$1 ORDER BY created_at DESC,id DESC LIMIT 1`,[attempt.id])
+   if(latest&&createHash('sha256').update(latest.documentText).digest('hex')!==latest.sha256)throw Error('review_evidence_integrity_failed')
    reply(res,200,{sandbox:true,readOnly:true,requiresManualReview:true,attempt,
     notificationCount:audit?.notificationCount||0,lastNotificationAt:audit?.lastNotificationAt||null,
+    latestVerification:latest?{id:latest.id,createdAt:latest.createdAt,reviewedBy:latest.reviewedBy,evidence:JSON.parse(latest.documentText)}:null,
     resolutionAllowed:false});return true
   }
   if(action==='sandbox-payment'&&req.method==='GET'){
@@ -152,7 +166,7 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   reply(res,200,{sessionId:a.session_id,url:a.checkout_url,channel:a.channel,provider:'stripe',testMode:true,nativePayment:false})
  }catch(e){
   const invalid=new Set(['invalid_json','invalid_payment_channel','invalid_refund_request','invalid_idempotency_key','stripe_signature_missing','stripe_signature_invalid','invalid_test_event','invalid_order_reference','stripe_session_mismatch','stripe_paid_intent_mismatch'])
-  const conflict=new Set(['active_payment_channel_conflict','payment_not_open_refresh','refund_amount_exceeds_remaining','refund_idempotency_conflict','payment_order_not_payable','payment_manual_review_required','payment_cancellation_requires_review','payment_cancellation_pending','payment_already_collected','payment_cancellation_unconfirmed','payment_cancellation_state_changed','trusted_payment_required'])
+  const conflict=new Set(['active_payment_channel_conflict','payment_not_open_refresh','refund_amount_exceeds_remaining','refund_idempotency_conflict','payment_order_not_payable','payment_manual_review_required','payment_cancellation_requires_review','payment_cancellation_pending','payment_already_collected','payment_cancellation_unconfirmed','payment_cancellation_state_changed','payment_review_state_changed','trusted_payment_required'])
   const status=e.message==='too_large'?413:invalid.has(e.message)?400:conflict.has(e.message)?409:503
   reply(res,status,{error:status===503?'payment_test_unavailable':e.message})
  }
