@@ -168,19 +168,25 @@ export async function reconcileOneUncertainStripeTestRefund(db,client){
   FROM stripe_test_refund_jobs WHERE status='review' AND refund_id IS NULL
   AND last_error IN ('stripe_refund_unconfirmed','refund_outcome_unknown')
   AND payment_intent_id IS NOT NULL AND kind IN ('merchant','review_compensation')
-  ORDER BY updated_at,id LIMIT 1`)
+  AND next_attempt_at<=clock_timestamp()
+  ORDER BY next_attempt_at,id LIMIT 1`)
  if(!job)return {action:'idle'}
+ const defer=()=>db.query(`UPDATE stripe_test_refund_jobs SET next_attempt_at=clock_timestamp()+interval '5 minutes'
+  WHERE id=$1 AND status='review' AND refund_id IS NULL
+  AND last_error IN ('stripe_refund_unconfirmed','refund_outcome_unknown')`,[job.id])
  let found
  try{found=await client.findRefundForJob(job)}
- catch{return {action:'review',jobId:job.id,lookupFailed:true}}
- if(!found)return {action:'review',jobId:job.id,notFound:true}
+ catch{await defer();return {action:'review',jobId:job.id,lookupFailed:true}}
+ if(!found){await defer();return {action:'review',jobId:job.id,notFound:true}}
  if(found.paymentIntentId!==job.payment_intent_id||found.amountCents!==Number(job.amount_cents)||
-    found.completed!==(found.status==='succeeded')||!/^re_[A-Za-z0-9_]+$/.test(found.refundId||''))
-  return {action:'review',jobId:job.id,mismatch:true}
+    found.completed!==(found.status==='succeeded')||!/^re_[A-Za-z0-9_]+$/.test(found.refundId||'')){
+  await defer();return {action:'review',jobId:job.id,mismatch:true}
+ }
  const state=found.status==='succeeded'?'succeeded':
   ['failed','canceled'].includes(found.status)?'review':'submitted'
  const result=await db.query(`UPDATE stripe_test_refund_jobs SET
   refund_id=$2,provider_status=$3,status=$4,updated_at=clock_timestamp(),
+  next_attempt_at=clock_timestamp()+interval '5 minutes',
   last_error=CASE WHEN $4='review' THEN 'stripe_refund_failed' ELSE NULL END
   WHERE id=$1 AND status='review' AND refund_id IS NULL
   AND last_error IN ('stripe_refund_unconfirmed','refund_outcome_unknown')
