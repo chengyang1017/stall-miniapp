@@ -86,7 +86,7 @@ export async function applySandboxObservation(pool,attempt,observation,notificat
   // Manual review is a durable safety hold. A delayed/replayed webhook must not
   // clear it, settle the order, generate a paid receipt or release the active slot.
   // Notification identity was audited above; resolution needs a separate reviewed path.
-  if(current.status==='review')return {action:'review'}
+  if(current.status==='review'||current.status==='refunded')return {action:current.status}
   let state=sandboxSessionState(observation.session),action=state
   if(observation.event){
    const result=await settleVerifiedOrderPayment(pool,{event:observation.event,expectedProvider:'stripe',expectedMode:'sandbox',transaction:db})

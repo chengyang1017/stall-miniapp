@@ -52,8 +52,12 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
    // A review hold must remain immutable even if a signed event is delivered again.
    // Audit the event by its already-bound Session without retrying a provider lookup
    // that may repeatedly fail on the known channel mismatch.
-   if(attempt.status==='review'&&(s.client_reference_id!==attempt.order_id||s.metadata?.orderId!==attempt.order_id))throw Error('invalid_order_reference')
-   const observation=attempt.status==='review'?{session:{id:attempt.session_id}}:await observeSandboxSession(pool,client,attempt)
+   if(['review','refunded'].includes(attempt.status)&&
+    (s.client_reference_id!==attempt.order_id||s.metadata?.orderId!==attempt.order_id))throw Error('invalid_order_reference')
+   // The fully refunded mismatch was already independently reconciled with
+   // Stripe. Audit late signed callbacks without re-entering settlement.
+   const observation=['review','refunded'].includes(attempt.status)?
+    {session:{id:attempt.session_id}}:await observeSandboxSession(pool,client,attempt)
    const result=await applySandboxObservation(pool,attempt,observation,{id:signed.id,type:signed.type,created:signed.created,hash:createHash('sha256').update(raw).digest('hex')})
    reply(res,200,{received:true,action:result.action});return true
   }

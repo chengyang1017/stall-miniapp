@@ -333,6 +333,37 @@ test('paid mismatch review closes only after independently verified refund',asyn
  const next=await reserve({id:a.order_id},'card')
  assert.notEqual(next.id,a.id)
 })
+test('late signed payment callback after verified mismatch refund is audited without resettlement',async()=>{
+ const a=await opened(await order(),'alipay')
+ await pool.query("UPDATE sandbox_payment_attempts SET status='review' WHERE id=$1",[a.id])
+ const paid=session(a);paid.payment_intent.latest_charge.payment_method_details.type='card'
+ const client=createStripeSandboxClient(env,async()=>({ok:true,json:async()=>paid}))
+ const root='/v1/merchant/stores/sandbox-test/orders/'+a.order_id
+ const queued=await route(root+'/sandbox-review-refund',{who:'synthetic-owner',method:'POST',body:{},client})
+ assert.equal(queued.status,202)
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='succeeded',refund_id='re_late_callback',provider_status='succeeded' WHERE id=$1",[queued.body.jobId])
+ const refundClient={getRefundStatus:async refundId=>({refundId,status:'succeeded',amountCents:1000,paymentIntentId:paid.payment_intent.id,completed:true})}
+ const released=await route(root+'/sandbox-review-refund-release',{who:'synthetic-owner',method:'POST',body:{},refundClient})
+ assert.equal(released.status,200)
+ const eventId='evt_after_refund_'+randomUUID().replaceAll('-','')
+ const payload={id:eventId,livemode:false,created:Math.floor(Date.now()/1000),type:'checkout.session.completed',data:{object:paid}}
+ const stamp=Math.floor(Date.now()/1000),raw=JSON.stringify(payload)
+ const signature='t='+stamp+',v1='+createHmac('sha256',env.STRIPE_TEST_WEBHOOK_SECRET).update(stamp+'.'+raw).digest('hex')
+ const send=(body,sign)=>route('/v1/payments/stripe-test/webhook',{method:'POST',body,signature:sign,client:{getSession(){throw Error('refunded_callback_must_not_lookup')}}})
+ const first=await send(raw,signature)
+ assert.equal(first.status,200)
+ assert.equal(first.body.action,'refunded')
+ assert.equal((await send(raw,signature)).status,200)
+ const {rows:[audit]}=await pool.query('SELECT COUNT(*)::integer AS n FROM sandbox_payment_notifications WHERE event_id=$1',[eventId])
+ assert.equal(audit.n,1)
+ assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'refunded')
+ assert.equal((await readSandboxPayment(pool,a.order_id)).receipts.length,0)
+ assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+ assert.equal((await pool.query('SELECT COUNT(*)::integer AS n FROM payment_events WHERE order_id=$1',[a.order_id])).rows[0].n,0)
+ const tampered={...payload,id:'evt_after_refund_fake_'+randomUUID().replaceAll('-',''),data:{object:{...paid,client_reference_id:randomUUID()}}}
+ const fakeRaw=JSON.stringify(tampered),fakeSig='t='+stamp+',v1='+createHmac('sha256',env.STRIPE_TEST_WEBHOOK_SECRET).update(stamp+'.'+fakeRaw).digest('hex')
+ assert.equal((await send(fakeRaw,fakeSig)).status,400)
+})
 test('authorized merchant releases only Stripe-expired unpaid review with immutable audit',async()=>{
  const a=await opened(await order(),'card')
  await pool.query("UPDATE sandbox_payment_attempts SET status='review' WHERE id=$1",[a.id])
