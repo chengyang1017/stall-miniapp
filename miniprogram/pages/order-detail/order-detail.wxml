@@ -7,10 +7,19 @@
     <view wx:if="{{cloudMode && !phoneReadOnly && order.paymentStatus === 'unpaid'}}" class="order-detail-card">
       <view class="order-detail-title">Sandbox 外部支付测试</view>
       <view>仅隔离测试环境可用。复制链接到外部浏览器完成测试付款；返回本页后将自动核对服务端结果，微信原生支付尚未接入。</view>
-      <button size="mini" data-channel="wechat_pay" bindtap="openSandboxCheckout">微信支付测试链接</button>
-      <button size="mini" data-channel="alipay" bindtap="openSandboxCheckout">支付宝测试链接</button>
-      <button size="mini" data-channel="card" bindtap="openSandboxCheckout">银行卡测试链接</button>
-      <button size="mini" bindtap="cancelSandboxPayment">取消当前付款会话 / 更换渠道</button>
+      <view wx:if="{{sandbox.resumeCheckout}}">
+        <view class="order-detail-muted">当前待付款渠道：{{sandbox.resumeCheckout.channelText}}。可继续使用原 Stripe Checkout 测试会话。</view>
+        <button type="primary" bindtap="copyActiveSandboxCheckout">继续付款 · 复制原测试链接</button>
+        <button size="mini" bindtap="cancelSandboxPayment">取消原会话并更换渠道</button>
+      </view>
+      <view wx:elif="{{sandbox.attempts.length && (sandbox.attempts[sandbox.attempts.length-1].status === 'creating' || sandbox.attempts[sandbox.attempts.length-1].status === 'processing' || sandbox.attempts[sandbox.attempts.length-1].status === 'review')}}">
+        <view class="order-detail-muted">当前付款请求尚未确认结束。请先刷新支付状态，不要新建或重复付款。</view>
+      </view>
+      <view wx:else>
+        <button size="mini" data-channel="wechat_pay" bindtap="openSandboxCheckout">微信支付测试链接</button>
+        <button size="mini" data-channel="alipay" bindtap="openSandboxCheckout">支付宝测试链接</button>
+        <button size="mini" data-channel="card" bindtap="openSandboxCheckout">银行卡测试链接</button>
+      </view>
     </view>
     <view wx:if="{{cloudMode && !phoneReadOnly}}" class="order-detail-card">
       <view class="order-detail-title">Sandbox 支付记录与电子小票</view>

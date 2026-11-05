@@ -173,7 +173,18 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
       WHERE j.order_id=$1 AND j.kind='merchant'),0)) AS "canRefund"`,[orderId])
     canRefund=balance?.canRefund===true
    }
-   reply(res,200,{...state,stale,canRefund});return true
+   // A scoped customer may resume the same still-open hosted checkout without
+   // issuing a new creation POST. Never expose the URL to merchant status reads.
+   let resumeCheckout=null
+   if(!merchant&&!stale){
+    const {rows:[resume]}=await pool.query(`SELECT channel,checkout_url
+     FROM sandbox_payment_attempts
+     WHERE order_id=$1 AND status='open' AND checkout_url LIKE 'https://checkout.stripe.com/%'
+       AND expires_at>clock_timestamp()
+     ORDER BY created_at DESC LIMIT 1`,[orderId])
+    if(resume)resumeCheckout={channel:resume.channel,url:resume.checkout_url}
+   }
+   reply(res,200,{...state,stale,canRefund,...!merchant?{resumeCheckout}:{}});return true
   }
   if(req.method!=='POST'){reply(res,405,{error:'method_not_allowed'});return true}
   if(action==='sandbox-refund'){

@@ -6,7 +6,10 @@ export function sandboxPaymentView(data:any){
  const refunds=(data.refunds||[]).map((r:any)=>({...r,kindText:r.kind==='review_compensation'?'渠道异常补偿退款':r.kind==='merchant'?'商家退款':'补偿退款',label:refundNames[r.status]||'待核对',amountText:(Number(r.amountCents)/100).toFixed(2)}))
  const receipts=(data.receipts||[]).map((r:any)=>({...r,totalText:(Number(r.totalCents)/100).toFixed(2),subtotalText:(Number(r.subtotalCents)/100).toFixed(2),deliveryFeeText:(Number(r.deliveryFeeCents)/100).toFixed(2),channelText:channels[r.channel]||'待核对',items:(r.items||[]).map((i:any)=>({...i,unitText:(Number(i.unitPriceCents)/100).toFixed(2),lineTotalText:(Number(i.lineTotalCents)/100).toFixed(2)}))}))
  const mismatchRefunds=refunds.filter((r:any)=>r.kind==='review_compensation')
- return {attempts,refunds,receipts,
+ const resumed=data.resumeCheckout
+ const resumeCheckout=resumed&&['card','alipay','wechat_pay'].includes(resumed.channel)&&typeof resumed.url==='string'&&/^https:\/\/checkout\.stripe\.com\//.test(resumed.url)
+  ?{channel:resumed.channel,channelText:channels[resumed.channel],url:resumed.url}:null
+ return {attempts,refunds,receipts,resumeCheckout,
   hasMismatchRefund:mismatchRefunds.length>0,
   hasSuccessfulMismatchRefund:mismatchRefunds.some((r:any)=>r.status==='succeeded'&&!!r.refundId),
   stale:data.stale===true,canRefund:data.canRefund===true}

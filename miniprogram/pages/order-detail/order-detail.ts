@@ -68,12 +68,23 @@ Page({
       }
     }catch(_){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({sandbox:null,sandboxError:'Sandbox 服务未启用、未授权或网络不可用；未确认新的付款结果'})}
   },
+  copyActiveSandboxCheckout(){
+    if(!this.detailVisible||this.phoneReadOnly||this.data.order.paymentStatus!=='unpaid')return
+    const url=this.data.sandbox?.resumeCheckout?.url
+    if(typeof url!=='string'||!/^https:\/\/checkout\.stripe\.com\//.test(url))return
+    wx.setClipboardData({data:url,fail:()=>wx.showToast({title:'复制付款链接失败',icon:'none'})})
+  },
   async cancelSandboxPayment(){
     const cfg=customerOrdersConfig(),serial=this.detailSerial,identity=supportIdentity()
     if(!cfg||this.phoneReadOnly||this.sandboxBusy)return
     this.sandboxBusy=true
-    try{await sandboxPaymentRequest(cfg,String(this.data.order.id),false,'sandbox-cancel')
-      if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())await this.loadSandboxPayment()
+    try{
+      const result=await sandboxPaymentRequest(cfg,String(this.data.order.id),false,'sandbox-cancel')
+      if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()){
+        const state=sandboxPaymentView(result)
+        this.setData({sandbox:state,sandboxError:''})
+        await this.loadSandboxPayment()
+      }
     }catch(_){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({sandboxError:'取消结果未确认，请刷新状态后再试'})}
     finally{this.sandboxBusy=false}
   },
@@ -81,6 +92,13 @@ Page({
   async openSandboxCheckout(e:any){
     const cfg=customerOrdersConfig(),channel=e.currentTarget.dataset.channel as SandboxChannel
     if(!cfg||this.phoneReadOnly||this.sandboxBusy||!this.detailVisible||this.data.order.paymentStatus!=='unpaid')return
+    if(this.data.sandbox?.resumeCheckout){
+      wx.showToast({title:'已有付款链接，请继续原付款或先取消',icon:'none'});return
+    }
+    const currentAttempt=(this.data.sandbox?.attempts||[]).slice(-1)[0]
+    if(currentAttempt&&['creating','processing','review'].includes(currentAttempt.status)){
+      wx.showToast({title:'原支付结果待核对，请先刷新',icon:'none'});return
+    }
     const identity=supportIdentity(),serial=this.detailSerial,id=String(this.data.order.id)
     const current=()=>this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()
     const key=[identity,id,channel].join(':')
