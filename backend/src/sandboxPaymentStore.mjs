@@ -66,6 +66,19 @@ export async function materializeSandboxAttempt(pool,client,attempt){
  if(q.rows.length)return q.rows[0]
  const saved=await pool.query('SELECT * FROM sandbox_payment_attempts WHERE id=$1',[attempt.id])
  if(saved.rows[0]?.session_id!==result.sessionId)fail('payment_attempt_conflict')
+ // A signed webhook can bind this exact Session before the create response
+ // persists the Checkout URL. Preserve the original URL without creating a
+ // second Session or reopening a terminal/under-review payment.
+ if(saved.rows[0].status==='open'&&!saved.rows[0].checkout_url){
+  const {rows:[completed]}=await pool.query(`UPDATE sandbox_payment_attempts
+   SET checkout_url=$3,updated_at=clock_timestamp()
+   WHERE id=$1 AND session_id=$2 AND status='open' AND checkout_url IS NULL RETURNING *`,
+   [attempt.id,result.sessionId,result.url])
+  if(completed)return completed
+  const {rows:[current]}=await pool.query('SELECT * FROM sandbox_payment_attempts WHERE id=$1',[attempt.id])
+  if(current?.session_id!==result.sessionId)fail('payment_attempt_conflict')
+  return current
+ }
  return saved.rows[0]
 }
 export function sandboxSessionState(session){
