@@ -66,16 +66,28 @@ export async function runSandboxMaintenance(pool,env,{client,refundClient}={}){
    }catch{lateUnavailable++}
   }
  }catch{lateUnavailable++}
- let refund='disabled'
+ let refund='disabled',refundFailures=0
  if(env.STRIPE_TEST_REFUNDS_ENABLED==='true'){
-  refundClient||=createStripeTestRefundClient({secretKey:env.STRIPE_TEST_SECRET_KEY})
-  await enqueueStripeTestRefunds(pool)
-  refund=(await processOneStripeTestRefund(pool,refundClient)).action
-  await reconcileOneSubmittedStripeTestRefund(pool,refundClient)
-  await reconcileOneUncertainStripeTestRefund(pool,refundClient)
-  await syncSandboxRefundOrders(pool)
+  // A database/provider failure in one queue phase must not block reconciliation
+  // of other already-submitted or uncertain refunds. Never retry an unknown POST.
+  const phase=async fn=>{
+   try{return await fn()}
+   catch{refundFailures++;return null}
+  }
+  await phase(()=>enqueueStripeTestRefunds(pool))
+  try{refundClient||=createStripeTestRefundClient({secretKey:env.STRIPE_TEST_SECRET_KEY})}
+  catch{refundFailures++}
+  if(refundClient){
+   const submitted=await phase(()=>processOneStripeTestRefund(pool,refundClient))
+   refund=submitted?.action||'unavailable'
+   await phase(()=>reconcileOneSubmittedStripeTestRefund(pool,refundClient))
+   await phase(()=>reconcileOneUncertainStripeTestRefund(pool,refundClient))
+  }else refund='unavailable'
+  // Keep merchant-facing order status in sync even if a different refund job
+  // cannot currently be reconciled with Stripe.
+  await phase(()=>syncSandboxRefundOrders(pool))
  }
- return {recovered,unavailable,lateRecovered,lateUnavailable,refund}
+ return {recovered,unavailable,lateRecovered,lateUnavailable,refund,refundFailures}
 }
 export function startSandboxPaymentWorker(pool,env=process.env){
  if(!sandboxEnabled(env)||env.SANDBOX_PAYMENT_WORKER_ENABLED!=='true')return async()=>{}
