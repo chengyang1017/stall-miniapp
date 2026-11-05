@@ -164,16 +164,20 @@ async function finalizeSubmittedRefund(db,job,result,state){
  * No second POST is made. A unique provider record can be reattached to the
  * persisted job; unresolved or conflicting results remain quarantined. */
 export async function reconcileOneUncertainStripeTestRefund(db,client){
- const {rows:[job]}=await db.query(`SELECT id,order_id,checkout_session_id,amount_cents,payment_intent_id,kind
-  FROM stripe_test_refund_jobs WHERE status='review' AND refund_id IS NULL
-  AND last_error IN ('stripe_refund_unconfirmed','refund_outcome_unknown')
-  AND payment_intent_id IS NOT NULL AND kind IN ('merchant','review_compensation')
-  AND next_attempt_at<=clock_timestamp()
-  ORDER BY next_attempt_at,id LIMIT 1`)
+ const {rows:[job]}=await db.query(`UPDATE stripe_test_refund_jobs SET
+  next_attempt_at=clock_timestamp()+interval '2 minutes'
+  WHERE id=(SELECT id FROM stripe_test_refund_jobs
+   WHERE status='review' AND refund_id IS NULL
+   AND last_error IN ('stripe_refund_unconfirmed','refund_outcome_unknown')
+   AND payment_intent_id IS NOT NULL AND kind IN ('merchant','review_compensation')
+   AND next_attempt_at<=clock_timestamp()
+   ORDER BY next_attempt_at,id FOR UPDATE SKIP LOCKED LIMIT 1)
+  RETURNING id,order_id,checkout_session_id,amount_cents,payment_intent_id,kind,next_attempt_at AS "leaseUntil"`)
  if(!job)return {action:'idle'}
  const defer=()=>db.query(`UPDATE stripe_test_refund_jobs SET next_attempt_at=clock_timestamp()+interval '5 minutes'
   WHERE id=$1 AND status='review' AND refund_id IS NULL
-  AND last_error IN ('stripe_refund_unconfirmed','refund_outcome_unknown')`,[job.id])
+  AND last_error IN ('stripe_refund_unconfirmed','refund_outcome_unknown')
+  AND next_attempt_at=$2`,[job.id,job.leaseUntil])
  let found
  try{found=await client.findRefundForJob(job)}
  catch{await defer();return {action:'review',jobId:job.id,lookupFailed:true}}
@@ -190,8 +194,8 @@ export async function reconcileOneUncertainStripeTestRefund(db,client){
   last_error=CASE WHEN $4='review' THEN 'stripe_refund_failed' ELSE NULL END
   WHERE id=$1 AND status='review' AND refund_id IS NULL
   AND last_error IN ('stripe_refund_unconfirmed','refund_outcome_unknown')
-  AND payment_intent_id=$5 AND amount_cents=$6
-  RETURNING id`,[job.id,found.refundId,found.status,state,job.payment_intent_id,job.amount_cents])
+  AND payment_intent_id=$5 AND amount_cents=$6 AND next_attempt_at=$7
+  RETURNING id`,[job.id,found.refundId,found.status,state,job.payment_intent_id,job.amount_cents,job.leaseUntil])
  if(result.rows.length!==1)return {action:'review',jobId:job.id,stateChanged:true}
  return {action:state,jobId:job.id,refundId:found.refundId,recovered:true}
 }

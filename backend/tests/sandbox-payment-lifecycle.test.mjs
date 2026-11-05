@@ -889,6 +889,7 @@ test('uncertain refund recovery only attaches verified provider refund; never se
  assert.equal(first.action,'review')
  const {rows:[still]}=await pool.query('SELECT status,refund_id FROM stripe_test_refund_jobs WHERE id=$1',[queued.body.jobId])
  assert.equal(still.refund_id,null)
+ await pool.query("UPDATE stripe_test_refund_jobs SET next_attempt_at=now()-interval '1 second' WHERE id=$1",[queued.body.jobId])
  let calls=0
  const recovered=await reconcileOneUncertainStripeTestRefund(pool,{findRefundForJob:async job=>{
   calls++;return {refundId:'re_recovered_refund',status:'succeeded',amountCents:1000,paymentIntentId:paid.payment_intent.id,completed:true}
@@ -902,6 +903,60 @@ test('uncertain refund recovery only attaches verified provider refund; never se
  assert.equal((await readSandboxPayment(pool,a.order_id)).attempts[0].status,'review')
  assert.equal((await readSandboxPayment(pool,a.order_id)).receipts.length,0)
  assert.equal((await pool.query('SELECT payment_status FROM orders WHERE id=$1',[a.order_id])).rows[0].payment_status,'unpaid')
+})
+test('two workers never concurrently claim one uncertain refund lookup',async()=>{
+ const {reconcileOneUncertainStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ const a=await opened(await order(),'alipay')
+ await pool.query("UPDATE sandbox_payment_attempts SET status='review' WHERE id=$1",[a.id])
+ const paid=session(a);paid.payment_intent.latest_charge.payment_method_details.type='card'
+ const stripe=createStripeSandboxClient(env,async()=>({ok:true,json:async()=>paid}))
+ const queued=await route('/v1/merchant/stores/sandbox-test/orders/'+a.order_id+'/sandbox-review-refund',{who:'synthetic-owner',method:'POST',body:{},client:stripe})
+ assert.equal(queued.status,202)
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='review',last_error='stripe_refund_unconfirmed',next_attempt_at=now()-interval '1 second' WHERE id=$1",[queued.body.jobId])
+ let calls=0,release
+ const wait=new Promise(resolve=>{release=resolve})
+ const first=reconcileOneUncertainStripeTestRefund(pool,{findRefundForJob:async()=>{
+  calls++;await wait;return {refundId:'re_parallel_recovered',status:'succeeded',amountCents:1000,paymentIntentId:paid.payment_intent.id,completed:true}
+ }})
+ // Wait until first query has claimed the row and reached the provider.
+ for(let i=0;i<100&&calls===0;i++)await new Promise(r=>setTimeout(r,1))
+ assert.equal(calls,1)
+ const second=await reconcileOneUncertainStripeTestRefund(pool,{findRefundForJob:async()=>{calls++;throw Error('duplicate query')}})
+ assert.equal(second.action,'idle')
+ release()
+ assert.equal((await first).action,'succeeded')
+ assert.equal(calls,1)
+ const {rows:[saved]}=await pool.query('SELECT status,refund_id FROM stripe_test_refund_jobs WHERE id=$1',[queued.body.jobId])
+ assert.equal(saved.status,'succeeded')
+ assert.equal(saved.refund_id,'re_parallel_recovered')
+})
+test('stale uncertain refund lookup cannot overwrite a newer recovery claim',async()=>{
+ const {reconcileOneUncertainStripeTestRefund}=await import('../src/stripeTestRefundJobs.mjs')
+ const a=await opened(await order(),'alipay')
+ await pool.query("UPDATE sandbox_payment_attempts SET status='review' WHERE id=$1",[a.id])
+ const paid=session(a);paid.payment_intent.latest_charge.payment_method_details.type='card'
+ const stripe=createStripeSandboxClient(env,async()=>({ok:true,json:async()=>paid}))
+ const queued=await route('/v1/merchant/stores/sandbox-test/orders/'+a.order_id+'/sandbox-review-refund',{who:'synthetic-owner',method:'POST',body:{},client:stripe})
+ assert.equal(queued.status,202)
+ await pool.query("UPDATE stripe_test_refund_jobs SET status='review',last_error='stripe_refund_unconfirmed',next_attempt_at=now()-interval '1 second' WHERE id=$1",[queued.body.jobId])
+ let release
+ const wait=new Promise(resolve=>{release=resolve})
+ let entered=false
+ const old=reconcileOneUncertainStripeTestRefund(pool,{findRefundForJob:async()=>{
+  entered=true;await wait;return {refundId:'re_stale',status:'succeeded',amountCents:1000,paymentIntentId:paid.payment_intent.id,completed:true}
+ }})
+ for(let i=0;i<100&&!entered;i++)await new Promise(r=>setTimeout(r,1))
+ assert.equal(entered,true)
+ // Simulate lease expiry/reclaim while the original Stripe response is delayed.
+ await pool.query("UPDATE stripe_test_refund_jobs SET next_attempt_at=now()-interval '1 second' WHERE id=$1",[queued.body.jobId])
+ const latest=await reconcileOneUncertainStripeTestRefund(pool,{findRefundForJob:async()=>null})
+ assert.equal(latest.action,'review')
+ release()
+ const oldResult=await old
+ assert.equal(oldResult.stateChanged,true)
+ const {rows:[saved]}=await pool.query('SELECT status,refund_id FROM stripe_test_refund_jobs WHERE id=$1',[queued.body.jobId])
+ assert.equal(saved.status,'review')
+ assert.equal(saved.refund_id,null)
 })
 test('refund amount mismatch is quarantined before marking refund succeeded',async()=>{
  const a=await opened(await order(),'card')
