@@ -36,14 +36,24 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
     s.metadata?.orderId&&s.metadata.orderId!==s.client_reference_id)throw Error('invalid_order_reference')
    let {rows:[attempt]}=await pool.query('SELECT * FROM sandbox_payment_attempts WHERE session_id=$1',[s.id])
    if(!attempt&&typeof s.metadata?.paymentAttemptKey==='string'){
+    // Validate the original channel BEFORE persisting an early webhook binding.
+    // Reject inconsistent metadata without mutating a customer's checkout.
+    if(!['card','alipay','wechat_pay'].includes(s.metadata?.channel)||
+      s.metadata?.orderId!==s.client_reference_id)throw Error('invalid_order_reference')
     const bound=await pool.query(`UPDATE sandbox_payment_attempts SET session_id=$1,status='open',updated_at=clock_timestamp()
-     WHERE request_key=$2 AND order_id=$3 AND status='creating' AND session_id IS NULL RETURNING *`,[s.id,s.metadata.paymentAttemptKey,s.client_reference_id])
+     WHERE request_key=$2 AND order_id=$3 AND channel=$4
+       AND status='creating' AND session_id IS NULL RETURNING *`,
+     [s.id,s.metadata.paymentAttemptKey,s.client_reference_id,s.metadata.channel])
     attempt=bound.rows[0]
     if(!attempt){
-     // An existing idempotency key may already be bound to another Session.
-     // Do not manufacture a legacy attempt or rebind it to this notification.
-     const {rows:[existing]}=await pool.query('SELECT session_id,order_id FROM sandbox_payment_attempts WHERE request_key=$1',[s.metadata.paymentAttemptKey])
-     if(existing&&(existing.order_id!==s.client_reference_id||existing.session_id!==s.id))throw Error('payment_attempt_conflict')
+     // Another webhook/create request may have bound this exact Session first.
+     // Reuse its durable record; never insert a synthetic legacy attempt for it.
+     const {rows:[existing]}=await pool.query('SELECT * FROM sandbox_payment_attempts WHERE request_key=$1',[s.metadata.paymentAttemptKey])
+     if(existing){
+      if(existing.order_id!==s.client_reference_id||existing.session_id!==s.id||
+        existing.channel!==s.metadata.channel)throw Error('payment_attempt_conflict')
+      attempt=existing
+     }
     }
    }
    if(!attempt){
