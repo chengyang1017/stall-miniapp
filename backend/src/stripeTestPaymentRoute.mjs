@@ -32,12 +32,19 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
     reply(res,200,{received:true,ignored:true});return true
    }
    const s=signed.data?.object
-   if(s?.object!=='checkout.session'||!/^cs_test_[A-Za-z0-9_]+$/.test(s.id||'')||!uuid.test(s.client_reference_id||''))throw Error('invalid_order_reference')
+   if(s?.object!=='checkout.session'||!/^cs_test_[A-Za-z0-9_]+$/.test(s.id||'')||!uuid.test(s.client_reference_id||'')||
+    s.metadata?.orderId&&s.metadata.orderId!==s.client_reference_id)throw Error('invalid_order_reference')
    let {rows:[attempt]}=await pool.query('SELECT * FROM sandbox_payment_attempts WHERE session_id=$1',[s.id])
    if(!attempt&&typeof s.metadata?.paymentAttemptKey==='string'){
     const bound=await pool.query(`UPDATE sandbox_payment_attempts SET session_id=$1,status='open',updated_at=clock_timestamp()
      WHERE request_key=$2 AND order_id=$3 AND status='creating' AND session_id IS NULL RETURNING *`,[s.id,s.metadata.paymentAttemptKey,s.client_reference_id])
     attempt=bound.rows[0]
+    if(!attempt){
+     // An existing idempotency key may already be bound to another Session.
+     // Do not manufacture a legacy attempt or rebind it to this notification.
+     const {rows:[existing]}=await pool.query('SELECT session_id,order_id FROM sandbox_payment_attempts WHERE request_key=$1',[s.metadata.paymentAttemptKey])
+     if(existing&&(existing.order_id!==s.client_reference_id||existing.session_id!==s.id))throw Error('payment_attempt_conflict')
+    }
    }
    if(!attempt){
     // Recover pre-ledger SBX-01 collections, including duplicate payments.
@@ -49,11 +56,20 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
      [order.id,channel,order.total_cents,'legacy:'+s.id,s.id])
     attempt=q.rows[0]
    }
+   // A signed notification must belong to the saved checkout. Settlement uses
+   // a fresh Stripe lookup, but mismatched notification metadata must not be
+   // recorded against a different order, channel or request.
+   const legacy=typeof attempt.request_key==='string'&&attempt.request_key.startsWith('legacy:')
+   if(s.client_reference_id!==attempt.order_id||
+    s.metadata?.orderId&&s.metadata.orderId!==attempt.order_id||
+    !legacy&&(s.metadata?.orderId!==attempt.order_id||
+      s.metadata?.channel!==attempt.channel||
+      s.metadata?.paymentAttemptKey!==attempt.request_key)||
+    legacy&&s.metadata?.channel&&s.metadata.channel!==attempt.channel)
+    throw Error('invalid_order_reference')
    // A review hold must remain immutable even if a signed event is delivered again.
    // Audit the event by its already-bound Session without retrying a provider lookup
    // that may repeatedly fail on the known channel mismatch.
-   if(['review','refunded'].includes(attempt.status)&&
-    (s.client_reference_id!==attempt.order_id||s.metadata?.orderId!==attempt.order_id))throw Error('invalid_order_reference')
    // The fully refunded mismatch was already independently reconciled with
    // Stripe. Audit late signed callbacks without re-entering settlement.
    const observation=['review','refunded'].includes(attempt.status)?
