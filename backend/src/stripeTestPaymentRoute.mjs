@@ -203,11 +203,15 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
    // issuing a new creation POST. Never expose the URL to merchant status reads.
    let resumeCheckout=null
    if(!merchant&&!stale){
-    const {rows:[resume]}=await pool.query(`SELECT channel,checkout_url
-     FROM sandbox_payment_attempts
-     WHERE order_id=$1 AND status='open' AND checkout_url LIKE 'https://checkout.stripe.com/%'
-       AND expires_at>clock_timestamp()
-     ORDER BY created_at DESC LIMIT 1`,[orderId])
+    const {rows:[resume]}=await pool.query(`SELECT a.channel,a.checkout_url
+     FROM sandbox_payment_attempts a JOIN orders o ON o.id=a.order_id
+     WHERE a.order_id=$1 AND o.payment_status='unpaid'
+       AND o.fulfillment_status='new'
+       AND (o.inventory_expires_at IS NULL OR o.inventory_expires_at>clock_timestamp())
+       AND o.created_at+interval '60 minutes'>clock_timestamp()
+       AND a.status='open' AND a.checkout_url LIKE 'https://checkout.stripe.com/%'
+       AND a.expires_at>clock_timestamp()
+     ORDER BY a.created_at DESC LIMIT 1`,[orderId])
     if(resume)resumeCheckout={channel:resume.channel,url:resume.checkout_url}
    }
    reply(res,200,{...state,stale,canRefund,...!merchant?{resumeCheckout}:{}});return true
@@ -259,8 +263,14 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
   const observation=await observeSandboxSession(pool,client,a)
   await applySandboxObservation(pool,a,observation)
   if(observation.session.status!=='open'||observation.event)throw Error('payment_not_open_refresh')
-  const {rows:[persisted]}=await pool.query("SELECT status,session_id,checkout_url FROM sandbox_payment_attempts WHERE id=$1",[a.id])
-  if(!sandboxCheckoutStillOpen(a,persisted))throw Error('payment_not_open_refresh')
+  const {rows:[persisted]}=await pool.query(`SELECT a.status,a.session_id,a.checkout_url,
+    o.payment_status AS "orderPaymentStatus",o.fulfillment_status AS "fulfillmentStatus",
+    (o.inventory_expires_at IS NULL OR o.inventory_expires_at>clock_timestamp()) AS "inventoryValid",
+    (o.created_at+interval '60 minutes'>clock_timestamp()) AS "paymentWindowOpen"
+    FROM sandbox_payment_attempts a JOIN orders o ON o.id=a.order_id WHERE a.id=$1`,[a.id])
+  if(!sandboxCheckoutStillOpen(a,persisted)||persisted.orderPaymentStatus!=='unpaid'||
+    persisted.fulfillmentStatus!=='new'||persisted.inventoryValid!==true||
+    persisted.paymentWindowOpen!==true)throw Error('payment_not_open_refresh')
   reply(res,200,{sessionId:a.session_id,url:a.checkout_url,channel:a.channel,provider:'stripe',testMode:true,nativePayment:false})
  }catch(e){
   const invalid=new Set(['invalid_json','invalid_payment_channel','invalid_refund_request','invalid_idempotency_key','stripe_signature_missing','stripe_signature_invalid','invalid_test_event','invalid_order_reference','invalid_review_release','invalid_review_refund','invalid_review_refund_release','stripe_session_mismatch','stripe_paid_intent_mismatch'])
