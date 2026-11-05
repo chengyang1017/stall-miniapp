@@ -9,7 +9,18 @@ export function inspectSandboxEnvironment(e){
  add('STRIPE_TEST_SECRET_KEY',/^sk_test_[A-Za-z0-9]+$/.test(e.STRIPE_TEST_SECRET_KEY||''))
  add('STRIPE_TEST_WEBHOOK_SECRET',/^whsec_[A-Za-z0-9]+$/.test(e.STRIPE_TEST_WEBHOOK_SECRET||''))
  for(const c of ['CARD','ALIPAY','WECHAT_PAY'])add('STRIPE_TEST_'+c+'_CONFIGURATION',/^pmc_[A-Za-z0-9]+$/.test(e['STRIPE_TEST_'+c+'_CONFIGURATION']||''))
- for(const k of ['STRIPE_TEST_SUCCESS_URL','STRIPE_TEST_CANCEL_URL']){let ok=false;try{const u=new URL(e[k]);ok=u.protocol==='https:'&&!u.username&&!u.password}catch{}add(k,ok)}
+ // Return URLs must point to the routes actually mounted by this backend.
+ // Keep them on the same HTTPS origin; no third-party redirect destination.
+ let origin=null
+ for(const [k,path] of [['STRIPE_TEST_SUCCESS_URL','/v1/payments/stripe-test/return/complete'],['STRIPE_TEST_CANCEL_URL','/v1/payments/stripe-test/return/cancel']]){
+  let ok=false
+  try{
+   const u=new URL(e[k])
+   ok=u.protocol==='https:'&&!u.username&&!u.password&&!u.search&&!u.hash&&u.pathname===path&&!!u.hostname
+   if(ok){if(origin!==null&&u.origin!==origin)ok=false;else origin=u.origin}
+  }catch{}
+  add(k,ok)
+ }
  let db=false;try{const u=new URL(e.DATABASE_URL);db=['postgres:','postgresql:'].includes(u.protocol)&&!!u.hostname&&!!u.pathname.slice(1)}catch{}
  add('DATABASE_URL',db);add('PG_SSL',e.PG_SSL==='true')
  return {kind:'LOCAL_CONFIGURATION_ONLY',networkUsed:false,ready:checks.every(c=>c.status==='CONFIGURED'),checks,
