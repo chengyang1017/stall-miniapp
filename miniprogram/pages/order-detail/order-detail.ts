@@ -12,6 +12,41 @@ function workflowText(st: string): string {
   return labels[st] || '待接单'
 }
 Page({
+  sandboxPollTimer:null as ReturnType<typeof setTimeout>|null,
+  sandboxPollRemaining:0,
+  stopSandboxPolling(message=''){
+    if(this.sandboxPollTimer){clearTimeout(this.sandboxPollTimer);this.sandboxPollTimer=null}
+    this.sandboxPollRemaining=0
+    this.setData({sandboxPollText:message})
+  },
+  scheduleSandboxPolling(){
+    if(this.sandboxPollTimer){clearTimeout(this.sandboxPollTimer);this.sandboxPollTimer=null}
+    if(!this.detailVisible||this.phoneReadOnly||!this.data.cloudMode)return
+    const attempts=this.data.sandbox?.attempts||[]
+    const latest=attempts[attempts.length-1]
+    // Only the server can confirm payment. A Checkout URL or return to the
+    // mini program never means that Stripe has collected the money.
+    if(this.data.order.paymentStatus!=='unpaid'){
+      this.stopSandboxPolling(this.data.order.paymentStatus==='paid'?'服务端已确认测试付款':'')
+      return
+    }
+    if(!latest||!['creating','open','processing'].includes(latest.status)){
+      this.stopSandboxPolling(latest?.status==='review'?'支付结果需要人工核查，请勿重复付款':'')
+      return
+    }
+    if(this.sandboxPollRemaining<=0){
+      this.stopSandboxPolling('自动查询已结束；可手动刷新支付状态')
+      return
+    }
+    this.setData({sandboxPollText:'正在自动核对 Stripe Sandbox 付款结果…'})
+    const identity=supportIdentity(),serial=this.detailSerial,id=String(this.data.order.id)
+    this.sandboxPollTimer=setTimeout(()=>{
+      this.sandboxPollTimer=null
+      if(!this.detailVisible||serial!==this.detailSerial||identity!==supportIdentity()||id!==String(this.data.order.id))return
+      this.sandboxPollRemaining--
+      this.loadSandboxPayment()
+    },5000)
+  },
   copySandboxReceipt(e:any){
     if(!this.detailVisible||this.phoneReadOnly)return
     const id=String(e.currentTarget.dataset.id||'')
@@ -26,8 +61,11 @@ Page({
     try{const result=await sandboxPaymentRequest(cfg,id)
       if(!this.detailVisible||serial!==this.detailSerial||identity!==supportIdentity())return
       const latest=await customerOrdersRequest(cfg,id)
-      if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({sandbox:sandboxPaymentView(result),sandboxError:'',
-       order:{...this.data.order,paymentStatus:latest.order.paymentStatus,paymentSource:latest.order.paymentSource},paymentText:paymentLabel(latest.order)})
+      if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()){
+        this.setData({sandbox:sandboxPaymentView(result),sandboxError:'',
+         order:{...this.data.order,paymentStatus:latest.order.paymentStatus,paymentSource:latest.order.paymentSource},paymentText:paymentLabel(latest.order)})
+        this.scheduleSandboxPolling()
+      }
     }catch(_){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({sandbox:null,sandboxError:'Sandbox 服务未启用、未授权或网络不可用；未确认新的付款结果'})}
   },
   async cancelSandboxPayment(){
@@ -47,6 +85,7 @@ Page({
     const current=()=>this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()
     const key=[identity,id,channel].join(':')
     if(!this.sandboxKeys[key])this.sandboxKeys[key]='sandbox_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)
+    this.stopSandboxPolling()
     this.sandboxBusy=true
     try{
       const url=await createSandboxCheckout(cfg,id,channel,this.sandboxKeys[key])
@@ -55,10 +94,16 @@ Page({
         if(r.confirm&&current())wx.setClipboardData({data:url})
       }})
     }catch(_){if(current())wx.showToast({title:'测试入口不可用，或结果未知；请刷新订单后重试',icon:'none'})}
-    finally{this.sandboxBusy=false;if(current())await this.loadSandboxPayment()}
+    finally{
+      this.sandboxBusy=false
+      if(current()){
+        this.sandboxPollRemaining=12
+        await this.loadSandboxPayment()
+      }
+    }
   },
   phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
-  data: { sandbox:null as any,sandboxError:'',sandboxChannel:'card',phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
+  data: { sandbox:null as any,sandboxError:'',sandboxPollText:'',sandboxChannel:'card',phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
     this.phoneReadOnly=options.phone==='1'
     this.setData({phoneReadOnly:this.phoneReadOnly})
@@ -66,6 +111,8 @@ Page({
     this.setData({ order: { id: options.id || '' } })
   },
   async onShow() {
+    this.stopSandboxPolling()
+    this.sandboxPollRemaining=12
     this.detailVisible=true;const serial=++this.detailSerial,identity=supportIdentity()
     const id = String(this.data.order.id || '')
     const cloud=customerOrdersConfig()
@@ -128,8 +175,8 @@ Page({
       proofImage: String(o.deliveryPhoto || o.deliveryPhotoPath || o.proofImage || o.proofImageUrl || o.proofPhoto || o.deliveredPhoto || '')
     })
   },
-  onHide(){this.detailVisible=false;this.detailSerial++;this.setData({sandbox:null,sandboxError:'',proofImage:'',proofLoading:false,proofError:''})},
-  onUnload(){this.detailVisible=false;this.detailSerial++;this.simulationOperation++},
+  onHide(){this.stopSandboxPolling();this.detailVisible=false;this.detailSerial++;this.setData({sandbox:null,sandboxError:'',proofImage:'',proofLoading:false,proofError:''})},
+  onUnload(){this.stopSandboxPolling();this.detailVisible=false;this.detailSerial++;this.simulationOperation++},
   async loadSimulationCapability(serial:number,identity:string,id:string){
     const cfg=customerOrdersConfig();if(!cfg)return
     try{const capability=await stagingOrderPayment(cfg,id);if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({simulationAuthorized:true,simulationEligible:capability.eligible})}

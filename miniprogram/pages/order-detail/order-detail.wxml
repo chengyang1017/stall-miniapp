@@ -6,7 +6,7 @@
   <view wx:else>
     <view wx:if="{{cloudMode && !phoneReadOnly && order.paymentStatus === 'unpaid'}}" class="order-detail-card">
       <view class="order-detail-title">Sandbox 外部支付测试</view>
-      <view>仅隔离测试服务配置后可用。复制到外部浏览器测试，返回后重新进入本页查询服务端状态。微信原生支付尚未接入。</view>
+      <view>仅隔离测试环境可用。复制链接到外部浏览器完成测试付款；返回本页后将自动核对服务端结果，微信原生支付尚未接入。</view>
       <button size="mini" data-channel="wechat_pay" bindtap="openSandboxCheckout">微信支付测试链接</button>
       <button size="mini" data-channel="alipay" bindtap="openSandboxCheckout">支付宝测试链接</button>
       <button size="mini" data-channel="card" bindtap="openSandboxCheckout">银行卡测试链接</button>
@@ -14,7 +14,9 @@
     </view>
     <view wx:if="{{cloudMode && !phoneReadOnly}}" class="order-detail-card">
       <view class="order-detail-title">Sandbox 支付记录与电子小票</view>
-      <button size="mini" bindtap="loadSandboxPayment">查询服务端最新状态</button><view>{{sandboxError}}</view>
+      <button size="mini" bindtap="loadSandboxPayment">立即刷新支付状态</button>
+      <view wx:if="{{sandboxPollText}}" class="order-detail-muted">{{sandboxPollText}}</view>
+      <view wx:if="{{sandboxError}}" class="order-detail-muted">{{sandboxError}}</view>
       <view wx:if="{{sandbox.stale}}">渠道暂不可用，以下为已保存状态，最新结果尚未确认。</view>
       <view wx:for="{{sandbox.attempts}}" wx:key="id">{{item.channelText}} · ¥{{item.amountText}} · {{item.label}}</view>
       <view wx:for="{{sandbox.refunds}}" wx:key="id">退款 ¥{{item.amountText}} · {{item.label}} · {{item.refundId}}</view>
