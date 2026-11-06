@@ -1,6 +1,4 @@
 <view class="order-detail-page">
-  <navigator wx:if="{{found && cloudMode && order.fulfillmentStatus === 'delivering'}}" class="order-detail-card" url="/pages/customer-tracking/customer-tracking?id={{order.id}}">查看配送位置 ›</navigator>
-  <navigator class="order-detail-card" url="/pages/customer-support-chat/customer-support-chat">联系店铺客服 ›</navigator>
   <view wx:if="{{found && cloudMode && order.fulfillmentStatus === 'delivered'}}" class="order-detail-card"><view class="order-detail-title">评价商品</view><view class="order-detail-muted">须核验真实支付后才能发表；商家已送达不等于已确认收款。</view><navigator wx:for="{{items}}" wx:key="orderItemId" wx:if="{{item.orderItemId}}" url="/pages/customer-reviews/customer-reviews?orderItemId={{item.orderItemId}}">评价 {{item.name}} ›</navigator></view>
   <view wx:if="{{detailLoading && !found}}" class="order-detail-empty">正在读取订单详情…</view>
   <view wx:elif="{{!found}}" class="order-detail-empty">
@@ -12,14 +10,18 @@
     <button size="mini" bindtap="reloadOrderDetail" disabled="{{detailLoading}}">重试刷新</button>
   </view>
   <view wx:if="{{found}}">
-    <view class="order-detail-card order-overview">
-      <view class="overview-top"><text class="order-detail-title">订单状态</text><text class="overview-test-tag" wx:if="{{order.paymentSource === 'stripe:sandbox'}}">Sandbox 测试</text></view>
-      <view class="order-detail-status">{{statusText}}</view>
-      <view class="overview-payment">{{paymentText}}</view>
-      <view class="overview-divider"></view>
-      <view class="overview-meta"><text>订单编号</text><text selectable="true">{{order.id}}</text></view>
-      <view class="overview-meta"><text>下单时间</text><text>{{createdText}}</text></view>
+    <view class="order-hero">
+      <view class="order-hero-top"><text class="order-hero-label">订单进度</text><text wx:if="{{order.paymentSource === 'stripe:sandbox'}}" class="order-hero-test">测试订单</text></view>
+      <view class="order-hero-status">{{statusText}}</view>
+      <view class="order-hero-payment">{{paymentText}}</view>
+      <view class="order-hero-footer"><text>订单号 {{order.id}}</text><text>{{createdText}}</text></view>
     </view>
+    <view class="order-quick-actions">
+      <navigator class="order-action-item" url="/pages/customer-support-chat/customer-support-chat"><text>联系店铺客服</text><text class="order-action-chevron">›</text></navigator>
+      <navigator wx:if="{{cloudMode && order.fulfillmentStatus === 'delivering'}}" class="order-action-item" url="/pages/customer-tracking/customer-tracking?id={{order.id}}"><text>查看配送位置</text><text class="order-action-chevron">›</text></navigator>
+    </view>
+    <view class="order-detail-card"><view class="order-detail-title">商品清单</view><view wx:for="{{items}}" wx:key="productId" class="order-detail-line"><text>{{item.name}} × {{item.quantity}}</text><text>¥{{item.subtotal}}</text></view><view class="order-detail-total">合计 ¥{{order.totalText}}</view></view>
+    <view class="order-detail-card"><view class="order-detail-title">配送信息</view><view class="order-detail-line"><text>收货人</text><text>{{order.receiverName}}</text></view><view class="order-detail-line"><text>联系电话</text><text>{{order.phone}}</text></view><view class="order-detail-line"><text>收货地址</text><text>{{order.area}} {{order.detail}}</text></view><view class="order-detail-line"><text>配送时段</text><text>{{order.slotText}}</text></view><view wx:if="{{order.estimatedArrival}}" class="order-detail-line"><text>预计送达</text><text>{{order.estimatedArrival}}</text></view><view wx:if="{{order.note}}" class="order-detail-muted">顾客备注：{{order.note}}</view></view>
     <view wx:if="{{cloudMode && !phoneReadOnly && order.paymentStatus === 'unpaid'}}" class="order-detail-card">
       <view class="order-detail-title">Sandbox 外部支付测试</view>
       <view wx:if="{{sandboxUnavailable}}" class="order-detail-muted">测试支付服务尚未启用，下面的创建付款操作暂不可用；订单仍为待支付。管理员接通独立 Sandbox 环境后，可点击「立即刷新支付状态」重新检查。</view>
@@ -51,13 +53,14 @@
     </view>
     <view wx:if="{{cloudMode && !phoneReadOnly}}" class="order-detail-card payment-history-card">
       <view class="payment-history-head">
-        <view class="payment-history-heading"><view class="order-detail-title">支付记录</view><view class="order-detail-muted">Stripe Sandbox 测试记录</view></view>
+        <view class="payment-history-heading"><view class="order-detail-title">付款与电子小票</view><view class="order-detail-muted">仅供测试环境使用</view></view>
         <button class="payment-refresh-btn" size="mini" bindtap="loadSandboxPayment">刷新状态</button>
       </view>
       <view wx:if="{{sandboxPollText}}" class="order-detail-muted">{{sandboxPollText}}</view>
       <view wx:if="{{sandboxError}}" class="order-detail-muted">{{sandboxError}}</view>
-      <view wx:if="{{sandbox.stale}}">渠道暂不可用，以下为已保存状态，最新结果尚未确认。</view>
-      <view wx:for="{{sandbox.attempts}}" wx:key="id" class="payment-attempt-row">
+      <view wx:if="{{sandbox.stale}}" class="order-detail-muted">渠道暂不可用，以下为已保存状态，最新结果尚未确认。</view>
+      <view wx:if="{{sandbox.attempts.length && sandbox.receipts.length}}" class="attempt-history-toggle" bindtap="togglePaymentHistory"><text>支付尝试记录（{{sandbox.attempts.length}}）</text><text>{{paymentHistoryExpanded ? '收起 ⌃' : '展开 ⌄'}}</text></view>
+      <view wx:for="{{sandbox.attempts}}" wx:key="id" wx:if="{{!sandbox.receipts.length || paymentHistoryExpanded}}" class="payment-attempt-row">
         <view class="payment-attempt-info"><text class="payment-attempt-channel">{{item.channelText}}</text><text class="payment-attempt-state">{{item.label}}</text></view>
         <text class="payment-attempt-price">¥{{item.amountText}}</text>
       </view>
@@ -76,40 +79,33 @@
         <view wx:else class="order-detail-muted">尚无已核实的 Stripe 退款编号</view>
         <view wx:if="{{item.createdAt}}" class="order-detail-muted">申请记录时间：{{item.createdAt}}</view>
       </view>
-      <view wx:for="{{sandbox.receipts}}" wx:key="id" wx:for-item="receipt" class="payment-receipt">
-        <view class="receipt-heading">
-          <view class="receipt-seal">✓</view>
-          <view class="receipt-heading-copy"><text class="receipt-title">测试电子小票</text><text class="receipt-subtitle">{{receipt.channelText}} · {{receipt.paidAt}}</text></view>
-          <text class="receipt-success">付款已确认</text>
+      <view wx:for="{{sandbox.receipts}}" wx:key="id" wx:for-item="receipt" class="receipt-ticket">
+        <view class="ticket-top"><view class="ticket-identity"><text class="ticket-icon">✓</text><view><view class="ticket-title">测试付款凭证</view><view class="ticket-subtitle">{{receipt.channelText}} · {{receipt.paidAt}}</view></view></view><text class="ticket-tag">已确认</text></view>
+        <view class="ticket-paid-label">付款金额</view>
+        <view class="ticket-paid-amount">¥{{receipt.totalText}}</view>
+        <view class="ticket-disclaimer">Stripe Sandbox 测试交易，不代表真实资金到账</view>
+        <view class="ticket-controls">
+          <view class="ticket-expand" data-id="{{receipt.id}}" bindtap="toggleReceiptDetails"><text>{{receiptExpandedId === receipt.id ? '收起小票明细' : '查看小票明细'}}</text><text>{{receiptExpandedId === receipt.id ? '⌃' : '⌄'}}</text></view>
+          <button class="ticket-copy" size="mini" data-id="{{receipt.id}}" bindtap="copySandboxReceipt">复制小票</button>
         </view>
-        <view class="receipt-amount"><text class="receipt-currency">¥</text>{{receipt.totalText}}</view>
-        <view class="receipt-notice">{{receipt.notice || 'Stripe Sandbox 测试交易，不代表真实收款'}}</view>
-        <view class="receipt-divider"></view>
-        <view class="receipt-section-title">商品明细</view>
-        <view wx:for="{{receipt.items}}" wx:for-item="line" wx:key="productId" class="receipt-line">
-          <view class="receipt-product"><text class="receipt-product-name">{{line.name}}</text><text class="receipt-qty">× {{line.quantity}} · 单价 ¥{{line.unitText}}</text></view>
-          <text class="receipt-line-price">¥{{line.lineTotalText}}</text>
+        <view wx:if="{{receiptExpandedId === receipt.id}}" class="ticket-expanded">
+          <view class="ticket-section-name">商品明细</view>
+          <view wx:for="{{receipt.items}}" wx:for-item="line" wx:key="productId" class="ticket-product-row">
+            <view class="ticket-product-info"><text>{{line.name}}</text><text class="ticket-product-muted">× {{line.quantity}} · 单价 ¥{{line.unitText}}</text></view><text>¥{{line.lineTotalText}}</text>
+          </view>
+          <view class="ticket-money-row"><text>商品小计</text><text>¥{{receipt.subtotalText}}</text></view>
+          <view class="ticket-money-row"><text>配送费</text><text>¥{{receipt.deliveryFeeText}}</text></view>
+          <view class="ticket-money-row ticket-money-total"><text>实付合计</text><text>¥{{receipt.totalText}}</text></view>
+          <view class="ticket-section-name ticket-reference-title">交易凭证</view>
+          <view class="ticket-reference-row"><text>订单编号</text><text selectable="true">{{receipt.orderId}}</text></view>
+          <view class="ticket-reference-row"><text>Stripe 交易参考</text><text selectable="true">{{receipt.transactionId}}</text></view>
+          <view class="ticket-reference-row"><text>PaymentIntent</text><text selectable="true">{{receipt.paymentIntentId}}</text></view>
+          <view class="ticket-reference-row"><text>SHA-256 校验摘要</text><text selectable="true">{{receipt.sha256}}</text></view>
         </view>
-        <view class="receipt-breakdown"><text>商品小计</text><text>¥{{receipt.subtotalText}}</text></view>
-        <view class="receipt-breakdown"><text>配送费</text><text>¥{{receipt.deliveryFeeText}}</text></view>
-        <view class="receipt-grand-total"><text>合计</text><text>¥{{receipt.totalText}}</text></view>
-        <view class="receipt-details-toggle" data-id="{{receipt.id}}" bindtap="toggleReceiptDetails">
-          <text>{{receiptExpandedId === receipt.id ? '收起交易凭证' : '查看交易凭证'}}</text><text>{{receiptExpandedId === receipt.id ? '⌃' : '⌄'}}</text>
-        </view>
-        <view wx:if="{{receiptExpandedId === receipt.id}}" class="receipt-technical">
-          <view class="receipt-tech-row"><text>订单编号</text><text selectable="true">{{receipt.orderId}}</text></view>
-          <view class="receipt-tech-row"><text>交易参考</text><text selectable="true">{{receipt.transactionId}}</text></view>
-          <view class="receipt-tech-row"><text>PaymentIntent</text><text selectable="true">{{receipt.paymentIntentId}}</text></view>
-          <view class="receipt-tech-row"><text>校验摘要 SHA-256</text><text selectable="true">{{receipt.sha256}}</text></view>
-          <text class="receipt-tech-hint">上述编号与摘要用于技术核验，不代表真实资金到账。</text>
-        </view>
-        <button class="receipt-copy-button" size="mini" data-id="{{receipt.id}}" bindtap="copySandboxReceipt">复制完整测试小票</button>
       </view>
     </view>
     <view wx:if="{{simulationAuthorized}}" class="order-detail-card"><view>Staging测试入口 · 不发生真实付款</view><button bindtap="confirmSimulation" disabled="{{simulationBusy || !simulationEligible}}" loading="{{simulationBusy}}">{{simulationBusy ? '正在核对模拟确认' : '授权测试：模拟支付确认'}}</button><view>仅服务端授权的测试人员可操作；非微信支付，不计真实收入。</view><view>{{simulationError}}</view></view>
 
-    <view class="order-detail-card"><view class="order-detail-title">商品清单</view><view wx:for="{{items}}" wx:key="productId" class="order-detail-line"><text>{{item.name}} × {{item.quantity}}</text><text>¥{{item.subtotal}}</text></view><view class="order-detail-total">合计 ¥{{order.totalText}}</view></view>
-    <view class="order-detail-card"><view class="order-detail-title">配送信息</view><view class="order-detail-line"><text>收货人</text><text>{{order.receiverName}}</text></view><view class="order-detail-line"><text>联系电话</text><text>{{order.phone}}</text></view><view class="order-detail-line"><text>收货地址</text><text>{{order.area}} {{order.detail}}</text></view><view class="order-detail-line"><text>配送时段</text><text>{{order.slotText}}</text></view><view wx:if="{{order.estimatedArrival}}" class="order-detail-line"><text>预计送达</text><text>{{order.estimatedArrival}}</text></view><view wx:if="{{order.note}}" class="order-detail-muted">顾客备注：{{order.note}}</view></view>
     <view wx:if="{{issueText}}" class="order-detail-card"><view class="order-detail-title">取消 / 异常原因</view><view class="order-detail-reason">{{issueText}}</view></view>
     <view wx:if="{{deliveredText || proofImage}}" class="order-detail-card"><view class="order-detail-title">送达凭证</view><view wx:if="{{proofError}}" class="order-detail-muted">{{proofError}}</view><button wx:if="{{cloudMode}}" size="mini" bindtap="renewProof" disabled="{{proofLoading}}" loading="{{proofLoading}}">重新获取凭证链接</button><view wx:if="{{deliveredText}}" class="order-detail-muted">送达时间：{{deliveredText}}</view><image wx:if="{{proofImage}}" class="order-detail-proof" src="{{proofImage}}" mode="aspectFill" bindtap="previewProof" binderror="proofReadError"/><view wx:else class="order-detail-muted">尚无送达照片</view></view>
   </view>
