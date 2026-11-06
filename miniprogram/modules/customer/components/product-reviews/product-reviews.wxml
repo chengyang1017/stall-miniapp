@@ -1,11 +1,49 @@
 <view class="reviews">
-  <view class="reviews-heading"><view class="title">用户评价<text wx:if="{{summary}}">（{{summary.count}}）</text></view><view wx:if="{{compact && !expanded && rows.length}}" class="view-all" bindtap="expand">查看全部 ›</view></view>
-  <view wx:if="{{summary && summary.count}}" class="rating-summary">{{summary.average === null ? '暂无评分' : summary.average + ' / 5'}}<text> · {{summary.testMode ? 'Sandbox 测试环境评分' : '已购公开评价'}}</text></view>
-  <view wx:if="{{!compact || expanded}}"><picker range="{{stars}}" value="{{rating || 0}}" bindchange="filter"><view class="filter">{{stars[rating || 0]}} ›</view></picker></view>
-  <view wx:if="{{error}}" class="error">{{error}}<button size="mini" bindtap="refresh">重试</button><button size="mini" bindtap="login">微信登录</button></view>
-  <view wx:if="{{loading && !rows.length}}" class="reviews-empty">正在读取评价…</view>
+  <view class="reviews-heading">
+    <view class="title">用户评价</view>
+    <view wx:if="{{summary}}" class="review-total">共 {{summary.count}} 条</view>
+  </view>
+  <view wx:if="{{summary && summary.count}}" class="review-score">
+    <view class="score-number">{{summary.average === null ? '—' : summary.average}}</view>
+    <view class="score-detail">
+      <view class="score-stars">★★★★★</view>
+      <view class="score-caption">{{summary.testMode ? 'Sandbox 测试评分' : '已购顾客评分'}}</view>
+    </view>
+    <view wx:if="{{summary.testMode}}" class="sandbox-tag">测试环境</view>
+  </view>
+  <view wx:if="{{!compact || expanded}}" class="filter-scroll">
+    <scroll-view scroll-x class="filter-scrollview" show-scrollbar="{{false}}">
+      <view class="filter-row">
+        <view wx:for="{{ratingChoices}}" wx:key="value" class="filter-chip {{rating === item.value ? 'filter-chip-selected' : ''}}" data-rating="{{item.value}}" bindtap="selectRating" role="button">{{item.label}}</view>
+      </view>
+    </scroll-view>
+  </view>
+  <view wx:if="{{error}}" class="review-error">
+    <text>{{error}}</text>
+    <view class="error-actions"><text bindtap="refresh">重新加载</text><text bindtap="login">登录</text></view>
+  </view>
+  <view wx:if="{{loading && !rows.length}}" class="reviews-empty">正在加载评价…</view>
   <view wx:if="{{!loading && !error && !rows.length}}" class="reviews-empty">暂无已发布评价</view>
-  <block wx:for="{{compact && !expanded ? previewRows : rows}}" wx:key="id"><review-card customer-summary="{{true}}" row="{{item}}" bind:images="images"/><view class="report-actions"><text data-id="{{item.id}}" bindtap="report">举报评价</text><text wx:if="{{item.reply}}" data-id="{{item.id}}" bindtap="reportReply">举报回复</text></view></block>
-  <view wx:if="{{reportId}}" class="report"><textarea maxlength="500" placeholder="请说明违规原因；举报不等于自动隐藏评价" value="{{reportReason}}" bindinput="reportInput" disabled="{{reportBusy}}"/><button bindtap="submitReport" disabled="{{reportBusy || !reportReason}}" loading="{{reportBusy}}">提交举报</button><button bindtap="cancelReport" disabled="{{reportBusy}}">取消</button></view>
-  <view wx:if="{{!compact || expanded}}"><button wx:if="{{hasMore}}" disabled="{{loading}}" bindtap="more">加载更多评价</button><button size="mini" disabled="{{loading}}" bindtap="refresh">刷新评价</button></view>
+  <view class="reviews-list">
+    <view wx:for="{{compact && !expanded ? previewRows : rows}}" wx:key="id" class="review-entry">
+      <review-card customer-summary="{{true}}" row="{{item}}" bind:images="images"/>
+      <view class="report-actions">
+        <text data-id="{{item.id}}" bindtap="report">举报评价</text>
+        <text wx:if="{{item.reply}}" data-id="{{item.id}}" bindtap="reportReply">举报回复</text>
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{reportId}}" class="report">
+    <view class="report-title">举报违规内容</view>
+    <textarea maxlength="500" placeholder="说明违规原因；举报不会自动隐藏评价" value="{{reportReason}}" bindinput="reportInput" disabled="{{reportBusy}}"/>
+    <view class="report-buttons">
+      <button bindtap="cancelReport" disabled="{{reportBusy}}">取消</button>
+      <button bindtap="submitReport" disabled="{{reportBusy || !reportReason}}" loading="{{reportBusy}}">提交举报</button>
+    </view>
+  </view>
+  <view wx:if="{{compact && !expanded && rows.length}}" class="all-reviews" bindtap="expand" role="button">查看全部评价 <text>›</text></view>
+  <view wx:if="{{!compact || expanded}}" class="review-bottom">
+    <button wx:if="{{hasMore}}" disabled="{{loading}}" bindtap="more">加载更多评价</button>
+    <text bindtap="refresh">刷新评价</text>
+  </view>
 </view>

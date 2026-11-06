@@ -6,7 +6,7 @@
     </swiper>
     <view wx:else class="gallery-empty"><template is="productPlaceholder" data="{{placeholderStyle,customPlaceholderUrl}}"/></view>
     <view class="gallery-shade"></view>
-    <button class="back-button" style="top:{{navigationTop}}px" bindtap="goBack" aria-label="返回">‹</button>
+    <view class="back-button" style="top:{{navigationTop}}px" bindtap="goBack" role="button" aria-label="返回"><text class="back-arrow">‹</text></view>
     <text wx:if="{{imageUrls.length > 1}}" class="gallery-counter">{{imageIndex + 1}} / {{imageUrls.length}}</text>
   </view>
   <view class="detail-body">

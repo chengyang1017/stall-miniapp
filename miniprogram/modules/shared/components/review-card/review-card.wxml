@@ -1,1 +1,18 @@
-<view class="review-card"><view wx:if="{{customerSummary}}" class="heading customer-heading"><text class="review-author">{{row.testReview ? 'Sandbox 测试顾客' : row.verifiedPurchase ? '匿名已购顾客' : '匿名顾客'}}</text><text class="review-rating">{{row.rating}} / 5 星</text></view><view wx:else class="heading">{{row.productName}} · {{row.rating}} / 5 星 <text wx:if="{{row.testReview}}">测试评价</text><text wx:elif="{{row.verifiedPurchase}}">已购评价</text></view><view class="body">{{row.content || '仅评分，未填写文字'}}</view><view class="time">{{row.displayTime}}</view><button wx:if="{{row.imageIds.length}}" size="mini" bindtap="images">查看评价图片（{{row.imageIds.length}}）</button><view wx:if="{{row.reply}}" class="reply">商家回复：{{row.reply}}</view></view>
+<view class="review-card {{customerSummary ? 'review-card-customer' : ''}}">
+  <view wx:if="{{customerSummary}}" class="heading customer-heading">
+    <view class="review-identity">
+      <view class="review-avatar">{{row.testReview ? '测' : '用'}}</view>
+      <view class="review-author-group">
+        <text class="review-author">{{row.testReview ? '测试顾客' : row.verifiedPurchase ? '已购顾客' : '匿名顾客'}}</text>
+        <text wx:if="{{row.testReview}}" class="review-test-badge">Sandbox</text>
+        <text wx:elif="{{row.verifiedPurchase}}" class="review-purchase-badge">已购</text>
+      </view>
+    </view>
+    <view class="review-rating">{{row.rating}} / 5 <text>★</text></view>
+  </view>
+  <view wx:else class="heading">{{row.productName}} · {{row.rating}} / 5 星 <text wx:if="{{row.testReview}}">测试评价</text><text wx:elif="{{row.verifiedPurchase}}">已购评价</text></view>
+  <view class="body">{{row.content || '仅评分，未填写文字'}}</view>
+  <view class="review-image-link" wx:if="{{row.imageIds.length}}" bindtap="images">查看图片（{{row.imageIds.length}}）›</view>
+  <view class="time">{{row.displayTime}}</view>
+  <view wx:if="{{row.reply}}" class="reply"><text class="reply-label">商家回复</text><view>{{row.reply}}</view></view>
+</view>

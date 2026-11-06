@@ -1,2 +1,13 @@
-.review-card{padding:22rpx 0;border-bottom:1rpx solid #eee6f6;line-height:1.7;word-break:break-all}.heading{font-weight:600;font-size:27rpx}.heading text{font-size:22rpx;color:#8050c1;margin-left:14rpx}.body{font-size:27rpx;margin:12rpx 0;white-space:pre-wrap}.time{font-size:22rpx;color:#9885a5}.reply{padding:16rpx;background:#f5effc;border-radius:12rpx;font-size:25rpx;margin-top:12rpx}button{margin:10rpx 0;color:#8252bf;background:#f6f1fc}
-.customer-heading{display:flex;justify-content:space-between;align-items:center;gap:12rpx}.customer-heading text{margin-left:0}.customer-heading .review-author{color:#625170;font-size:25rpx}.customer-heading .review-rating{font-size:23rpx;color:#8350c8}
+.review-card{padding:20rpx 0 10rpx;line-height:1.6;word-break:break-word;color:#382c47}
+.heading{font-weight:600;font-size:26rpx;line-height:1.5}.heading>text{font-size:21rpx;color:#865cc0;margin-left:12rpx}
+.body{font-size:26rpx;line-height:1.65;margin:14rpx 0 10rpx;white-space:pre-wrap;overflow-wrap:anywhere}
+.time{font-size:21rpx;color:#a498ad;margin:12rpx 0}
+.reply{padding:17rpx;background:#f7f4fb;border-radius:14rpx;font-size:23rpx;margin-top:14rpx;color:#695776}
+.reply-label{display:block;font-size:21rpx;font-weight:700;color:#6842a1;margin-bottom:6rpx}
+.review-image-link{display:inline-block;color:#7445c3;font-size:23rpx;margin:3rpx 0}
+.customer-heading{display:flex;align-items:center;justify-content:space-between;gap:15rpx}
+.review-identity{display:flex;align-items:center;gap:14rpx;min-width:0;flex:1}.review-avatar{height:56rpx;width:56rpx;border-radius:50%;background:#f1eafc;color:#8a5cc5;display:flex;justify-content:center;align-items:center;font-size:24rpx;font-weight:700;flex-shrink:0}
+.review-author-group{display:flex;align-items:center;gap:10rpx;min-width:0;flex-wrap:wrap}.review-author{color:#4c3c60;font-size:24rpx;font-weight:650}
+.review-test-badge,.review-purchase-badge{border-radius:8rpx;padding:3rpx 9rpx;font-size:18rpx;font-weight:500;color:#8b63bc;background:#f3edfa}
+.review-purchase-badge{color:#398c6b;background:#e9f5ef}
+.review-rating{font-size:22rpx;color:#756183;white-space:nowrap;font-weight:550}.review-rating text{color:#efa829;font-size:28rpx;margin-left:3rpx}
