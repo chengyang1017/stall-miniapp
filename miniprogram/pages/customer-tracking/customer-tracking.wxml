@@ -1,19 +1,49 @@
 <view class="tracking-page">
- <view class="card">
-  <view class="title">本订单配送位置</view>
-  <view>订单：{{id}}</view>
-  <view wx:if="{{!cloudMode}}" class="notice">本机演示没有真实配送位置，不采集定位、不生成模拟骑手。</view>
-  <block wx:else>
-   <view class="state">{{stateText}}</view>
-   <view>订单配送状态：{{orderStatus === 'delivering' ? '配送中' : orderStatus === 'delivered' ? '已送达' : orderStatus === 'cancelled' ? '已取消' : orderStatus === 'abnormal' ? '配送异常' : '当前不在配送中'}}</view>
-   <view>商家预计送达：{{eta || '尚未填写'}}</view>
-   <view>最后位置同步：{{lastUpdated || '尚未同步'}} · 北京时间</view>
-   <view wx:if="{{error}}" class="error">{{error}}</view>
-   <button bindtap="refresh" loading="{{loading}}" disabled="{{loading}}">刷新配送位置</button>
-   <map wx:if="{{hasMap}}" id="delivery-map" class="tracking-map" latitude="{{latitude}}" longitude="{{longitude}}" markers="{{markers}}" scale="15" show-location="{{false}}" />
-   <view wx:else class="notice">没有可靠坐标，位置不可用。</view>
-   <button wx:if="{{hasMap}}" bindtap="center" size="mini">查看当前配送区域</button>
-  </block>
-  <view class="notice">仅展示本订单获授权的位置及目的地。暂停、失联或结束后不表示仍在实时更新。地图不绘制推测路线，GPS 不作为送达证明。</view>
- </view>
+  <view class="tracking-hero">
+    <view class="tracking-hero-top">
+      <text class="tracking-eyebrow">配送动态</text>
+      <text class="tracking-hero-pill">{{cloudMode ? '订单专属' : '本机演示'}}</text>
+    </view>
+    <view class="tracking-status">{{cloudMode ? stateText : '暂无真实定位'}}</view>
+    <view class="tracking-order-status">订单状态 · {{orderStatus === 'delivering' ? '配送中' : orderStatus === 'delivered' ? '已送达' : orderStatus === 'cancelled' ? '已取消' : orderStatus === 'abnormal' ? '配送异常' : orderStatus ? '当前不在配送中' : '等待订单信息'}}</view>
+  </view>
+  <view wx:if="{{cloudMode}}" class="tracking-map-card">
+    <view class="tracking-card-head">
+      <view>
+        <view class="tracking-card-title">配送地图</view>
+        <view class="tracking-map-subtitle">{{hasCourier ? '已收到配送人员授权共享的位置' : hasDestination ? '目前仅显示配送目的地' : '尚未获得可显示的坐标'}}</view>
+      </view>
+      <button class="tracking-refresh" size="mini" bindtap="refresh" disabled="{{loading}}" loading="{{loading}}">刷新</button>
+    </view>
+    <map wx:if="{{hasMap}}" id="delivery-map" class="tracking-map" latitude="{{latitude}}" longitude="{{longitude}}" markers="{{markers}}" scale="15" show-location="{{false}}" />
+    <view wx:else class="tracking-map-empty">
+      <view class="tracking-empty-symbol">⌖</view>
+      <view class="tracking-empty-title">暂无可显示的位置</view>
+      <view class="tracking-empty-desc">配送人员尚未共享有效位置，或位置已经过期。</view>
+    </view>
+    <view class="tracking-map-footer">
+      <view class="tracking-legends">
+        <view class="tracking-legend"><view class="tracking-legend-dot tracking-dot-courier {{hasCourier ? '' : 'tracking-dot-muted'}}"></view><text>配送人员{{hasCourier ? '' : ' · 未共享'}}</text></view>
+        <view class="tracking-legend"><view class="tracking-legend-dot tracking-dot-destination {{hasDestination ? '' : 'tracking-dot-muted'}}"></view><text>收货目的地{{hasDestination ? '' : ' · 无坐标'}}</text></view>
+      </view>
+      <button wx:if="{{hasMap}}" class="tracking-center" size="mini" bindtap="center">查看全部位置</button>
+    </view>
+  </view>
+  <view wx:else class="tracking-info-card">
+    <view class="tracking-card-title">本机演示模式</view>
+    <view class="tracking-muted">当前没有真实配送位置，不采集定位，也不生成虚拟配送人员。</view>
+  </view>
+  <view wx:if="{{cloudMode}}" class="tracking-info-card">
+    <view class="tracking-card-title">配送信息</view>
+    <view class="tracking-info-row"><text>预计送达</text><text>{{eta || '尚未填写'}}</text></view>
+    <view class="tracking-info-row"><text>最后位置同步</text><text>{{lastUpdated || '尚未同步'}}</text></view>
+    <view class="tracking-timezone">以上同步时间使用北京时间（UTC+8）。</view>
+    <view wx:if="{{error}}" class="tracking-error">{{error}}</view>
+  </view>
+  <view class="tracking-info-card tracking-order-card">
+    <view class="tracking-card-title">当前订单</view>
+    <view class="tracking-order-id" selectable="true">{{id}}</view>
+    <navigator url="/pages/customer-support-chat/customer-support-chat" class="tracking-support"><text>联系店铺客服</text><text>›</text></navigator>
+  </view>
+  <view class="tracking-privacy">仅展示本订单获授权的配送位置与目的地。位置暂停、失联、过期或配送结束后不代表仍在实时更新；地图不推测路线，GPS 也不是送达证明。</view>
 </view>
