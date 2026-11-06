@@ -210,7 +210,7 @@ Page({
     }))
     if(!answer?.confirm||!current())return
     const input=String(answer.content||'').trim()
-    if(!/^\\d{1,7}(\\.\\d{1,2})?$/.test(input)){
+    if(!/^\d{1,7}(\.\d{1,2})?$/.test(input)){
      wx.showToast({title:'请输入有效退款金额',icon:'none'});return
     }
     const [yuan,fen='']=input.split('.')
