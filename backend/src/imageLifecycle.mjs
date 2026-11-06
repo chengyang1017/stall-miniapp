@@ -3,7 +3,7 @@ export const PRODUCT_KEY=/^stores\/([0-9a-f-]{36})\/products\/[0-9a-f-]{36}\.(jp
 export function imageStorageClient({presignedUpload=false}={}){
  const {S3_ENDPOINT:endpoint,S3_ACCESS_KEY_ID:accessKeyId,S3_SECRET_ACCESS_KEY:secretAccessKey}=process.env
  if(!endpoint||!accessKeyId||!secretAccessKey)return null
- return new S3Client({region:process.env.S3_REGION||'auto',endpoint,credentials:{accessKeyId,secretAccessKey},maxAttempts:1,...presignedUpload?{requestChecksumCalculation:'WHEN_REQUIRED'}:{}})
+ return new S3Client({region:process.env.S3_REGION||'auto',endpoint,forcePathStyle:process.env.S3_FORCE_PATH_STYLE==='true',credentials:{accessKeyId,secretAccessKey},maxAttempts:1,...presignedUpload?{requestChecksumCalculation:'WHEN_REQUIRED'}:{}})
 }
 export function privateProofBucket(){
  // An operator must verify bucket/public-gateway policies; code cannot revoke old public URLs.

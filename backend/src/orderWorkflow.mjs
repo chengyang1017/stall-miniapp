@@ -84,7 +84,7 @@ export async function orderWorkflowRoute(req, res, url, pool,simulationPolicy={}
     if(observed.state!=='exists'){reply(res,observed.state==='missing'?404:503,{error:'proof_object_unavailable'});return true}
     if(observed.bytes<1||observed.bytes>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(observed.contentType)){reply(res,409,{error:'invalid_proof_object'});return true}
     if(tracked.etag&&tracked.etag!==observed.etag){reply(res,409,{error:'proof_object_changed_requires_review'});return true}
-    const s3=new S3Client({region:process.env.S3_REGION||'auto',endpoint,credentials:{accessKeyId,secretAccessKey}})
+    const s3=new S3Client({region:process.env.S3_REGION||'auto',endpoint,forcePathStyle:process.env.S3_FORCE_PATH_STYLE==='true',credentials:{accessKeyId,secretAccessKey}})
     const url=await getSignedUrl(s3,new GetObjectCommand({Bucket,Key:key,ResponseCacheControl:'private, no-store, max-age=0'}),{expiresIn:180})
     reply(res,200,{url,expiresInSeconds:180});return true
   }
@@ -105,7 +105,7 @@ export async function orderWorkflowRoute(req, res, url, pool,simulationPolicy={}
     const bucket=privateProofBucket(),endpoint=process.env.S3_ENDPOINT,accessKeyId=process.env.S3_ACCESS_KEY_ID,secretAccessKey=process.env.S3_SECRET_ACCESS_KEY
     if(!bucket){reply(res,503,{error:'proof_private_storage_not_confirmed'});return true}
     if(!bucket||!endpoint||!accessKeyId||!secretAccessKey){reply(res,503,{error:'object_storage_not_configured'});return true}
-    const s3=new S3Client({region:process.env.S3_REGION||'auto',endpoint,credentials:{accessKeyId,secretAccessKey}})
+    const s3=new S3Client({region:process.env.S3_REGION||'auto',endpoint,forcePathStyle:process.env.S3_FORCE_PATH_STYLE==='true',credentials:{accessKeyId,secretAccessKey}})
     if(proofMatch){
       const types={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}
       const ext=body&&types[body.contentType]
