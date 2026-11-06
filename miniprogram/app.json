@@ -20,6 +20,7 @@
     "pages/addresses/addresses",
     "pages/orders/orders",
     "pages/admin-orders/admin-orders",
+    "pages/product-search/product-search",
     "pages/product-detail/product-detail",
     "pages/admin-products/admin-products",
     "pages/admin-categories/admin-categories",

@@ -32,3 +32,5 @@ button{font-weight:600}
 .service-icon{color:#7b45d4;font-size:36rpx;width:42rpx;text-align:center}
 
 .hero-title{max-width:calc(100% - 175rpx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.search-placeholder{font-size:26rpx;color:#9689a5;line-height:52rpx;flex:1;min-width:0}

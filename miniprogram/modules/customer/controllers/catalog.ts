@@ -123,6 +123,7 @@ export function createCatalogPage(isCategory = false) { return catalogOptions({
       this.setData({dealRows:this.data.dealRows.concat(page.products.filter(p=>!seen.has(p.id))),dealsHasMore:page.hasMore,dealCursor:page.nextCursor||''});this.renderCloudProducts()
     }catch(_){if(serial===this.cloudSerial)this.setData({dealError:'优惠商品续页失败，请重试'})}finally{if(serial===this.cloudSerial)this.setData({dealBusy:false})}
   },
+  openSearch(){wx.navigateTo({url:'/pages/product-search/product-search'})},
   inputSearch(e:any){this.setData({searchInput:String(e.detail.value||'')})},
   searchProducts(){this.setData({searchQuery:this.data.searchInput.trim().slice(0,100)});if(cloudCartConfig())this.loadCloudHome();else this.refresh()},
   clearSearch(){this.setData({searchInput:'',searchQuery:''});if(cloudCartConfig())this.loadCloudHome();else this.refresh()},

@@ -1,0 +1,32 @@
+<view class="search-page">
+  <view class="search-header">
+    <view class="search-back" bindtap="goBack" role="button" aria-label="返回">‹</view>
+    <view class="search-bar">
+      <text class="search-icon">⌕</text>
+      <input class="search-field" maxlength="100" value="{{input}}" bindinput="inputSearch" bindconfirm="searchProducts" confirm-type="search" placeholder="搜索商品名称" focus="{{true}}"/>
+      <text wx:if="{{input}}" class="search-clear" bindtap="clearSearch">×</text>
+    </view>
+    <view class="search-action" bindtap="searchProducts" role="button">搜索</view>
+  </view>
+  <view class="search-content">
+    <view wx:if="{{!searched}}" class="search-state"><text class="search-state-icon">⌕</text><view>搜索店铺商品</view><text>输入商品名称，找到你需要的好物</text></view>
+    <block wx:else>
+      <view class="search-result-heading"><text>搜索结果</text><text wx:if="{{!loading && !error}}">已找到 {{rows.length}} 件{{hasMore?' · 还有更多':''}}</text></view>
+      <view wx:if="{{loading}}" class="search-state"><view>正在搜索商品…</view></view>
+      <view wx:if="{{error}}" class="search-error">{{error}}<text bindtap="searchProducts">重试</text></view>
+      <view wx:if="{{!loading && !rows.length && !error}}" class="search-state"><text class="search-state-icon">⌕</text><view>没有找到相关商品</view><text>试试更短或不同的关键词</text></view>
+      <view wx:if="{{rows.length}}" class="search-results">
+        <view wx:for="{{rows}}" wx:key="id" class="search-product" data-id="{{item.id}}" bindtap="openProduct">
+          <image wx:if="{{item.imageUrl}}" class="search-product-image" src="{{item.imageUrl}}" mode="aspectFill"/>
+          <view wx:else class="search-product-empty">商品</view>
+          <view class="search-product-info">
+            <view class="search-product-name">{{item.name}}</view>
+            <view class="search-product-stock">{{item.inventoryText}}</view>
+            <view class="search-product-bottom"><text class="search-price">¥{{item.current}}</text><text wx:if="{{item.discounted}}" class="search-original">¥{{item.original}}</text><text class="search-detail">查看详情 ›</text></view>
+          </view>
+        </view>
+      </view>
+      <button wx:if="{{hasMore}}" class="search-more" bindtap="loadMore" loading="{{loadingMore}}" disabled="{{loadingMore}}">加载更多</button>
+    </block>
+  </view>
+</view>
