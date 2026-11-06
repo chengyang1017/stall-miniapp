@@ -23,5 +23,6 @@ export function customerOrdersRequest(cfg:{apiBase:string;storeSlug:string},id?:
    if(identity!==supportIdentity())reject(Error('identity_changed'))
    else if(res.statusCode===200)resolve(res.data)
    else reject(new Error('http_'+res.statusCode))
- },fail:reject}))
+ },fail:(error:any)=>reject(new Error('network_'+(String(error?.errMsg||'').includes('domain')?'domain':'unavailable')))}))
+}
 }

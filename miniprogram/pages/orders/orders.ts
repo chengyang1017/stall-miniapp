@@ -66,7 +66,7 @@ Page({
   serial:0,phoneOrdersSerial:0,visible:false,listContext:'',
   data: {
     phoneOrders:[] as any[],phoneOrdersStatus:'',phoneOrdersLoading:false,phoneOrdersHasMore:false,phoneOrdersNextOffset:0,
-    cloudMode:false,loading:false,error:'',hasMore:false,nextCursor:'',
+    cloudMode:false,loading:false,error:'',countsKnown:false,hasMore:false,nextCursor:'',
     tabs: TABS.map(t => ({ ...t, count: 0 })),
     activeTab: 'all' as OrderTab,
     allOrders: [] as any[],
@@ -126,6 +126,7 @@ Page({
   onHide(){this.visible=false;this.phoneOrdersSerial++;this.serial++;this.setData({createdId:''});if(this.data.cloudMode||customerOrdersConfig())this.setData({allOrders:[],visibleOrders:[],loading:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))})},
   onUnload(){this.visible=false;this.phoneOrdersSerial++;this.serial++;this.listContext=''},
   onPullDownRefresh(){this.refresh().finally(()=>wx.stopPullDownRefresh())},
+  goOrderLogin(){wx.switchTab({url:'/pages/profile/profile'})},
   onReachBottom(){this.loadMore()},
   syncListContext(): boolean {
     const cloud = !!customerOrdersConfig()
@@ -134,7 +135,7 @@ Page({
     const hadContext = !!this.listContext
     this.serial++
     this.listContext = context
-    this.setData({cloudMode:cloud,allOrders:[],visibleOrders:[],loading:false,error:'',nextCursor:'',hasMore:false,
+    this.setData({cloudMode:cloud,allOrders:[],visibleOrders:[],loading:false,error:'',countsKnown:false,nextCursor:'',hasMore:false,
       tabs:TABS.map(t=>({...t,count:0})),...hadContext?{createdId:''}:{}})
     return true
   },
@@ -156,7 +157,7 @@ Page({
     const cloud=customerOrdersConfig()
     if(!cloud||(!reset&&this.data.loading))return
     const serial=reset?++this.serial:this.serial,context=supportIdentity(),tab=this.data.activeTab
-    this.setData({cloudMode:true,error:'',loading:true,...reset?{allOrders:[],visibleOrders:[],nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))}:{}})
+    this.setData({cloudMode:true,error:'',loading:true,...reset?{allOrders:[],visibleOrders:[],countsKnown:false,nextCursor:'',hasMore:false,tabs:TABS.map(t=>({...t,count:0}))}:{}})
     try{
       const data=await customerOrdersRequest(cloud,undefined,{tab,limit:20,...!reset?{cursor:this.data.nextCursor}:{}})
       if(!this.currentCloudRequest(serial,context))return
@@ -168,15 +169,29 @@ Page({
         seen.add(order.id)
         orders.push(order)
       }
-      this.setData({allOrders:orders,visibleOrders:orders.filter(o=>this.entryMatches(o)),hasMore:data.hasMore,nextCursor:data.hasMore?data.nextCursor:'',tabs:TABS.map(t=>({...t,count:Number(data.counts&&data.counts[t.key])||0}))})
-    }catch(_){if(this.currentCloudRequest(serial,context))this.setData({error:'云端订单加载失败，请检查登录后重试；已读取的订单仍保留，未读取本机订单'})}
+      this.setData({allOrders:orders,visibleOrders:orders.filter(o=>this.entryMatches(o)),countsKnown:true,hasMore:data.hasMore,nextCursor:data.hasMore?data.nextCursor:'',tabs:TABS.map(t=>({...t,count:Number(data.counts&&data.counts[t.key])||0}))})
+    }catch(error:any){if(this.currentCloudRequest(serial,context)){
+      const message=String(error?.message||error)
+      const issue=message==='not_logged_in'?'尚未微信登录，请到「我的」登录后重新读取':
+        /http_401/.test(message)?'微信登录会话已失效（HTTP 401），请到「我的」重新登录':
+        /http_403/.test(message)?'当前登录身份没有读取订单的权限（HTTP 403）':
+        /http_404/.test(message)?'订单服务接口不存在（HTTP 404），请确认 Render 已部署最新后端':
+        /http_5\d\d/.test(message)?'订单服务暂时不可用（'+(message.match(/http_(5\d\d)/)?.[1]||'5xx')+'），请检查 Render 服务日志':
+        message==='network_domain'?'微信拦截了请求域名，请检查 request 合法域名设置':
+        message.startsWith('network_')?'订单网络请求失败，请检查开发者工具 Network / Console':
+        /identity_changed/.test(message)?'登录身份已变化，请重新打开订单页':
+        /invalid_order/.test(message)?'服务器返回的订单数据格式不符合要求':
+        /invalid_order_page/.test(message)?'服务器返回的订单列表分页数据不符合要求':
+        '订单读取失败（'+message.slice(0,50)+'），请检查网络响应'
+      this.setData({error:issue,countsKnown:false})
+    }}
     finally{if(serial===this.serial)this.setData({loading:false})}
   },
   async refresh() {
     if(customerOrdersConfig()){await this.loadCloudPage(true);return}
     this.syncListContext()
     this.serial++
-    this.setData({cloudMode:false,loading:false,error:'',hasMore:false,nextCursor:''})
+    this.setData({cloudMode:false,loading:false,error:'',countsKnown:true,hasMore:false,nextCursor:''})
     const orders = (loadWorkflowOrders() as any[]).map(normalize)
     orders.sort((a, b) => (Date.parse(b.createdAt || '') || 0) - (Date.parse(a.createdAt || '') || 0))
     this.setData({
