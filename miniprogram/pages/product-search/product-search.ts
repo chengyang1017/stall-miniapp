@@ -8,7 +8,7 @@ interface SearchProduct { id:string;name:string;imageUrl:string;current:string;o
 function presentRemote(p:any):SearchProduct{
  const cents=Number(p.effectivePriceCents??p.priceCents),original=Number(p.priceCents)
  return {id:String(p.id),name:String(p.name||''),imageUrl:String(p.imageUrl||''),current:(cents/100).toFixed(2),original:(original/100).toFixed(2),
-  discounted:cents<original,available:p.active!==false&&!p.soldOut&&stockAllows(p),
+  discounted:cents<original,available:(p as any).active!==false&&!p.soldOut&&stockAllows(p),
   inventoryText:p.soldOut?'已售罄':p.stockMode==='finite'?'库存 '+Number(p.stockQuantity||0)+' 件':'不限库存'}
 }
 Page({
@@ -30,7 +30,7 @@ Page({
   this.setData({query,searched:true,rows:[],loading:true,loadingMore:false,error:'',hasMore:false,nextCursor:''})
   try{
    let rows:SearchProduct[],hasMore=false,nextCursor=''
-   if(cfg){const page=await getRemoteProductPage(cfg.apiBase,cfg.storeSlug,{q:query});rows=page.products.filter(p=>p.active!==false).map(presentRemote);hasMore=page.hasMore;nextCursor=page.nextCursor||''}
+   if(cfg){const page=await getRemoteProductPage(cfg.apiBase,cfg.storeSlug,{q:query});rows=page.products.filter(p=>(p as any).active!==false).map(presentRemote);hasMore=page.hasMore;nextCursor=page.nextCursor||''}
    else{const store=loadStore();rows=store.products.filter(p=>productIsPublished(p)&&p.name.toLowerCase().includes(query.toLowerCase()))
      .map(p=>({id:p.id,name:p.name,imageUrl:p.imageUrl||'',current:money(effectivePrice(p)),original:money(p.price),
        discounted:effectivePrice(p)<p.price,available:!p.soldOut&&stockAllows(p),
@@ -46,7 +46,7 @@ Page({
   try{const page=await getRemoteProductPage(cfg.apiBase,cfg.storeSlug,{q:query,cursor})
    if(!this.visible||serial!==this.serial||context!==cloudIdentity())return
    const seen=new Set(this.data.rows.map(p=>p.id))
-   this.setData({rows:this.data.rows.concat(page.products.filter(p=>p.active!==false&&!seen.has(p.id)).map(presentRemote)),
+   this.setData({rows:this.data.rows.concat(page.products.filter(p=>(p as any).active!==false&&!seen.has(p.id)).map(presentRemote)),
     hasMore:page.hasMore,nextCursor:page.nextCursor||'',loadingMore:false})
   }catch(_){if(this.visible&&serial===this.serial)this.setData({loadingMore:false,error:'加载更多失败，请重试'})}
  },
