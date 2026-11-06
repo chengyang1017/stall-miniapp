@@ -12,7 +12,8 @@
     "check:build-output": "node scripts/check-build-output.mjs",
     "preview:phone:update": "node scripts/update-phone-preview.mjs",
     "verify:frontend": "node scripts/verify-frontend.mjs",
-    "verify": "node scripts/verify-sandbox.mjs"
+    "verify": "node scripts/verify-sandbox.mjs",
+    "preview:phone:sandbox:update": "node scripts/update-phone-preview.mjs .local/phone-sandbox.json"
   },
   "keywords": [],
   "author": "",
