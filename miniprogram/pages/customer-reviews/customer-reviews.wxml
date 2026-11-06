@@ -15,6 +15,7 @@
         <button size="mini" bindtap="refresh" disabled="{{busy}}">重新核验</button>
       </view>
       <view wx:if="{{eligible && eligibilityReason}}" class="review-product-hint">{{eligibilityReason}}</view>
+      <view wx:if="{{eligible && testReview}}" class="review-test-notice">Sandbox 测试评价：仅用于验证评价与审核流程，不作为真实已购评价公开展示。</view>
     </view>
 
     <view class="reviews-card">

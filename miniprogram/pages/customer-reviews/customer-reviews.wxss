@@ -52,3 +52,5 @@ page{background:#f4f6f5;color:#24392d}
 .review-more-btn{margin:25rpx 0 0!important}
 .review-login-footer{text-align:center;padding:10rpx 0 30rpx}
 .review-login-footer button{margin:0!important;color:#87948a!important;border:0!important;background:transparent!important;font-size:22rpx!important}
+
+.review-test-notice{padding:17rpx 18rpx;background:#eef5ff;border-radius:12rpx;color:#3e668d;font-size:22rpx;line-height:1.6;margin-top:14rpx}
