@@ -17,7 +17,9 @@ export function sandboxPaymentView(data:any){
   requiresPaymentReview:latestAttempt?.status==='review'||latestAttempt?.status==='processing'||latestAttempt?.status==='creating',
   hasMismatchRefund:mismatchRefunds.length>0,
   hasSuccessfulMismatchRefund:mismatchRefunds.some((r:any)=>r.status==='succeeded'&&!!r.refundId),
-  stale:data.stale===true,canRefund:data.canRefund===true}
+  stale:data.stale===true,canRefund:data.canRefund===true,
+  refundableAmountCents:Number.isSafeInteger(data.refundableAmountCents)&&data.refundableAmountCents>0?data.refundableAmountCents:0,
+  refundableAmountText:(Math.max(0,Number(data.refundableAmountCents)||0)/100).toFixed(2)}
 }
 
 /** Text-only export of an immutable server receipt; never creates or changes a payment. */

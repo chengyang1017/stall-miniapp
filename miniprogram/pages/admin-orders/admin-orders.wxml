@@ -99,7 +99,10 @@
           <view>已保存通知：{{sandboxReview.notificationCount}} · 最近通知：{{sandboxReview.lastNotificationAt || '暂无'}}</view>
         </view>
       </view>
-      <button wx:if="{{sandbox.canRefund}}" size="mini" bindtap="requestSandboxRefund" disabled="{{sandboxRefundBusy}}">申请全额 / 部分测试退款</button>
+      <view wx:if="{{sandbox.canRefund}}" class="order-detail-muted">剩余可申请测试退款：¥{{sandbox.refundableAmountText}}</view>
+      <button wx:if="{{sandbox.canRefund}}" size="mini" data-mode="full" bindtap="requestSandboxRefund" disabled="{{sandboxRefundBusy}}">退还剩余全部金额</button>
+      <button wx:if="{{sandbox.canRefund}}" size="mini" data-mode="partial" bindtap="requestSandboxRefund" disabled="{{sandboxRefundBusy}}">申请部分退款</button>
+      <view wx:if="{{sandboxRefundBusy}}" class="order-detail-muted">正在核对退款余额或提交申请，请勿重复操作。</view>
     </view>
     <view wx:if="{{expandedOrderIds[item.id]}}" class="order-details">
     <view wx:for="{{item.items}}" wx:for-item="product" wx:key="lineKey" class="row item"><text>{{product.name}} × {{product.quantity}}</text><text>¥{{product.subtotal}}</text></view>

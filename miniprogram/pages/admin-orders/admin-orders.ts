@@ -184,21 +184,61 @@ Page({
    if(current())this.setData({sandboxReviewError:'退款核销结果未确认；请先刷新记录核对，不要重复操作'})
   }finally{if(current())this.setData({sandboxRefundReleaseBusy:false})}
  },
- requestSandboxRefund(){
-  const cfg=merchantOrderConfig(),id=this.data.sandboxOrderId,s=this.data.sandbox,context=merchantOrderContextKey(),serial=this.serial
-  if(!cfg||!s?.canRefund||this.data.sandboxRefundBusy||!this.visible)return
+ async requestSandboxRefund(e:any){
+  const cfg=merchantOrderConfig(),id=this.data.sandboxOrderId,context=merchantOrderContextKey(),serial=this.serial
+  const mode=String(e.currentTarget.dataset.mode||'partial')
+  if(!cfg||!id||!['full','partial'].includes(mode)||!this.data.sandbox?.canRefund||
+    this.data.sandboxRefundBusy||!this.visible)return
   const current=()=>this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&id===this.data.sandboxOrderId
-  wx.showModal({title:'Sandbox 测试退款',content:'输入退款金额（元）；仅测试交易，原始小票保留。',editable:true,placeholderText:'例如 1.00',success:async(r:any)=>{
-   if(!r.confirm||!current())return
-   if(!/^\d{1,7}(\.\d{1,2})?$/.test(r.content||'')){wx.showToast({title:'请输入有效金额',icon:'none'});return}
-   const amount=Math.round(Number(r.content)*100),reserved=s.refunds.filter((x:any)=>x.kind==='merchant').reduce((n:number,x:any)=>n+Number(x.amountCents),0)
+  // Acquire the lock before reading the balance or showing a modal.
+  this.setData({sandboxRefundBusy:true,sandboxError:''})
+  try{
+   const fresh=sandboxPaymentView(await sandboxPaymentRequest(cfg,id,true))
+   if(!current())return
+   this.setData({sandbox:fresh})
+   const remaining=fresh.refundableAmountCents
+   if(!fresh.canRefund||!Number.isSafeInteger(remaining)||remaining<=0){
+    this.setData({sandboxError:'当前没有可申请的剩余退款金额，请核对记录'});return
+   }
+   let amount=remaining
+   if(mode==='partial'){
+    const answer=await new Promise<any>(resolve=>wx.showModal({
+     title:'部分测试退款',
+     content:'当前剩余可申请 ¥'+fresh.refundableAmountText+'。输入本次退款金额（人民币元）：',
+     editable:true,placeholderText:'例如 1.00',
+     success:resolve,fail:()=>resolve(null)
+    }))
+    if(!answer?.confirm||!current())return
+    const input=String(answer.content||'').trim()
+    if(!/^\\d{1,7}(\\.\\d{1,2})?$/.test(input)){
+     wx.showToast({title:'请输入有效退款金额',icon:'none'});return
+    }
+    const [yuan,fen='']=input.split('.')
+    amount=Number(yuan)*100+Number((fen+'00').slice(0,2))
+    if(!Number.isSafeInteger(amount)||amount<=0||amount>remaining){
+     wx.showToast({title:'金额超过可退余额或为零',icon:'none'});return
+    }
+   }
+   const amountText=(amount/100).toFixed(2)
+   const approved=await new Promise<boolean>(resolve=>wx.showModal({
+    title:mode==='full'?'退还全部剩余测试款':'确认部分测试退款',
+    content:'本次申请 ¥'+amountText+'；当前剩余可退 ¥'+fresh.refundableAmountText+'。申请会交由后台退款队列执行，并不代表 Stripe 已退款成功。原始小票保留。',
+    confirmText:'提交退款',cancelText:'取消',
+    success:(r:any)=>resolve(r.confirm===true),fail:()=>resolve(false)
+   }))
+   if(!approved||!current())return
+   const reserved=fresh.refunds.filter((x:any)=>x.kind==='merchant').reduce((n:number,x:any)=>n+Number(x.amountCents),0)
    const key='refund_'+id+'_'+amount+'_'+reserved
-   this.setData({sandboxRefundBusy:true})
-   try{await sandboxPaymentRequest(cfg,id,true,'sandbox-refund',{amountCents:amount},key)
-    if(current())await this.viewSandboxPayment({currentTarget:{dataset:{id}}})
-   }catch(_){if(current())this.setData({sandboxError:'退款申请未确认，请查询记录后重试；不得当作已退款'})}
-   finally{if(current())this.setData({sandboxRefundBusy:false})}
-  }})
+   const result=await sandboxPaymentRequest(cfg,id,true,'sandbox-refund',{amountCents:amount},key)
+   if(!current())return
+   const refreshed=sandboxPaymentView(await sandboxPaymentRequest(cfg,id,true))
+   if(!current())return
+   this.setData({sandbox:refreshed})
+   const recorded=refreshed.refunds.find((r:any)=>r.id===result.refund?.id&&r.kind==='merchant'&&Number(r.amountCents)===amount)
+   this.setData({sandboxError:recorded?'已提交 ¥'+amountText+' 测试退款申请（'+recorded.label+'）；请等待渠道确认。':'退款请求已提交，但无法核对记录；请刷新后再操作，勿重复申请'})
+  }catch(_){
+   if(current())this.setData({sandboxError:'退款结果未确认；请先刷新支付／退款记录，不要重复申请'})
+  }finally{if(current())this.setData({sandboxRefundBusy:false})}
  },
  loaded:[] as any[],localRows:[] as any[],localFiltered:[] as any[],counts:emptyCounts(),context:'',serial:0,nextCursor:'',localOffset:0,visible:false,
  data:{expandedOrderIds:{} as Record<string,boolean>,sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,sandboxEvidenceMeta:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,

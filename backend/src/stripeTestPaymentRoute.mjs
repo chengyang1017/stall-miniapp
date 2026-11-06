@@ -190,14 +190,18 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
    if(rows[0]?.status==='review')stale=true
    else if(rows[0])try{const a=await materializeSandboxAttempt(pool,client,rows[0]);await applySandboxObservation(pool,a,await observeSandboxSession(pool,client,a))}catch{stale=true}
    const state=await readSandboxPayment(pool,orderId)
-   let canRefund=false
+   let canRefund=false,refundableAmountCents=0
    if(env.STRIPE_TEST_REFUNDS_ENABLED==='true'&&store&&['owner','manager'].includes(store.role)){
-    const {rows:[balance]}=await pool.query(`SELECT EXISTS (
-     SELECT 1 FROM payment_events e
-     WHERE e.order_id=$1 AND e.provider='stripe:sandbox' AND e.event_type='payment_succeeded'
-     AND e.amount_cents>COALESCE((SELECT SUM(j.amount_cents) FROM stripe_test_refund_jobs j
-      WHERE j.order_id=$1 AND j.kind='merchant'),0)) AS "canRefund"`,[orderId])
-    canRefund=balance?.canRefund===true
+    // The server is the source of truth for remaining refundable balance.
+    // Include all previously reserved merchant refunds, even under review.
+    const {rows:[balance]}=await pool.query(`SELECT GREATEST(0,
+      COALESCE((SELECT amount_cents FROM payment_events e
+       WHERE e.order_id=$1 AND e.provider='stripe:sandbox' AND e.event_type='payment_succeeded'
+       ORDER BY e.id LIMIT 1),0)-
+      COALESCE((SELECT SUM(j.amount_cents) FROM stripe_test_refund_jobs j
+       WHERE j.order_id=$1 AND j.kind='merchant'),0)) AS "remaining"`,[orderId])
+    refundableAmountCents=Number(balance?.remaining||0)
+    canRefund=Number.isSafeInteger(refundableAmountCents)&&refundableAmountCents>0
    }
    // A scoped customer may resume the same still-open hosted checkout without
    // issuing a new creation POST. Never expose the URL to merchant status reads.
@@ -214,7 +218,7 @@ export async function stripeTestPaymentRoute(req,res,url,pool,env=process.env,de
      ORDER BY a.created_at DESC LIMIT 1`,[orderId])
     if(resume)resumeCheckout={channel:resume.channel,url:resume.checkout_url}
    }
-   reply(res,200,{...state,stale,canRefund,...!merchant?{resumeCheckout}:{}});return true
+   reply(res,200,{...state,stale,canRefund,...merchant?{refundableAmountCents}:{resumeCheckout}});return true
   }
   if(req.method!=='POST'){reply(res,405,{error:'method_not_allowed'});return true}
   if(action==='sandbox-refund'){
