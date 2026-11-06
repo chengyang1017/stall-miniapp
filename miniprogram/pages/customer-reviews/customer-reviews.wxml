@@ -15,7 +15,7 @@
         <button size="mini" bindtap="refresh" disabled="{{busy}}">重新核验</button>
       </view>
       <view wx:if="{{eligible && eligibilityReason}}" class="review-product-hint">{{eligibilityReason}}</view>
-      <view wx:if="{{eligible && testReview}}" class="review-test-notice">Sandbox 测试评价：仅用于验证评价与审核流程，不作为真实已购评价公开展示。</view>
+      <view wx:if="{{eligible && testReview}}" class="review-test-notice">Sandbox 测试评价：仅用于验证评价与回复流程，不作为真实已购评价公开展示。</view>
     </view>
 
     <view class="reviews-card">
@@ -58,9 +58,9 @@
       <button class="review-preview-btn" bindtap="preview" disabled="{{busy}}">{{previewing ? '收起预览' : '预览评价'}}</button>
       <view wx:if="{{previewing}}" class="review-preview">
         <view class="review-preview-stars">{{rating}} 星 · {{content || '仅评分'}}</view>
-        <view>{{photos.length}} 张图片 · 提交后等待平台审核</view>
+        <view>{{photos.length}} 张图片 · 提交后直接发布</view>
       </view>
-      <button class="review-submit-btn" type="primary" bindtap="submit" loading="{{busy}}" disabled="{{busy || !eligible}}">{{pendingSubmit ? '使用原编号重试提交' : '提交评价并等待审核'}}</button>
+      <button class="review-submit-btn" type="primary" bindtap="submit" loading="{{busy}}" disabled="{{busy || !eligible}}">{{pendingSubmit ? '使用原编号重试提交' : '发布评价'}}</button>
       <button class="review-back-btn" bindtap="back" disabled="{{busy}}">返回我的评价</button>
     </view>
   </block>
@@ -72,8 +72,8 @@
       <view wx:if="{{!loading && !rows.length}}" class="review-list-empty"><view class="review-empty-icon">☆</view><view>暂无评价记录</view><view class="review-field-hint">已购买商品且通过资格核验后，可发表评价。</view></view>
       <view wx:for="{{rows}}" wx:key="id" class="review-list-item">
         <review-card row="{{item}}" bind:images="images"/>
-        <view class="review-list-meta">审核：{{item.statusText}} · 回复：{{item.replyStatusText}}</view>
-        <view wx:if="{{item.publicRating}}" class="review-public-note">当前公开版本：{{item.publicRating}} 星，{{item.publicContent}}。修改候选通过审核后才替换公开内容。</view>
+        <view class="review-list-meta">状态：{{item.statusText}} · 回复：{{item.replyStatusText}}</view>
+        <view wx:if="{{item.publicRating}}" class="review-public-note">当前公开版本：{{item.publicRating}} 星，{{item.publicContent}}。修改后直接更新公开内容（被隐藏的评价除外）。</view>
         <view class="review-list-actions"><button wx:if="{{item.canEdit}}" size="mini" data-id="{{item.id}}" bindtap="edit" disabled="{{busy}}">修改评价</button><button wx:if="{{!item.withdrawnAt}}" size="mini" data-id="{{item.id}}" bindtap="withdraw" disabled="{{busy}}">撤回评价</button></view>
       </view>
       <button wx:if="{{hasMore}}" class="review-more-btn" bindtap="more" disabled="{{loading}}">加载更多</button>

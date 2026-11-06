@@ -129,6 +129,7 @@ export async function productReviewRoute(req,res,url,pool){
    }else{
     r=(await db.query('SELECT *,clock_timestamp() AS server_now FROM product_reviews WHERE store_id=$1 AND id=$2 FOR UPDATE',[store.id,key(item[1])])).rows[0];if(!r)fail(404,'review_not_found')
     if(r.withdrawn_at)fail(409,'review_withdrawn')
+    if(kind==='reply'&&r.moderation_status==='hidden')fail(409,'hidden_review_cannot_be_replied_to')
     if(kind==='review'){
      if(r.customer_subject!==subject)fail(403,'forbidden')
      if(!Number.isInteger(b.expectedVersion)||b.expectedVersion!==r.version)fail(409,'review_changed_refresh')
@@ -140,15 +141,15 @@ export async function productReviewRoute(req,res,url,pool){
    }
    if(kind==='review')await checkReviewImages(db,store.id,subject,r.order_item_id,ids,r.id)
    const safety=await inspectReviewContent({kind,content,rating,imageIds:ids,storeId:store.id,reviewId:r.id})
-   const revision=(await db.query(`INSERT INTO product_review_revisions(store_id,review_id,kind,actor_subject,client_key,fingerprint,rating,content,image_ids,safety_result) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb) RETURNING id`,[store.id,r.id,kind,subject,b.clientKey,fp,rating,content,ids,JSON.stringify(safety)])).rows[0]
+   const revision=(await db.query(`INSERT INTO product_review_revisions(store_id,review_id,kind,actor_subject,client_key,fingerprint,rating,content,image_ids,safety_result,moderation_status,moderated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,'approved',clock_timestamp()) RETURNING id`,[store.id,r.id,kind,subject,b.clientKey,fp,rating,content,ids,JSON.stringify(safety)])).rows[0]
    if(kind==='review'){
-    await db.query("UPDATE product_reviews SET current_revision_id=$2,moderation_status=CASE WHEN moderation_status='hidden' THEN 'hidden' ELSE 'pending' END,edit_count=edit_count+$3,version=version+1,updated_at=clock_timestamp() WHERE id=$1",[r.id,revision.id,create?0:1])
+    await db.query("UPDATE product_reviews SET current_revision_id=$2,published_revision_id=CASE WHEN moderation_status='hidden' THEN published_revision_id ELSE $2 END,moderation_status=CASE WHEN moderation_status='hidden' THEN 'hidden' ELSE 'approved' END,edit_count=edit_count+$3,version=version+1,updated_at=clock_timestamp() WHERE id=$1",[r.id,revision.id,create?0:1])
     if(ids.length)await db.query('UPDATE product_review_images SET bound_review_id=$1 WHERE id=ANY($2::uuid[])',[r.id,ids])
    }else{
-    await db.query('INSERT INTO product_review_replies(store_id,review_id,current_revision_id) VALUES($1,$2,$3) ON CONFLICT(review_id) DO UPDATE SET current_revision_id=$3,version=product_review_replies.version+1',[store.id,r.id,revision.id]);await db.query('UPDATE product_reviews SET version=version+1,updated_at=clock_timestamp() WHERE id=$1',[r.id])
+    await db.query('INSERT INTO product_review_replies(store_id,review_id,current_revision_id,published_revision_id) VALUES($1,$2,$3,$3) ON CONFLICT(review_id) DO UPDATE SET current_revision_id=$3,published_revision_id=$3,version=product_review_replies.version+1',[store.id,r.id,revision.id]);await db.query('UPDATE product_reviews SET version=version+1,updated_at=clock_timestamp() WHERE id=$1',[r.id])
    }
-   await event(db,r,subject,create?'create':kind==='reply'?'reply_revision':'customer_revision','submitted_pending',revision.id)
-   await db.query('COMMIT');send(res,200,{reviewId:r.id,revisionId:revision.id,moderationStatus:'pending'});return true
+   await event(db,r,subject,create?'create':kind==='reply'?'reply_revision':'customer_revision','published_without_prior_review',revision.id)
+   await db.query('COMMIT');send(res,200,{reviewId:r.id,revisionId:revision.id,moderationStatus:r.moderation_status==='hidden'?'hidden':'approved'});return true
   }
   if(item&&req.method==='POST'){
    const r=(await db.query('SELECT * FROM product_reviews WHERE store_id=$1 AND id=$2 FOR UPDATE',[store.id,key(item[1])])).rows[0];if(!r)fail(404,'review_not_found')
