@@ -1,14 +1,14 @@
 @import "./customer-theme.wxss";
 @import "./product-placeholder.wxss";.home-body{padding:0 24rpx 38rpx}
 .home-sync-status { height:44rpx;line-height:44rpx;font-size:22rpx;color:#8d7eaa;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.deals-section{position:relative;overflow:hidden;margin:10rpx 0 20rpx;border-radius:28rpx;padding:22rpx 16rpx 20rpx;background:linear-gradient(135deg,#b74ac6 0%,#a552d6 51%,#ddb0ed 100%);box-shadow:0 10rpx 28rpx #a45bd329}
+.deals-section{position:relative;overflow:hidden;margin:10rpx 0 24rpx;border-radius:28rpx;padding:22rpx 16rpx 22rpx;background:linear-gradient(125deg,#bc52bb 0%,#ae62d7 55%,#dca0e9 100%);box-shadow:0 10rpx 28rpx #a45bd329}
 .deals-section::before{content:"";position:absolute;right:-35rpx;top:-90rpx;width:270rpx;height:250rpx;border-radius:50%;background:rgba(255,255,255,.10);pointer-events:none}
 .deals-heading{display:flex;align-items:center;justify-content:space-between;gap:14rpx;position:relative;z-index:1;padding:0 7rpx 16rpx}
 .deals-title{display:flex;align-items:center;gap:12rpx;font-size:31rpx;font-weight:750;color:#fff;white-space:nowrap}
 .deals-title-icon{width:43rpx;height:43rpx;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:12rpx;color:#b34dcc;font-size:29rpx;font-weight:800;transform:rotate(-10deg)}
 .deals-subtitle{font-size:21rpx;color:#fff;opacity:.87;white-space:nowrap}
 .deals-scroll,.category-scroll{width:100%;white-space:nowrap;position:relative;z-index:1}
-.deals-track,.category-track{display:flex;gap:12rpx}
+.deals-track,.category-track{display:flex;gap:10rpx}
 .product-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16rpx}
 .product{min-width:0;background:#fff;border-radius:24rpx;padding:14rpx;box-shadow:0 6rpx 20rpx #50308b0c;display:flex;gap:14rpx;align-items:center}
 .product-media{position:relative;width:108rpx;height:116rpx;flex:0 0 108rpx;border-radius:17rpx;overflow:hidden;background:#f1eafb}
@@ -22,17 +22,19 @@
 .product .price{font-size:25rpx}
 .product .old{display:block;margin:0;font-size:18rpx}
 .product .round-add{width:40rpx;height:40rpx;line-height:40rpx;font-size:27rpx}
-.deal-product{flex:0 0 166rpx;width:166rpx;min-width:0;box-sizing:border-box;white-space:normal;background:rgba(255,255,255,.97);border-radius:21rpx;padding:10rpx;overflow:hidden}
+.deal-product{flex:0 0 156rpx;width:156rpx;min-width:0;box-sizing:border-box;white-space:normal;background:rgba(255,255,255,.97);border-radius:21rpx;padding:9rpx;overflow:hidden;box-shadow:0 4rpx 14rpx #74318b20}
 .deal-product-content{display:block}
-.deal-media{height:132rpx;width:100%;position:relative;overflow:hidden;border-radius:14rpx;background:linear-gradient(135deg,#fff4eb,#f2e6fc)}
+.deal-media{height:128rpx;width:100%;position:relative;overflow:hidden;border-radius:14rpx;background:linear-gradient(135deg,#fff4eb,#f2e6fc)}
 .deal-media image{width:100%;height:100%;display:block}
 .deal-no-image{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#ad96b6;font-size:21rpx}
-.deal-percent{position:absolute;right:0;top:0;padding:4rpx 9rpx;border-radius:0 12rpx 0 12rpx;background:#ff4569;color:white;font-size:21rpx;font-weight:750}
-.deal-name{font-size:23rpx;font-weight:700;color:#33213a;margin:10rpx 0 5rpx;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deal-percent{position:absolute;right:0;top:0;padding:5rpx 9rpx;border-radius:20rpx;background:#ff4569;color:white;font-size:21rpx;font-weight:750;box-shadow:0 3rpx 8rpx #d8245740}
+.deal-name{font-size:23rpx;font-weight:700;color:#33213a;margin:9rpx 0 5rpx;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .deal-prices{display:flex;align-items:baseline;gap:6rpx;white-space:nowrap;overflow:hidden}
 .deal-price{color:#cd205c;font-size:25rpx;font-weight:800}
 .deal-original{font-size:17rpx;color:#9a91a3;text-decoration:line-through}
 .deals-load-more{text-align:center;padding:17rpx 0 0;color:#fff;font-size:23rpx}
+.deals-empty{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12rpx;min-height:106rpx;padding:12rpx 18rpx;box-sizing:border-box;border-radius:18rpx;background:#ffffff25;color:#fff;font-size:25rpx}
+.deals-empty-link{font-size:23rpx;color:#fff;font-weight:650;white-space:nowrap}
 .feature-swiper{height:190rpx;margin-top:20rpx}
 .feature-banner,.category-banner{position:relative;display:flex;align-items:center;justify-content:space-between;overflow:hidden;background:radial-gradient(at 70% 100%,#ec8bbd,transparent 75%),linear-gradient(120deg,#9d41df,#6536dc);border-radius:28rpx;color:#fff;padding:24rpx 30rpx;height:190rpx;box-sizing:border-box;margin-top:20rpx}
 .feature-swiper .feature-banner{margin:0;height:190rpx}

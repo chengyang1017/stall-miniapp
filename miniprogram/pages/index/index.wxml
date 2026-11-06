@@ -26,12 +26,12 @@
 </view>
 <view class="home-catalog" hidden="{{entryBlocking || cloudConnectionError || !!entryError}}">
 <view wx:if="{{businessInfo.label || businessInfo.notice}}" class="notice">{{businessInfo.label}} {{businessInfo.notice}}</view>
-<view class="deals-section" wx:if="{{discountedProducts.length}}">
+<view class="deals-section">
   <view class="deals-heading">
     <view class="deals-title"><text class="deals-title-icon">%</text><text>折扣专区</text></view>
     <text class="deals-subtitle">精选优惠商品</text>
   </view>
-  <scroll-view scroll-x class="deals-scroll" show-scrollbar="{{false}}">
+  <scroll-view wx:if="{{discountedProducts.length}}" scroll-x class="deals-scroll" show-scrollbar="{{false}}">
     <view class="deals-track">
       <view wx:for="{{discountedProducts}}" wx:key="id" class="deal-product" data-trace-list="discountedProducts" data-trace-key="{{item.id}}">
         <render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="home" list-name="discountedProducts" row-key="{{item.id}}"/>
@@ -47,7 +47,11 @@
       </view>
     </view>
   </scroll-view>
-  <view wx:if="{{dealsHasMore || dealError}}" class="deals-load-more" bindtap="loadMoreDeals">{{dealError || (dealBusy ? '加载中…' : '查看更多折扣商品 ›')}}</view>
+  <view wx:if="{{!discountedProducts.length && !cloudBusy && !entryLoading}}" class="deals-empty">
+    <text>暂无折扣商品</text>
+    <text class="deals-empty-link" bindtap="goCategories">浏览全部商品 ›</text>
+  </view>
+  <view wx:if="{{discountedProducts.length && (dealsHasMore || dealError)}}" class="deals-load-more" bindtap="loadMoreDeals">{{dealError || (dealBusy ? '加载中…' : '查看更多折扣商品 ›')}}</view>
 </view>
 <swiper wx:if="{{discountedProducts.length}}" class="feature-swiper" indicator-dots circular indicator-active-color="#ffffff">
 <swiper-item wx:for="{{discountedProducts}}" wx:key="id">
