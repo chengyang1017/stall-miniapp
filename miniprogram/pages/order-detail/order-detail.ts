@@ -47,6 +47,11 @@ Page({
       this.loadSandboxPayment()
     },5000)
   },
+  toggleReceiptDetails(e:any){
+    const id=String(e.currentTarget.dataset.id||'')
+    if(!id||!this.data.sandbox?.receipts?.some((r:any)=>r.id===id))return
+    this.setData({receiptExpandedId:this.data.receiptExpandedId===id?'':id})
+  },
   copySandboxReceipt(e:any){
     if(!this.detailVisible||this.phoneReadOnly)return
     const id=String(e.currentTarget.dataset.id||'')
@@ -195,7 +200,7 @@ Page({
     }
   },
   phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
-  data: { sandbox:null as any,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
+  data: { sandbox:null as any,receiptExpandedId:'',sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
     this.phoneReadOnly=options.phone==='1'
     this.setData({phoneReadOnly:this.phoneReadOnly})

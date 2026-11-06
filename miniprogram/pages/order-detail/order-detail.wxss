@@ -1,2 +1,50 @@
 page{background:#f5f6f8}.order-detail-page{padding:28rpx;padding-bottom:80rpx}.order-detail-empty{text-align:center;padding:90rpx 25rpx;color:#999}.order-detail-card{background:#fff;border-radius:18rpx;padding:28rpx;margin-bottom:22rpx}.order-detail-title{font-size:29rpx;font-weight:650;color:#25372d;margin-bottom:16rpx}.order-detail-status{font-size:36rpx;color:#16865d;font-weight:700;margin-bottom:12rpx}.order-detail-muted{color:#758078;font-size:24rpx;line-height:1.7;margin:10rpx 0;word-break:break-all}.order-detail-line{display:flex;justify-content:space-between;gap:24rpx;font-size:26rpx;color:#344139;padding:15rpx 0;border-bottom:1rpx solid #eef0ee}.order-detail-line text:last-child{text-align:right}.order-detail-total{color:#16865d;text-align:right;font-size:31rpx;font-weight:700;margin-top:20rpx}.order-detail-reason{color:#b64d36;line-height:1.6;font-size:27rpx}.order-detail-proof{width:240rpx;height:240rpx;border-radius:12rpx;margin-top:15rpx}
 .sandbox-refund-summary{background:#f6faf7;border:1rpx solid #dcece0;border-radius:14rpx;padding:20rpx;margin:18rpx 0}.sandbox-refund-item{border:1rpx solid #e8ece9;border-radius:12rpx;padding:16rpx 20rpx;margin:16rpx 0}.sandbox-refund-item .order-detail-line{padding:8rpx 0}
+
+/* Clean payment history and receipt view: detailed identifiers stay accessible on demand. */
+.order-overview{padding:32rpx}
+.overview-top{display:flex;align-items:center;justify-content:space-between;gap:14rpx}
+.overview-top .order-detail-title{margin:0}
+.overview-test-tag{font-size:21rpx;color:#267b52;background:#edf8f1;border-radius:999rpx;padding:8rpx 16rpx}
+.order-overview .order-detail-status{margin:24rpx 0 10rpx}
+.overview-payment{font-size:24rpx;color:#698171;line-height:1.5}
+.overview-divider,.receipt-divider{height:1rpx;background:#edf1ee;margin:22rpx 0}
+.overview-meta{display:flex;justify-content:space-between;gap:24rpx;font-size:23rpx;line-height:1.55;margin:12rpx 0;color:#78867c}
+.overview-meta text:last-child{color:#394f41;text-align:right;min-width:0;overflow-wrap:anywhere}
+.payment-history-card{padding:30rpx}
+.payment-history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14rpx;margin-bottom:16rpx}
+.payment-history-heading{flex:1;min-width:0}
+.payment-history-heading .order-detail-title{margin:0}
+.payment-history-heading .order-detail-muted{margin:6rpx 0 0}
+.payment-refresh-btn{margin:0!important;background:#edf7f1!important;color:#178150!important;border:0!important;border-radius:14rpx!important;font-size:22rpx!important;flex-shrink:0}
+.payment-attempt-row{display:flex;align-items:center;gap:18rpx;justify-content:space-between;border:1rpx solid #e9eee9;background:#fafcfb;border-radius:16rpx;padding:20rpx;margin-bottom:12rpx}
+.payment-attempt-info{display:flex;flex-direction:column;gap:7rpx;flex:1;min-width:0}
+.payment-attempt-channel{font-size:26rpx;font-weight:650;color:#254030}
+.payment-attempt-state{font-size:23rpx;color:#258257}
+.payment-attempt-price{font-size:29rpx;font-weight:700;color:#254031;flex-shrink:0}
+.payment-receipt{margin-top:22rpx;padding:26rpx 22rpx;background:#fbfcfb;border:1rpx solid #e6eee8;border-radius:20rpx}
+.receipt-heading{display:flex;align-items:center;gap:14rpx}
+.receipt-seal{width:48rpx;height:48rpx;background:#e2f4e9;color:#168354;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28rpx;font-weight:700;flex-shrink:0}
+.receipt-heading-copy{display:flex;flex-direction:column;gap:6rpx;flex:1;min-width:0}
+.receipt-title{font-size:29rpx;color:#203a2a;font-weight:700}
+.receipt-subtitle{font-size:21rpx;color:#87948b;line-height:1.5;overflow-wrap:anywhere}
+.receipt-success{font-size:20rpx;color:#188757;background:#e8f6ee;padding:7rpx 12rpx;border-radius:999rpx;flex-shrink:0}
+.receipt-amount{text-align:center;font-size:57rpx;letter-spacing:-1rpx;font-weight:750;color:#1a8554;margin:26rpx 0 10rpx}
+.receipt-currency{font-size:31rpx;margin-right:4rpx}
+.receipt-notice{text-align:center;color:#8a968d;font-size:21rpx;line-height:1.6}
+.receipt-section-title{font-weight:650;color:#32483a;font-size:25rpx;margin-bottom:7rpx}
+.receipt-line{display:flex;justify-content:space-between;gap:18rpx;padding:17rpx 0}
+.receipt-product{flex:1;min-width:0;display:flex;flex-direction:column;gap:6rpx}
+.receipt-product-name{color:#344a3b;font-size:25rpx;overflow-wrap:anywhere}
+.receipt-qty{color:#929b94;font-size:21rpx}
+.receipt-line-price{font-size:25rpx;color:#344a3b;flex-shrink:0}
+.receipt-breakdown,.receipt-grand-total{display:flex;justify-content:space-between;gap:16rpx;padding:12rpx 0;font-size:24rpx;color:#77847b}
+.receipt-breakdown text:last-child{color:#364b3d}
+.receipt-grand-total{border-top:1rpx solid #e5ece6;margin-top:7rpx;padding-top:22rpx;color:#284032;font-weight:700;font-size:27rpx}
+.receipt-grand-total text:last-child{color:#188657;font-size:32rpx}
+.receipt-details-toggle{padding:20rpx 4rpx;margin-top:14rpx;border-top:1rpx solid #e8efea;display:flex;justify-content:space-between;color:#248357;font-size:24rpx}
+.receipt-technical{background:#f2f6f3;padding:18rpx;border-radius:13rpx;margin-bottom:18rpx}
+.receipt-tech-row{display:flex;flex-direction:column;gap:6rpx;margin-bottom:16rpx;font-size:22rpx;color:#839187}
+.receipt-tech-row text:last-child{font-size:22rpx;color:#43564a;overflow-wrap:anywhere;word-break:break-all}
+.receipt-tech-hint{font-size:20rpx;color:#87968a;line-height:1.6}
+.receipt-copy-button{width:100%;margin:12rpx 0 0!important;background:#e9f5ed!important;color:#177b4d!important;font-size:25rpx!important;border:0!important;border-radius:14rpx!important}
