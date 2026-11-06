@@ -41,7 +41,8 @@
     "pages/category/category": "customer",
     "pages/customer-account/customer-account": "customer",
     "pages/product-library/product-library": "customer",
-    "pages/sandbox-receipts/sandbox-receipts": "customer"
+    "pages/sandbox-receipts/sandbox-receipts": "customer",
+    "pages/product-search/product-search": "customer"
   },
   "utils": {
     "addresses": "customer",
@@ -101,6 +102,7 @@
         "pages/addresses/addresses",
         "pages/orders/orders",
         "pages/admin-orders/admin-orders",
+        "pages/product-search/product-search",
         "pages/product-detail/product-detail",
         "pages/admin-products/admin-products",
         "pages/admin-categories/admin-categories",
@@ -134,6 +136,7 @@
       "pages": [
         "pages/index/index",
         "pages/category/category",
+        "pages/product-search/product-search",
         "pages/product-detail/product-detail",
         "pages/cart/cart",
         "pages/checkout/checkout",
