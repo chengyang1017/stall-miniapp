@@ -1,9 +1,5 @@
 page{background:#f4f6f5;color:#18251f}
-.checkout-page{padding:30rpx 26rpx 0;box-sizing:border-box}
-.checkout-intro{margin:10rpx 2rpx 28rpx}
-.checkout-eyebrow{font-size:19rpx;letter-spacing:4rpx;color:#6a987d;font-weight:700}
-.checkout-title{font-size:47rpx;font-weight:750;color:#15291e;margin-top:7rpx}
-.checkout-subtitle{font-size:24rpx;color:#87918b;margin-top:8rpx}
+.checkout-page{padding:20rpx 26rpx 0;box-sizing:border-box}
 .checkout-section{padding:30rpx 28rpx;background:#fff;border-radius:25rpx;margin-bottom:20rpx;box-shadow:0 7rpx 30rpx rgba(25,68,40,.035)}
 .section-head{display:flex;align-items:center;gap:12rpx;font-weight:700;font-size:31rpx;color:#183125;margin-bottom:26rpx}
 .section-icon{width:46rpx;height:46rpx;border-radius:13rpx;background:#eaf5ee;color:#188052;display:flex;align-items:center;justify-content:center;font-size:29rpx}
@@ -48,3 +44,23 @@ page{background:#f4f6f5;color:#18251f}
 .bottom-price{font-size:39rpx;color:#188354;font-weight:750;margin-top:4rpx}
 .place-order{margin:0!important;background:#1a8554!important;color:#fff!important;border-radius:17rpx!important;font-size:28rpx!important;font-weight:650!important;padding:0 49rpx!important;height:86rpx!important;line-height:86rpx!important}
 .place-order[disabled]{background:#aebfb4!important;color:#fff!important}
+
+/* Payment selection: deliberate full-width radio rows, consistent with delivery slots. */
+.checkout-payment .section-head{margin-bottom:12rpx}
+.payment-test-tag{margin-left:auto;border-radius:999rpx;background:#edf5f0;color:#278255;font-size:21rpx;font-weight:500;padding:7rpx 15rpx}
+.payment-explainer{color:#728078;font-size:24rpx;line-height:1.6;margin-bottom:22rpx}
+.payment-options{display:flex;flex-direction:column;gap:14rpx}
+.payment-option{display:flex;align-items:center;gap:19rpx;min-height:110rpx;padding:15rpx 20rpx;border:2rpx solid #edf1ee;border-radius:18rpx;background:#fbfcfb;box-sizing:border-box}
+.payment-option-active{border-color:#218657;background:#eff9f2}
+.payment-mark{flex-shrink:0;width:65rpx;height:65rpx;border-radius:16rpx;display:flex;align-items:center;justify-content:center;font-size:26rpx;font-weight:700}
+.payment-mark-wechat{background:#e5f5e9;color:#168744}
+.payment-mark-alipay{background:#e6f3ff;color:#176fc1}
+.payment-mark-card{background:#ecedf8;color:#575e9e}
+.payment-copy{min-width:0;flex:1}
+.payment-name{font-size:28rpx;font-weight:650;color:#233a2b}
+.payment-desc{font-size:22rpx;color:#86958b;line-height:1.4;margin-top:6rpx}
+.payment-radio{width:34rpx;height:34rpx;flex-shrink:0;border:2rpx solid #c2d0c6;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.payment-option-active .payment-radio{border-color:#238758}
+.payment-radio-dot{width:18rpx;height:18rpx;background:#238758;border-radius:50%}
+.payment-notice{display:flex;align-items:flex-start;gap:12rpx;margin-top:22rpx;color:#77887c;font-size:22rpx;line-height:1.65}
+.payment-notice-icon{color:#218657;font-size:26rpx;line-height:1.3}

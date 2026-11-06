@@ -1,5 +1,4 @@
 <view class="checkout-page">
-  <view class="checkout-intro"><view class="checkout-eyebrow">CHECKOUT</view><view class="checkout-title">确认订单</view><view class="checkout-subtitle">核对收货信息并选择配送时间</view></view>
   <view wx:if="{{cloudMode && cloudError}}" class="checkout-alert">{{cloudError}}<text class="checkout-retry" bindtap="refreshCloudCheckout">重新加载</text></view>
   <view class="checkout-section">
     <view class="section-head"><text class="section-icon">⌖</text><text>收货地址</text></view>
@@ -39,14 +38,29 @@
     <view wx:if="{{noteShortcuts.length}}" class="checkout-note-presets"><view wx:for="{{noteShortcuts}}" wx:key="label" class="checkout-note-chip" data-label="{{item.label}}" bindtap="toggleNoteShortcut">{{item.label}}</view></view>
     <textarea class="note-input" maxlength="200" placeholder="有需要交代给商家的事项？" value="{{note}}" bindinput="updateNote" auto-height />
   </view>
-  <view class="checkout-bottom-space"></view>
-  <view wx:if="{{cloudMode}}" class="checkout-section">
-    <view>Sandbox 测试支付方式（下单后确认外部测试入口）</view>
-    <button size="mini" data-channel="wechat_pay" bindtap="chooseSandboxChannel">{{sandboxChannel === 'wechat_pay' ? '✓ ' : ''}}微信 · Stripe 外部测试</button>
-    <button size="mini" data-channel="alipay" bindtap="chooseSandboxChannel">{{sandboxChannel === 'alipay' ? '✓ ' : ''}}支付宝</button>
-    <button size="mini" data-channel="card" bindtap="chooseSandboxChannel">{{sandboxChannel === 'card' ? '✓ ' : ''}}银行卡</button>
-    <view>仅独立测试服务配置后可用。非微信原生支付；提交订单不会扣款。</view>
+  <view wx:if="{{cloudMode}}" class="checkout-section checkout-payment">
+    <view class="section-head"><text class="section-icon">¥</text><text>支付方式</text><text class="payment-test-tag">测试环境</text></view>
+    <view class="payment-explainer">选择测试渠道，提交订单后在订单详情获取 Stripe 外部付款链接。</view>
+    <view class="payment-options">
+      <view class="payment-option {{sandboxChannel === 'wechat_pay' ? 'payment-option-active' : ''}}" data-channel="wechat_pay" bindtap="chooseSandboxChannel" accessibilityLabel="微信支付测试" role="radio" aria-checked="{{sandboxChannel === 'wechat_pay'}}">
+        <view class="payment-mark payment-mark-wechat">微</view>
+        <view class="payment-copy"><view class="payment-name">微信支付</view><view class="payment-desc">Stripe 外部测试 · 非微信原生支付</view></view>
+        <view class="payment-radio"><view wx:if="{{sandboxChannel === 'wechat_pay'}}" class="payment-radio-dot"></view></view>
+      </view>
+      <view class="payment-option {{sandboxChannel === 'alipay' ? 'payment-option-active' : ''}}" data-channel="alipay" bindtap="chooseSandboxChannel" accessibilityLabel="支付宝测试" role="radio" aria-checked="{{sandboxChannel === 'alipay'}}">
+        <view class="payment-mark payment-mark-alipay">支</view>
+        <view class="payment-copy"><view class="payment-name">支付宝</view><view class="payment-desc">Stripe 外部测试</view></view>
+        <view class="payment-radio"><view wx:if="{{sandboxChannel === 'alipay'}}" class="payment-radio-dot"></view></view>
+      </view>
+      <view class="payment-option {{sandboxChannel === 'card' ? 'payment-option-active' : ''}}" data-channel="card" bindtap="chooseSandboxChannel" accessibilityLabel="银行卡测试" role="radio" aria-checked="{{sandboxChannel === 'card'}}">
+        <view class="payment-mark payment-mark-card">卡</view>
+        <view class="payment-copy"><view class="payment-name">银行卡</view><view class="payment-desc">Stripe Card 外部测试</view></view>
+        <view class="payment-radio"><view wx:if="{{sandboxChannel === 'card'}}" class="payment-radio-dot"></view></view>
+      </view>
+    </view>
+    <view class="payment-notice"><text class="payment-notice-icon">ⓘ</text><text>提交订单不会扣款，付款状态以服务端核验为准。具体渠道是否可用由测试服务决定。</text></view>
   </view>
+  <view class="checkout-bottom-space"></view>
   <view class="checkout-bottom">
     <view class="bottom-amount"><view class="bottom-caption">合计</view><view class="bottom-price">¥{{totalText}}</view></view>
     <button wx:if="{{cloudMode}}" class="place-order" loading="{{cloudBusy || orderSubmitting}}" disabled="{{totalCount === 0 || orderSubmitting || cloudBusy || cloudError !== '' || deliveryError !== '' || !minimumReached || !selectedSlotId || !hasAddress}}" bindtap="confirmOrder">提交订单</button>
