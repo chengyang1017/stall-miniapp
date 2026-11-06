@@ -1,10 +1,17 @@
 import { randomUUID,createHash } from 'node:crypto'
+import {sandboxEnabled,assertSandboxDatabase} from './sandboxPaymentWorker.mjs'
 import { authenticate,permittedStore } from './auth.mjs'
 import { pageScope,pageQuery,pageResult,cursorTime } from './customerPagination.mjs'
 import { reviewPolicy,reviewError as fail,reviewPurchase,inspectReviewContent } from './reviewPolicy.mjs'
 import { issueReviewImage,completeReviewImage,checkReviewImages,signedReviewImage,verifySealedImage,expireUnboundReviewImage } from './reviewImages.mjs'
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const publicValid=`r.withdrawn_at IS NULL AND r.moderation_status<>'hidden' AND p.moderation_status='approved' AND r.purchase_receipt_ref NOT LIKE 'sandbox-test:%'`
+// Show test reviews only when the request is served by the authorized isolated Sandbox database.
+// Production never lists or counts sandbox-test receipts.
+async function mayDisplaySandboxReviews(pool){
+ if(process.env.APP_ENV!=='sandbox'||!sandboxEnabled(process.env))return false
+ try{await assertSandboxDatabase(pool,process.env);return true}catch{return false}
+}
+const publicValid=allowSandbox=>`r.withdrawn_at IS NULL AND r.moderation_status<>'hidden' AND p.moderation_status='approved' ${allowSandbox?'':"AND r.purchase_receipt_ref NOT LIKE 'sandbox-test:%'"}`
 const send=(res,status,value)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'private, no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(value))}
 const fingerprint=b=>createHash('sha256').update(JSON.stringify(b)).digest('hex')
 async function read(req){let n=0,parts=[];for await(const c of req){n+=c.length;if(n>8192)fail(413,'body_too_large');parts.push(c)}try{const b=JSON.parse(Buffer.concat(parts).toString('utf8'));if(!b||typeof b!=='object'||Array.isArray(b))fail(400,'invalid_body');return b}catch(e){if(e.status)throw e;fail(400,'invalid_json')}}
@@ -17,29 +24,30 @@ async function rate(db,subject){await db.query('SELECT pg_advisory_xact_lock(has
 async function duplicate(db,store,subject,clientKey,fp){const v=(await db.query('SELECT review_id,fingerprint FROM product_review_revisions WHERE store_id=$1 AND actor_subject=$2 AND client_key=$3',[store,subject,clientKey])).rows[0];if(v&&v.fingerprint!==fp)fail(409,'idempotency_payload_changed');return v}
 function queryPage(params,scope,extra=[]){let p;try{p=pageQuery(params,['limit','cursor',...extra],10,scope)}catch(e){fail(400,e.message)}if(p.limit>reviewPolicy.maxPage)fail(400,'page_size_limit');return p}
 function filters(q){const rating=q.get('rating')||'',product=q.get('productId')||'',status=q.get('status')||'',low=q.get('low')||'';if(rating&&!/^[1-5]$/.test(rating)||product&&!uuid.test(product)||status&&!['pending','approved','rejected','hidden'].includes(status)||low&&low!=='1')fail(400,'invalid_review_filter');return {rating:Number(rating)||null,product:product||null,status:status||null,low:low==='1'}}
-async function listing(db,store,subject,mode,q,productId=null){
+async function listing(db,store,subject,mode,q,productId=null,allowSandbox=false){
  const f=filters(q),scope=pageScope(['reviews',store,mode,subject||'',productId,f]),page=queryPage(q,scope,mode==='public'?['rating']:['rating','productId','status','low'])
  const privateView=mode!=='public',v=privateView?'c':'p'
  const rows=(await db.query(`SELECT ${cursorTime('r')} AS "cursorTime",r.id,r.product_id AS "productId",r.product_name AS "productName",r.created_at AS "createdAt",
  ${v}.rating,${v}.content,${v}.image_ids AS "imageIds",${v}.moderated_at AS "publishedAt",pp.content AS reply,pp.id AS "publicReplyRevisionId",
  ${privateView?`r.order_item_id AS "orderItemId",r.version,r.moderation_status AS "moderationStatus",r.withdrawn_at AS "withdrawnAt",r.current_revision_id AS "revisionId",r.edit_count AS "editCount",r.created_at>clock_timestamp()-interval '1 day'*$10 AND r.edit_count<$11 AND r.withdrawn_at IS NULL AS "canEdit",c.safety_result AS "safetyResult",rp.version AS "replyVersion",rp.current_revision_id AS "replyRevisionId",rc.content AS "replyDraft",rc.moderation_status AS "replyStatus",p.rating AS "publicRating",p.content AS "publicContent",` : 'p.id AS "revisionId",'}
- true AS "verifiedPurchase"
+ (r.purchase_receipt_ref NOT LIKE 'sandbox-test:%') AS "verifiedPurchase",
+ (r.purchase_receipt_ref LIKE 'sandbox-test:%') AS "testReview"
  FROM product_reviews r JOIN product_review_revisions c ON c.id=r.current_revision_id
  LEFT JOIN product_review_revisions p ON p.id=r.published_revision_id
  LEFT JOIN product_review_replies rp ON rp.review_id=r.id LEFT JOIN product_review_revisions pp ON pp.id=rp.published_revision_id AND pp.moderation_status='approved'
  LEFT JOIN product_review_revisions rc ON rc.id=rp.current_revision_id
- WHERE r.store_id=$1 AND ($2::text<>'mine' OR r.customer_subject=$3) AND ($2::text<>'public' OR (${publicValid}))
+ WHERE r.store_id=$1 AND ($2::text<>'mine' OR r.customer_subject=$3) AND ($2::text<>'public' OR (${publicValid(allowSandbox)}))
  AND ($4::uuid IS NULL OR r.product_id=$4) AND ($5::int IS NULL OR ${v}.rating=$5)
  AND ${f.low?`${v}.rating<=2`:'true'}
  AND ($6::text IS NULL OR r.moderation_status=$6 OR rc.moderation_status=$6)
  AND ($7::timestamptz IS NULL OR (r.created_at,r.id)<($7,$8::uuid)) ORDER BY r.created_at DESC,r.id DESC LIMIT $9`,[store,mode,subject||'',productId||f.product,f.rating,f.status,page.anchor?.[1]??null,page.anchor?.[2]??null,page.limit+1,...privateView?[reviewPolicy.editWindowDays,reviewPolicy.maxCustomerEdits]:[]])).rows
  return {...pageResult(rows,page.limit,scope),policy:{editWindowDays:reviewPolicy.editWindowDays,maxEdits:reviewPolicy.maxCustomerEdits}}
 }
-async function summary(db,store,productId=null,privateView=false){
- const rows=(await db.query(`SELECT p.rating,count(*)::int AS n FROM product_reviews r JOIN product_review_revisions p ON p.id=r.published_revision_id WHERE r.store_id=$1 AND ($2::uuid IS NULL OR r.product_id=$2) AND ${publicValid} GROUP BY p.rating`,[store,productId])).rows
+async function summary(db,store,productId=null,privateView=false,allowSandbox=false){
+ const rows=(await db.query(`SELECT p.rating,count(*)::int AS n FROM product_reviews r JOIN product_review_revisions p ON p.id=r.published_revision_id WHERE r.store_id=$1 AND ($2::uuid IS NULL OR r.product_id=$2) AND ${publicValid(allowSandbox)} GROUP BY p.rating`,[store,productId])).rows
  const distribution=[1,2,3,4,5].map(rating=>({rating,count:rows.find(r=>r.rating===rating)?.n||0})),count=distribution.reduce((a,b)=>a+b.count,0),total=distribution.reduce((a,b)=>a+b.rating*b.count,0)
  const states=privateView?(await db.query('SELECT moderation_status AS status,count(*)::int AS count FROM product_reviews WHERE store_id=$1 AND ($2::uuid IS NULL OR product_id=$2) GROUP BY moderation_status',[store,productId])).rows:undefined
- return {count,average:count?Number((total/count).toFixed(2)):null,distribution,...states?{states}:{}}
+ return {count,average:count?Number((total/count).toFixed(2)):null,distribution,testMode:allowSandbox,...states?{states}:{}}
 }
 export async function productReviewRoute(req,res,url,pool){
  const m=/^\/v1\/(?:(merchant|platform)\/)?stores\/([a-z0-9][a-z0-9-]{1,62})\/(reviews(?:\/.*)?|review-images(?:\/.*)?|products\/[0-9a-f-]{36}\/reviews(?:\/summary)?)$/.exec(url.pathname)
@@ -57,8 +65,9 @@ export async function productReviewRoute(req,res,url,pool){
   if(product){
    if(role!=='customer'||req.method!=='GET')fail(405,'method_not_allowed');key(product[1])
    if(!store.is_active)fail(404,'store_not_found')
-   if(product[2]){if(q.size)fail(400,'invalid_summary_query');send(res,200,await summary(pool,store.id,product[1]));return true}
-   send(res,200,await listing(pool,store.id,null,'public',q,product[1]));return true
+   const allowSandbox=await mayDisplaySandboxReviews(pool)
+   if(product[2]){if(q.size)fail(400,'invalid_summary_query');send(res,200,await summary(pool,store.id,product[1],false,allowSandbox));return true}
+   send(res,200,await listing(pool,store.id,null,'public',q,product[1],allowSandbox));return true
   }
   if(!subject&&!(role==='customer'&&req.method==='GET'&&/^review-images\/[0-9a-f-]{36}$/.test(tail)))fail(401,'login_required')
   const b=req.method==='GET'?{}:await read(req)
@@ -99,7 +108,8 @@ export async function productReviewRoute(req,res,url,pool){
    if(q.size)fail(400,'invalid_image_query')
    const row=(await db.query('SELECT * FROM product_review_images WHERE store_id=$1 AND id=$2 AND upload_state=$3',[store.id,key(image[1]),'verified'])).rows[0]
    if(!row)fail(404,'image_not_found')
-   const pub=store.is_active&&row.bound_review_id&&(await db.query(`SELECT 1 FROM product_reviews r JOIN product_review_revisions p ON p.id=r.published_revision_id WHERE r.id=$1 AND r.store_id=$3 AND ${publicValid} AND $2::uuid=ANY(p.image_ids)`,[row.bound_review_id,row.id,store.id])).rows.length
+   const allowSandbox=await mayDisplaySandboxReviews(db)
+   const pub=store.is_active&&row.bound_review_id&&(await db.query(`SELECT 1 FROM product_reviews r JOIN product_review_revisions p ON p.id=r.published_revision_id WHERE r.id=$1 AND r.store_id=$3 AND ${publicValid(allowSandbox)} AND $2::uuid=ANY(p.image_ids)`,[row.bound_review_id,row.id,store.id])).rows.length
    if(!pub&&row.customer_subject!==subject&&!isModerator&&!(member&&row.bound_review_id))fail(403,'private_review_image')
    const result=await signedReviewImage(row);await db.query('COMMIT');send(res,200,result);return true
   }
