@@ -246,7 +246,7 @@ Page({
         }
       }catch(error){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()){
         const message=String(error),missing=/http_404/.test(message),auth=/http_40[13]|not_logged_in/.test(message)
-        this.setData({detailLoading:false,detailNotFound:missing,detailError:missing?'订单不存在或当前账号无权查看':auth?'登录状态已失效，请重新登录后查看订单':'订单详情读取失败，请检查网络并重试',...auth||missing?{found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false}:{}})
+        this.setData({detailLoading:false,detailNotFound:missing,detailError:missing?'订单不存在或当前账号无权查看':auth?'登录状态已失效，请重新登录后查看订单':'订单详情读取失败，请检查网络并重试',...(auth||missing?{found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false}:{})})
       }}
       return
     }
