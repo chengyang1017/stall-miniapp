@@ -25,4 +25,3 @@ export function customerOrdersRequest(cfg:{apiBase:string;storeSlug:string},id?:
    else reject(new Error('http_'+res.statusCode))
  },fail:(error:any)=>reject(new Error('network_'+(String(error?.errMsg||'').includes('domain')?'domain':'unavailable')))}))
 }
-}
