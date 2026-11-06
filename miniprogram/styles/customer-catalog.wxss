@@ -9,6 +9,19 @@
 .deals-subtitle{font-size:21rpx;color:#fff;opacity:.87;white-space:nowrap}
 .deals-scroll,.category-scroll{width:100%;white-space:nowrap;position:relative;z-index:1}
 .deals-track,.category-track{display:flex;gap:12rpx}
+.product-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16rpx}
+.product{min-width:0;background:#fff;border-radius:24rpx;padding:14rpx;box-shadow:0 6rpx 20rpx #50308b0c;display:flex;gap:14rpx;align-items:center}
+.product-media{position:relative;width:108rpx;height:116rpx;flex:0 0 108rpx;border-radius:17rpx;overflow:hidden;background:#f1eafb}
+.product-media>image{width:100%;height:100%;display:block}
+.product-media .stall-placeholder-choice-shell{transform:scale(.82);transform-origin:top left}
+.discount-badge{position:absolute;right:0;top:0;background:#ff4b7e;color:white;border-radius:0 14rpx 0 14rpx;padding:4rpx 8rpx;font-size:17rpx}
+.product-copy{min-width:0;flex:1}
+.product-name{font-size:26rpx;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.product-description{font-size:20rpx;color:#8d809f;margin:8rpx 0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.product-bottom{display:flex;justify-content:space-between;align-items:center;gap:5rpx}
+.product .price{font-size:25rpx}
+.product .old{display:block;margin:0;font-size:18rpx}
+.product .round-add{width:40rpx;height:40rpx;line-height:40rpx;font-size:27rpx}
 .deal-product{flex:0 0 166rpx;width:166rpx;min-width:0;box-sizing:border-box;white-space:normal;background:rgba(255,255,255,.97);border-radius:21rpx;padding:10rpx;overflow:hidden}
 .deal-product-content{display:block}
 .deal-media{height:132rpx;width:100%;position:relative;overflow:hidden;border-radius:14rpx;background:linear-gradient(135deg,#fff4eb,#f2e6fc)}
