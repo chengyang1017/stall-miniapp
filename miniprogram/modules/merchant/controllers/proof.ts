@@ -38,7 +38,23 @@ export function createMerchantProofController(){
           await completeCloudDelivery(id,key)
           if(identity!==supportIdentity()||!this.proofVisible)return
           this.setData({selectedPhoto:''});this.refresh();wx.showToast({title:'服务器已确认送达',icon:'success'})
-        }catch(_){if(identity===supportIdentity())this.setData({proofError:'上传或送达提交未确认，照片已保留；可重试并刷新核对订单状态。'})}
+        }catch(error:any){if(identity===supportIdentity()){
+          const reason=String(error?.message||error)
+          const message=/proof_private_storage_not_confirmed|object_storage_not_configured/.test(reason)
+            ?'送达照片的私有对象存储尚未配置完成，请管理员检查 Render 的私有存储桶及 S3/R2 凭证。'
+            :/unsupported_image_format|invalid_image/.test(reason)
+            ?'照片格式或大小不符合要求，请选用 5MB 以内的 JPG、PNG 或 WebP 照片。'
+            :/upload_http_|proof_not_uploaded|proof_object_unavailable/.test(reason)
+            ?'照片上传到对象存储失败，请检查上传域名、网络或存储桶权限。'
+            :/http_40[13]/.test(reason)
+            ?'当前登录身份无权提交送达照片，请检查商家登录状态与权限。'
+            :/http_409|order_state_changed|not_delivering|payment_not_confirmed/.test(reason)
+            ?'订单状态或付款状态已变化，送达未确认，请先刷新订单状态。'
+            :/http_503/.test(reason)
+            ?'送达服务暂不可用（HTTP 503），请检查后端日志及私有照片存储配置。'
+            :'上传或送达结果尚未确认（'+reason.slice(0,85)+'），照片已保留；请刷新核对后再重试。'
+          this.setData({proofError:message})
+        }}
         finally{this.setData({busy:false})}
       },fail:()=>this.setData({busy:false})})
       return
