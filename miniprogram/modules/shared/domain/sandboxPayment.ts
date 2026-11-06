@@ -3,7 +3,27 @@ export function sandboxPaymentView(data:any){
  const refundNames:Record<string,string>={pending:'退款申请已保存',processing:'退款处理中',submitted:'退款已提交，待渠道确认',succeeded:'退款成功',review:'退款失败或结果不确定，需人工核对'}
  const channels:Record<string,string>={card:'银行卡',alipay:'支付宝',wechat_pay:'微信（Stripe 外部测试）'}
  const attempts=(data.attempts||[]).map((a:any)=>({...a,label:a.status==='open'&&a.failureCode?'付款失败，可在原会话重试':paymentNames[a.status]||'待核对',channelText:channels[a.actualChannel||a.channel]||'待核对',amountText:(Number(a.amountCents)/100).toFixed(2)}))
- const refunds=(data.refunds||[]).map((r:any)=>({...r,kindText:r.kind==='review_compensation'?'渠道异常补偿退款':r.kind==='merchant'?'商家退款':'补偿退款',label:refundNames[r.status]||'待核对',amountText:(Number(r.amountCents)/100).toFixed(2)}))
+ const refunds=(data.refunds||[]).map((r:any)=>({...r,kindText:r.kind==='review_compensation'?'渠道异常补偿退款':r.kind==='merchant'?'商家退款':'超时收款补偿退款',label:refundNames[r.status]||'待核对',amountText:(Number(r.amountCents)/100).toFixed(2)}))
+ // Summarize only provider-confirmed refunds as completed; a submitted, pending
+ // or manual-review refund is never presented as money already returned.
+ const refundCents=(items:any[])=>items.reduce((sum:number,r:any)=>sum+(Number.isSafeInteger(Number(r.amountCents))&&Number(r.amountCents)>0?Number(r.amountCents):0),0)
+ const confirmedRefunds=refunds.filter((r:any)=>r.status==='succeeded')
+ const awaitingRefunds=refunds.filter((r:any)=>['pending','processing','submitted'].includes(r.status))
+ const reviewRefunds=refunds.filter((r:any)=>r.status==='review')
+ const merchantRefunds=refunds.filter((r:any)=>r.kind==='merchant')
+ const confirmedMerchantCents=refundCents(merchantRefunds.filter((r:any)=>r.status==='succeeded'))
+ const confirmedMerchantPayment=attempts.find((a:any)=>a.status==='succeeded')
+ const originalPaidCents=confirmedMerchantPayment?Number(confirmedMerchantPayment.amountCents):0
+ const confirmedRemainingCents=originalPaidCents>0?Math.max(0,originalPaidCents-confirmedMerchantCents):0
+ const money=(value:number)=>(value/100).toFixed(2)
+ const refundSummary={hasRefunds:refunds.length>0,
+  completedText:money(refundCents(confirmedRefunds)),
+  awaitingText:money(refundCents(awaitingRefunds)),
+  reviewText:money(refundCents(reviewRefunds)),
+  merchantCompletedText:money(confirmedMerchantCents),
+  merchantRemainingText:money(confirmedRemainingCents),
+  merchantPaidKnown:originalPaidCents>0,
+  hasAwaiting:awaitingRefunds.length>0,hasReview:reviewRefunds.length>0}
  const receipts=(data.receipts||[]).map((r:any)=>({...r,totalText:(Number(r.totalCents)/100).toFixed(2),subtotalText:(Number(r.subtotalCents)/100).toFixed(2),deliveryFeeText:(Number(r.deliveryFeeCents)/100).toFixed(2),channelText:channels[r.channel]||'待核对',items:(r.items||[]).map((i:any)=>({...i,unitText:(Number(i.unitPriceCents)/100).toFixed(2),lineTotalText:(Number(i.lineTotalCents)/100).toFixed(2)}))}))
  const mismatchRefunds=refunds.filter((r:any)=>r.kind==='review_compensation')
  const latestAttempt=attempts.length?attempts[attempts.length-1]:null
@@ -12,7 +32,7 @@ export function sandboxPaymentView(data:any){
  const resumed=data.resumeCheckout
  const resumeCheckout=resumed&&['card','alipay','wechat_pay'].includes(resumed.channel)&&typeof resumed.url==='string'&&/^https:\/\/checkout\.stripe\.com\//.test(resumed.url)
   ?{channel:resumed.channel,channelText:channels[resumed.channel],url:resumed.url}:null
- return {attempts,refunds,receipts,resumeCheckout,retryChannel,retryLabel,
+ return {attempts,refunds,receipts,refundSummary,resumeCheckout,retryChannel,retryLabel,
   retryChannelText:retryChannel?channels[retryChannel]:'',
   requiresPaymentReview:latestAttempt?.status==='review'||latestAttempt?.status==='processing'||latestAttempt?.status==='creating',
   hasMismatchRefund:mismatchRefunds.length>0,

@@ -39,7 +39,21 @@
       <view wx:if="{{sandboxError}}" class="order-detail-muted">{{sandboxError}}</view>
       <view wx:if="{{sandbox.stale}}">渠道暂不可用，以下为已保存状态，最新结果尚未确认。</view>
       <view wx:for="{{sandbox.attempts}}" wx:key="id">{{item.channelText}} · ¥{{item.amountText}} · {{item.label}}</view>
-      <view wx:for="{{sandbox.refunds}}" wx:key="id">退款 ¥{{item.amountText}} · {{item.label}} · {{item.refundId}}</view>
+      <view wx:if="{{sandbox.refundSummary.hasRefunds}}" class="sandbox-refund-summary">
+        <view class="order-detail-title">测试退款进度</view>
+        <view class="order-detail-line"><text>渠道已确认退款合计</text><text>¥{{sandbox.refundSummary.completedText}}</text></view>
+        <view wx:if="{{sandbox.refundSummary.hasAwaiting}}" class="order-detail-line"><text>待处理／待渠道确认</text><text>¥{{sandbox.refundSummary.awaitingText}}</text></view>
+        <view wx:if="{{sandbox.refundSummary.hasReview}}" class="order-detail-line"><text>需人工核查金额</text><text>¥{{sandbox.refundSummary.reviewText}}</text></view>
+        <view wx:if="{{sandbox.refundSummary.merchantPaidKnown}}" class="order-detail-line"><text>原订单付款扣除已成功商家退款</text><text>¥{{sandbox.refundSummary.merchantRemainingText}}</text></view>
+        <view class="order-detail-muted">以上均为 Stripe 测试交易。待处理和人工核查金额不算退款成功；超时收款补偿退款与商家主动退款分别记录。</view>
+      </view>
+      <view wx:for="{{sandbox.refunds}}" wx:key="id" class="sandbox-refund-item">
+        <view class="order-detail-line"><text>{{item.kindText}}</text><text>¥{{item.amountText}}</text></view>
+        <view class="order-detail-muted">退款状态：{{item.label}}</view>
+        <view wx:if="{{item.refundId}}" class="order-detail-muted">Stripe 退款编号：{{item.refundId}}</view>
+        <view wx:else class="order-detail-muted">尚无已核实的 Stripe 退款编号</view>
+        <view wx:if="{{item.createdAt}}" class="order-detail-muted">申请记录时间：{{item.createdAt}}</view>
+      </view>
       <view wx:for="{{sandbox.receipts}}" wx:key="id" wx:for-item="receipt">
         <view>测试电子小票 · {{receipt.notice}}</view><view>订单：{{receipt.orderId}}</view>
         <view>{{receipt.channelText}} · ¥{{receipt.totalText}} {{receipt.currency}} · {{receipt.paidAt}}</view>
