@@ -62,11 +62,17 @@ Page({
       if(!this.detailVisible||serial!==this.detailSerial||identity!==supportIdentity())return
       const latest=await customerOrdersRequest(cfg,id)
       if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()){
-        this.setData({sandbox:sandboxPaymentView(result),sandboxError:'',
+        this.setData({sandbox:sandboxPaymentView(result),sandboxUnavailable:false,sandboxError:'',
          order:{...this.data.order,paymentStatus:latest.order.paymentStatus,paymentSource:latest.order.paymentSource},paymentText:paymentLabel(latest.order)})
         this.scheduleSandboxPolling()
       }
-    }catch(_){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())this.setData({sandbox:null,sandboxError:'Sandbox 服务未启用、未授权或网络不可用；未确认新的付款结果'})}
+    }catch(error:any){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()){
+      const reason=String(error?.message||error)
+      const unavailable=/^http_404(?:_|$)/.test(reason)
+      this.setData({sandbox:null,sandboxUnavailable:unavailable,sandboxError:unavailable
+        ?'当前店铺尚未接通 Stripe Sandbox 测试服务，不能创建测试付款链接；请由管理员完成隔离环境配置。'
+        :'Sandbox 支付状态尚未核实，请检查网络或服务端配置后刷新；不要重复付款'})
+    }}
   },
   copyActiveSandboxCheckout(){
     if(!this.detailVisible||this.phoneReadOnly||this.data.order.paymentStatus!=='unpaid')return
@@ -157,7 +163,7 @@ Page({
   },
   async openSandboxCheckout(e:any){
     const cfg=customerOrdersConfig(),channel=e.currentTarget.dataset.channel as SandboxChannel
-    if(!cfg||this.phoneReadOnly||this.sandboxBusy||this.data.sandboxActionBusy||!this.detailVisible||this.data.order.paymentStatus!=='unpaid')return
+    if(!cfg||this.phoneReadOnly||this.sandboxBusy||this.data.sandboxActionBusy||!this.detailVisible||this.data.order.paymentStatus!=='unpaid'||this.data.sandboxUnavailable)return
     if(this.data.sandbox?.resumeCheckout){
       wx.showToast({title:'请先继续原付款或更换渠道',icon:'none'});return
     }
@@ -189,7 +195,7 @@ Page({
     }
   },
   phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
-  data: { sandbox:null as any,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
+  data: { sandbox:null as any,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
     this.phoneReadOnly=options.phone==='1'
     this.setData({phoneReadOnly:this.phoneReadOnly})
@@ -204,7 +210,7 @@ Page({
     const id = String(this.data.order.id || '')
     const cloud=customerOrdersConfig()
     this.setData({detailLoading:true,detailError:'',detailNotFound:false})
-    if(this.detailContext!==JSON.stringify([identity,id])){this.detailContext=JSON.stringify([identity,id]);this.simulationKey='';this.simulationOperation++;this.setData({sandbox:null,sandboxError:'',sandboxActionText:'',found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:''})}
+    if(this.detailContext!==JSON.stringify([identity,id])){this.detailContext=JSON.stringify([identity,id]);this.simulationKey='';this.simulationOperation++;this.setData({sandbox:null,sandboxUnavailable:false,sandboxError:'',sandboxActionText:'',found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:''})}
     this.setData({cloudMode:!!cloud,proofImage:'',proofError:'',proofLoading:false})
     if(this.loadSandboxPayment)this.loadSandboxPayment()
     if(cloud&&this.phoneReadOnly){
@@ -267,7 +273,7 @@ Page({
       proofImage: String(o.deliveryPhoto || o.deliveryPhotoPath || o.proofImage || o.proofImageUrl || o.proofPhoto || o.deliveredPhoto || '')
     })
   },
-  onHide(){this.stopSandboxPolling();this.detailVisible=false;this.detailSerial++;this.setData({sandbox:null,sandboxError:'',sandboxActionBusy:false,sandboxActionText:'',proofImage:'',proofLoading:false,proofError:''})},
+  onHide(){this.stopSandboxPolling();this.detailVisible=false;this.detailSerial++;this.setData({sandbox:null,sandboxUnavailable:false,sandboxError:'',sandboxActionBusy:false,sandboxActionText:'',proofImage:'',proofLoading:false,proofError:''})},
   onUnload(){this.stopSandboxPolling();this.detailVisible=false;this.detailSerial++;this.simulationOperation++},
   async loadSimulationCapability(serial:number,identity:string,id:string){
     const cfg=customerOrdersConfig();if(!cfg)return

@@ -14,6 +14,7 @@
   <view wx:if="{{found}}">
     <view wx:if="{{cloudMode && !phoneReadOnly && order.paymentStatus === 'unpaid'}}" class="order-detail-card">
       <view class="order-detail-title">Sandbox 外部支付测试</view>
+      <view wx:if="{{sandboxUnavailable}}" class="order-detail-muted">测试支付服务尚未启用，下面的创建付款操作暂不可用；订单仍为待支付。管理员接通独立 Sandbox 环境后，可点击「立即刷新支付状态」重新检查。</view>
       <view>仅隔离测试环境可用。复制链接到外部浏览器完成测试付款；返回本页后将自动核对服务端结果，微信原生支付尚未接入。</view>
       <view wx:if="{{sandboxActionText}}" class="order-detail-muted">{{sandboxActionText}}</view>
       <view wx:if="{{sandbox.resumeCheckout}}">
@@ -33,11 +34,11 @@
           {{sandbox.retryLabel}}。上次选择：{{sandbox.retryChannelText}}。
           重新尝试会创建新的 Stripe Sandbox 测试付款会话，不会自动扣款。
         </view>
-        <button wx:if="{{sandbox.retryChannel}}" type="primary" disabled="{{sandboxActionBusy}}" bindtap="retrySandboxCheckout">重新尝试 {{sandbox.retryChannelText}}</button>
+        <button wx:if="{{sandbox.retryChannel}}" type="primary" disabled="{{sandboxActionBusy || sandboxUnavailable}}" bindtap="retrySandboxCheckout">重新尝试 {{sandbox.retryChannelText}}</button>
         <view wx:if="{{sandbox.retryChannel}}" class="order-detail-muted">也可以改选其他支付方式：</view>
-        <button size="mini" data-channel="wechat_pay" disabled="{{sandboxActionBusy}}" bindtap="openSandboxCheckout">微信支付测试链接</button>
-        <button size="mini" data-channel="alipay" disabled="{{sandboxActionBusy}}" bindtap="openSandboxCheckout">支付宝测试链接</button>
-        <button size="mini" data-channel="card" disabled="{{sandboxActionBusy}}" bindtap="openSandboxCheckout">银行卡测试链接</button>
+        <button size="mini" data-channel="wechat_pay" disabled="{{sandboxActionBusy || sandboxUnavailable}}" bindtap="openSandboxCheckout">微信支付测试链接</button>
+        <button size="mini" data-channel="alipay" disabled="{{sandboxActionBusy || sandboxUnavailable}}" bindtap="openSandboxCheckout">支付宝测试链接</button>
+        <button size="mini" data-channel="card" disabled="{{sandboxActionBusy || sandboxUnavailable}}" bindtap="openSandboxCheckout">银行卡测试链接</button>
       </view>
     </view>
     <view wx:if="{{cloudMode && !phoneReadOnly}}" class="order-detail-card">
