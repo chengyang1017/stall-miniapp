@@ -67,10 +67,35 @@ function reply(res, status, body) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' })
   res.end(JSON.stringify(body))
 }
+// WeChat DevTools loads the mini program in a servicewechat.com webview.
+ // Permit only that browser origin to read staging API responses; normal
+ // authenticated routes still require their existing session/role checks.
+const previewCorsOrigins=new Set(['https://servicewechat.com'])
+const previewCorsMethods=new Set(['GET','POST','PUT','PATCH','DELETE'])
+const previewCorsHeaders=new Set(['content-type','authorization','idempotency-key'])
 const server = http.createServer(async (req, res) => {
   let url
   try { url = new URL(req.url || '/', 'http://localhost') }
   catch { return reply(res, 400, { error: 'invalid_url' }) }
+  // Apply CORS before any route writes its response headers, including errors.
+  // Do not use wildcard origins or authorize requests on the basis of Origin.
+  if(url.pathname.startsWith('/v1/')){
+    res.setHeader('Vary','Origin')
+    const origin=req.headers.origin
+    if(typeof origin==='string'&&previewCorsOrigins.has(origin)){
+      res.setHeader('Access-Control-Allow-Origin',origin)
+      if(req.method==='OPTIONS'){
+        const method=String(req.headers['access-control-request-method']||'').toUpperCase()
+        const requested=String(req.headers['access-control-request-headers']||'').toLowerCase().split(',').map(x=>x.trim()).filter(Boolean)
+        if(!previewCorsMethods.has(method)||requested.some(x=>!previewCorsHeaders.has(x)))
+          return reply(res,403,{error:'cors_preflight_rejected'})
+        res.writeHead(204,{'Access-Control-Allow-Methods':[...previewCorsMethods].join(', '),
+          'Access-Control-Allow-Headers':[...previewCorsHeaders].join(', '),
+          'Access-Control-Max-Age':'600','Cache-Control':'no-store'})
+        return res.end()
+      }
+    }else if(req.method==='OPTIONS')return reply(res,403,{error:'cors_origin_rejected'})
+  }
   try {
     if (stripeTestReturnRoute(req,res,url)) return
     if (await stripeTestPaymentRoute(req,res,url,pool)) return
