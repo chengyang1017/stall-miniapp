@@ -2,7 +2,15 @@
   <navigator wx:if="{{found && cloudMode && order.fulfillmentStatus === 'delivering'}}" class="order-detail-card" url="/pages/customer-tracking/customer-tracking?id={{order.id}}">查看配送位置 ›</navigator>
   <navigator class="order-detail-card" url="/pages/customer-support-chat/customer-support-chat">联系店铺客服 ›</navigator>
   <view wx:if="{{found && cloudMode && order.fulfillmentStatus === 'delivered'}}" class="order-detail-card"><view class="order-detail-title">评价商品</view><view class="order-detail-muted">须核验真实支付后才能发表；商家已送达不等于已确认收款。</view><navigator wx:for="{{items}}" wx:key="orderItemId" wx:if="{{item.orderItemId}}" url="/pages/customer-reviews/customer-reviews?orderItemId={{item.orderItemId}}">评价 {{item.name}} ›</navigator></view>
-  <view wx:if="{{!found}}" class="order-detail-empty">找不到该订单，或者订单已被删除</view>
+  <view wx:if="{{detailLoading && !found}}" class="order-detail-empty">正在读取订单详情…</view>
+  <view wx:elif="{{!found}}" class="order-detail-empty">
+    <view>{{detailError || (detailNotFound ? "找不到该订单" : "订单详情尚未加载")}}</view>
+    <button size="mini" bindtap="reloadOrderDetail" disabled="{{detailLoading}}">重新读取订单</button>
+  </view>
+  <view wx:if="{{found && detailError}}" class="order-detail-card">
+    <view class="order-detail-muted">{{detailError}}（以下为上次已加载的信息）</view>
+    <button size="mini" bindtap="reloadOrderDetail" disabled="{{detailLoading}}">重试刷新</button>
+  </view>
   <view wx:else>
     <view wx:if="{{cloudMode && !phoneReadOnly && order.paymentStatus === 'unpaid'}}" class="order-detail-card">
       <view class="order-detail-title">Sandbox 外部支付测试</view>

@@ -189,34 +189,36 @@ Page({
     }
   },
   phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
-  data: { sandbox:null as any,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
+  data: { sandbox:null as any,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
     this.phoneReadOnly=options.phone==='1'
     this.setData({phoneReadOnly:this.phoneReadOnly})
     if(['card','alipay','wechat_pay'].includes(options.sandboxChannel||''))this.setData({sandboxChannel:options.sandboxChannel})
     this.setData({ order: { id: options.id || '' } })
   },
+  reloadOrderDetail(){if(this.detailVisible&&!this.data.detailLoading)this.onShow()},
   async onShow() {
     this.stopSandboxPolling()
     this.sandboxPollRemaining=12
     this.detailVisible=true;const serial=++this.detailSerial,identity=supportIdentity()
     const id = String(this.data.order.id || '')
     const cloud=customerOrdersConfig()
+    this.setData({detailLoading:true,detailError:'',detailNotFound:false})
     if(this.detailContext!==JSON.stringify([identity,id])){this.detailContext=JSON.stringify([identity,id]);this.simulationKey='';this.simulationOperation++;this.setData({sandbox:null,sandboxError:'',sandboxActionText:'',found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:''})}
     this.setData({cloudMode:!!cloud,proofImage:'',proofError:'',proofLoading:false})
     if(this.loadSandboxPayment)this.loadSandboxPayment()
     if(cloud&&this.phoneReadOnly){
       const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
-      if(!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'){this.setData({found:false});return}
+      if(!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'){this.setData({detailLoading:false,detailError:'手机号登录状态已失效，请重新登录'});return}
       const token=saved.token
       wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/account/stores/'+cfg.storeSlug+'/orders/'+encodeURIComponent(id),method:'GET',timeout:15000,header:{Authorization:'Bearer '+token},
         success:(r:any)=>{
           const cur=wx.getStorageSync('stall_customer_phone_session_v1') as any
           if(!this.detailVisible||serial!==this.detailSerial||cur?.token!==token||cur?.apiBase!==cfg.apiBase)return
-          if(r.statusCode!==200||!r.data?.order){this.setData({found:false});wx.showToast({title:'手机号订单详情不可用',icon:'none'});return}
+          if(r.statusCode!==200||!r.data?.order){this.setData({found:false,detailLoading:false,detailNotFound:r.statusCode===404,detailError:r.statusCode===404?'订单不存在或当前账号无权查看':'手机号订单详情读取失败，请重试'});return}
           const o=r.data.order,addr=o.contactSnapshot||{},slot=o.deliverySlotSnapshot||{}
-          this.setData({found:true,order:{...o,receiverName:addr.receiverName||'',phone:addr.phone||'',area:addr.areaName||slot.areaName||'',detail:addr.detail||'',totalText:(Number(o.totalCents)/100).toFixed(2)},items:(r.data.items||[]).map((i:any)=>({...i,subtotal:(Number(i.lineTotalCents)/100).toFixed(2)})),statusText:workflowText(String(o.fulfillmentStatus||'new')),paymentText:paymentLabel(o),createdText:o.createdAt?chinaTime(o.createdAt):'',deliveredText:o.deliveredAt?chinaTime(o.deliveredAt):'',issueText:String(o.issueReason||''),simulationAuthorized:false,proofImage:''})
-        },fail:()=>wx.showToast({title:'订单详情网络异常',icon:'none'})})
+          this.setData({found:true,detailLoading:false,detailError:'',detailNotFound:false,order:{...o,receiverName:addr.receiverName||'',phone:addr.phone||'',area:addr.areaName||slot.areaName||'',detail:addr.detail||'',totalText:(Number(o.totalCents)/100).toFixed(2)},items:(r.data.items||[]).map((i:any)=>({...i,subtotal:(Number(i.lineTotalCents)/100).toFixed(2)})),statusText:workflowText(String(o.fulfillmentStatus||'new')),paymentText:paymentLabel(o),createdText:o.createdAt?chinaTime(o.createdAt):'',deliveredText:o.deliveredAt?chinaTime(o.deliveredAt):'',issueText:String(o.issueReason||''),simulationAuthorized:false,proofImage:''})
+        },fail:()=>{if(this.detailVisible&&serial===this.detailSerial)this.setData({detailLoading:false,detailError:'网络异常，订单详情尚未加载，请点击重试'})}})
       return
     }
     if (cloud) {
@@ -224,14 +226,15 @@ Page({
       try {
         const result=await customerOrdersRequest(cloud,id)
         if(!this.detailVisible||serial!==this.detailSerial||identity!==supportIdentity())return
-        const o=result.order || {}
+        if(!result?.order||String(result.order.id)!==id)throw Error('invalid_order_detail_response')
+        const o=result.order
         const address=o.contactSnapshot || {}
         const slot=o.deliverySlotSnapshot || {}
         const items=(Array.isArray(result.items)?result.items:[]).map((i:any)=>({
           ...i,subtotal:(Number(i.lineTotalCents)/100).toFixed(2)
         }))
         const st=String(o.fulfillmentStatus||'new')
-        this.setData({found:true,order:{...o,receiverName:address.receiverName||'',phone:address.phone||'',
+        this.setData({found:true,detailLoading:false,detailError:'',detailNotFound:false,order:{...o,receiverName:address.receiverName||'',phone:address.phone||'',
           area:address.areaName||slot.areaName||address.areaId||'',detail:address.detail||'',note:String(address.note||''), /* PHASE41_ORDER_NOTES */slotText:[slot.date,slot.label,slot.start,slot.end].filter(Boolean).join(' '),
           totalText:(Number(o.totalCents)/100).toFixed(2)},items,
           statusText:o.paymentStatus==='unpaid'&&st==='new'?'待支付':workflowText(st),paymentText:paymentLabel(o),
@@ -241,16 +244,19 @@ Page({
         if(String(o.fulfillmentStatus||'')==='delivered'){
           this.renewProof()
         }
-      }catch(error){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()){if(/401|403/.test(String(error)))this.setData({found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false});wx.showToast({title:'订单详情加载失败',icon:'none'})}}
+      }catch(error){if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()){
+        const message=String(error),missing=/http_404/.test(message),auth=/http_40[13]|not_logged_in/.test(message)
+        this.setData({detailLoading:false,detailNotFound:missing,detailError:missing?'订单不存在或当前账号无权查看':auth?'登录状态已失效，请重新登录后查看订单':'订单详情读取失败，请检查网络并重试',...auth||missing?{found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false}:{}})
+      }}
       return
     }
     const o = (loadWorkflowOrders() as any[]).find(item => item.id === id)
-    if (!o) { this.setData({ found: false }); return }
+    if (!o) { this.setData({ found: false,detailLoading:false,detailNotFound:true,detailError:'本地未找到该订单' }); return }
     const status = String(o.fulfillmentStatus || 'new')
     const paymentStatus = String(o.paymentStatus || 'unpaid')
     const publicOrder={...o};delete publicOrder.merchantNote;delete publicOrder.merchantNoteVersion
     this.setData({
-      found: true,
+      found: true,detailLoading:false,detailError:'',detailNotFound:false,
       order: publicOrder,
       items: Array.isArray(o.items) ? o.items : [],
       statusText: paymentStatus !== 'paid' && status === 'new' ? '待支付' : workflowText(status),
