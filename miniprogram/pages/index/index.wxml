@@ -26,20 +26,28 @@
 </view>
 <view class="home-catalog" hidden="{{entryBlocking || cloudConnectionError || !!entryError}}">
 <view wx:if="{{businessInfo.label || businessInfo.notice}}" class="notice">{{businessInfo.label}} {{businessInfo.notice}}</view>
-<view class="deals-section" hidden="{{!discountedProducts.length}}">
-<view class="section-heading">
-<text>✦ 优惠专区</text>
-<text class="more">好物优惠 · 以实时价格为准</text>
-</view>
-<scroll-view scroll-x class="deals-scroll">
-<view class="deals-track">
-<view wx:for="{{discountedProducts}}" wx:key="id" class="product deal-product" data-trace-list="discountedProducts" data-trace-key="{{item.id}}">
-<render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="home" list-name="discountedProducts" row-key="{{item.id}}"/>
-<template is="productCard" data="{{item,placeholderStyle,customPlaceholderUrl}}"/>
-</view>
-</view>
-</scroll-view>
-<view wx:if="{{dealsHasMore || dealError}}" class="notice" bindtap="loadMoreDeals">{{dealError || (dealBusy ? '加载中…' : '查看更多优惠 ›')}}</view>
+<view class="deals-section" wx:if="{{discountedProducts.length}}">
+  <view class="deals-heading">
+    <view class="deals-title"><text class="deals-title-icon">%</text><text>折扣专区</text></view>
+    <text class="deals-subtitle">精选优惠商品</text>
+  </view>
+  <scroll-view scroll-x class="deals-scroll" show-scrollbar="{{false}}">
+    <view class="deals-track">
+      <view wx:for="{{discountedProducts}}" wx:key="id" class="deal-product" data-trace-list="discountedProducts" data-trace-key="{{item.id}}">
+        <render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="home" list-name="discountedProducts" row-key="{{item.id}}"/>
+        <view class="deal-product-content" data-id="{{item.id}}" bindtap="openProduct" role="button">
+          <view class="deal-media">
+            <image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFill"/>
+            <view wx:else class="deal-no-image">暂无图片</view>
+            <text class="deal-percent">-{{item.discountPercent}}%</text>
+          </view>
+          <view class="deal-name">{{item.name}}</view>
+          <view class="deal-prices"><text class="deal-price">¥{{item.current}}</text><text class="deal-original">¥{{item.original}}</text></view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+  <view wx:if="{{dealsHasMore || dealError}}" class="deals-load-more" bindtap="loadMoreDeals">{{dealError || (dealBusy ? '加载中…' : '查看更多折扣商品 ›')}}</view>
 </view>
 <swiper wx:if="{{discountedProducts.length}}" class="feature-swiper" indicator-dots circular indicator-active-color="#ffffff">
 <swiper-item wx:for="{{discountedProducts}}" wx:key="id">
