@@ -4,7 +4,7 @@ import { pageScope,pageQuery,pageResult,cursorTime } from './customerPagination.
 import { reviewPolicy,reviewError as fail,reviewPurchase,inspectReviewContent } from './reviewPolicy.mjs'
 import { issueReviewImage,completeReviewImage,checkReviewImages,signedReviewImage,verifySealedImage,expireUnboundReviewImage } from './reviewImages.mjs'
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const publicValid=`r.withdrawn_at IS NULL AND r.moderation_status<>'hidden' AND p.moderation_status='approved'`
+const publicValid=`r.withdrawn_at IS NULL AND r.moderation_status<>'hidden' AND p.moderation_status='approved' AND r.purchase_receipt_ref NOT LIKE 'sandbox-test:%'`
 const send=(res,status,value)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'private, no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(value))}
 const fingerprint=b=>createHash('sha256').update(JSON.stringify(b)).digest('hex')
 async function read(req){let n=0,parts=[];for await(const c of req){n+=c.length;if(n>8192)fail(413,'body_too_large');parts.push(c)}try{const b=JSON.parse(Buffer.concat(parts).toString('utf8'));if(!b||typeof b!=='object'||Array.isArray(b))fail(400,'invalid_body');return b}catch(e){if(e.status)throw e;fail(400,'invalid_json')}}
