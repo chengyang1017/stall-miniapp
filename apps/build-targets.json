@@ -40,7 +40,8 @@
     "pages/merchant-reviews/merchant-reviews": "merchant",
     "pages/category/category": "customer",
     "pages/customer-account/customer-account": "customer",
-    "pages/product-library/product-library": "customer"
+    "pages/product-library/product-library": "customer",
+    "pages/sandbox-receipts/sandbox-receipts": "customer"
   },
   "utils": {
     "addresses": "customer",
@@ -108,6 +109,7 @@
         "pages/store-hours/store-hours",
         "pages/delivery-proof/delivery-proof",
         "pages/order-detail/order-detail",
+        "pages/sandbox-receipts/sandbox-receipts",
         "pages/profile/profile",
         "pages/customer-account/customer-account",
         "pages/customer-settings/customer-settings",
@@ -138,6 +140,7 @@
         "pages/addresses/addresses",
         "pages/orders/orders",
         "pages/order-detail/order-detail",
+        "pages/sandbox-receipts/sandbox-receipts",
         "pages/profile/profile",
         "pages/customer-account/customer-account",
         "pages/customer-settings/customer-settings",
