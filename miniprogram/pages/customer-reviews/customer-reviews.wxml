@@ -1,4 +1,84 @@
-<view class="page"><view class="card"><view class="title">{{mode === 'form' ? '评价商品' : '我的评价'}}</view><view wx:if="{{!cloudMode}}" class="notice">本机演示不生成虚构已购评价；真实评价须登录云端并核验交易。</view><view wx:if="{{error}}" class="error">{{error}}</view><button size="mini" bindtap="login" disabled="{{busy}}">微信登录</button><view class="notice">{{policyText}}</view>
- <block wx:if="{{cloudMode && mode === 'form'}}"><view>订单商品：{{productName || '正在核对商品'}}</view><view class="notice">{{eligibilityReason}}</view><view wx:if="{{!eligible}}" class="error">资格尚未满足；支付标签不等于可信收款。</view><picker range="{{[1,2,3,4,5]}}" value="{{rating - 1}}" bindchange="rate" disabled="{{busy || pendingSubmit || !eligible}}"><view class="picker">评分：{{rating}} / 5 星 ›</view></picker><textarea maxlength="500" value="{{content}}" bindinput="input" placeholder="文字可留空，最多500字；请勿包含电话、地址等私人信息" disabled="{{busy || pendingSubmit || !eligible}}"/><view wx:for="{{photos}}" wx:key="key" class="photo"><image wx:if="{{item.path}}" src="{{item.path}}" mode="aspectFit"/><text>图片 {{index + 1}} · {{item.imageId ? '已关联私有图片' : '未上传'}}</text><button size="mini" data-index="{{index}}" bindtap="previewPhoto">预览图片</button><button size="mini" data-index="{{index}}" bindtap="removePhoto" disabled="{{busy || pendingSubmit}}">移除</button></view><button bindtap="choose" disabled="{{busy || pendingSubmit || !eligible || photos.length >= 3}}">选择图片（最多3张，每张5MB）</button><button bindtap="uploadPhotos" disabled="{{busy || pendingSubmit || !eligible}}" loading="{{busy}}">上传未确认图片</button><button bindtap="preview">{{previewing ? '收起预览' : '预览评价'}}</button><view wx:if="{{previewing}}" class="preview"><view>{{rating}} 星 · {{content || '仅评分'}}</view><view>{{photos.length}} 张图片；发布前需平台审核。</view></view><button type="primary" bindtap="submit" loading="{{busy}}" disabled="{{busy || !eligible}}">{{pendingSubmit ? '使用原编号重试提交' : '提交并等待审核'}}</button><button bindtap="back" disabled="{{busy}}">返回我的评价／核对结果</button></block>
- <block wx:if="{{cloudMode && mode === 'list'}}"><button bindtap="refresh" loading="{{loading}}" disabled="{{loading || busy}}">刷新我的评价</button><view wx:if="{{!loading && !rows.length}}">尚无评价记录</view><block wx:for="{{rows}}" wx:key="id"><review-card row="{{item}}" bind:images="images"/><view>审核：{{item.statusText}} · 回复：{{item.replyStatusText}}</view><view wx:if="{{item.publicRating}}" class="notice">当前公开版本：{{item.publicRating}} 星，{{item.publicContent}}。修改候选未经审核不会替换它。</view><button wx:if="{{item.canEdit}}" size="mini" data-id="{{item.id}}" bindtap="edit" disabled="{{busy}}">修改评价</button><button wx:if="{{!item.withdrawnAt}}" size="mini" data-id="{{item.id}}" bindtap="withdraw" disabled="{{busy}}">撤回评价</button></block><button wx:if="{{hasMore}}" bindtap="more" disabled="{{loading}}">加载更多</button></block>
-</view></view>
+<view class="reviews-page">
+  <view wx:if="{{!cloudMode}}" class="review-alert">本机演示不生成虚构的已购评价。真实评价需要云端登录及交易核验。</view>
+  <view wx:if="{{error}}" class="review-alert review-alert-error">{{error}}</view>
+
+  <block wx:if="{{cloudMode && mode === 'form'}}">
+    <view class="reviews-card review-product">
+      <view class="review-card-kicker">本次评价</view>
+      <view class="review-product-name">{{productName || '正在核对订单商品…'}}</view>
+      <view class="review-eligibility {{eligible ? 'review-eligibility-ok' : ''}}">
+        <text class="review-status-dot"></text>
+        <text>{{checkingEligibility ? '正在核验评价资格…' : eligible ? '已通过评价资格核验' : eligibilityReason || '当前尚未确认评价资格'}}</text>
+      </view>
+      <view wx:if="{{!eligible && !checkingEligibility}}" class="review-eligibility-actions">
+        <text>只有符合条件的已购订单商品可以发表评价。</text>
+        <button size="mini" bindtap="refresh" disabled="{{busy}}">重新核验</button>
+      </view>
+      <view wx:if="{{eligible && eligibilityReason}}" class="review-product-hint">{{eligibilityReason}}</view>
+    </view>
+
+    <view class="reviews-card">
+      <view class="review-section-header"><text class="review-section-title">商品评分</text><text class="review-section-helper">{{rating}} / 5 分</text></view>
+      <view class="review-stars">
+        <view wx:for="{{ratingStars}}" wx:key="*this" class="review-star {{item <= rating ? 'review-star-active' : ''}}" data-rating="{{item}}" bindtap="selectRating" aria-label="{{item}}星" role="button"><text>{{item <= rating ? '★' : '☆'}}</text></view>
+      </view>
+      <view class="review-field-hint">点击星星为本次购买的商品评分</view>
+
+      <view class="review-separator"></view>
+      <view class="review-section-header"><text class="review-section-title">评价内容</text><text class="review-optional">选填</text></view>
+      <view class="review-input-wrap">
+        <textarea class="review-textarea" maxlength="500" value="{{content}}" bindinput="input" placeholder="分享商品质量、使用体验或配送感受…" disabled="{{busy || pendingSubmit || !eligible}}" auto-height="{{false}}" />
+        <view class="review-character-count">{{content.length}} / 500</view>
+      </view>
+      <view class="review-field-hint">请勿填写电话、住址等个人隐私信息。</view>
+    </view>
+
+    <view class="reviews-card">
+      <view class="review-section-header"><text class="review-section-title">添加图片</text><text class="review-section-helper">{{photos.length}} / 3 张</text></view>
+      <view class="review-photo-grid">
+        <view wx:for="{{photos}}" wx:key="key" class="review-photo-tile">
+          <image wx:if="{{item.path}}" class="review-photo-image" src="{{item.path}}" mode="aspectFill" data-index="{{index}}" bindtap="previewPhoto"/>
+          <view wx:else class="review-photo-remote" data-index="{{index}}" bindtap="previewPhoto">查看图片</view>
+          <view class="review-photo-state">{{item.imageId ? '已上传' : '待上传'}}</view>
+          <view class="review-photo-remove" data-index="{{index}}" bindtap="removePhoto" wx:if="{{!busy && !pendingSubmit}}">×</view>
+        </view>
+        <view wx:if="{{photos.length < 3}}" class="review-photo-add {{!eligible || busy || pendingSubmit ? 'review-photo-disabled' : ''}}" bindtap="choose" role="button" aria-label="选择评价图片">
+          <text class="review-photo-plus">+</text>
+          <text>添加图片</text>
+        </view>
+      </view>
+      <view class="review-field-hint">最多 3 张，每张不超过 5MB。图片上传确认后才能提交评价。</view>
+      <button wx:if="{{photos.length > 0}}" class="review-upload-btn" bindtap="uploadPhotos" loading="{{busy}}" disabled="{{busy || pendingSubmit || !eligible}}">上传未确认图片</button>
+    </view>
+
+    <view class="reviews-card review-actions">
+      <view class="review-section-title">提交评价</view>
+      <view class="review-policy-note">{{policyText}}</view>
+      <button class="review-preview-btn" bindtap="preview" disabled="{{busy}}">{{previewing ? '收起预览' : '预览评价'}}</button>
+      <view wx:if="{{previewing}}" class="review-preview">
+        <view class="review-preview-stars">{{rating}} 星 · {{content || '仅评分'}}</view>
+        <view>{{photos.length}} 张图片 · 提交后等待平台审核</view>
+      </view>
+      <button class="review-submit-btn" type="primary" bindtap="submit" loading="{{busy}}" disabled="{{busy || !eligible}}">{{pendingSubmit ? '使用原编号重试提交' : '提交评价并等待审核'}}</button>
+      <button class="review-back-btn" bindtap="back" disabled="{{busy}}">返回我的评价</button>
+    </view>
+  </block>
+
+  <block wx:if="{{cloudMode && mode === 'list'}}">
+    <view class="reviews-card">
+      <view class="review-section-header"><text class="review-section-title">我的评价</text><button class="review-refresh-btn" size="mini" bindtap="refresh" loading="{{loading}}" disabled="{{loading || busy}}">刷新</button></view>
+      <view class="review-policy-note">{{policyText}}</view>
+      <view wx:if="{{!loading && !rows.length}}" class="review-list-empty"><view class="review-empty-icon">☆</view><view>暂无评价记录</view><view class="review-field-hint">已购买商品且通过资格核验后，可发表评价。</view></view>
+      <view wx:for="{{rows}}" wx:key="id" class="review-list-item">
+        <review-card row="{{item}}" bind:images="images"/>
+        <view class="review-list-meta">审核：{{item.statusText}} · 回复：{{item.replyStatusText}}</view>
+        <view wx:if="{{item.publicRating}}" class="review-public-note">当前公开版本：{{item.publicRating}} 星，{{item.publicContent}}。修改候选通过审核后才替换公开内容。</view>
+        <view class="review-list-actions"><button wx:if="{{item.canEdit}}" size="mini" data-id="{{item.id}}" bindtap="edit" disabled="{{busy}}">修改评价</button><button wx:if="{{!item.withdrawnAt}}" size="mini" data-id="{{item.id}}" bindtap="withdraw" disabled="{{busy}}">撤回评价</button></view>
+      </view>
+      <button wx:if="{{hasMore}}" class="review-more-btn" bindtap="more" disabled="{{loading}}">加载更多</button>
+    </view>
+  </block>
+  <view class="review-login-footer">
+    <button size="mini" bindtap="login" disabled="{{busy}}">微信登录 / 切换账号</button>
+  </view>
+</view>
