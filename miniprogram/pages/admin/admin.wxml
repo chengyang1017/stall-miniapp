@@ -49,6 +49,11 @@
       <view wx:if="{{settingsError}}" class="merchant-setting-desc">{{settingsError}}<text bindtap="refreshMinimum"> · 点击重新读取</text></view>
     </view>
 
+    <view class="merchant-section-title">配送位置隐私</view>
+    <view class="merchant-minimum">
+      <view class="merchant-minimum-row"><text>允许顾客查看配送实时位置</text><switch checked="{{shareDeliveryLocation}}" disabled="{{!cloudMode || !settingsReady || settingsSaving || trackingSaving}}" bindchange="toggleTrackingVisibility" color="#16865d"/></view>
+      <view class="merchant-setting-desc">默认关闭。开启后，仍需配送人员为当前订单主动授权共享；关闭会阻止新的位置上传并隐藏坐标。</view>
+    </view>
     <view class="merchant-section-title">服务与数据</view>
     <navigator class="merchant-item" url="/pages/merchant-reviews/merchant-reviews"><view class="merchant-item-text"><view class="merchant-item-name">商品评价</view><view class="merchant-item-desc">查看评分、回复与举报 · 审核由平台负责</view></view><text class="merchant-arrow">›</text></navigator>
     <navigator class="merchant-item" url="/pages/store-code/store-code"><view class="merchant-item-text"><view class="merchant-item-name">店铺小程序码</view><view class="merchant-item-desc">微信官方码 · 保存、分享与打印图片</view></view><text class="merchant-arrow">›</text></navigator>

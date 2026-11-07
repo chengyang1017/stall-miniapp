@@ -16,7 +16,7 @@ Page({
  // Page-local proof only: bound to API, store and session; shows reuse a short-lived shared proof or recheck the server.
  accessSerial:0,accessContext:'',
  revision:null as string|null, serial:0,pendingSerial:0, loadedContext:'',supportSerial:0,supportTimer:0 as any,
- data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,pendingNewOrderCount:null as number|null,unpaidOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',cloudMode:false},
+ data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,pendingNewOrderCount:null as number|null,unpaidOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',shareDeliveryLocation:false,trackingSaving:false,cloudMode:false},
  async onShow(){
   const cfg=getCloudContext(),serial=++this.accessSerial,identity=supportIdentity()
   const retained=this.accessContext===identity&&this.data.workspaceAuthorized||!!cfg&&hasRecentMerchantPermission(cfg.apiBase,cfg.storeSlug)
@@ -48,11 +48,19 @@ Page({
   const cfg=getCloudContext(),serial=++this.serial,context=businessContextKey();this.loadedContext=context
   this.setData({cloudMode:!!cfg,settingsLoading:!!cfg,settingsReady:!cfg,settingsError:'',minimumOrderInput:cfg?'':getMinimumOrder().toFixed(2)})
   if(!cfg)return
-  try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==businessContextKey())return;this.revision=r.revision||null;this.setData({minimumOrderInput:(r.minimumOrderCents/100).toFixed(2),settingsReady:true})}
+  try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==businessContextKey())return;this.revision=r.revision||null;this.setData({minimumOrderInput:(r.minimumOrderCents/100).toFixed(2),shareDeliveryLocation:r.shareDeliveryLocation===true,settingsReady:true})}
   catch(_){if(serial===this.serial&&context===businessContextKey())this.setData({settingsError:'云端起送金额读取失败，请检查权限后重试'})}
   finally{if(serial===this.serial&&context===businessContextKey())this.setData({settingsLoading:false})}
  },
- beginMinimumEdit(){if(this.data.settingsReady&&!this.data.settingsLoading&&!this.data.settingsSaving)this.setData({minimumEditing:true})},
+ async toggleTrackingVisibility(e:any){
+   const desired=!!e.detail.value,cfg=getCloudContext(),context=businessContextKey()
+   if(!cfg||!this.data.settingsReady||this.data.settingsSaving||this.data.trackingSaving||context!==this.loadedContext){this.setData({shareDeliveryLocation:this.data.shareDeliveryLocation});return}
+   this.setData({trackingSaving:true,settingsError:''})
+   try{this.revision=await patchMerchantBusiness(cfg,this.revision,{shareDeliveryLocation:desired});if(context!==businessContextKey())throw Error('context_changed');this.setData({shareDeliveryLocation:desired});wx.showToast({title:desired?'已允许共享':'已关闭共享',icon:'success'})}
+   catch(_){this.setData({settingsReady:false,settingsError:'定位设置保存失败，请刷新核对服务器状态'});this.refreshMinimum()}
+   finally{this.setData({trackingSaving:false})}
+  },
+  beginMinimumEdit(){if(this.data.settingsReady&&!this.data.settingsLoading&&!this.data.settingsSaving)this.setData({minimumEditing:true})},
  cancelMinimumEdit(){if(!this.data.settingsSaving)this.setData({minimumEditing:false})},
  async saveMinimumOrder(){
   if(this.data.settingsSaving||!this.data.settingsReady)return

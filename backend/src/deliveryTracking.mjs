@@ -14,9 +14,9 @@ async function members(db,storeId){return (await db.query('SELECT mm.external_su
 function sessionView(s,order,task,subject,manager){
  const now=Number(order.server_ms),allowed=order.fulfillment_status==='delivering'&&task&&s&&task.courier_subject===s.courier_subject&&s.state!=='ended'&&now-new Date(s.started_at).getTime()<8*3600000
  const age=s?.last_location_at?now-new Date(s.last_location_at).getTime():Infinity
- const visible=allowed&&s.state==='active'&&age>=0&&age<=120000&&s.latitude!==null
+ const visible=order.share_delivery_location===true&&allowed&&s.state==='active'&&age>=0&&age<=120000&&s.latitude!==null
  const state=!allowed?(s?'ended':'unavailable'):s.state==='paused'?'paused':visible?'active':'stale'
- return {state,sessionId:s?.id||null,orderStatus:order.fulfillment_status,estimatedArrival:order.estimated_arrival||'',lastLocationAt:s?.last_location_at||null,serverTime:new Date(now).toISOString(),expiresInSeconds:visible?Math.max(0,Math.floor((120000-age)/1000)):0,
+ return {state,shareDeliveryLocation:order.share_delivery_location===true,sessionId:s?.id||null,orderStatus:order.fulfillment_status,estimatedArrival:order.estimated_arrival||'',lastLocationAt:s?.last_location_at||null,serverTime:new Date(now).toISOString(),expiresInSeconds:visible?Math.max(0,Math.floor((120000-age)/1000)):0,
   location:visible?{latitude:s.latitude,longitude:s.longitude,accuracy:s.accuracy,coordinateSystem:'gcj02',sampledAt:s.sampled_at,receivedAt:s.last_location_at,seq:Number(s.seq)}:null,
   ...(subject?{canAssign:manager,canControl:task?.courier_subject===subject,assignmentVersion:task?.version||0,courierId:task?hash(order.store_id+':'+task.courier_subject):null,lastSeq:Number(s?.seq||0)}:{})}
 }
@@ -45,7 +45,7 @@ export async function deliveryTrackingRoute(req,res,url,pool){
   if(Object.keys(b).some(k=>!keys.includes(k)))fail(400,'invalid_fields')
   db=await pool.connect();await db.query('BEGIN')
   // All state writes lock the order first, matching fulfillment/termination.
-  const o=(await db.query(`SELECT o.id,o.store_id,o.fulfillment_status,o.estimated_arrival,jsonb_build_object('latitude',o.contact_snapshot->'latitude','longitude',o.contact_snapshot->'longitude') AS contact_snapshot,extract(epoch FROM clock_timestamp())*1000 AS server_ms FROM orders o JOIN stores s ON s.id=o.store_id WHERE s.slug=$1 AND o.id=$2 ${merchant?'':'AND o.customer_subject=$3'} FOR UPDATE OF o`,merchant?[slug,m[3]]:[slug,m[3],subject])).rows[0]
+  const o=(await db.query(`SELECT o.id,o.store_id,o.fulfillment_status,o.estimated_arrival,jsonb_build_object('latitude',o.contact_snapshot->'latitude','longitude',o.contact_snapshot->'longitude') AS contact_snapshot,extract(epoch FROM clock_timestamp())*1000 AS server_ms,COALESCE((SELECT r.configuration->>'shareDeliveryLocation' FROM store_delivery_rules r WHERE r.store_id=o.store_id),'false')='true' AS share_delivery_location FROM orders o JOIN stores s ON s.id=o.store_id WHERE s.slug=$1 AND o.id=$2 ${merchant?'':'AND o.customer_subject=$3'} FOR UPDATE OF o`,merchant?[slug,m[3]]:[slug,m[3],subject])).rows[0]
   if(!o)fail(404,'order_not_found')
   let task=(await db.query('SELECT * FROM delivery_tracking_tasks WHERE order_id=$1',[o.id])).rows[0]
   let s=(await db.query('SELECT * FROM delivery_tracking_sessions WHERE order_id=$1 ORDER BY started_at DESC,id DESC LIMIT 1 FOR UPDATE',[o.id])).rows[0]
@@ -62,6 +62,7 @@ export async function deliveryTrackingRoute(req,res,url,pool){
    await db.query('COMMIT');reply(res,200,result);return true
   }
   if(o.fulfillment_status!=='delivering')fail(409,'not_delivering')
+   if(!o.share_delivery_location&&['start','resume','location'].includes(action))fail(409,'tracking_disabled_by_store')
   if(action==='assign'){
    if(!manager)fail(403,'dispatch_forbidden')
    if(!Number.isSafeInteger(b.expectedVersion)||b.expectedVersion!==(task?.version||0)||typeof b.courierId!=='string')fail(409,'assignment_changed')

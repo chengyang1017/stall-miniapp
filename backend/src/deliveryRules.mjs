@@ -15,6 +15,7 @@ export function validRules(c){
  if(c.placeholderStyle!==undefined&&!styles.includes(c.placeholderStyle))return false
  if(c.placeholderImageKey!==undefined&&c.placeholderImageKey!==null&&(typeof c.placeholderImageKey!=='string'||!/^stores\/[0-9a-f-]{36}\/products\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(c.placeholderImageKey)))return false
  if(c.placeholderStyle==='custom'&&!c.placeholderImageKey)return false
+ if(c.shareDeliveryLocation!==undefined&&typeof c.shareDeliveryLocation!=='boolean')return false
  if(c.minimumOrderCents!==undefined&&(!Number.isSafeInteger(c.minimumOrderCents)||c.minimumOrderCents<0||c.minimumOrderCents>99999900))return false
  if(!c.days.every(d=>d&&typeof d.enabled==='boolean'&&hhmm(d.start)&&hhmm(d.end)&&d.start<d.end))return false
  if(!c.areas.every(a=>a&&safeText(a.id,60)&&safeText(a.name,120)&&typeof a.enabled==='boolean'&&((a.latitude===null&&a.longitude===null&&a.radiusMeters===null)||(coord(a.latitude,-90,90)&&coord(a.longitude,-180,180)&&Number.isInteger(a.radiusMeters)&&a.radiusMeters>=100&&a.radiusMeters<=100000))))return false
@@ -47,7 +48,7 @@ export function businessView(rules,now=new Date(),storeName='') {
  const imageKey=configured?rules.placeholderImageKey||null:null,base=(process.env.IMAGE_PUBLIC_BASE_URL||'').replace(/\/+$/,'')
  return {storeName,configured,noteTags:configured?rules.noteTags||[]:[],placeholderStyle:configured?rules.placeholderStyle||'premium':'premium',placeholderImageKey:imageKey,customPlaceholderUrl:imageKey&&/^https:\/\/[^/]+/.test(base)?base+'/'+imageKey.split('/').map(encodeURIComponent).join('/'):null,
    accepting:configured?rules.accepting:false,days:configured?rules.days:[],notice:configured?(rules.notice||''):'',minimumOrderCents:configured?(rules.minimumOrderCents||0):0,
-   deliveryPaused:configured?!!rules.deliveryPaused:false,todayDeliveryPaused:!!todayDeliveryPaused,
+   shareDeliveryLocation:configured?rules.shareDeliveryLocation===true:false,deliveryPaused:configured?!!rules.deliveryPaused:false,todayDeliveryPaused:!!todayDeliveryPaused,
    open:!!open,label:!configured?'营业信息未配置':!rules.accepting?'暂停接单':rules.deliveryPaused?'暂停全部配送':!deliveryReady?'配送未配置':open?(todayDeliveryPaused?'营业中 · 今日暂停配送，请核对其他日期':'营业中'):'休息中',timeZone:'Asia/Shanghai'}
 }
 export async function businessSettingsRoute(req,res,url,pool) {
@@ -71,7 +72,7 @@ export async function businessSettingsRoute(req,res,url,pool) {
  }
  let body;try{body=await bodyJson(req)}catch(e){response(res,400,{error:e.message});return true}
  const keys=body&&typeof body==='object'&&!Array.isArray(body)?Object.keys(body):[]
- if(!keys.includes('expectedRevision')||keys.length<2||keys.some(k=>!['expectedRevision','accepting','days','notice','minimumOrderCents','noteTags','placeholderStyle','placeholderImageKey'].includes(k))||!(body.expectedRevision===null||typeof body.expectedRevision==='string'&&/^[a-f0-9]{32}$/.test(body.expectedRevision))){response(res,400,{error:'invalid_business_patch'});return true}
+ if(!keys.includes('expectedRevision')||keys.length<2||keys.some(k=>!['expectedRevision','accepting','days','notice','minimumOrderCents','shareDeliveryLocation','noteTags','placeholderStyle','placeholderImageKey'].includes(k))||!(body.expectedRevision===null||typeof body.expectedRevision==='string'&&/^[a-f0-9]{32}$/.test(body.expectedRevision))){response(res,400,{error:'invalid_business_patch'});return true}
  if(Object.hasOwn(body,'placeholderImageKey')&&body.placeholderImageKey!==null&&!await verifyProductImage(pool,store.id,body.placeholderImageKey)){response(res,400,{error:'invalid_placeholder_image'});return true}
  const client=await pool.connect()
  try {
@@ -86,7 +87,10 @@ export async function businessSettingsRoute(req,res,url,pool) {
    if(configuration.placeholderStyle==='custom'&&!Object.hasOwn(body,'placeholderImageKey')&&!await verifyProductImage(client,store.id,configuration.placeholderImageKey)){await client.query('ROLLBACK');response(res,409,{error:'placeholder_image_unavailable'});return true}
    const saved=await client.query(`INSERT INTO store_delivery_rules(store_id,configuration) VALUES($1,$2::jsonb)
      ON CONFLICT(store_id) DO UPDATE SET configuration=excluded.configuration,updated_at=now() RETURNING md5(configuration::text) AS revision`,[store.id,JSON.stringify(configuration)])
-   await client.query('COMMIT');response(res,200,{ok:true,revision:saved.rows[0].revision})
+   if(configuration.shareDeliveryLocation!==true){
+      await client.query("UPDATE delivery_tracking_sessions SET state='paused',paused_at=COALESCE(paused_at,clock_timestamp()),latitude=NULL,longitude=NULL,accuracy=NULL,sampled_at=NULL WHERE store_id=$1 AND state='active'",[store.id])
+    }
+    await client.query('COMMIT');response(res,200,{ok:true,revision:saved.rows[0].revision})
  }catch(e){await client.query('ROLLBACK').catch(()=>{});if(e.code==='23514')response(res,409,{error:'image_or_configuration_changed_refresh'});else throw e}finally{client.release()}
  return true
 }
