@@ -9,3 +9,6 @@ export const PREVIEW_APP_ID:string=''
 // Opt-in only after audited production WeChat Pay V3 and merchant acceptance.
 // Keep false for all Sandbox/staging builds.
 export const LIVE_WECHAT_PAY_ENABLED:boolean=false
+
+// Enabled ONLY for a dedicated isolated Sandbox build, never merchant production.
+export const PAYMENT_SANDBOX_UI_ENABLED:boolean=false

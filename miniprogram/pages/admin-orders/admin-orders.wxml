@@ -50,9 +50,27 @@
     <view class="muted">配送时段：{{item.slotText || '待确认'}}</view>
     <view class="order-card-toolbar">
       <button size="mini" data-id="{{item.id}}" bindtap="toggleOrderDetails">{{expandedOrderIds[item.id] ? '收起' : '详情'}}</button>
-      <button wx:if="{{cloudMode}}" size="mini" data-id="{{item.id}}" bindtap="viewSandboxPayment">支付 / 退款 / 小票</button>
+      <button wx:if="{{cloudMode && !livePayEnabled && sandboxUiEnabled}}" size="mini" data-id="{{item.id}}" bindtap="viewSandboxPayment">支付 / 退款 / 小票</button>
+      <button wx:if="{{cloudMode && livePayEnabled && canManage && item.paymentSource === 'wechatpay:live'}}" size="mini" data-id="{{item.id}}" bindtap="viewLiveRefunds">微信支付退款记录</button>
     </view>
-    <view wx:if="{{sandboxOrderId === item.id}}" class="order-payment-panel">
+    <view wx:if="{{livePayEnabled && liveRefundOrderId === item.id && canManage}}" class="order-payment-panel">
+      <view class="order-detail-title">微信支付退款</view>
+      <view class="muted">仅处理本店经微信支付核实的真实收款。退款受理后，仍须等待渠道确认，退款不会自动恢复库存。</view>
+      <view wx:if="{{liveRefundError}}" class="notice">{{liveRefundError}}</view>
+      <view wx:if="{{liveRefundMessage}}" class="muted">{{liveRefundMessage}}</view>
+      <view wx:for="{{liveRefundRows}}" wx:for-item="refund" wx:key="id" class="order-payment-history">
+        <view>退款单 {{refund.outRefundNo}}</view>
+        <view>金额（分）：{{refund.amountCents}} · 状态：{{refund.status}}</view>
+        <view wx:if="{{refund.reviewRequired}}" class="notice">请人工核对，不要重复提交。</view>
+        <button size="mini" data-refundid="{{refund.id}}" bindtap="refreshLiveRefund" disabled="{{liveRefundBusy}}">向微信查询退款状态</button>
+      </view>
+      <view wx:if="{{(item.paymentStatus === 'paid' || item.paymentStatus === 'partially_refunded')}}" class="order-query-actions">
+        <button size="mini" data-id="{{item.id}}" data-mode="full" bindtap="requestLiveRefund" disabled="{{liveRefundBusy}}">申请退还剩余金额</button>
+        <button size="mini" data-id="{{item.id}}" data-mode="partial" bindtap="requestLiveRefund" disabled="{{liveRefundBusy}}">申请部分退款</button>
+      </view>
+      <view wx:if="{{liveRefundBusy}}" class="muted">正在核验退款，请勿重复操作…</view>
+    </view>
+    <view wx:if="{{!livePayEnabled && sandboxUiEnabled && sandboxOrderId === item.id}}" class="order-payment-panel">
       <view>{{sandboxError}}</view><view wx:if="{{sandbox.stale}}">渠道未能刷新，显示已保存状态。</view>
       <view wx:for="{{sandbox.attempts}}" wx:for-item="attempt" wx:key="id">{{attempt.channelText}} · ¥{{attempt.amountText}} · {{attempt.label}}</view>
       <view wx:for="{{sandbox.refunds}}" wx:for-item="refund" wx:key="id">{{refund.kindText}} ¥{{refund.amountText}} · {{refund.label}} · {{refund.refundId || '尚无退款编号'}}</view>

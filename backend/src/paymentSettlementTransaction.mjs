@@ -20,7 +20,8 @@ export async function settleVerifiedOrderPayment(pool,{event,expectedProvider,ex
   if(!order)throw fail('payment_order_not_found')
   if(Number(order.total_cents)!==event.amountCents||order.currency!==event.currency)throw fail('payment_amount_mismatch')
   const provider=providerKey(event)
-  if(order.payment_status==='paid'||event.provider==='stripe'&&['refunded','partially_refunded'].includes(order.payment_status)){
+  if(order.payment_status==='paid'||['refunded','partially_refunded'].includes(order.payment_status)&&
+    ((event.provider==='stripe'&&event.mode==='sandbox')||(event.provider==='wechatpay'&&event.mode==='live'))){
    // A repeated notification may be acknowledged only if its existing event
    // matches this paid order; no duplicate inventory or status update.
    const prior=await db.query(`SELECT order_id,amount_cents,event_type FROM payment_events

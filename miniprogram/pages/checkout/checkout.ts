@@ -1,4 +1,4 @@
-import {LIVE_WECHAT_PAY_ENABLED} from '../../config/cloud'
+import {LIVE_WECHAT_PAY_ENABLED,PAYMENT_SANDBOX_UI_ENABLED,CLOUD_ONLY} from '../../config/cloud'
 import { cloudCartConfig, loadCloudCheckout, localDate, availableCloudSlots, cloudDeliveryReason, createCloudOrder } from '../../utils/cloudCheckout' // PHASE34_CLOUD_CHECKOUT
 import { businessState } from '../../modules/customer/demo/settings' // STALL_HOURS_V1
 import { getMinimumOrder, minimumOrderShortfall } from '../../modules/customer/demo/settings'
@@ -42,7 +42,7 @@ Page({
     this.saveDraft()
   },
   data: {
-    sandboxChannel:'card',livePayEnabled:LIVE_WECHAT_PAY_ENABLED,
+    sandboxChannel:'card',livePayEnabled:LIVE_WECHAT_PAY_ENABLED,sandboxUiEnabled:PAYMENT_SANDBOX_UI_ENABLED,paymentNotConfigured:CLOUD_ONLY&&!LIVE_WECHAT_PAY_ENABLED&&!PAYMENT_SANDBOX_UI_ENABLED,
     demoConfirmBusy:false,
     orderSubmitting:false,
     cloudMode: false, cloudBusy: false, cloudError: '',deliveryError:'',selectionNotice:'',cloudAreaName:'', deliveryDate: '', deliveryDateMin: '', deliveryDateMax: '', cloudRules: null as any, cloudAreas: [] as Array<{id:string;name:string}>,
@@ -137,6 +137,7 @@ Page({
     this.recheckCloudSelection(date)
   },
   async submitCloudOrder() {
+    if(CLOUD_ONLY&&!LIVE_WECHAT_PAY_ENABLED&&!PAYMENT_SANDBOX_UI_ENABLED){this.setData({cloudError:'本店支付尚未开通，暂不能提交订单'});return}
     if(this.data.orderSubmitting)return
     if(this.checkoutContext!==supportIdentity()){this.restoreDraft();await this.refreshCloudCheckout();return}
     if(this.data.cloudBusy||this.data.cloudError||this.data.deliveryError)return

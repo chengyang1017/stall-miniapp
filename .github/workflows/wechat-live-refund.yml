@@ -1,0 +1,40 @@
+name: WeChat Pay live refund safety checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/src/wechatPayV3.mjs'
+      - 'backend/src/wechatLiveRefundRoute.mjs'
+      - 'backend/src/wechatLivePaymentRoute.mjs'
+      - 'backend/src/paymentSettlementTransaction.mjs'
+      - 'backend/tests/wechatLivePayment.test.mjs'
+      - 'backend/tests/wechatLiveRefund.test.mjs'
+      - 'backend/sql/035_wechat_live_refunds.sql'
+      - 'miniprogram/pages/admin-orders/**'
+      - 'miniprogram/modules/merchant/api/wechatLiveRefunds.ts'
+      - '.github/workflows/wechat-live-refund.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  refund-unit-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix backend
+      - name: Verify JS syntax and refund ledger safety tests
+        run: |
+          node --check backend/src/wechatPayV3.mjs
+          node --check backend/src/wechatLiveRefundRoute.mjs
+          node --check backend/src/wechatLivePaymentRoute.mjs
+          node --check backend/src/paymentSettlementTransaction.mjs
+          node --test backend/tests/wechatLivePayment.test.mjs backend/tests/wechatLiveRefund.test.mjs backend/tests/paymentSettlementTransaction.test.mjs
+      - run: npm ci
+      - name: Typecheck customer and merchant miniapp
+        run: npx tsc --noEmit
+      - name: Build combined miniapp
+        run: npm run build:combined

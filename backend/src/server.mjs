@@ -13,6 +13,7 @@ import {customerWechatIdentityLinkRoute} from './customerWechatIdentityLinkRoute
 import { storeEntryRoute } from './storeEntry.mjs'
 import { stripeTestPaymentRoute } from './stripeTestPaymentRoute.mjs'
 import { wechatLivePaymentRoute } from './wechatLivePaymentRoute.mjs'
+import { wechatLiveRefundRoute } from './wechatLiveRefundRoute.mjs'
 import { stripeTestReturnRoute } from './stripeTestReturnRoute.mjs'
 import { startSandboxPaymentWorker } from './sandboxPaymentWorker.mjs'
 import { stagingPaymentRoute } from './stagingPayments.mjs'
@@ -106,6 +107,7 @@ const server = http.createServer(async (req, res) => {
   }
   try {
     if (stripeTestReturnRoute(req,res,url)) return
+    if (await wechatLiveRefundRoute(req,res,url,pool)) return
     if (await wechatLivePaymentRoute(req,res,url,pool)) return
     if (await stripeTestPaymentRoute(req,res,url,pool)) return
     if (await stagingPaymentRoute(req,res,url,pool)) return

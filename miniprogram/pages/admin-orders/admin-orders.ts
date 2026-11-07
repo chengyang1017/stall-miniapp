@@ -1,5 +1,7 @@
 import { paymentLabel,fulfillmentPaymentReady } from '../../modules/shared/domain/payment'
 import { stableRowsPatch } from '../../modules/shared/runtime/stableRows'
+import {LIVE_WECHAT_PAY_ENABLED,PAYMENT_SANDBOX_UI_ENABLED} from '../../config/cloud'
+import {listLiveRefunds,createLiveRefund,refreshLiveRefund,LiveRefund} from '../../modules/merchant/api/wechatLiveRefunds'
 import {loadWorkflowOrders,updateWorkflowOrder,chinaTime} from '../../modules/merchant/demo/orders'
 import {saveDemoOrders} from '../../modules/merchant/demo/orders'
 import { merchantOrderConfig, merchantOrderContextKey, fetchMerchantOrderPage, updateMerchantOrder, saveMerchantOrderNote, MerchantOrderCounts, MerchantOrderQuery } from '../../modules/merchant/api/orders'
@@ -15,6 +17,86 @@ function validRange(from:string,to:string):boolean{if(!from&&!to)return true;con
 function emptyCounts():MerchantOrderCounts{return {all:0,new:0,accepted:0,preparing:0,delivering:0,delivered:0,cancelled:0,abnormal:0,other:0}}
 function errorMessage(e:unknown):string{const s=String(e);if(/orders_changed|cursor/.test(s))return '订单数据已变化或分页已过期，请刷新后继续加载';if(/401|403|not_logged_in/.test(s))return '登录已失效或无操作权限，请重新登录有权限的商家账号';if(s.includes('payment_not_confirmed'))return '尚未确认支付，现有支付或库存预留规则禁止此操作';if(s.includes('inventory_reservation_expired'))return '库存预留已过期，服务器已处理，请刷新核对';if(/invalid_transition|state_changed|inventory_released/.test(s))return '订单状态或库存预留已变化，请刷新核对';if(s.includes('400'))return '查询条件或操作参数无效，请检查日期范围和输入';return '请求失败或结果未能确认，请检查网络后刷新核对，勿重复操作'}
 Page({
+ async viewLiveRefunds(e:any){
+  const cfg=merchantOrderConfig(),id=String(e.currentTarget.dataset.id||'')
+  if(!LIVE_WECHAT_PAY_ENABLED||!cfg||!this.visible||!this.data.canManage)return
+  const context=merchantOrderContextKey(),serial=this.serial
+  this.setData({liveRefundOrderId:id,liveRefundRows:[],liveRefundError:'',liveRefundMessage:'',liveRefundBusy:true})
+  try{
+   const rows=await listLiveRefunds(cfg,id)
+   if(this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&this.data.liveRefundOrderId===id)
+    this.setData({liveRefundRows:rows})
+  }catch(_){
+   if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())
+    this.setData({liveRefundError:'退款记录读取失败，请稍后重试'})
+  }finally{if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({liveRefundBusy:false})}
+ },
+ async refreshLiveRefund(e:any){
+  const cfg=merchantOrderConfig(),id=this.data.liveRefundOrderId,refundId=String(e.currentTarget.dataset.refundid||'')
+  if(!LIVE_WECHAT_PAY_ENABLED||!cfg||!id||!refundId||this.data.liveRefundBusy)return
+  const context=merchantOrderContextKey(),serial=this.serial
+  this.setData({liveRefundBusy:true,liveRefundError:'',liveRefundMessage:'正在向微信支付核验退款状态…'})
+  try{
+   await refreshLiveRefund(cfg,id,refundId)
+   const rows=await listLiveRefunds(cfg,id)
+   if(this.visible&&serial===this.serial&&context===merchantOrderContextKey()&&this.data.liveRefundOrderId===id)
+    this.setData({liveRefundRows:rows,liveRefundMessage:'已更新渠道核验结果'})
+  }catch(_){
+   if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())
+    this.setData({liveRefundError:'暂时无法确定退款状态，请勿重复申请；可稍后再次核验。'})
+  }finally{if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({liveRefundBusy:false})}
+ },
+ async requestLiveRefund(e:any){
+  const cfg=merchantOrderConfig(),id=String(e.currentTarget.dataset.id||'')
+  const mode=String(e.currentTarget.dataset.mode||'partial')
+  if(!LIVE_WECHAT_PAY_ENABLED||!cfg||!id||!this.visible||this.data.liveRefundBusy||
+   this.data.liveRefundOrderId!==id||!this.data.canManage||!['full','partial'].includes(mode))return
+  const order=this.loaded.find(o=>o.id===id)
+  if(!order||order.paymentSource!=='wechatpay:live'||!['paid','partially_refunded'].includes(order.paymentStatus))return
+  const reserved=this.data.liveRefundRows.filter((r:LiveRefund)=>r.status!=='closed')
+   .reduce((sum:number,r:LiveRefund)=>sum+Number(r.amountCents),0)
+  const left=Number(order.totalCents)-reserved
+  if(!Number.isSafeInteger(left)||left<=0){wx.showToast({title:'暂无可退款金额',icon:'none'});return}
+  const context=merchantOrderContextKey(),serial=this.serial
+  this.setData({liveRefundBusy:true,liveRefundError:'',liveRefundMessage:''})
+  try{
+   let cents=left
+   if(mode==='partial'){
+    const amount=await new Promise<any>(resolve=>wx.showModal({title:'申请部分退款',editable:true,
+     placeholderText:'金额（人民币元）',success:resolve,fail:()=>resolve({confirm:false})}))
+    if(!amount.confirm)return
+    const value=String(amount.content||'').trim()
+    if(!/^[0-9]{1,7}(?:\.[0-9]{1,2})?$/.test(value))throw Error('invalid_refund_amount')
+    const parts=value.split('.');cents=Number(parts[0])*100+Number((parts[1]||'').padEnd(2,'0'))
+   }
+   if(!Number.isSafeInteger(cents)||cents<=0||cents>left)throw Error('invalid_refund_amount')
+   const reasonDialog=await new Promise<any>(resolve=>wx.showModal({title:'退款原因',editable:true,
+    placeholderText:'请填写退款原因',success:resolve,fail:()=>resolve({confirm:false})}))
+   if(!reasonDialog.confirm)return
+   const reason=String(reasonDialog.content||'').trim()
+   if(!reason||reason.length>80)throw Error('invalid_refund_reason')
+   const ok=await new Promise<boolean>(resolve=>wx.showModal({title:'确认申请退款',
+    content:'本次退款 ¥'+(cents/100).toFixed(2)+'，退款将原路返还。申请受理不代表已经退款成功。确定继续吗？',
+    success:r=>resolve(!!r.confirm),fail:()=>resolve(false)}))
+   if(!ok||!this.visible||serial!==this.serial||context!==merchantOrderContextKey())return
+   // Reuse the pending request key on uncertain network outcomes.
+   const savedKey=(this as any).liveRefundPendingKey
+   const key=savedKey?.orderId===id&&savedKey?.amountCents===cents&&savedKey?.reason===reason?
+    savedKey.key:'weixin_refund_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,12)
+   ;(this as any).liveRefundPendingKey={orderId:id,amountCents:cents,reason,key}
+   const result=await createLiveRefund(cfg,id,{requestKey:key,amountCents:cents,reason})
+   if(!this.visible||serial!==this.serial||context!==merchantOrderContextKey())return
+   const rows=await listLiveRefunds(cfg,id)
+   this.setData({liveRefundRows:rows,liveRefundMessage:result.status==='unknown'?
+    '退款请求结果不确定，已记录退款单号。不要重复申请，请稍后查单。':
+    '退款申请已记录。最终是否退还成功以渠道核验结果为准。'})
+  }catch(error:any){
+   if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())
+    this.setData({liveRefundError:/invalid_refund_amount/.test(String(error))?'金额无效或超过剩余可退金额':
+     /invalid_refund_reason/.test(String(error))?'退款原因不能为空或超过80字':
+     '退款结果未确认，请先刷新记录。不要使用新的退款单号重复申请。'})
+  }finally{if(this.visible&&serial===this.serial&&context===merchantOrderContextKey())this.setData({liveRefundBusy:false})}
+ },
  toggleOrderDetails(e:any){
   const id=String(e.currentTarget.dataset.id||'')
   if(!this.data.dateResults.some((o:any)=>o.id===id))return
@@ -241,17 +323,17 @@ Page({
   }finally{if(current())this.setData({sandboxRefundBusy:false})}
  },
  loaded:[] as any[],localRows:[] as any[],localFiltered:[] as any[],counts:emptyCounts(),context:'',serial:0,nextCursor:'',localOffset:0,visible:false,
- data:{expandedOrderIds:{} as Record<string,boolean>,sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,sandboxEvidenceMeta:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
+ data:{sandboxUiEnabled:PAYMENT_SANDBOX_UI_ENABLED,livePayEnabled:LIVE_WECHAT_PAY_ENABLED,liveRefundOrderId:'',liveRefundRows:[] as LiveRefund[],liveRefundBusy:false,liveRefundError:'',liveRefundMessage:'',expandedOrderIds:{} as Record<string,boolean>,sandbox:null as any,sandboxError:'',sandboxOrderId:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null as any,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null as any,sandboxEvidenceMeta:null as any,dateResults:[] as any[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',queryDirty:false,
   orderTabs:tabs.map(t=>({...t,count:0})),countsKnown:false,globalTotal:0,globalPending:0,matchingCount:0,
   noteInputs:{} as Record<string,string>,etaInputs:{} as Record<string,string>,cloudMode:false,cloudBusy:false,loadingMore:false,cloudError:'',moreError:'',hasMore:false,refreshRequired:false,canManage:true,
   batchMode:false,selectedIds:[] as string[],selectedMap:{} as Record<string,boolean>,selectedCount:0,allSelected:false,operationBusy:false,operationProgress:'',batchResult:'',batchFailures:[] as Array<{id:string;reason:string}>},
- onShow(){this.visible=true;this.setData({sandbox:null,sandboxOrderId:'',sandboxError:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null});this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
+ onShow(){this.visible=true;this.setData({liveRefundOrderId:'',liveRefundRows:[],liveRefundBusy:false,liveRefundError:'',liveRefundMessage:'',sandbox:null,sandboxOrderId:'',sandboxError:'',sandboxRefundBusy:false,sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null});this.syncContext();if(!this.data.operationBusy)this.fetchPage(true,this.loaded.length>0)},
  onHide(){this.visible=false;this.serial++;this.setData({cloudBusy:false,loadingMore:false})},
  onUnload(){this.visible=false;this.serial++;this.loaded=[];this.localRows=[];this.localFiltered=[]},
  async onPullDownRefresh(){try{if(!this.data.operationBusy)await this.refresh()}finally{wx.stopPullDownRefresh()}},
  onReachBottom(){this.loadMore()},
  query():MerchantOrderQuery{return {q:this.data.orderSearchText.trim(),state:this.data.currentTab,from:this.data.dateFrom,to:this.data.dateTo}},
- syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({expandedOrderIds:{},sandbox:null,sandboxOrderId:'',sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null,dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
+ syncContext(){const context=merchantOrderContextKey();if(context===this.context)return;this.loaded=[];this.localRows=[];this.localFiltered=[];this.nextCursor='';this.counts=emptyCounts();this.setSelection([]);this.setData({liveRefundOrderId:'',liveRefundRows:[],liveRefundError:'',liveRefundMessage:'',expandedOrderIds:{},sandbox:null,sandboxOrderId:'',sandboxReleaseBusy:false,sandboxReleaseMessage:'',sandboxMismatchBusy:false,sandboxMismatchMessage:'',sandboxRefundReleaseBusy:false,sandboxReview:null,sandboxReviewError:'',sandboxReviewBusy:false,sandboxEvidence:null,sandboxEvidenceMeta:null,dateResults:[],currentTab:'latest',orderSearchText:'',dateFrom:'',dateTo:'',etaInputs:{},noteInputs:{},batchMode:false,batchResult:'',batchFailures:[],countsKnown:false,globalTotal:0,globalPending:0,hasMore:false,matchingCount:0,queryDirty:false,refreshRequired:false,moreError:'',cloudError:'',cloudMode:!!merchantOrderConfig(),canManage:!merchantOrderConfig()});this.context=context},
  setCounts(counts:MerchantOrderCounts){this.counts=counts;this.setData({countsKnown:true,globalTotal:counts.all,globalPending:counts.new,orderTabs:tabs.map(t=>({...t,count:Number((counts as any)[t.key==='latest'?'all':t.key]||0)}))})},
  setSelection(ids:string[]){const map:Record<string,boolean>={};ids.forEach(id=>{map[id]=true});const eligible=this.loaded.filter(o=>['new','accepted'].includes(state(o))&&(!this.data.cloudMode||fulfillmentPaymentReady(o)));this.setData({selectedIds:ids,selectedMap:map,selectedCount:ids.length,allSelected:!!eligible.length&&ids.length===eligible.length})},
  changedQuery(){this.serial++;this.setSelection([]);this.setData({batchMode:false,queryDirty:true,cloudBusy:false,loadingMore:false,refreshRequired:false,batchResult:'',batchFailures:[],moreError:''})},

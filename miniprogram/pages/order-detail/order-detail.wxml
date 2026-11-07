@@ -29,7 +29,7 @@
       <button size="mini" loading="{{livePaymentBusy}}" disabled="{{livePaymentBusy}}" bindtap="refreshWechatPayment">刷新付款状态</button>
       <view wx:if="{{livePaymentText}}" class="order-detail-muted">{{livePaymentText}}</view>
     </view>
-    <view wx:if="{{cloudMode && !livePayEnabled && !phoneReadOnly && order.paymentStatus === 'unpaid'}}" class="order-detail-card">
+    <view wx:if="{{cloudMode && !livePayEnabled && sandboxUiEnabled && !phoneReadOnly && order.paymentStatus === 'unpaid'}}" class="order-detail-card">
       <view class="order-detail-title">Sandbox 外部支付测试</view>
       <view wx:if="{{sandboxUnavailable}}" class="order-detail-muted">测试支付服务尚未启用，下面的创建付款操作暂不可用；订单仍为待支付。管理员接通独立 Sandbox 环境后，可点击「立即刷新支付状态」重新检查。</view>
       <view>仅隔离测试环境可用。复制链接到外部浏览器完成测试付款；返回本页后将自动核对服务端结果，微信原生支付尚未接入。</view>
@@ -58,7 +58,7 @@
         <button size="mini" data-channel="card" disabled="{{sandboxActionBusy || sandboxUnavailable}}" bindtap="openSandboxCheckout">银行卡测试链接</button>
       </view>
     </view>
-    <view wx:if="{{cloudMode && !livePayEnabled && !phoneReadOnly}}" class="order-detail-card payment-history-card">
+    <view wx:if="{{cloudMode && !livePayEnabled && sandboxUiEnabled && !phoneReadOnly}}" class="order-detail-card payment-history-card">
       <view class="payment-history-head">
         <view class="payment-history-heading"><view class="order-detail-title">付款与电子小票</view><view class="order-detail-muted">仅供测试环境使用</view></view>
         <button class="payment-refresh-btn" size="mini" bindtap="loadSandboxPayment">刷新状态</button>
@@ -111,7 +111,7 @@
         </view>
       </view>
     </view>
-    <view wx:if="{{!livePayEnabled && simulationAuthorized}}" class="order-detail-card"><view>Staging测试入口 · 不发生真实付款</view><button bindtap="confirmSimulation" disabled="{{simulationBusy || !simulationEligible}}" loading="{{simulationBusy}}">{{simulationBusy ? '正在核对模拟确认' : '授权测试：模拟支付确认'}}</button><view>仅服务端授权的测试人员可操作；非微信支付，不计真实收入。</view><view>{{simulationError}}</view></view>
+    <view wx:if="{{!livePayEnabled && sandboxUiEnabled && simulationAuthorized}}" class="order-detail-card"><view>Staging测试入口 · 不发生真实付款</view><button bindtap="confirmSimulation" disabled="{{simulationBusy || !simulationEligible}}" loading="{{simulationBusy}}">{{simulationBusy ? '正在核对模拟确认' : '授权测试：模拟支付确认'}}</button><view>仅服务端授权的测试人员可操作；非微信支付，不计真实收入。</view><view>{{simulationError}}</view></view>
 
     <view wx:if="{{issueText}}" class="order-detail-card"><view class="order-detail-title">取消 / 异常原因</view><view class="order-detail-reason">{{issueText}}</view></view>
     <view wx:if="{{deliveredText || proofImage}}" class="order-detail-card"><view class="order-detail-title">送达凭证</view><view wx:if="{{proofError}}" class="order-detail-muted">{{proofError}}</view><button wx:if="{{cloudMode}}" size="mini" bindtap="renewProof" disabled="{{proofLoading}}" loading="{{proofLoading}}">重新获取凭证链接</button><view wx:if="{{deliveredText}}" class="order-detail-muted">送达时间：{{deliveredText}}</view><image wx:if="{{proofImage}}" class="order-detail-proof" src="{{proofImage}}" mode="aspectFill" bindtap="previewProof" binderror="proofReadError"/><view wx:else class="order-detail-muted">尚无送达照片</view></view>

@@ -1,4 +1,4 @@
-import {LIVE_WECHAT_PAY_ENABLED} from '../../config/cloud'
+import {LIVE_WECHAT_PAY_ENABLED,PAYMENT_SANDBOX_UI_ENABLED} from '../../config/cloud'
 import {prepareWechatPayment,queryWechatPayment} from '../../modules/customer/api/wechatLivePayment'
 import { paymentLabel } from '../../modules/shared/domain/payment'
 import { createSandboxCheckout, SandboxChannel } from '../../modules/customer/api/sandboxPayment'
@@ -237,7 +237,7 @@ Page({
     finally{if(current())this.setData({livePaymentBusy:false})}
   },
   phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
-  data: { livePayEnabled:LIVE_WECHAT_PAY_ENABLED,livePaymentBusy:false,livePaymentText:'',sandbox:null as any,receiptExpandedId:'',paymentHistoryExpanded:false,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
+  data: { livePayEnabled:LIVE_WECHAT_PAY_ENABLED,sandboxUiEnabled:PAYMENT_SANDBOX_UI_ENABLED,livePaymentBusy:false,livePaymentText:'',sandbox:null as any,receiptExpandedId:'',paymentHistoryExpanded:false,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
     this.phoneReadOnly=options.phone==='1'
     this.setData({phoneReadOnly:this.phoneReadOnly})
@@ -254,7 +254,7 @@ Page({
     this.setData({detailLoading:true,detailError:'',detailNotFound:false})
     if(this.detailContext!==JSON.stringify([identity,id])){this.detailContext=JSON.stringify([identity,id]);this.simulationKey='';this.simulationOperation++;this.setData({sandbox:null,sandboxUnavailable:false,sandboxError:'',sandboxActionText:'',found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:''})}
     this.setData({cloudMode:!!cloud,proofImage:'',proofError:'',proofLoading:false})
-    if(!LIVE_WECHAT_PAY_ENABLED&&this.loadSandboxPayment)this.loadSandboxPayment()
+    if(PAYMENT_SANDBOX_UI_ENABLED&&!LIVE_WECHAT_PAY_ENABLED&&this.loadSandboxPayment)this.loadSandboxPayment()
     if(cloud&&this.phoneReadOnly){
       const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
       if(!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'){this.setData({detailLoading:false,detailError:'手机号登录状态已失效，请重新登录'});return}
@@ -288,7 +288,7 @@ Page({
           statusText:o.paymentStatus==='unpaid'&&st==='new'?'待支付':workflowText(st),paymentText:paymentLabel(o),
           createdText:o.createdAt?chinaTime(o.createdAt):'',deliveredText:o.deliveredAt?chinaTime(o.deliveredAt):'',
           issueText:String(o.issueReason||''),proofImage:'' /* PHASE40_ISSUE_REASON */})
-        if(!LIVE_WECHAT_PAY_ENABLED)this.loadSimulationCapability(serial,identity,id)
+        if(PAYMENT_SANDBOX_UI_ENABLED&&!LIVE_WECHAT_PAY_ENABLED)this.loadSimulationCapability(serial,identity,id)
         if(String(o.fulfillmentStatus||'')==='delivered'){
           this.renewProof()
         }

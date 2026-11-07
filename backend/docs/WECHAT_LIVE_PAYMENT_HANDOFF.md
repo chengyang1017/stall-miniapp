@@ -11,7 +11,7 @@ Stripe Sandbox 独立保留；不允许以测试凭据操作生产。
 禁止把密钥发送在聊天、提交 GitHub、存入小程序或写入客户端。
 
 ## 部署前审查
-1. 选定正式小程序、店铺及腾讯云生产数据库，审查并按顺序执行 001—034 迁移，在独立测试库验收备份/回滚及权限。
+1. 选定正式小程序、店铺及腾讯云生产数据库，审查并按顺序执行 001—035 迁移，在独立测试库验收备份/回滚及权限。
 2. 正式环境必须 APP_ENV=production 且 PAYMENT_DB_ENV 不是 isolated-test。
 3. 在可信的腾讯云服务器私密环境配置 WX_APPID、WX_APPSECRET、WECHAT_PAY_MCH_ID、
    WECHAT_PAY_STORE_SLUG、WECHAT_PAY_MERCHANT_SERIAL、
@@ -32,8 +32,22 @@ Stripe Sandbox 独立保留；不允许以测试凭据操作生产。
 生产交付必须以微信支付后台对账为准，客户端 wx.requestPayment success 不是收款凭证。
 如果下单 API 结果不确定，请先查单，不要切换商户订单号重复扣款。
 
+## 退款模块（本轮新增，默认关闭）
+- 增加 `backend/sql/035_wechat_live_refunds.sql`，退款请求及真实渠道状态与订单金额绑定。
+- 商家 owner/manager 可通过 POST `/v1/merchant/stores/:slug/orders/:id/wechat-refunds`
+  提交 `{requestKey,amountCents,reason}`。同一 requestKey 只能重复取得原结果，不得更换退款单号重试。
+- GET 同路径查询本店退款记录；GET `.../wechat-refunds/:refundId` 通过微信支付官方退款查单核验状态。
+- POST `/v1/payments/wechat-pay/refund-notify` 签名验证和 AES-GCM 解密；只根据微信支付成功/关闭/异常的可信数据更新订单退款状态。
+- 需要在正式服务端私密配置 `WECHAT_PAY_LIVE_REFUNDS_ENABLED=true` 以及
+  `WECHAT_PAY_REFUND_NOTIFY_URL=https://<商家 API 域名>/v1/payments/wechat-pay/refund-notify`。
+  此开关在代码中默认关闭；启用前必须在隔离真实环境核对角色授权、生产数据库结构和回调。
+- 正式退款申请的 HTTP 200/202 只代表已受理/可能未知；`unknown`、`abnormal`、`review`
+  均不代表资金已退回。退款状态查询与交易对账必须独立运行。
+- 商家订单页的退款管理仅在经审核正式构建中显示。不要将退款接口开放给顾客或普通员工。
+- 正式构建未配置真实支付时必须阻止用户创建无法付款的订单，不能退回到 Stripe Sandbox。
+
 ## 仍须完成的独立生产工作
-- **退款 APIv3、退款异步通知、退款账务一致性、商家退款审核界面尚未接通**。实际收款前必须另行完成并验收；异常到款的 refund_required 事件需运营人工跟进并安排正式退款。
+- 退款申请、查询、回调与商家操作入口已有初版；**并未在商家真实微信支付账号验收**。人工复核流程、超时退款任务自动恢复、微信账户对账、异常到账的补偿退款、退款告警及企业操作审计仍须完善，不能直接当作已验收的正式资金操作。
 - 正式电子小票、交易金额账单、订单发货管理回传、评价资格和财务对账的端到端联调仍需完成。不能把现有 Stripe Sandbox 小票称为正式微信支付小票。
 - 生产数据库最小权限 GRANT、平台公钥轮换、回调告警、备份恢复、真实腾讯云 HTTPS/微信真机、支付/取消/晚到账/重复通知/退款验证，均需商家提供账户、正式环境及审批。
 - 微信支付交易类小程序运营规范、商家主体/经营类目、隐私合规要求需单独核实。
@@ -41,3 +55,8 @@ Stripe Sandbox 独立保留；不允许以测试凭据操作生产。
 官方文档：
 https://pay.wechatpay.cn/doc/v3/merchant/4012791856
 https://pay.wechatpay.cn/doc/v3/merchant/4012791898
+
+官方退款文档：
+- https://pay.wechatpay.cn/doc/v3/merchant/4012791903
+- https://pay.wechatpay.cn/doc/v3/merchant/4012791906
+- https://pay.wechatpay.cn/doc/v3/merchant/4012791905

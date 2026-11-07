@@ -38,7 +38,7 @@
     <view wx:if="{{noteShortcuts.length}}" class="checkout-note-presets"><view wx:for="{{noteShortcuts}}" wx:key="label" class="checkout-note-chip" data-label="{{item.label}}" bindtap="toggleNoteShortcut">{{item.label}}</view></view>
     <textarea class="note-input" maxlength="200" placeholder="有需要交代给商家的事项？" value="{{note}}" bindinput="updateNote" auto-height />
   </view>
-  <view wx:if="{{cloudMode && !livePayEnabled}}" class="checkout-section checkout-payment">
+  <view wx:if="{{cloudMode && !livePayEnabled && sandboxUiEnabled}}" class="checkout-section checkout-payment">
     <view class="section-head"><text class="section-icon">¥</text><text>支付方式</text><text class="payment-test-tag">测试环境</text></view>
     <view class="payment-explainer">选择测试渠道，提交订单后在订单详情获取 Stripe 外部付款链接。</view>
     <view class="payment-options">
@@ -64,10 +64,14 @@
     <view class="section-head"><text class="section-icon">¥</text><text>付款方式</text></view>
     <view class="payment-explainer">微信支付（可在微信收银台选择零钱或已绑定银行卡）。下单后到订单详情完成付款，实际结果以服务端确认为准。</view>
   </view>
+  <view wx:if="{{cloudMode && !livePayEnabled && !sandboxUiEnabled}}" class="checkout-section checkout-payment">
+    <view class="section-head"><text class="section-icon">¥</text><text>付款方式</text></view>
+    <view class="payment-explainer">当前店铺暂未开通在线支付。请等待商家完成收款配置。</view>
+  </view>
   <view class="checkout-bottom-space"></view>
   <view class="checkout-bottom">
     <view class="bottom-amount"><view class="bottom-caption">合计</view><view class="bottom-price">¥{{payableText}}</view></view>
-    <button wx:if="{{cloudMode}}" class="place-order" loading="{{cloudBusy || orderSubmitting}}" disabled="{{totalCount === 0 || orderSubmitting || cloudBusy || cloudError !== '' || deliveryError !== '' || !minimumReached || !selectedSlotId || !hasAddress}}" bindtap="confirmOrder">提交订单</button>
+    <button wx:if="{{cloudMode}}" class="place-order" loading="{{cloudBusy || orderSubmitting}}" disabled="{{totalCount === 0 || orderSubmitting || cloudBusy || cloudError !== '' || deliveryError !== '' || !minimumReached || !selectedSlotId || !hasAddress || paymentNotConfigured}}" bindtap="confirmOrder">{{paymentNotConfigured ? "暂未开通支付" : "提交订单"}}</button>
     <button wx:else class="place-order" loading="{{demoConfirmBusy}}" disabled="{{totalCount === 0 || demoConfirmBusy}}" bindtap="confirmOrder">提交订单</button>
   </view>
 </view>

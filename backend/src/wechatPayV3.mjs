@@ -22,14 +22,18 @@ export const orderIdFromTradeNo=value=>{
 export function wechatPayLiveConfig(env=process.env){
  if(env.APP_ENV!=='production'||env.PAYMENT_DB_ENV==='isolated-test'||env.WECHAT_PAY_LIVE_ENABLED!=='true')return null
  const notify=String(env.WECHAT_PAY_NOTIFY_URL||'')
- let url
- try{url=new URL(notify)}catch{throw err('wechatpay_invalid_configuration')}
+ const refundNotify=String(env.WECHAT_PAY_REFUND_NOTIFY_URL||'')
+ const refundsEnabled=env.WECHAT_PAY_LIVE_REFUNDS_ENABLED==='true'
+ let url,refundUrl
+ try{url=new URL(notify);if(refundsEnabled)refundUrl=new URL(refundNotify)}catch{throw err('wechatpay_invalid_configuration')}
  if(!merchant.test(env.WECHAT_PAY_MCH_ID||'')||!app.test(env.WX_APPID||'')||
   !slug.test(env.WECHAT_PAY_STORE_SLUG||'')||!serial.test(env.WECHAT_PAY_MERCHANT_SERIAL||'')||
   !serial.test(env.WECHAT_PAY_PLATFORM_SERIAL||'')||
   url.protocol!=='https:'||url.username||url.password||url.search||url.hash||
   url.pathname!=='/v1/payments/wechat-pay/notify'||
-  !/^[a-z0-9.-]+$/i.test(url.hostname)||Buffer.byteLength(env.WECHAT_PAY_API_V3_KEY||'')!==32)
+  !/^[a-z0-9.-]+$/i.test(url.hostname)||Buffer.byteLength(env.WECHAT_PAY_API_V3_KEY||'')!==32||
+  refundsEnabled&&(refundUrl.protocol!=='https:'||refundUrl.username||refundUrl.password||refundUrl.search||refundUrl.hash||
+   refundUrl.pathname!=='/v1/payments/wechat-pay/refund-notify'||!/^[a-z0-9.-]+$/i.test(refundUrl.hostname)))
   throw err('wechatpay_invalid_configuration')
  let privateKey,platformKey
  try{
@@ -40,7 +44,8 @@ export function wechatPayLiveConfig(env=process.env){
  return Object.freeze({appId:env.WX_APPID,mchid:env.WECHAT_PAY_MCH_ID,
   storeSlug:env.WECHAT_PAY_STORE_SLUG,serial:env.WECHAT_PAY_MERCHANT_SERIAL,
   platformSerial:env.WECHAT_PAY_PLATFORM_SERIAL,privateKey,platformKey,
-  v3key:Buffer.from(env.WECHAT_PAY_API_V3_KEY),notifyUrl:notify})
+  v3key:Buffer.from(env.WECHAT_PAY_API_V3_KEY),notifyUrl:notify,
+  refundsEnabled,refundNotifyUrl:refundsEnabled?refundNotify:null})
 }
 export function verifyWechatSignature(headers,raw,config,now=Date.now()){
  const serialHeader=headers['wechatpay-serial']
@@ -59,16 +64,19 @@ export function decodeWechatNotification(raw,headers,config){
  verifyWechatSignature(headers,raw,config)
  let event
  try{event=JSON.parse(raw)}catch{throw err('wechatpay_invalid_notification')}
- if(!event||!/^TRANSACTION\./.test(event.event_type||'')||
+ if(!event||!(/^(TRANSACTION\.SUCCESS|REFUND\.(SUCCESS|CLOSED|ABNORMAL))$/.test(event.event_type||''))||
    event.resource?.algorithm!=='AEAD_AES_256_GCM')throw err('wechatpay_invalid_notification')
  const resource=event.resource
- if(typeof resource.nonce!=='string'||typeof resource.ciphertext!=='string'||typeof resource.associated_data!=='string')throw err('wechatpay_invalid_notification')
+ if(typeof resource.nonce!=='string'||Buffer.byteLength(resource.nonce)!==12||
+   typeof resource.ciphertext!=='string'||resource.associated_data!==undefined&&typeof resource.associated_data!=='string'||
+   event.event_type.startsWith('REFUND.')&&resource.original_type!==undefined&&resource.original_type!=='refund')
+   throw err('wechatpay_invalid_notification')
  let data
  try{
   const bytes=Buffer.from(resource.ciphertext,'base64')
   if(bytes.length<17)throw Error('ciphertext')
   const decipher=createDecipheriv('aes-256-gcm',config.v3key,Buffer.from(resource.nonce))
-  decipher.setAAD(Buffer.from(resource.associated_data))
+  decipher.setAAD(Buffer.from(resource.associated_data||''))
   decipher.setAuthTag(bytes.subarray(-16))
   data=JSON.parse(Buffer.concat([decipher.update(bytes.subarray(0,-16)),decipher.final()]).toString('utf8'))
  }catch{throw err('wechatpay_invalid_notification')}
@@ -86,7 +94,7 @@ export function trustedWechatSuccess(tx,config,order){
 }
 export function wechatPayV3(config,{fetchImpl=fetch,now=()=>Date.now()}={}){
  async function request(method,path,body=null){
-  if(!/^\/v3\/(pay\/transactions\/|pay\/refund)/.test(path))throw err('wechatpay_invalid_api_path')
+  if(!/^\/v3\/(pay\/transactions\/|refund\/domestic\/refunds(?:\/|$))/.test(path))throw err('wechatpay_invalid_api_path')
   const timestamp=String(Math.floor(now()/1000)),nonce=randomBytes(16).toString('hex')
   const payload=body===null?'':JSON.stringify(body)
   const authorization='WECHATPAY2-SHA256-RSA2048 mchid="'+config.mchid+'",nonce_str="'+nonce+
@@ -126,6 +134,21 @@ export function wechatPayV3(config,{fetchImpl=fetch,now=()=>Date.now()}={}){
   async query(orderId){
    const path='/v3/pay/transactions/out-trade-no/'+tradeNo(orderId)+'?mchid='+encodeURIComponent(config.mchid)
    return request('GET',path)
+  },
+  async refund({outTradeNo,outRefundNo,refundCents,totalCents,reason}){
+   if(!config.refundsEnabled||!config.refundNotifyUrl)throw err('wechatpay_refunds_disabled')
+   if(!/^[a-f0-9]{32}$/.test(outTradeNo||'')||!/^wr[a-f0-9]{32}$/.test(outRefundNo||'')||
+      !Number.isSafeInteger(refundCents)||refundCents<=0||
+      !Number.isSafeInteger(totalCents)||totalCents<refundCents||
+      typeof reason!=='string'||!reason.trim()||Buffer.byteLength(reason)>80)throw err('wechatpay_invalid_refund_request')
+   return request('POST','/v3/refund/domestic/refunds',{
+    out_trade_no:outTradeNo,out_refund_no:outRefundNo,reason,notify_url:config.refundNotifyUrl,
+    amount:{refund:refundCents,total:totalCents,currency:'CNY'}
+   })
+  },
+  async queryRefund(outRefundNo){
+   if(!config.refundsEnabled||!/^wr[a-f0-9]{32}$/.test(outRefundNo||''))throw err('wechatpay_invalid_refund_request')
+   return request('GET','/v3/refund/domestic/refunds/'+outRefundNo)
   },
   requestPaymentParams(prepayId){
    if(!/^wx[A-Za-z0-9]+$/.test(prepayId||''))throw err('wechatpay_invalid_prepay')
