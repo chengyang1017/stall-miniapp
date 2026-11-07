@@ -1,3 +1,5 @@
+import {LIVE_WECHAT_PAY_ENABLED} from '../../config/cloud'
+import {prepareWechatPayment,queryWechatPayment} from '../../modules/customer/api/wechatLivePayment'
 import { paymentLabel } from '../../modules/shared/domain/payment'
 import { createSandboxCheckout, SandboxChannel } from '../../modules/customer/api/sandboxPayment'
 import { sandboxPaymentRequest } from '../../modules/shared/api/sandboxPayment'
@@ -200,8 +202,42 @@ Page({
       }
     }
   },
+  async payWithWechat(){
+    const cfg=customerOrdersConfig(),identity=supportIdentity(),id=String(this.data.order.id||'')
+    if(!LIVE_WECHAT_PAY_ENABLED||!cfg||this.phoneReadOnly||!this.detailVisible||
+      this.data.livePaymentBusy||this.data.order.paymentStatus!=='unpaid')return
+    const serial=this.detailSerial,current=()=>this.detailVisible&&this.detailSerial===serial&&identity===supportIdentity()&&id===String(this.data.order.id)
+    this.setData({livePaymentBusy:true,livePaymentText:'正在准备微信支付…'})
+    try{
+      const params=await prepareWechatPayment(cfg,id)
+      if(!current())return
+      this.setData({livePaymentText:''})
+      // wx.requestPayment success/fail is not proof of settlement; always query provider.
+      await new Promise<void>(resolve=>wx.requestPayment({...params,success:()=>resolve(),fail:()=>resolve()}))
+      if(!current())return
+      this.setData({livePaymentText:'正在通过服务器核实支付结果…'})
+      const status=await queryWechatPayment(cfg,id)
+      if(!current())return
+      if(status==='paid'){this.setData({livePaymentText:'付款已核实'});await this.onShow()}
+      else this.setData({livePaymentText:status==='refund_required'?'该笔付款需商家核对退款，请联系客服':'付款尚未确认。如已扣款，请勿重复支付，稍后刷新核实。'})
+    }catch(_){if(current())this.setData({livePaymentText:'支付结果未确认，请先刷新状态；如已扣款请勿再次付款。'})}
+    finally{if(current())this.setData({livePaymentBusy:false})}
+  },
+  async refreshWechatPayment(){
+    const cfg=customerOrdersConfig(),identity=supportIdentity(),id=String(this.data.order.id||'')
+    if(!LIVE_WECHAT_PAY_ENABLED||!cfg||this.phoneReadOnly||!this.detailVisible||this.data.livePaymentBusy)return
+    const serial=this.detailSerial,current=()=>this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()
+    this.setData({livePaymentBusy:true,livePaymentText:'正在查询微信支付…'})
+    try{
+      const status=await queryWechatPayment(cfg,id)
+      if(!current())return
+      if(status==='paid'){this.setData({livePaymentText:'付款已核实'});await this.onShow()}
+      else this.setData({livePaymentText:status==='refund_required'?'到账异常，请联系商家处理退款':'暂未确认到账；如已经扣款，请勿重复支付。'})
+    }catch(_){if(current())this.setData({livePaymentText:'暂时无法验证支付状态，请稍后再试。'})}
+    finally{if(current())this.setData({livePaymentBusy:false})}
+  },
   phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
-  data: { sandbox:null as any,receiptExpandedId:'',paymentHistoryExpanded:false,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
+  data: { livePayEnabled:LIVE_WECHAT_PAY_ENABLED,livePaymentBusy:false,livePaymentText:'',sandbox:null as any,receiptExpandedId:'',paymentHistoryExpanded:false,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
     this.phoneReadOnly=options.phone==='1'
     this.setData({phoneReadOnly:this.phoneReadOnly})
@@ -218,7 +254,7 @@ Page({
     this.setData({detailLoading:true,detailError:'',detailNotFound:false})
     if(this.detailContext!==JSON.stringify([identity,id])){this.detailContext=JSON.stringify([identity,id]);this.simulationKey='';this.simulationOperation++;this.setData({sandbox:null,sandboxUnavailable:false,sandboxError:'',sandboxActionText:'',found:false,order:{id},items:[],simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:''})}
     this.setData({cloudMode:!!cloud,proofImage:'',proofError:'',proofLoading:false})
-    if(this.loadSandboxPayment)this.loadSandboxPayment()
+    if(!LIVE_WECHAT_PAY_ENABLED&&this.loadSandboxPayment)this.loadSandboxPayment()
     if(cloud&&this.phoneReadOnly){
       const cfg=getCloudContext(),saved=wx.getStorageSync('stall_customer_phone_session_v1') as any
       if(!cfg||!saved||saved.apiBase!==cfg.apiBase||typeof saved.token!=='string'){this.setData({detailLoading:false,detailError:'手机号登录状态已失效，请重新登录'});return}
@@ -252,7 +288,7 @@ Page({
           statusText:o.paymentStatus==='unpaid'&&st==='new'?'待支付':workflowText(st),paymentText:paymentLabel(o),
           createdText:o.createdAt?chinaTime(o.createdAt):'',deliveredText:o.deliveredAt?chinaTime(o.deliveredAt):'',
           issueText:String(o.issueReason||''),proofImage:'' /* PHASE40_ISSUE_REASON */})
-        this.loadSimulationCapability(serial,identity,id)
+        if(!LIVE_WECHAT_PAY_ENABLED)this.loadSimulationCapability(serial,identity,id)
         if(String(o.fulfillmentStatus||'')==='delivered'){
           this.renewProof()
         }

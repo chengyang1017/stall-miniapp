@@ -1,3 +1,4 @@
+import {LIVE_WECHAT_PAY_ENABLED} from '../../config/cloud'
 import { cloudCartConfig, loadCloudCheckout, localDate, availableCloudSlots, cloudDeliveryReason, createCloudOrder } from '../../utils/cloudCheckout' // PHASE34_CLOUD_CHECKOUT
 import { businessState } from '../../modules/customer/demo/settings' // STALL_HOURS_V1
 import { getMinimumOrder, minimumOrderShortfall } from '../../modules/customer/demo/settings'
@@ -41,7 +42,7 @@ Page({
     this.saveDraft()
   },
   data: {
-    sandboxChannel:'card',
+    sandboxChannel:'card',livePayEnabled:LIVE_WECHAT_PAY_ENABLED,
     demoConfirmBusy:false,
     orderSubmitting:false,
     cloudMode: false, cloudBusy: false, cloudError: '',deliveryError:'',selectionNotice:'',cloudAreaName:'', deliveryDate: '', deliveryDateMin: '', deliveryDateMax: '', cloudRules: null as any, cloudAreas: [] as Array<{id:string;name:string}>,
@@ -162,7 +163,7 @@ Page({
         detail:address.detail,latitude:address.latitude,longitude:address.longitude},slot:{id:slot.id,date},note:String(this.data.note||'')})
       if(submittedContext!==supportIdentity())return
       wx.showModal({title:'订单已创建（待支付）',content:'订单号：'+result.orderId+'\n服务端金额：¥'+(Number(result.totalCents)/100).toFixed(2)+(result.inventoryExpiresAt?'\n有限库存预留至：'+formatPublishTime(result.inventoryExpiresAt,'Asia/Shanghai')+' 北京时间（UTC+8），未支付会释放。':'')+'\n尚未扣款，请勿当作付款成功。',showCancel:false,
-        success:()=>{if(submittedSerial===this.cloudSerial&&submittedContext===supportIdentity())wx.navigateTo({url:'/pages/order-detail/order-detail?id='+encodeURIComponent(result.orderId)+'&sandboxChannel='+this.data.sandboxChannel})}})
+        success:()=>{if(submittedSerial===this.cloudSerial&&submittedContext===supportIdentity())wx.navigateTo({url:'/pages/order-detail/order-detail?id='+encodeURIComponent(result.orderId)+(LIVE_WECHAT_PAY_ENABLED?'':'&sandboxChannel='+this.data.sandboxChannel)})}})
     }catch(e:any){
       if(submittedContext!==supportIdentity())return
       const message=String(e&&e.message||e)

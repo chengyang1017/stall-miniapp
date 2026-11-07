@@ -30,13 +30,28 @@ export async function settleVerifiedOrderPayment(pool,{event,expectedProvider,ex
     if(!transaction)await db.query('COMMIT');active=false
     return {action:'already_settled',orderId:order.id}
    }
-   if(event.provider!=='stripe'||event.mode!=='sandbox')throw fail('paid_order_different_transaction')
+   if(event.provider!=='stripe'||event.mode!=='sandbox'){
+    if(event.provider!=='wechatpay'||event.mode!=='live')throw fail('paid_order_different_transaction')
+   }
+  }
+  // A second verified live collection must be recorded for manual refund review.
+  // Never treat it as a successful replay or change fulfilled stock.
+  if(event.provider==='wechatpay'&&event.mode==='live'&&order.payment_status==='paid'){
+    const previous=await db.query(`SELECT order_id,amount_cents,event_type FROM payment_events
+      WHERE provider=$1 AND provider_event_id=$2`,[provider,event.transactionId])
+    if(previous.rows.length){
+      if(previous.rows[0].order_id!==order.id||Number(previous.rows[0].amount_cents)!==event.amountCents||
+        previous.rows[0].event_type!=='refund_required')throw fail('provider_transaction_reused')
+    }else await db.query(`INSERT INTO payment_events(order_id,provider,provider_event_id,event_type,amount_cents)
+      VALUES($1,$2,$3,'refund_required',$4)`,[order.id,provider,event.transactionId,event.amountCents])
+    if(!transaction)await db.query('COMMIT');active=false
+    return {action:'refund_required',orderId:order.id,replayed:previous.rows.length>0}
   }
   // A payment may succeed at Stripe after our 15-minute inventory hold has
   // expired. Record the paid transaction durably for refund reconciliation,
   // but NEVER mark the cancelled/expired order paid or re-reserve stock.
   // This branch applies only to the explicitly isolated Stripe sandbox.
-  if(event.provider==='stripe'&&event.mode==='sandbox'&&
+  if(((event.provider==='stripe'&&event.mode==='sandbox')||(event.provider==='wechatpay'&&event.mode==='live'))&&
     (order.payment_window_open!==true||order.fulfillment_status!=='new'||!['held','none'].includes(order.inventory_state)||order.payment_status!=='unpaid')){
     const previous=await db.query(`SELECT order_id,amount_cents,event_type FROM payment_events
       WHERE provider=$1 AND provider_event_id=$2`,[provider,event.transactionId])
@@ -59,8 +74,10 @@ export async function settleVerifiedOrderPayment(pool,{event,expectedProvider,ex
   // only resolves the hold, and is executed within the same transaction.
   await db.query(`INSERT INTO payment_events(order_id,provider,provider_event_id,event_type,amount_cents)
    VALUES($1,$2,$3,'payment_succeeded',$4)`,[order.id,provider,event.transactionId,event.amountCents])
-  const updated=await db.query(`UPDATE orders SET payment_status='paid',updated_at=clock_timestamp()
-   WHERE id=$1 AND payment_status='unpaid' RETURNING id`,[order.id])
+  const updated=await db.query(`UPDATE orders SET payment_status='paid',updated_at=clock_timestamp(),
+   payment_source=CASE WHEN $2='wechatpay' AND $3='live' THEN 'wechatpay:live' ELSE payment_source END,
+   paid_at=CASE WHEN $2='wechatpay' AND $3='live' THEN COALESCE(paid_at,clock_timestamp()) ELSE paid_at END
+   WHERE id=$1 AND payment_status='unpaid' RETURNING id`,[order.id,event.provider,event.mode])
   if(updated.rowCount!==1||updated.rows?.[0]?.id!==order.id)throw fail('payment_order_update_failed')
   await resolveOrderInventory(db,{...order,payment_status:'paid'},'committed','payment','system:gateway',
    '支付网关验签成功，预留库存转为正式扣减（不再次扣库存）')
