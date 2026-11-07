@@ -71,6 +71,7 @@ Page({
   openAvatarMenu(){if(this.data.loggedIn&&!this.data.photoBusy)this.setData({avatarMenu:true})},
   closeAvatarMenu(){if(!this.data.photoBusy)this.setData({avatarMenu:false})},
   keepAvatarMenu(){},
+  retryAvatarRead(){const token=getSessionToken();if(token){this.setData({photoStatus:''});this.loadAvatarPhoto(token,this.profileReadSerial)}},
   async loadAvatarPhoto(token:string,serial:number){
     const cfg=getCloudContext();if(!cfg)return
     wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/avatar-photo',
@@ -83,14 +84,16 @@ Page({
           return
         }
         if(r.statusCode!==200||!r.data?.dataBase64){
-          this.setData({photoStatus:'头像暂时无法读取，稍后可重试'})
+          const code=String(r.data?.error||'')
+          const explanation=code==='not_found'||code==='not_enabled'?'头像服务尚未在当前服务器启用':code==='private_avatar_storage_not_configured'?'服务器尚未配置头像存储':code==='profile_not_found'?'当前微信身份还没有对应的顾客档案':code==='no_avatar_photo'?'尚未设置头像':code==='unauthorized'?'登录状态失效，请重新登录':code==='avatar_read_unavailable'?'服务器无法读取已保存的头像':'头像读取失败（HTTP '+r.statusCode+'）'
+          this.setData({photoStatus:explanation})
           return
         }
         const mime=r.data.mimeType==='image/png'?'png':r.data.mimeType==='image/jpeg'?'jpg':''
-        if(!mime)return
+        if(!mime){this.setData({photoStatus:'服务器返回的头像格式不受支持'});return}
         const filename=wx.env.USER_DATA_PATH+'/customer-avatar-'+Date.now()+'.'+mime
         wx.getFileSystemManager().writeFile({filePath:filename,data:r.data.dataBase64,encoding:'base64',
-          success:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({avatarPhotoPath:filename,avatarMissing:false})}})
+          success:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({avatarPhotoPath:filename,avatarMissing:false,photoStatus:''})},fail:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoStatus:'已读取头像，但写入本机临时文件失败'})}})
       },
       fail:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoStatus:'头像读取失败，请检查网络'})}
     })
@@ -124,7 +127,7 @@ Page({
         success:(res:any)=>{
           if(getSessionToken()!==token||serial!==this.profileReadSerial)return
           if(res.statusCode===200){this.setData({avatarPhotoPath:path,avatarMissing:false,avatarMenu:false,photoStatus:'头像已保存到云端'})}
-          else this.setData({photoStatus:'上传失败：'+String(res.data?.error||res.statusCode)})
+          else {const code=String(res.data?.error||'');const hint=code==='not_found'||code==='not_enabled'?'头像服务尚未在当前服务器启用':code==='private_avatar_storage_not_configured'?'服务器尚未配置头像存储':code==='profile_not_found'?'当前微信身份尚未建立顾客档案':code==='invalid_image'?'图片格式不受支持，请选择 JPEG 或 PNG':code==='too_large'?'图片超过512KB':code==='avatar_storage_unavailable'?'服务器图片存储不可用':code==='unauthorized'?'登录已过期，请重新登录':'HTTP '+res.statusCode+' · '+code;this.setData({photoStatus:'头像保存失败：'+hint})}
         },fail:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoStatus:'网络异常，头像上传失败'})},
         complete:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoBusy:false})}
       })

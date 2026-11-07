@@ -29,3 +29,5 @@ page{background:#f7f5fb}
 .sheet-title{text-align:center;font-size:34rpx;font-weight:700;color:#2e2244}.sheet-caption{text-align:center;font-size:23rpx;color:#8f829c;margin:13rpx 0 30rpx}
 .avatar-sheet button{margin:14rpx 0;font-size:29rpx;border-radius:19rpx;height:90rpx;line-height:90rpx}.avatar-sheet button::after{border:0}
 .sheet-wechat{background:#6d42dc;color:#fff}.sheet-album{background:#eee8fb;color:#603ab8}.sheet-cancel{background:#f7f6fa;color:#857991}
+
+.avatar-retry{color:#6238d1;text-decoration:underline;margin-left:12rpx}

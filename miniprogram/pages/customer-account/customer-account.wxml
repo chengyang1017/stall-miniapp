@@ -39,7 +39,7 @@
     <view wx:if="{{loggedIn}}" class="settings-card danger-card" bindtap="showAccountCancellation">
       <view class="settings-row last-row"><view class="row-main"><view class="row-title">账号注销</view></view><text class="chevron">›</text></view>
     </view>
-    <view wx:if="{{photoStatus}}" class="inline-message">{{photoStatus}}</view>
+    <view wx:if="{{photoStatus}}" class="inline-message">{{photoStatus}} <text class="avatar-retry" bindtap="retryAvatarRead">重新读取</text></view>
     <button wx:if="{{loggedIn}}" class="save-button" loading="{{profileBusy}}" disabled="{{profileBusy}}" bindtap="saveNickname">保存资料</button>
     <view wx:if="{{profileStatus}}" class="inline-message">{{profileStatus}}</view>
     <view wx:if="{{!loggedIn}}" class="settings-card login-note">请先返回「我的」登录微信账号</view>
