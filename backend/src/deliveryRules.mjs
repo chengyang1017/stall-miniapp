@@ -87,7 +87,7 @@ export async function businessSettingsRoute(req,res,url,pool) {
    if(configuration.placeholderStyle==='custom'&&!Object.hasOwn(body,'placeholderImageKey')&&!await verifyProductImage(client,store.id,configuration.placeholderImageKey)){await client.query('ROLLBACK');response(res,409,{error:'placeholder_image_unavailable'});return true}
    const saved=await client.query(`INSERT INTO store_delivery_rules(store_id,configuration) VALUES($1,$2::jsonb)
      ON CONFLICT(store_id) DO UPDATE SET configuration=excluded.configuration,updated_at=now() RETURNING md5(configuration::text) AS revision`,[store.id,JSON.stringify(configuration)])
-   if(configuration.shareDeliveryLocation!==true){
+   if(rows[0]?.configuration?.shareDeliveryLocation===true&&configuration.shareDeliveryLocation!==true){
       await client.query("UPDATE delivery_tracking_sessions SET state='paused',paused_at=COALESCE(paused_at,clock_timestamp()),latitude=NULL,longitude=NULL,accuracy=NULL,sampled_at=NULL WHERE store_id=$1 AND state='active'",[store.id])
     }
     await client.query('COMMIT');response(res,200,{ok:true,revision:saved.rows[0].revision})

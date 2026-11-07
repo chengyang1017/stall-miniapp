@@ -30,7 +30,7 @@ async function upload(){
   if(gen!==generation||current!==lease)return
   const message=String((e as Error).message)
   emit({error:'同步失败，当前位置尚未确认：'+message})
-  if(/http_(401|403)|not_delivering|session_ended|device_control_required|session_changed/.test(message))halt()
+  if(/http_(401|403)|not_delivering|session_ended|device_control_required|session_changed|tracking_disabled_by_store/.test(message))halt()
   else if(/out_of_order/.test(message)){
    try{const r=await merchantTracking(current.orderId);if(current===lease)current.seq=Math.max(current.seq,r.lastSeq||0)}catch{ /* keep explicit error, never fake acknowledgement */ }
   }
