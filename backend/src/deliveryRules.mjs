@@ -80,7 +80,7 @@ export async function businessSettingsRoute(req,res,url,pool) {
  try {
    await client.query('BEGIN')
    // Serialize initial creation as well as concurrent partial updates to this one existing business row.
-   await client.query('SELECT id FROM stores WHERE id=$1 FOR NO KEY UPDATE',[store.id])
+   await client.query("SELECT pg_advisory_xact_lock(hashtext('business-settings'),hashtext($1::text))",[store.id])
    const {rows}=await client.query('SELECT configuration,md5(configuration::text) AS revision FROM store_delivery_rules WHERE store_id=$1 FOR UPDATE',[store.id])
    if((rows[0]?.revision||null)!==body.expectedRevision){await client.query('ROLLBACK');response(res,409,{error:'business_settings_changed_refresh'});return true}
    const configuration={...(rows[0]?.configuration||{accepting:false,days:Array.from({length:7},()=>({enabled:true,start:'09:00',end:'21:00'})),areas:[],slots:[]}),...Object.fromEntries(keys.filter(k=>k!=='expectedRevision').map(k=>[k,body[k]]))}
