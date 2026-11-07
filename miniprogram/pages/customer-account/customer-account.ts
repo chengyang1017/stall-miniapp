@@ -81,7 +81,7 @@ Page({
         }
         if(r.statusCode!==200||!r.data?.dataBase64){
           const code=String(r.data?.error||'')
-          const explanation=code==='not_found'||code==='not_enabled'?'头像服务尚未在当前服务器启用':code==='private_avatar_storage_not_configured'?'服务器尚未配置头像存储':code==='profile_not_found'?'当前微信身份还没有对应的顾客档案':code==='no_avatar_photo'?'尚未设置头像':code==='unauthorized'?'登录状态失效，请重新登录':code==='avatar_read_unavailable'?'服务器无法读取已保存的头像':'头像读取失败（HTTP '+r.statusCode+'）'
+          const explanation=code==='not_found'||code==='not_enabled'?'头像服务尚未在当前服务器启用':code==='private_avatar_storage_not_configured'?'服务器尚未配置头像存储':code==='avatar_database_migration_required'?'头像数据库尚未执行迁移031':code==='profile_not_found'?'当前微信身份还没有对应的顾客档案':code==='no_avatar_photo'?'尚未设置头像':code==='unauthorized'?'登录状态失效，请重新登录':code==='avatar_read_unavailable'?'服务器无法读取已保存的头像':'头像读取失败（HTTP '+r.statusCode+'）'
           // Loading an avatar is optional; surface storage errors only after an explicit user action.
           if(code==='private_avatar_storage_not_configured'||code==='not_found'||code==='not_enabled')this.setData({photoStatus:''})
           else this.setData({photoStatus:explanation})
@@ -117,7 +117,7 @@ Page({
         success:(res:any)=>{
           if(getSessionToken()!==token||serial!==this.profileReadSerial)return
           if(res.statusCode===200){this.setData({avatarPhotoPath:path,avatarMissing:false,photoStatus:'头像已保存到云端'})}
-          else {const code=String(res.data?.error||'');const hint=code==='not_found'||code==='not_enabled'?'头像服务尚未在当前服务器启用':code==='private_avatar_storage_not_configured'?'服务器尚未配置头像存储':code==='profile_not_found'?'当前微信身份尚未建立顾客档案':code==='invalid_image'?'图片格式不受支持，请选择 JPEG 或 PNG':code==='too_large'?'图片超过512KB':code==='avatar_storage_unavailable'?'服务器图片存储不可用':code==='unauthorized'?'登录已过期，请重新登录':'HTTP '+res.statusCode+' · '+code;this.setData({photoStatus:'头像保存失败：'+hint})}
+          else {const code=String(res.data?.error||'');const hint=code==='not_found'||code==='not_enabled'?'头像服务尚未在当前服务器启用':code==='private_avatar_storage_not_configured'?'服务器尚未配置头像存储':code==='avatar_database_migration_required'?'头像数据库尚未执行迁移031':code==='profile_not_found'?'当前微信身份尚未建立顾客档案':code==='invalid_image'?'图片格式不受支持，请选择 JPEG 或 PNG':code==='too_large'?'图片超过512KB':code==='avatar_storage_unavailable'?'服务器图片存储不可用':code==='unauthorized'?'登录已过期，请重新登录':'HTTP '+res.statusCode+' · '+code;this.setData({photoStatus:'头像保存失败：'+hint})}
         },fail:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoStatus:'网络异常，头像上传失败'})},
         complete:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoBusy:false})}
       })

@@ -18,12 +18,29 @@ export async function customerAvatarPhotoRoute(req,res,url,pool){
  if(!account){respond(res,404,{error:'profile_not_found'});return true}
  const bucket=process.env.S3_AVATAR_BUCKET
  const client=bucket?imageStorageClient():null
- if(!client){respond(res,503,{error:'private_avatar_storage_not_configured'});return true}
+ // Never fall back to publicly accessible product images.
+ // In isolated staging, private database bytes are an explicit alternative to S3.
+ const databaseMode=!client
  if(req.method==='DELETE'){
-  await pool.query('UPDATE customer_accounts SET avatar_photo_key=NULL,updated_at=now() WHERE id=$1',[account.id])
-  respond(res,200,{ok:true});return true
+  try{
+   if(databaseMode)await pool.query('DELETE FROM customer_avatar_photos WHERE account_id=$1',[account.id])
+   else await pool.query('UPDATE customer_accounts SET avatar_photo_key=NULL,updated_at=now() WHERE id=$1',[account.id])
+   respond(res,200,{ok:true})
+  }catch(e){if(databaseMode&&e.code==='42P01')respond(res,503,{error:'avatar_database_migration_required'});else throw e}
+  return true
  }
  if(req.method==='GET'){
+  if(databaseMode){
+   try{
+    const result=await pool.query('SELECT image_bytes,mime_type FROM customer_avatar_photos WHERE account_id=$1',[account.id])
+    if(!result.rows.length){respond(res,404,{error:'no_avatar_photo'});return true}
+    const bytes=result.rows[0].image_bytes
+    const mimeType=imageKind(bytes)
+    if(!mimeType||mimeType!==result.rows[0].mime_type||bytes.length>MAX){respond(res,502,{error:'stored_avatar_invalid'});return true}
+    respond(res,200,{mimeType,dataBase64:bytes.toString('base64')});return true
+   }catch(e){if(e.code==='42P01')respond(res,503,{error:'avatar_database_migration_required'});else throw e}
+   return true
+  }
   if(!account.avatar_photo_key){respond(res,404,{error:'no_avatar_photo'});return true}
   try{
    const result=await client.send(new GetObjectCommand({Bucket:bucket,Key:account.avatar_photo_key}),{abortSignal:AbortSignal.timeout(9000)})
@@ -40,6 +57,15 @@ export async function customerAvatarPhotoRoute(req,res,url,pool){
  const bytes=Buffer.from(input.dataBase64,'base64')
  const kind=imageKind(bytes)
  if(!kind||bytes.length<100||bytes.length>MAX){respond(res,400,{error:'invalid_image'});return true}
+ if(databaseMode){
+  try{
+   await pool.query(`INSERT INTO customer_avatar_photos(account_id,image_bytes,mime_type)
+     VALUES($1,$2,$3) ON CONFLICT(account_id) DO UPDATE
+     SET image_bytes=excluded.image_bytes,mime_type=excluded.mime_type,updated_at=now()`,[account.id,bytes,kind])
+   respond(res,200,{ok:true})
+  }catch(e){if(e.code==='42P01')respond(res,503,{error:'avatar_database_migration_required'});else throw e}
+  return true
+ }
  const extension=kind==='image/jpeg'?'jpg':'png'
  const key='customer-avatars/'+account.id+'/'+Date.now()+'-'+Math.random().toString(16).slice(2,14)+'.'+extension
  try{

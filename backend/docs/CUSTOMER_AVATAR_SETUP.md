@@ -1,31 +1,13 @@
-# Customer avatar persistence (staging)
+# Customer avatar storage in isolated staging
 
-The customer miniapp does **not** receive a user's current WeChat avatar from `wx.login`. A customer must explicitly select a WeChat avatar once (using the WeChat avatar picker), or upload a photograph. Subsequent sessions retrieve the saved private avatar automatically.
+The avatar endpoint supports two **private** persistence modes in isolated staging:
+1. An explicitly configured `S3_AVATAR_BUCKET` and S3 credentials, using a private object.
+2. If private S3 configuration is absent, database storage in `customer_avatar_photos` (migration `031_customer_avatar_private_bytes.sql`).
 
-## Existing endpoint
+The database stores at most 512 KiB of validated JPEG/PNG bytes per verified WeChat account; access uses existing authenticated `/v1/customer/avatar-photo` GET/PUT/DELETE routes, not a public URL.
 
-`GET/PUT/DELETE /v1/customer/avatar-photo` is implemented in `backend/src/customerAvatarPhoto.mjs`. It requires verified WeChat account mapping and is currently **staging-only** (`PAYMENT_DB_ENV=isolated-test` and `CUSTOMER_ACCOUNT_MAPPING_ENABLED=true`). Each avatar is limited to 512 KiB, JPEG or PNG. The server keeps the storage key in `customer_accounts.avatar_photo_key` and reads the private object through S3 API.
+**Deployment requirement:** apply migration 031 using the project's reviewed remote-migration procedure, then deploy this backend. The dev migration script intentionally rejects remote database hosts. If migration 031 is missing, the API returns `503 avatar_database_migration_required` rather than claiming success. Do not run an unreviewed SQL script on production.
 
-## Deployment configuration
+The first WeChat avatar selection always requires explicit user interaction: `wx.login` cannot silently return a real WeChat avatar. Subsequent visits automatically retrieve the saved avatar. Clicking the round avatar opens the platform's native avatar picker directly, without an extra custom modal.
 
-Configure the **staging** server and a dedicated, non-public avatar bucket:
-
-- `S3_AVATAR_BUCKET` — the dedicated private bucket name
-- `S3_ENDPOINT` — trusted R2/S3-compatible API endpoint
-- `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` — credentials scoped to this private bucket
-- `S3_REGION` (if required; defaults to `auto`)
-
-Do not substitute a public product-image bucket unless access control and retention have been explicitly reviewed. Do not commit credentials. Ensure the staging database has the customer-account migrations, including `avatar_photo_key`.
-
-With missing credentials or bucket, the backend returns `503 private_avatar_storage_not_configured`. This cannot be fixed by UI changes. Configure the service, deploy the backend, then use an authenticated account to upload one avatar and verify `GET` on a fresh device.
-
-## Expected interaction
-
-- Sign-in without a previously saved avatar: neutral placeholder, **no popup**.
-- Sign-in with a saved avatar: fetch and show it automatically without user action.
-- Tap the avatar: choose a new WeChat avatar explicitly or select a camera/album image.
-- WeChat does not provide permissionless retrieval of the current profile photo.
-
-## Important limitation
-
-The existing backend avatar route is not production-enabled. Production rollout needs independent authorization, storage, retention, and migration review. Do not remove the staging guards solely to make UI tests pass.
+The avatar endpoint remains guarded by `PAYMENT_DB_ENV=isolated-test` and `CUSTOMER_ACCOUNT_MAPPING_ENABLED=true`. Review privacy, DB backups, retention, rate limiting and production access control before enabling outside staging.

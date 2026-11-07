@@ -26,3 +26,9 @@ page{background:#f7f5fb}
 .save-button{margin:35rpx auto 0;width:78%;height:88rpx;line-height:88rpx;border-radius:44rpx;background:linear-gradient(100deg,#6438dc,#9765ed);color:white;font-size:29rpx;font-weight:650}.save-button::after{border:0}
 .inline-message{padding:12rpx 15rpx;font-size:23rpx;color:#7754a6;line-height:1.5}.login-note{padding:38rpx;text-align:center;color:#877a99}
 .avatar-retry{color:#6238d1;text-decoration:underline;margin-left:12rpx}
+
+/* WeChat button has its own sizing rules: force a true square avatar. */
+.hero-user .hero-avatar-button{width:132rpx!important;height:132rpx!important;min-width:132rpx!important;max-width:132rpx!important;min-height:132rpx!important;max-height:132rpx!important;flex:0 0 132rpx!important;box-sizing:border-box;padding:0!important;margin:0!important;border-radius:50%!important;line-height:1!important;white-space:normal;overflow:visible}
+.hero-user .hero-avatar-button[disabled]{opacity:1}
+.hero-user .hero-avatar-button::after{display:none}
+.hero-avatar-button .avatar-photo{width:100%;height:100%;border-radius:50%}
