@@ -10,7 +10,7 @@
       <view class="hero-details">
         <view class="hero-name">{{loggedIn ? (nickname || '微信用户') : '未登录'}}</view>
         <view class="hero-subtitle">{{loggedIn ? '微信账号已连接' : '请先登录微信账号'}}</view>
-        <view wx:if="{{loggedIn}}" class="avatar-edit-link" bindtap="openAvatarMenu">{{avatarMissing ? '设置微信头像' : '点击头像更换' }} ›</view>
+        <view wx:if="{{loggedIn}}" class="avatar-edit-link" bindtap="openAvatarMenu">{{avatarMissing ? '点击设置头像' : '点击头像更换'}} ›</view>
       </view>
     </view>
   </view>

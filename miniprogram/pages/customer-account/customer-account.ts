@@ -3,7 +3,7 @@ import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/co
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
 Page({
-  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',avatarMenu:false,avatarPromptSeen:false,avatarMissing:false,photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneReadSerial:0,regionParts:[] as string[],regionLabel:'',customerId:'' },
+  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',avatarMenu:false,avatarMissing:false,photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneReadSerial:0,regionParts:[] as string[],regionLabel:'',customerId:'' },
   profileReadSerial:0,
   editSerial:0,
   async onShow() {
@@ -79,14 +79,15 @@ Page({
       success:(r:any)=>{
         if(getSessionToken()!==token||serial!==this.profileReadSerial)return
         if(r.statusCode===404&&r.data?.error==='no_avatar_photo'){
-          this.setData({avatarMissing:true,avatarMenu:!this.data.avatarPromptSeen})
-          this.setData({avatarPromptSeen:true})
+          this.setData({avatarMissing:true,avatarMenu:false,photoStatus:''})
           return
         }
         if(r.statusCode!==200||!r.data?.dataBase64){
           const code=String(r.data?.error||'')
           const explanation=code==='not_found'||code==='not_enabled'?'头像服务尚未在当前服务器启用':code==='private_avatar_storage_not_configured'?'服务器尚未配置头像存储':code==='profile_not_found'?'当前微信身份还没有对应的顾客档案':code==='no_avatar_photo'?'尚未设置头像':code==='unauthorized'?'登录状态失效，请重新登录':code==='avatar_read_unavailable'?'服务器无法读取已保存的头像':'头像读取失败（HTTP '+r.statusCode+'）'
-          this.setData({photoStatus:explanation})
+          // Loading an avatar is optional; surface storage errors only after an explicit user action.
+          if(code==='private_avatar_storage_not_configured'||code==='not_found'||code==='not_enabled')this.setData({photoStatus:''})
+          else this.setData({photoStatus:explanation})
           return
         }
         const mime=r.data.mimeType==='image/png'?'png':r.data.mimeType==='image/jpeg'?'jpg':''
