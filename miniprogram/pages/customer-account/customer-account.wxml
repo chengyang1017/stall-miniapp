@@ -1,41 +1,57 @@
 <view class="account-page">
- <view class="profile-hero">
-  <view class="hero-orb"></view><view class="hero-wave wave-back"></view><view class="hero-wave wave-front"></view>
-  <view class="hero-user">
-   <view class="hero-avatar" bindtap="chooseAvatarPhoto">
-    <image wx:if="{{avatarPhotoPath}}" class="avatar-photo" src="{{avatarPhotoPath}}" mode="aspectFill"/>
-    <text wx:else class="avatar-placeholder">♙</text>
-    <view wx:if="{{loggedIn}}" class="avatar-camera">◎</view>
-   </view>
-   <view class="hero-details"><view class="hero-name">{{loggedIn ? (nickname || '微信用户') : '未登录'}}</view><view class="hero-subtitle">{{loggedIn ? '微信身份已连接' : '请先登录微信账号'}}</view></view>
+  <view class="profile-hero">
+    <view class="hero-orb"></view><view class="hero-wave wave-back"></view>
+    <view class="hero-user">
+      <view class="hero-avatar" bindtap="openAvatarMenu">
+        <image wx:if="{{avatarPhotoPath}}" class="avatar-photo" src="{{avatarPhotoPath}}" mode="aspectFill"/>
+        <text wx:else class="avatar-placeholder">☺</text>
+        <view wx:if="{{loggedIn}}" class="avatar-camera">✎</view>
+      </view>
+      <view class="hero-details">
+        <view class="hero-name">{{loggedIn ? (nickname || '微信用户') : '未登录'}}</view>
+        <view class="hero-subtitle">{{loggedIn ? '微信账号已连接' : '请先登录微信账号'}}</view>
+        <view wx:if="{{loggedIn}}" class="avatar-edit-link" bindtap="openAvatarMenu">{{avatarMissing ? '设置微信头像' : '点击头像更换' }} ›</view>
+      </view>
+    </view>
   </view>
- </view>
- <view class="account-content">
-  <view wx:if="{{loggedIn}}" class="settings-card">
-   <view class="avatar-actions"><button class="avatar-wechat-action" open-type="chooseAvatar" bindchooseavatar="useWechatAvatar" disabled="{{photoBusy}}">使用微信头像</button><button class="avatar-album-action" bindtap="chooseAvatarPhoto" disabled="{{photoBusy}}">相册 / 拍照</button></view>
-   <view wx:if="{{photoStatus}}" class="inline-message">{{photoStatus}}</view>
-   <view class="settings-row nickname-row">
-    <view class="outline-icon">✎</view><view class="row-main"><view class="row-title">昵称</view><view class="row-hint">最多30个字符</view></view>
-    <input class="nickname-input" maxlength="30" value="{{nickname}}" placeholder="输入昵称" bindinput="onNicknameInput"/>
-   </view>
-   <view class="settings-row">
-    <view class="outline-icon">☏</view><view class="row-main"><view class="row-title">微信账号</view></view><view class="row-value">已绑定</view>
-   </view>
-   <view class="settings-row phone-row">
-    <view class="outline-icon">▯</view><view class="row-main"><view class="row-title">手机号</view><view class="row-hint">仅支持中国大陆 +86 手机号</view></view>
-    <view class="phone-right"><view class="row-value">{{phoneLoading ? '读取中…' : (phoneBound ? maskedPhone : '未绑定')}}</view><button class="phone-action" open-type="getPhoneNumber" bindgetphonenumber="bindWechatPhone" loading="{{phoneLoading}}" disabled="{{phoneLoading}}">{{phoneBound ? '换绑' : '绑定'}}</button></view>
-   </view>
-   <view wx:if="{{phoneStatus}}" class="inline-message">{{phoneStatus}}</view>
-   <picker mode="region" value="{{regionParts}}" bindchange="onRegionChange">
-    <view class="settings-row"><view class="outline-icon">♧</view><view class="row-main"><view class="row-title">地区</view></view><view class="row-value">{{regionLabel || '未设置'}}</view><text class="chevron">›</text></view>
-   </picker>
-   <view class="settings-row last-row">
-    <view class="outline-icon">▤</view><view class="row-main"><view class="row-title">用户 ID</view></view><view class="row-value">{{customerId || '暂不可用'}}</view><text class="copy-mark" bindtap="copyCustomerId">▢</text>
-   </view>
+  <view class="account-content">
+    <view wx:if="{{loggedIn}}" class="settings-card">
+      <view class="card-heading">基本资料</view>
+      <view class="settings-row nickname-row">
+        <view class="row-main"><view class="row-title">昵称</view><view class="row-hint">最多30个字符</view></view>
+        <input class="nickname-input" maxlength="30" value="{{nickname}}" placeholder="填写昵称" bindinput="onNicknameInput"/>
+      </view>
+      <view class="settings-row">
+        <view class="row-main"><view class="row-title">微信账号</view></view><view class="status-chip">已连接</view>
+      </view>
+      <view class="settings-row phone-row">
+        <view class="row-main"><view class="row-title">手机号</view><view class="row-hint">目前支持中国大陆 +86 手机号</view></view>
+        <view class="phone-right"><view class="row-value">{{phoneLoading ? '读取中…' : (phoneBound ? maskedPhone : '未绑定')}}</view><button class="phone-action" open-type="getPhoneNumber" bindgetphonenumber="bindWechatPhone" loading="{{phoneLoading}}" disabled="{{phoneLoading}}">{{phoneBound ? '换绑' : '绑定'}}</button></view>
+      </view>
+      <view wx:if="{{phoneStatus}}" class="inline-message">{{phoneStatus}}</view>
+      <picker mode="region" value="{{regionParts}}" bindchange="onRegionChange">
+        <view class="settings-row"><view class="row-main"><view class="row-title">地区</view></view><view class="row-value">{{regionLabel || '未设置'}}</view><text class="chevron">›</text></view>
+      </picker>
+      <view class="settings-row last-row">
+        <view class="row-main"><view class="row-title">用户 ID</view></view><view class="row-value">{{customerId || '暂不可用'}}</view><text class="copy-mark" bindtap="copyCustomerId">复制</text>
+      </view>
+    </view>
+    <view wx:if="{{loggedIn}}" class="settings-card danger-card" bindtap="showAccountCancellation">
+      <view class="settings-row last-row"><view class="row-main"><view class="row-title">账号注销</view></view><text class="chevron">›</text></view>
+    </view>
+    <view wx:if="{{photoStatus}}" class="inline-message">{{photoStatus}}</view>
+    <button wx:if="{{loggedIn}}" class="save-button" loading="{{profileBusy}}" disabled="{{profileBusy}}" bindtap="saveNickname">保存资料</button>
+    <view wx:if="{{profileStatus}}" class="inline-message">{{profileStatus}}</view>
+    <view wx:if="{{!loggedIn}}" class="settings-card login-note">请先返回「我的」登录微信账号</view>
   </view>
-  <view wx:if="{{loggedIn}}" class="settings-card danger-card" bindtap="showAccountCancellation"><view class="settings-row last-row"><view class="outline-icon">♢</view><view class="row-main"><view class="row-title">账号注销</view></view><text class="chevron">›</text></view></view>
-  <button wx:if="{{loggedIn}}" class="save-button" loading="{{profileBusy}}" disabled="{{profileBusy}}" bindtap="saveNickname">保存修改</button>
-  <view wx:if="{{profileStatus}}" class="inline-message">{{profileStatus}}</view>
-  <view wx:if="{{!loggedIn}}" class="settings-card login-note">请先返回「我的」登录微信账号</view>
- </view>
+  <view wx:if="{{avatarMenu && loggedIn}}" class="avatar-overlay" catchtap="closeAvatarMenu">
+    <view class="avatar-sheet" catchtap="keepAvatarMenu">
+      <view class="sheet-handle"></view>
+      <view class="sheet-title">{{avatarMissing ? '设置头像' : '更换头像'}}</view>
+      <view class="sheet-caption">可使用微信头像，也可选择自己喜欢的照片</view>
+      <button class="sheet-wechat" open-type="chooseAvatar" bindchooseavatar="useWechatAvatar" disabled="{{photoBusy}}">使用微信头像</button>
+      <button class="sheet-album" bindtap="chooseAvatarPhoto" disabled="{{photoBusy}}">从相册选择或拍照</button>
+      <button class="sheet-cancel" bindtap="closeAvatarMenu" disabled="{{photoBusy}}">稍后再说</button>
+    </view>
+  </view>
 </view>

@@ -3,22 +3,23 @@ import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/co
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
 Page({
-  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneReadSerial:0,regionParts:[] as string[],regionLabel:'',customerId:'' },
+  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',avatarMenu:false,avatarPromptSeen:false,avatarMissing:false,photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneReadSerial:0,regionParts:[] as string[],regionLabel:'',customerId:'' },
   profileReadSerial:0,
   editSerial:0,
   async onShow() {
     const token=getSessionToken(), loggedIn=!!token
     const serial=++this.profileReadSerial
     const editAtStart=this.editSerial
-    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',photoStatus:'',nickname:loggedIn?cachedCustomerNickname():'',phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false})
+    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',avatarMenu:false,avatarMissing:false,photoStatus:'',nickname:loggedIn?cachedCustomerNickname():'',phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false})
     if(!token)return
     this.loadPhoneStatus(token)
+    this.loadAvatarPhoto(token,serial)
     try {
       const cfg=getCloudContext()
       if(!cfg)throw Error('missing_api')
       const profile=await authorizedGet(cfg.apiBase,'/v1/customer/profile')
       if(serial!==this.profileReadSerial||getSessionToken()!==token||this.editSerial!==editAtStart)return
-      cacheCustomerNickname(String(profile.nickname||''));this.setData({nickname:String(profile.nickname||''),profileStatus:'',avatarStyle:String(profile.avatarStyle||'violet'),customerId:String(profile.customerId||profile.userId||'')});this.loadAvatarPhoto(token)
+      cacheCustomerNickname(String(profile.nickname||''));this.setData({nickname:String(profile.nickname||''),profileStatus:'',avatarStyle:String(profile.avatarStyle||'violet'),customerId:String(profile.customerId||profile.userId||'')})
     } catch(error:any) {
       if(serial===this.profileReadSerial&&getSessionToken()===token)
         this.setData({profileStatus:'读取云端昵称失败：'+String(error?.message||error).slice(0,80)})
@@ -67,25 +68,42 @@ Page({
   showPhoneBindNotice(){
     wx.showModal({title:'手机号绑定',content:'手机号必须通过微信官方手机号授权或短信验证码验证后才能绑定。当前测试环境尚未启用验证服务，因此暂不接受手工填写号码作为已绑定手机号。',showCancel:false,confirmText:'知道了'})
   },
-  async loadAvatarPhoto(token:string){
+  openAvatarMenu(){if(this.data.loggedIn&&!this.data.photoBusy)this.setData({avatarMenu:true})},
+  closeAvatarMenu(){if(!this.data.photoBusy)this.setData({avatarMenu:false})},
+  keepAvatarMenu(){},
+  async loadAvatarPhoto(token:string,serial:number){
     const cfg=getCloudContext();if(!cfg)return
     wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/avatar-photo',
       method:'GET',header:{Authorization:'Bearer '+token},timeout:15000,
       success:(r:any)=>{
-        if(getSessionToken()!==token||r.statusCode!==200||!r.data?.dataBase64)return
-        const mime=r.data.mimeType==='image/png'?'png':'jpg'
+        if(getSessionToken()!==token||serial!==this.profileReadSerial)return
+        if(r.statusCode===404&&r.data?.error==='no_avatar_photo'){
+          this.setData({avatarMissing:true,avatarMenu:!this.data.avatarPromptSeen})
+          this.setData({avatarPromptSeen:true})
+          return
+        }
+        if(r.statusCode!==200||!r.data?.dataBase64){
+          this.setData({photoStatus:'头像暂时无法读取，稍后可重试'})
+          return
+        }
+        const mime=r.data.mimeType==='image/png'?'png':r.data.mimeType==='image/jpeg'?'jpg':''
+        if(!mime)return
         const filename=wx.env.USER_DATA_PATH+'/customer-avatar-'+Date.now()+'.'+mime
-        wx.getFileSystemManager().writeFile({filePath:filename,data:r.data.dataBase64,encoding:'base64',success:()=>{if(getSessionToken()===token)this.setData({avatarPhotoPath:filename})}})
-      }
+        wx.getFileSystemManager().writeFile({filePath:filename,data:r.data.dataBase64,encoding:'base64',
+          success:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({avatarPhotoPath:filename,avatarMissing:false})}})
+      },
+      fail:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoStatus:'头像读取失败，请检查网络'})}
     })
   },
   useWechatAvatar(e:any){
     const path=String(e?.detail?.avatarUrl||'')
     if(!path){this.setData({photoStatus:'未选择微信头像'});return}
+    this.setData({avatarMenu:false})
     this.uploadAvatarPath(path)
   },
   chooseAvatarPhoto(){
     if(!getSessionToken()||!getCloudContext()||this.data.photoBusy)return
+    this.setData({avatarMenu:false})
     wx.chooseMedia({count:1,mediaType:['image'],sourceType:['album','camera'],sizeType:['compressed'],
       success:(selection:any)=>{const file=selection.tempFiles?.[0];if(file?.tempFilePath)this.uploadAvatarPath(file.tempFilePath,file.size)}
     })
@@ -105,7 +123,7 @@ Page({
         data:{dataBase64:encoded},timeout:20000,
         success:(res:any)=>{
           if(getSessionToken()!==token||serial!==this.profileReadSerial)return
-          if(res.statusCode===200){this.setData({avatarPhotoPath:path,photoStatus:'头像已保存到云端'})}
+          if(res.statusCode===200){this.setData({avatarPhotoPath:path,avatarMissing:false,avatarMenu:false,photoStatus:'头像已保存到云端'})}
           else this.setData({photoStatus:'上传失败：'+String(res.data?.error||res.statusCode)})
         },fail:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoStatus:'网络异常，头像上传失败'})},
         complete:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoBusy:false})}

@@ -3,7 +3,7 @@
 <view class="hero-title">我的</view>
 <view class="hero-subtitle">个人资料 · 收藏 · 服务</view>
 <view class="profile-identity" bindtap="showLogin">
-<view class="profile-avatar avatar-{{avatarStyle}}"><image wx:if="{{avatarPhotoPath}}" src="{{avatarPhotoPath}}" mode="aspectFill" class="profile-avatar-photo"/><text wx:else>♙</text></view>
+<view class="profile-avatar avatar-{{avatarStyle}}"><image wx:if="{{avatarPhotoPath}}" src="{{avatarPhotoPath}}" mode="aspectFill" class="profile-avatar-photo"/><text wx:else>☺</text></view>
 <view class="profile-account">
 <view class="profile-name">{{accountName}}</view>
 <view class="profile-subtitle">{{accountSubtitle}}</view>
