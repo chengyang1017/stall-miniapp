@@ -1,0 +1,42 @@
+name: Delivery fee and checkout validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/src/checkout.mjs'
+      - 'backend/src/deliveryRules.mjs'
+      - 'backend/src/billing.mjs'
+      - 'backend/tests/delivery-rules.test.mjs'
+      - 'miniprogram/pages/admin/**'
+      - 'miniprogram/pages/checkout/**'
+      - 'miniprogram/modules/merchant/api/business.ts'
+      - 'miniprogram/modules/shared/domain/business.ts'
+      - '.github/workflows/delivery-fee-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  delivery-fee:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
+      - name: Validate delivery and billing syntax
+        run: node --check backend/src/deliveryRules.mjs && node --check backend/src/checkout.mjs && node --check backend/src/billing.mjs
+      - name: Delivery policy and fee tests
+        run: node --test backend/tests/delivery-rules.test.mjs
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: TypeScript typecheck
+        run: npx tsc --noEmit
+      - name: Combined miniapp build
+        run: npm run build:combined
