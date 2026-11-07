@@ -5,7 +5,7 @@ const headers={'content-type':'application/json; charset=utf-8','cache-control':
 function response(res,status,data){res.writeHead(status,headers);res.end(JSON.stringify(data))}
 function dateOk(v){return /^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T00:00:00Z'))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v&&v>='2000-01-01'&&v<='2100-12-31'}
 function cell(v){let s=String(v??'');if(/^[\s\u0000-\u001f]*[=+@-]/.test(s)||/^[\t\r\n]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
-const notice='已确认收款仅统计微信支付官方验真且完成订单结算的原始金额，未扣除退款；测试和模拟支付不计入。异常到账、退款及支付渠道结算须另行对账。'
+const notice='此为内部订单核对账，成功退款按原订单日期统计，未扣除渠道手续费；并非微信支付官方结算账单。真实到账请以微信商户平台下载的交易和结算账单复核。'
 export async function billingRoute(req,res,url,pool){
  const m=/^\/v1\/merchant\/stores\/([a-z0-9][a-z0-9-]{1,62})\/billing(?:\/(export))?$/.exec(url.pathname)
  if(!m)return false
@@ -36,6 +36,26 @@ export async function billingRoute(req,res,url,pool){
  AND EXISTS(SELECT 1 FROM payment_events e WHERE e.order_id=o.id AND e.provider='wechatpay:live'
    AND e.event_type='payment_succeeded' AND e.amount_cents=o.total_cents)),0)::text AS "paidCents",COALESCE(SUM(total_cents) FILTER(WHERE fulfillment_status<>'cancelled' AND payment_status='unpaid'),0)::text AS "unpaidCents" FROM orders o WHERE `+where.join(' AND '),params)
   const summary=summaryResult.rows[0]
+  // Refund totals are attributed to the original order's date in this internal
+  // operational view. They are NOT WeChat's merchant settlement statement.
+  summary.refundedCents='0'
+  summary.refundPendingCents='0'
+  summary.refundReviewCount=0
+  summary.abnormalCollectionCents='0'
+  if(process.env.APP_ENV==='production'&&process.env.WECHAT_PAY_LIVE_ENABLED==='true'){
+   const payments=await client.query(`SELECT
+    COALESCE(SUM(r.amount_cents) FILTER(WHERE r.status='succeeded'),0)::text AS "refundedCents",
+    COALESCE(SUM(r.amount_cents) FILTER(WHERE r.status IN
+      ('pending','submitting','unknown','processing','abnormal','review')),0)::text AS "refundPendingCents",
+    COUNT(*) FILTER(WHERE r.status IN ('unknown','abnormal','review'))::int AS "refundReviewCount"
+    FROM wechat_live_refunds r JOIN orders o ON o.id=r.order_id WHERE `+where.join(' AND '),params)
+   Object.assign(summary,payments.rows[0])
+   const anomalies=await client.query(`SELECT COALESCE(SUM(e.amount_cents),0)::text AS "abnormalCollectionCents"
+    FROM payment_events e JOIN orders o ON o.id=e.order_id
+    WHERE e.provider='wechatpay:live' AND e.event_type='refund_required' AND `+where.join(' AND '),params)
+   summary.abnormalCollectionCents=anomalies.rows[0]?.abnormalCollectionCents||'0'
+  }
+  summary.netVerifiedCents=String(Number(summary.paidCents)-Number(summary.refundedCents))
   if(Object.values(summary).some(v=>!Number.isSafeInteger(Number(v))||Number(v)<0)){response(res,413,{error:'billing_amount_too_large'});return true}
   const pageParams=params.slice(),pageWhere=where.slice()
   if(cursor&&!m[2]){pageParams.push(cursor.at,cursor.id);pageWhere.push('(o.created_at,o.id)<($'+(pageParams.length-1)+'::timestamptz,$'+pageParams.length+'::uuid)')}

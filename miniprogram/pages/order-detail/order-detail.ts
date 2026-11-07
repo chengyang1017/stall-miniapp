@@ -1,5 +1,6 @@
 import {LIVE_WECHAT_PAY_ENABLED,PAYMENT_SANDBOX_UI_ENABLED} from '../../config/cloud'
 import {prepareWechatPayment,queryWechatPayment} from '../../modules/customer/api/wechatLivePayment'
+import {fetchWechatLiveReceipt,formatWechatLiveReceipt} from '../../modules/shared/api/wechatLiveReceipt'
 import { paymentLabel } from '../../modules/shared/domain/payment'
 import { createSandboxCheckout, SandboxChannel } from '../../modules/customer/api/sandboxPayment'
 import { sandboxPaymentRequest } from '../../modules/shared/api/sandboxPayment'
@@ -202,6 +203,24 @@ Page({
       }
     }
   },
+  async copyWechatLiveReceipt(){
+    const cfg=customerOrdersConfig(),id=String(this.data.order.id||''),identity=supportIdentity(),serial=this.detailSerial
+    if(!LIVE_WECHAT_PAY_ENABLED||!cfg||!this.detailVisible||this.phoneReadOnly||this.data.liveReceiptBusy||
+       this.data.order.paymentSource!=='wechatpay:live')return
+    this.setData({liveReceiptBusy:true,liveReceiptError:''})
+    try{
+      const {receipt}=await fetchWechatLiveReceipt(cfg,id)
+      if(!this.detailVisible||serial!==this.detailSerial||identity!==supportIdentity())return
+      wx.setClipboardData({data:formatWechatLiveReceipt(receipt),
+        fail:()=>wx.showToast({title:'复制付款记录失败',icon:'none'})})
+    }catch(_){
+      if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())
+        this.setData({liveReceiptError:'正式付款记录暂时无法核验，请稍后重试'})
+    }finally{
+      if(this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity())
+        this.setData({liveReceiptBusy:false})
+    }
+  },
   async payWithWechat(){
     const cfg=customerOrdersConfig(),identity=supportIdentity(),id=String(this.data.order.id||'')
     if(!LIVE_WECHAT_PAY_ENABLED||!cfg||this.phoneReadOnly||!this.detailVisible||
@@ -237,7 +256,7 @@ Page({
     finally{if(current())this.setData({livePaymentBusy:false})}
   },
   phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
-  data: { livePayEnabled:LIVE_WECHAT_PAY_ENABLED,sandboxUiEnabled:PAYMENT_SANDBOX_UI_ENABLED,livePaymentBusy:false,livePaymentText:'',sandbox:null as any,receiptExpandedId:'',paymentHistoryExpanded:false,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
+  data: { livePayEnabled:LIVE_WECHAT_PAY_ENABLED,sandboxUiEnabled:PAYMENT_SANDBOX_UI_ENABLED,liveReceiptBusy:false,liveReceiptError:'',livePaymentBusy:false,livePaymentText:'',sandbox:null as any,receiptExpandedId:'',paymentHistoryExpanded:false,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
     this.phoneReadOnly=options.phone==='1'
     this.setData({phoneReadOnly:this.phoneReadOnly})

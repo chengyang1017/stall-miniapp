@@ -14,6 +14,8 @@ import { storeEntryRoute } from './storeEntry.mjs'
 import { stripeTestPaymentRoute } from './stripeTestPaymentRoute.mjs'
 import { wechatLivePaymentRoute } from './wechatLivePaymentRoute.mjs'
 import { wechatLiveRefundRoute } from './wechatLiveRefundRoute.mjs'
+import { wechatLiveReceiptRoute } from './wechatLiveReceipt.mjs'
+import { startWechatRefundReconciliation } from './wechatLiveRefundReconcile.mjs'
 import { stripeTestReturnRoute } from './stripeTestReturnRoute.mjs'
 import { startSandboxPaymentWorker } from './sandboxPaymentWorker.mjs'
 import { stagingPaymentRoute } from './stagingPayments.mjs'
@@ -107,6 +109,7 @@ const server = http.createServer(async (req, res) => {
   }
   try {
     if (stripeTestReturnRoute(req,res,url)) return
+    if (await wechatLiveReceiptRoute(req,res,url,pool)) return
     if (await wechatLiveRefundRoute(req,res,url,pool)) return
     if (await wechatLivePaymentRoute(req,res,url,pool)) return
     if (await stripeTestPaymentRoute(req,res,url,pool)) return
@@ -275,8 +278,9 @@ const server = http.createServer(async (req, res) => {
 let stopInventoryWorker=async()=>{}
 let stopTrackingRetention=()=>{}
 let stopSandboxPayments=async()=>{}
+let stopWechatRefundReconciliation=async()=>{}
 server.listen(port, host, () => { console.log(`Stall API listening on ${host}:${port}`);void pool.query("SELECT current_user AS role, current_database() AS database, has_table_privilege(current_user,'public.stores','UPDATE') AS stores_update,has_table_privilege(current_user,'public.categories','UPDATE') AS categories_update").then(({rows})=>{const x=rows[0]||{};console.log('Staging DB role diagnostic',JSON.stringify({role:x.role,database:x.database,storesUpdate:x.stores_update,categoriesUpdate:x.categories_update}))}).catch(e=>console.error('Staging DB role diagnostic failed',e?.code||'unknown'));void pool.query("SELECT to_regclass('public.customer_verified_phones') IS NOT NULL AS verified_phones_table, to_regclass('public.customer_account_sessions') IS NOT NULL AS account_sessions_table, has_column_privilege(current_user,'public.customer_verified_phones','phone_e164','SELECT') AS can_read_verified_phones, has_column_privilege(current_user,'public.customer_verified_phones','phone_e164','INSERT') AS can_bind_verified_phones, CASE WHEN to_regclass('public.customer_account_sessions') IS NOT NULL THEN has_column_privilege(current_user,'public.customer_account_sessions','token_hash','SELECT') ELSE false END AS can_read_account_sessions").then(({rows})=>{const r=rows[0]||{};console.log('Staging customer phone database readiness',JSON.stringify({verifiedPhonesTable:r.verified_phones_table===true,accountSessionsTable:r.account_sessions_table===true,canReadVerifiedPhones:r.can_read_verified_phones===true,canBindVerifiedPhones:r.can_bind_verified_phones===true,canReadAccountSessions:r.can_read_account_sessions===true}))}).catch(e=>console.error('Staging customer phone database readiness failed',e?.code||'unknown'));stopInventoryWorker=startInventoryWorker(pool);stopTrackingRetention=startTrackingRetention(pool) })
-server.on('listening',()=>{stopSandboxPayments=startSandboxPaymentWorker(pool)})
-async function shutdown() { server.close(); stopTrackingRetention(); await stopSandboxPayments(); await stopInventoryWorker(); await pool.end() }
+server.on('listening',()=>{stopSandboxPayments=startSandboxPaymentWorker(pool);stopWechatRefundReconciliation=startWechatRefundReconciliation(pool)})
+async function shutdown() { server.close(); stopTrackingRetention(); await stopSandboxPayments(); await stopWechatRefundReconciliation(); await stopInventoryWorker(); await pool.end() }
 process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)

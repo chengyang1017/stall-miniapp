@@ -9,10 +9,17 @@
   </view>
   <view wx:if="{{!loading && !error}}" class="bill-grid">
     <view class="bill-stat"><text>有效订单金额</text><view>¥{{orderValue}}</view></view>
-    <view class="bill-stat"><text>已确认收款</text><view>¥{{received}}</view></view>
+    <view class="bill-stat"><text>微信已核验收款（退款前）</text><view>¥{{received}}</view></view>
     <view class="bill-stat"><text>待付款金额</text><view>¥{{unpaid}}</view></view>
     <view class="bill-stat"><text>总订单 / 取消 / 已送达</text><view>{{count}} / {{cancelled}} / {{delivered}}</view></view>
   </view>
+  <view wx:if="{{cloudMode && livePayEnabled && !error}}" class="bill-grid">
+    <view class="bill-stat"><text>已确认成功退款</text><view>¥{{refunded}}</view></view>
+    <view class="bill-stat"><text>已核验收款净额（未扣手续费）</text><view>¥{{netReceived}}</view></view>
+    <view class="bill-stat"><text>待确认退款金额</text><view>¥{{pendingRefunds}}</view></view>
+    <view class="bill-stat"><text>异常到账待处理</text><view>¥{{abnormalCollections}}</view></view>
+  </view>
+  <view wx:if="{{cloudMode && livePayEnabled && reviewRefunds}}" class="bill-warning">需人工复核的退款 {{reviewRefunds}} 笔；请到订单页核对。</view>
   <view class="bill-warning">{{notice}} 即使订单已送达，也不代表已付款。</view>
   <view class="bill-section"><text>订单明细（已加载 {{rows.length}} / {{count}}）</text><button disabled="{{exporting}}" size="mini" type="primary" bindtap="exportCsv">{{exporting ? '导出中…' : '导出账单（CSV）'}}</button></view>
   <view wx:if="{{rows.length === 0 && !loading && !error}}" class="bill-empty">所选日期暂无订单</view>

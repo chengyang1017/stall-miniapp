@@ -22,6 +22,12 @@
     </view>
     <view class="order-detail-card"><view class="order-detail-title">商品清单</view><view wx:for="{{items}}" wx:key="productId" class="order-detail-line"><text>{{item.name}} × {{item.quantity}}</text><text>¥{{item.subtotal}}</text></view><view class="order-detail-total">合计 ¥{{order.totalText}}</view></view>
     <view class="order-detail-card"><view class="order-detail-title">配送信息</view><view class="order-detail-line"><text>收货人</text><text>{{order.receiverName}}</text></view><view class="order-detail-line"><text>联系电话</text><text>{{order.phone}}</text></view><view class="order-detail-line"><text>收货地址</text><text>{{order.area}} {{order.detail}}</text></view><view class="order-detail-line"><text>配送时段</text><text>{{order.slotText}}</text></view><view wx:if="{{order.estimatedArrival}}" class="order-detail-line"><text>预计送达</text><text>{{order.estimatedArrival}}</text></view><view wx:if="{{order.note}}" class="order-detail-muted">顾客备注：{{order.note}}</view></view>
+    <view wx:if="{{cloudMode && livePayEnabled && !phoneReadOnly && order.paymentSource === 'wechatpay:live'}}" class="order-detail-card">
+      <view class="order-detail-title">正式付款记录</view>
+      <view class="order-detail-muted">付款与退款金额来自服务端验真的微信支付记录；非税务发票。</view>
+      <button size="mini" loading="{{liveReceiptBusy}}" disabled="{{liveReceiptBusy}}" bindtap="copyWechatLiveReceipt">复制付款记录</button>
+      <view wx:if="{{liveReceiptError}}" class="order-detail-muted">{{liveReceiptError}}</view>
+    </view>
     <view wx:if="{{cloudMode && livePayEnabled && !phoneReadOnly && order.paymentStatus === 'unpaid' && order.fulfillmentStatus === 'new'}}" class="order-detail-card">
       <view class="order-detail-title">微信支付</view>
       <view class="order-detail-muted">可使用微信零钱或已绑定银行卡。付款状态以微信支付服务端核验为准。</view>

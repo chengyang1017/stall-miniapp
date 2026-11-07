@@ -52,6 +52,7 @@
       <button size="mini" data-id="{{item.id}}" bindtap="toggleOrderDetails">{{expandedOrderIds[item.id] ? '收起' : '详情'}}</button>
       <button wx:if="{{cloudMode && !livePayEnabled && sandboxUiEnabled}}" size="mini" data-id="{{item.id}}" bindtap="viewSandboxPayment">支付 / 退款 / 小票</button>
       <button wx:if="{{cloudMode && livePayEnabled && canManage && item.paymentSource === 'wechatpay:live'}}" size="mini" data-id="{{item.id}}" bindtap="viewLiveRefunds">微信支付退款记录</button>
+      <button wx:if="{{cloudMode && livePayEnabled && canManage && item.paymentSource === 'wechatpay:live'}}" size="mini" data-id="{{item.id}}" bindtap="copyWechatMerchantReceipt">复制付款记录</button>
     </view>
     <view wx:if="{{livePayEnabled && liveRefundOrderId === item.id && canManage}}" class="order-payment-panel">
       <view class="order-detail-title">微信支付退款</view>

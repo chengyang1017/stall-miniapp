@@ -2,6 +2,7 @@ import { paymentLabel,fulfillmentPaymentReady } from '../../modules/shared/domai
 import { stableRowsPatch } from '../../modules/shared/runtime/stableRows'
 import {LIVE_WECHAT_PAY_ENABLED,PAYMENT_SANDBOX_UI_ENABLED} from '../../config/cloud'
 import {listLiveRefunds,createLiveRefund,refreshLiveRefund,LiveRefund} from '../../modules/merchant/api/wechatLiveRefunds'
+import {fetchWechatLiveReceipt,formatWechatLiveReceipt} from '../../modules/shared/api/wechatLiveReceipt'
 import {loadWorkflowOrders,updateWorkflowOrder,chinaTime} from '../../modules/merchant/demo/orders'
 import {saveDemoOrders} from '../../modules/merchant/demo/orders'
 import { merchantOrderConfig, merchantOrderContextKey, fetchMerchantOrderPage, updateMerchantOrder, saveMerchantOrderNote, MerchantOrderCounts, MerchantOrderQuery } from '../../modules/merchant/api/orders'
@@ -17,6 +18,19 @@ function validRange(from:string,to:string):boolean{if(!from&&!to)return true;con
 function emptyCounts():MerchantOrderCounts{return {all:0,new:0,accepted:0,preparing:0,delivering:0,delivered:0,cancelled:0,abnormal:0,other:0}}
 function errorMessage(e:unknown):string{const s=String(e);if(/orders_changed|cursor/.test(s))return '订单数据已变化或分页已过期，请刷新后继续加载';if(/401|403|not_logged_in/.test(s))return '登录已失效或无操作权限，请重新登录有权限的商家账号';if(s.includes('payment_not_confirmed'))return '尚未确认支付，现有支付或库存预留规则禁止此操作';if(s.includes('inventory_reservation_expired'))return '库存预留已过期，服务器已处理，请刷新核对';if(/invalid_transition|state_changed|inventory_released/.test(s))return '订单状态或库存预留已变化，请刷新核对';if(s.includes('400'))return '查询条件或操作参数无效，请检查日期范围和输入';return '请求失败或结果未能确认，请检查网络后刷新核对，勿重复操作'}
 Page({
+ async copyWechatMerchantReceipt(e:any){
+   const cfg=merchantOrderConfig(),id=String(e.currentTarget.dataset.id||''),identity=merchantOrderContextKey(),serial=this.serial
+   if(!LIVE_WECHAT_PAY_ENABLED||!cfg||!this.data.canManage||!this.visible)return
+   try{
+     const {receipt}=await fetchWechatLiveReceipt(cfg,id,true)
+     if(!this.visible||serial!==this.serial||identity!==merchantOrderContextKey())return
+     wx.setClipboardData({data:formatWechatLiveReceipt(receipt),
+       fail:()=>wx.showToast({title:'复制付款记录失败',icon:'none'})})
+   }catch(_){
+     if(this.visible&&serial===this.serial&&identity===merchantOrderContextKey())
+       wx.showToast({title:'付款记录未通过核验',icon:'none'})
+   }
+ },
  async viewLiveRefunds(e:any){
   const cfg=merchantOrderConfig(),id=String(e.currentTarget.dataset.id||'')
   if(!LIVE_WECHAT_PAY_ENABLED||!cfg||!this.visible||!this.data.canManage)return
