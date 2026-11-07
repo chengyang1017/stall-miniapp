@@ -7,4 +7,7 @@ CREATE TABLE IF NOT EXISTS public.customer_avatar_photos (
  updated_at timestamptz NOT NULL DEFAULT now(),
  CONSTRAINT customer_avatar_photo_size CHECK (octet_length(image_bytes) BETWEEN 100 AND 524288)
 );
+REVOKE ALL ON public.customer_avatar_photos FROM PUBLIC;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.customer_avatar_photos TO stall_payment_app_limited;
+-- The dedicated SBX04 acceptance service uses a different least-privilege role.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.customer_avatar_photos TO sbx04_app_least;
