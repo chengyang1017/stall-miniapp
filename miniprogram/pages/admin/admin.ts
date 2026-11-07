@@ -74,8 +74,16 @@ Page({
   async saveDeliveryFee(){
    if(this.data.deliveryFeeSaving||this.data.settingsSaving||!this.data.settingsReady)return
    const raw=this.data.deliveryFeeInput.trim()
-   if(!new RegExp('^[0-9]+(?:[.][0-9]{1,2})?if(this.data.settingsReady&&!this.data.settingsLoading&&!this.data.settingsSaving)this.setData({minimumEditing:true})},
- cancelMinimumEdit(){if(!this.data.settingsSaving)this.setData({minimumEditing:false})},
+   if(!/^[0-9]+(?:[.][0-9]{1,2})?$/.test(raw)||Number(raw)>1000){wx.showToast({title:'请输入 ¥0–1000 的金额',icon:'none'});return}
+   const cfg=getCloudContext(),context=businessContextKey()
+   if(!cfg||context!==this.loadedContext){this.refreshMinimum();return}
+   this.setData({deliveryFeeSaving:true,settingsError:''})
+   try{this.revision=await patchMerchantBusiness(cfg,this.revision,{deliveryFeeCents:Math.round(Number(raw)*100)});if(context!==businessContextKey())throw Error('context_changed');this.setData({deliveryFeeInput:Number(raw).toFixed(2),deliveryFeeEditing:false});wx.showToast({title:'配送费已保存',icon:'success'})}
+   catch(_){this.setData({settingsReady:false,settingsError:'配送费保存失败，请重新读取设置'});this.refreshMinimum()}
+   finally{this.setData({deliveryFeeSaving:false})}
+  },
+  beginMinimumEdit(){if(this.data.settingsReady&&!this.data.settingsLoading&&!this.data.settingsSaving)this.setData({minimumEditing:true})},
+  cancelMinimumEdit(){if(!this.data.settingsSaving)this.setData({minimumEditing:false})},
  async saveMinimumOrder(){
   if(this.data.settingsSaving||!this.data.settingsReady)return
   const raw=this.data.minimumOrderInput.trim()
