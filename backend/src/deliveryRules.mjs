@@ -16,6 +16,8 @@ export function validRules(c){
  if(c.placeholderImageKey!==undefined&&c.placeholderImageKey!==null&&(typeof c.placeholderImageKey!=='string'||!/^stores\/[0-9a-f-]{36}\/products\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(c.placeholderImageKey)))return false
  if(c.placeholderStyle==='custom'&&!c.placeholderImageKey)return false
  if(c.shareDeliveryLocation!==undefined&&typeof c.shareDeliveryLocation!=='boolean')return false
+ if(c.deliveryFeeEnabled!==undefined&&typeof c.deliveryFeeEnabled!=='boolean')return false
+ if(c.deliveryFeeCents!==undefined&&(!Number.isSafeInteger(c.deliveryFeeCents)||c.deliveryFeeCents<0||c.deliveryFeeCents>100000))return false
  if(c.minimumOrderCents!==undefined&&(!Number.isSafeInteger(c.minimumOrderCents)||c.minimumOrderCents<0||c.minimumOrderCents>99999900))return false
  if(!c.days.every(d=>d&&typeof d.enabled==='boolean'&&hhmm(d.start)&&hhmm(d.end)&&d.start<d.end))return false
  if(!c.areas.every(a=>a&&safeText(a.id,60)&&safeText(a.name,120)&&typeof a.enabled==='boolean'&&((a.latitude===null&&a.longitude===null&&a.radiusMeters===null)||(coord(a.latitude,-90,90)&&coord(a.longitude,-180,180)&&Number.isInteger(a.radiusMeters)&&a.radiusMeters>=100&&a.radiusMeters<=100000))))return false
@@ -47,7 +49,7 @@ export function businessView(rules,now=new Date(),storeName='') {
  const todayDeliveryPaused=configured&&(rules.specialDates||[]).some(x=>x.date===date&&x.paused)
  const imageKey=configured?rules.placeholderImageKey||null:null,base=(process.env.IMAGE_PUBLIC_BASE_URL||'').replace(/\/+$/,'')
  return {storeName,configured,noteTags:configured?rules.noteTags||[]:[],placeholderStyle:configured?rules.placeholderStyle||'premium':'premium',placeholderImageKey:imageKey,customPlaceholderUrl:imageKey&&/^https:\/\/[^/]+/.test(base)?base+'/'+imageKey.split('/').map(encodeURIComponent).join('/'):null,
-   accepting:configured?rules.accepting:false,days:configured?rules.days:[],notice:configured?(rules.notice||''):'',minimumOrderCents:configured?(rules.minimumOrderCents||0):0,
+   accepting:configured?rules.accepting:false,days:configured?rules.days:[],notice:configured?(rules.notice||''):'',minimumOrderCents:configured?(rules.minimumOrderCents||0):0,deliveryFeeEnabled:configured&&rules.deliveryFeeEnabled===true,deliveryFeeCents:configured&&rules.deliveryFeeEnabled===true?(rules.deliveryFeeCents||0):0,
    shareDeliveryLocation:configured?rules.shareDeliveryLocation===true:false,deliveryPaused:configured?!!rules.deliveryPaused:false,todayDeliveryPaused:!!todayDeliveryPaused,
    open:!!open,label:!configured?'营业信息未配置':!rules.accepting?'暂停接单':rules.deliveryPaused?'暂停全部配送':!deliveryReady?'配送未配置':open?(todayDeliveryPaused?'营业中 · 今日暂停配送，请核对其他日期':'营业中'):'休息中',timeZone:'Asia/Shanghai'}
 }
@@ -68,11 +70,11 @@ export async function businessSettingsRoute(req,res,url,pool) {
    const {rows}=await pool.query('SELECT configuration,md5(configuration::text) AS revision,statement_timestamp() AS now FROM store_delivery_rules WHERE store_id=$1',[store.id])
    if(rows.length&&!validRules(rows[0].configuration)){response(res,503,{error:'invalid_existing_business_settings'});return true}
    const defaults={accepting:false,notice:'',minimumOrderCents:0,days:Array.from({length:7},()=>({enabled:true,start:'09:00',end:'21:00'})),areas:[],slots:[]}
-   response(res,200,{...businessView(rows[0]?.configuration,rows[0]?.now,store.name),days:rows[0]?.configuration.days||defaults.days,revision:rows[0]?.revision||null});return true
+   response(res,200,{...businessView(rows[0]?.configuration,rows[0]?.now,store.name),days:rows[0]?.configuration.days||defaults.days,deliveryFeeCents:rows[0]?.configuration?.deliveryFeeCents||0,revision:rows[0]?.revision||null});return true
  }
  let body;try{body=await bodyJson(req)}catch(e){response(res,400,{error:e.message});return true}
  const keys=body&&typeof body==='object'&&!Array.isArray(body)?Object.keys(body):[]
- if(!keys.includes('expectedRevision')||keys.length<2||keys.some(k=>!['expectedRevision','accepting','days','notice','minimumOrderCents','shareDeliveryLocation','noteTags','placeholderStyle','placeholderImageKey'].includes(k))||!(body.expectedRevision===null||typeof body.expectedRevision==='string'&&/^[a-f0-9]{32}$/.test(body.expectedRevision))){response(res,400,{error:'invalid_business_patch'});return true}
+ if(!keys.includes('expectedRevision')||keys.length<2||keys.some(k=>!['expectedRevision','accepting','days','notice','minimumOrderCents','deliveryFeeEnabled','deliveryFeeCents','shareDeliveryLocation','noteTags','placeholderStyle','placeholderImageKey'].includes(k))||!(body.expectedRevision===null||typeof body.expectedRevision==='string'&&/^[a-f0-9]{32}$/.test(body.expectedRevision))){response(res,400,{error:'invalid_business_patch'});return true}
  if(Object.hasOwn(body,'placeholderImageKey')&&body.placeholderImageKey!==null&&!await verifyProductImage(pool,store.id,body.placeholderImageKey)){response(res,400,{error:'invalid_placeholder_image'});return true}
  const client=await pool.connect()
  try {
@@ -106,7 +108,7 @@ export async function merchantDeliveryRoute(req,res,url,pool){
   if(!rows.length){response(res,404,{error:'store_unavailable'});return true}
   const x=rows[0].configuration
   if(!x||!validRules(x)){response(res,200,{configured:false,rules:null});return true}
-  response(res,200,{configured:true,rules:{accepting:x.accepting,days:x.days,notice:x.notice||'',minimumOrderCents:x.minimumOrderCents||0,
+  response(res,200,{configured:true,rules:{accepting:x.accepting,days:x.days,notice:x.notice||'',minimumOrderCents:x.minimumOrderCents||0,deliveryFeeEnabled:x.deliveryFeeEnabled===true,deliveryFeeCents:x.deliveryFeeEnabled===true?(x.deliveryFeeCents||0):0,
    business:businessView(x,rows[0].now),deliveryPaused:!!x.deliveryPaused,specialDates:x.specialDates||[],serverNow:rows[0].now,
    areas:x.areas.map(a=>({id:a.id,name:a.name,enabled:a.enabled,requiresLocation:a.latitude!==null})),
    slots:x.slots.filter(s=>s.enabled).map(s=>({id:s.id,label:s.label,start:s.start,end:s.end,enabled:true,weekdays:weekdays(s),...(s.areaIds?{areaIds:s.areaIds}:{})}))}});return true
@@ -167,5 +169,5 @@ export async function verifyDelivery(client,storeId,address,slot){
  if(!rules.days[weekday].enabled)return {error:'delivery_date_unavailable'}
  const chosen=rules.slots.find(s=>s.enabled&&s.id===slot.id)
  if(!chosen||!weekdays(chosen).includes(weekday)||chosen.areaIds&&!chosen.areaIds.includes(area.id)||startDay===today&&chosen.end<=time)return {error:'delivery_slot_unavailable'}
- return {snapshot:{id:chosen.id,label:chosen.label,start:chosen.start,end:chosen.end,date:slot.date,areaId:area.id,areaName:area.name},area,minimumOrderCents:rules.minimumOrderCents||0}
+ return {snapshot:{id:chosen.id,label:chosen.label,start:chosen.start,end:chosen.end,date:slot.date,areaId:area.id,areaName:area.name},area,minimumOrderCents:rules.minimumOrderCents||0,deliveryFeeCents:rules.deliveryFeeEnabled===true?(rules.deliveryFeeCents||0):0}
 }

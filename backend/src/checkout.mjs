@@ -68,15 +68,18 @@ export async function checkoutRoute(req,res,url,pool){
       await client.query('ROLLBACK');reply(res,409,{error:'insufficient_stock'});return true
     }
     const lines=normalized.items.map(i=>({...i,name:byId.get(i.productId).name,priceCents:(byId.get(i.productId).discount_price_cents !== null && (!byId.get(i.productId).discount_start || new Date(byId.get(i.productId).discount_start) <= new Date()) && (!byId.get(i.productId).discount_end || new Date(byId.get(i.productId).discount_end) > new Date()) ? byId.get(i.productId).discount_price_cents : byId.get(i.productId).price_cents)}))
-    const total=lines.reduce((sum,i)=>sum+i.priceCents*i.quantity,0)
-    if(!Number.isSafeInteger(total)||total<0||total>100000000){await client.query('ROLLBACK');reply(res,400,{error:'cart_total_too_large'});return true}
+    const subtotal=lines.reduce((sum,i)=>sum+i.priceCents*i.quantity,0)
+    if(!Number.isSafeInteger(subtotal)||subtotal<0||subtotal>100000000){await client.query('ROLLBACK');reply(res,400,{error:'cart_total_too_large'});return true}
     // Recheck time boundaries after any wait for product locks; the same rules row remains share-locked.
     const finalDelivery=await verifyDelivery(client,storeId,normalized.address,normalized.slot)
     if(finalDelivery.error){await client.query('ROLLBACK');reply(res,409,{error:finalDelivery.error});return true}
-    if(total<finalDelivery.minimumOrderCents){await client.query('ROLLBACK');reply(res,409,{error:'minimum_order_not_reached',minimumOrderCents:finalDelivery.minimumOrderCents,subtotalCents:total});return true}
-    // Delivery is checked against server-owned rules; payment is not yet implemented. Delivery fee remains zero.
-    const inserted=await client.query(`INSERT INTO orders(store_id,customer_subject,subtotal_cents,total_cents,checkout_key,checkout_fingerprint,contact_snapshot,delivery_slot_snapshot)
-      VALUES($1,$2,$3,$3,$4,$5,$6::jsonb,$7::jsonb) RETURNING id`,[storeId,subject,total,key,fp,JSON.stringify({...normalized.address,areaName:finalDelivery.area.name,note:normalized.note}),JSON.stringify(finalDelivery.snapshot)])
+    if(subtotal<finalDelivery.minimumOrderCents){await client.query('ROLLBACK');reply(res,409,{error:'minimum_order_not_reached',minimumOrderCents:finalDelivery.minimumOrderCents,subtotalCents:subtotal});return true}
+    const deliveryFeeCents=finalDelivery.deliveryFeeCents||0
+    const total=subtotal+deliveryFeeCents
+    if(!Number.isSafeInteger(total)||total>100000000){await client.query('ROLLBACK');reply(res,400,{error:'cart_total_too_large'});return true}
+    // Use only the server-owned delivery fee and persist the breakdown atomically.
+    const inserted=await client.query(`INSERT INTO orders(store_id,customer_subject,subtotal_cents,delivery_fee_cents,total_cents,checkout_key,checkout_fingerprint,contact_snapshot,delivery_slot_snapshot)
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb) RETURNING id`,[storeId,subject,subtotal,deliveryFeeCents,total,key,fp,JSON.stringify({...normalized.address,areaName:finalDelivery.area.name,note:normalized.note}),JSON.stringify({...finalDelivery.snapshot,deliveryFeeCents})])
     const orderId=inserted.rows[0].id
     for(const line of lines)await client.query('INSERT INTO order_items(order_id,product_id,product_name,unit_price_cents,quantity) VALUES($1,$2,$3,$4,$5)',[orderId,line.productId,line.name,line.priceCents,line.quantity])
     let inventoryExpiresAt=null
@@ -93,7 +96,7 @@ export async function checkoutRoute(req,res,url,pool){
       }
     }
     await client.query('COMMIT')
-    reply(res,201,{orderId,totalCents:total,paymentStatus:'unpaid',inventoryState:finiteLines.length?'held':'none',inventoryExpiresAt,replayed:false,deliveryVerified:true})
+    reply(res,201,{orderId,subtotalCents:subtotal,deliveryFeeCents,totalCents:total,paymentStatus:'unpaid',inventoryState:finiteLines.length?'held':'none',inventoryExpiresAt,replayed:false,deliveryVerified:true})
   }catch(e){try{await client.query('ROLLBACK')}catch{};if(e.inventoryError){reply(res,409,{error:e.message});return true}throw e}finally{client.release()}
   return true
 }

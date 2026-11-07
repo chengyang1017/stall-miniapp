@@ -63,3 +63,13 @@ test('eligible delivery returns a server-owned slot snapshot',async()=>{
   assert.deepEqual(db.queries[0].params,['store1'])
   assert.ok(db.queries.some(q=>q.sql==='SELECT clock_timestamp() AS now'))
 })
+
+test('delivery fees are opt-in, bounded and returned from trusted rules',async()=>{
+ const r=buildRules();r.deliveryFeeCents=350;r.deliveryFeeEnabled=false
+ assert.equal(validRules(r),true)
+ assert.equal((await verifyDelivery(mock(r).client,'store1',address(),slot())).deliveryFeeCents,0)
+ r.deliveryFeeEnabled=true
+ assert.equal((await verifyDelivery(mock(r).client,'store1',address(),slot())).deliveryFeeCents,350)
+ r.deliveryFeeCents=100001
+ assert.equal(validRules(r),false)
+})

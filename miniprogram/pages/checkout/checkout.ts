@@ -46,7 +46,7 @@ Page({
     orderSubmitting:false,
     cloudMode: false, cloudBusy: false, cloudError: '',deliveryError:'',selectionNotice:'',cloudAreaName:'', deliveryDate: '', deliveryDateMin: '', deliveryDateMax: '', cloudRules: null as any, cloudAreas: [] as Array<{id:string;name:string}>,
     items: [] as CartDisplayItem[],
-    totalText: '0.00',
+    totalText: '0.00',deliveryFeeText:'0.00',payableText:'0.00',
     totalCount: 0,
     minimumOrderText: '0.00',
     minimumRemainingText: '0.00',
@@ -78,7 +78,7 @@ Page({
     const slotIndex = slots.findIndex(s => s.id === this.data.selectedSlotId)
     this.setData({
       items: cart.items,
-      totalText: cart.totalText,
+      totalText: cart.totalText,payableText:cart.totalText,deliveryFeeText:'0.00',
       totalCount: cart.totalCount,
       minimumOrderText: getMinimumOrder().toFixed(2),
       minimumRemainingText: minimumOrderShortfall(cart.totalText).toFixed(2),
@@ -96,13 +96,15 @@ Page({
     if (!cfg) return
     const serial=++this.cloudSerial,key=supportIdentity()
     const date=this.data.deliveryDate || localDate()
-    this.setData({cloudMode:true,cloudBusy:true,cloudError:'',deliveryError:'',selectionNotice:'',cloudAreaName:'',items:[],totalText:'0.00',totalCount:0,cloudRules:null,minimumReached:false,minimumOrderText:'读取中',
+    this.setData({cloudMode:true,cloudBusy:true,cloudError:'',deliveryError:'',selectionNotice:'',cloudAreaName:'',items:[],totalText:'0.00',payableText:'0.00',deliveryFeeText:'0.00',totalCount:0,cloudRules:null,minimumReached:false,minimumOrderText:'读取中',
       selectedAddress:null,hasAddress:false,noteShortcuts:[],deliveryDate:date,deliveryDateMin:localDate(),deliveryDateMax:localDate(7)})
     try {
       const [{cart,rules,business}]=await Promise.all([loadCloudCheckout(),refreshCloudAddresses()])
       const current=cloudCartConfig();if(serial!==this.cloudSerial||!current||supportIdentity()!==key)return
       const min=localDate(0,rules),max=localDate(7,rules),validDate=date<min||date>max?min:date
-      this.setData({items:cart.items,totalText:cart.totalText,totalCount:cart.totalCount,cloudRules:rules,noteShortcuts:(business.noteTags||[]).map(label=>({label})),
+      const fee=business.deliveryFeeEnabled===true&&Number.isSafeInteger(business.deliveryFeeCents)?business.deliveryFeeCents:0
+      const subtotalCents=Math.round(Number(cart.totalText)*100)
+      this.setData({items:cart.items,totalText:cart.totalText,payableText:((subtotalCents+fee)/100).toFixed(2),deliveryFeeText:(fee/100).toFixed(2),totalCount:cart.totalCount,cloudRules:rules,noteShortcuts:(business.noteTags||[]).map(label=>({label})),
         cloudAreas:rules.areas.filter(a=>a.enabled),deliveryDate:validDate,deliveryDateMin:min,deliveryDateMax:max,
         ...minimumDisplay(business.minimumOrderCents,cart.totalText),cloudBusy:false,cloudError:''})
       this.recheckCloudSelection(validDate,this.data.selectedSlotId)

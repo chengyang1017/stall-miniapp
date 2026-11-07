@@ -30,7 +30,7 @@
     <view class="section-head"><text class="section-icon">▤</text><text>商品明细</text><text class="section-count">共 {{totalCount}} 件</text></view>
     <view wx:for="{{items}}" wx:key="productId" class="product-line"><text class="product-name">{{item.name}} <text class="product-count">× {{item.quantity}}</text></text><text class="product-price">¥{{item.subtotalText}}</text></view>
     <view class="price-line"><text>商品金额</text><text>¥{{totalText}}</text></view>
-    <view wx:if="{{cloudMode}}" class="price-line"><text>配送费</text><text>¥0.00</text></view>
+    <view wx:if="{{cloudMode}}" class="price-line"><text>配送费</text><text>¥{{deliveryFeeText}}</text></view>
     <view wx:if="{{minimumOrderText !== '0.00'}}" class="minimum-status">起送金额 ¥{{minimumOrderText}} <text wx:if="{{!minimumReached}}"> · 还差 ¥{{minimumRemainingText}}</text></view>
   </view>
   <view class="checkout-section">
@@ -62,7 +62,7 @@
   </view>
   <view class="checkout-bottom-space"></view>
   <view class="checkout-bottom">
-    <view class="bottom-amount"><view class="bottom-caption">合计</view><view class="bottom-price">¥{{totalText}}</view></view>
+    <view class="bottom-amount"><view class="bottom-caption">合计</view><view class="bottom-price">¥{{payableText}}</view></view>
     <button wx:if="{{cloudMode}}" class="place-order" loading="{{cloudBusy || orderSubmitting}}" disabled="{{totalCount === 0 || orderSubmitting || cloudBusy || cloudError !== '' || deliveryError !== '' || !minimumReached || !selectedSlotId || !hasAddress}}" bindtap="confirmOrder">提交订单</button>
     <button wx:else class="place-order" loading="{{demoConfirmBusy}}" disabled="{{totalCount === 0 || demoConfirmBusy}}" bindtap="confirmOrder">提交订单</button>
   </view>

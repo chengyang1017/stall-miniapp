@@ -75,7 +75,7 @@ test('retry with same key and identical payload replays the original order witho
   const firstRes = await run(db1, first)
   assert.equal(firstRes.code, 201)
   const fingerprintIndex = db1.calls.findIndex(s => s.includes('INSERT INTO orders('))
-  const fp = db1.params[fingerprintIndex][4]
+  const fp = db1.params[fingerprintIndex][6]
   const db2 = mockDb({ existing: { id: ORDER_ID, total_cents: 2500, checkout_fingerprint: fp } })
   const replay = await run(db2, first)
   assert.equal(replay.code, 200)

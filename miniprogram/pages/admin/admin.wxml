@@ -49,6 +49,13 @@
       <view wx:if="{{settingsError}}" class="merchant-setting-desc">{{settingsError}}<text bindtap="refreshMinimum"> · 点击重新读取</text></view>
     </view>
 
+    <view class="merchant-section-title">配送收费</view>
+    <view class="merchant-minimum">
+      <view class="merchant-minimum-row"><text>收取固定配送费</text><switch checked="{{deliveryFeeEnabled}}" color="#16865d" disabled="{{!cloudMode || !settingsReady || settingsSaving || trackingSaving || deliveryFeeSaving}}" bindchange="toggleDeliveryFee"/></view>
+      <view class="merchant-setting-desc">默认免费配送；开启后每单按固定金额收费。起送金额仍按商品小计计算。</view>
+      <view wx:if="{{!deliveryFeeEditing}}" class="merchant-minimum-row"><text>每单 ¥{{deliveryFeeInput}}</text><button class="merchant-save" size="mini" bindtap="beginDeliveryFeeEdit" disabled="{{!cloudMode || !settingsReady || settingsSaving || deliveryFeeSaving}}">编辑</button></view>
+      <view wx:else class="merchant-minimum-row"><text class="merchant-yen">¥</text><input class="merchant-minimum-input" type="digit" placeholder="0.00" value="{{deliveryFeeInput}}" bindinput="onDeliveryFeeInput" disabled="{{deliveryFeeSaving}}"/><button class="merchant-save" size="mini" bindtap="saveDeliveryFee" disabled="{{deliveryFeeSaving}}">保存</button><button size="mini" bindtap="cancelDeliveryFeeEdit" disabled="{{deliveryFeeSaving}}">取消</button></view>
+    </view>
     <view class="merchant-section-title">配送位置隐私</view>
     <view class="merchant-minimum">
       <view class="merchant-minimum-row"><text>允许顾客查看配送实时位置</text><switch checked="{{shareDeliveryLocation}}" disabled="{{!cloudMode || !settingsReady || settingsSaving || trackingSaving}}" bindchange="toggleTrackingVisibility" color="#16865d"/></view>
