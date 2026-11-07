@@ -54,6 +54,13 @@ if(process.env.PAYMENT_DB_ENV==='isolated-test'){
   const avatarBucketPresent=!!process.env.S3_AVATAR_BUCKET
   const avatarCredentialsPresent=!!process.env.S3_ENDPOINT&&!!process.env.S3_ACCESS_KEY_ID&&!!process.env.S3_SECRET_ACCESS_KEY
   console.log('Staging avatar storage readiness',avatarBucketPresent?'private_bucket_named':'private_bucket_missing',avatarCredentialsPresent?'s3_credentials_present':'s3_credentials_missing')
+  // Diagnostics report only booleans. Never log credentials or phone numbers.
+  const mapping=process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED==='true'
+  const phoneBinding=mapping&&process.env.WECHAT_PHONE_BIND_ENABLED==='true'
+  const accountSessions=phoneBinding&&process.env.CUSTOMER_PHONE_SESSION_ENABLED==='true'
+  const sms=accountSessions&&process.env.CUSTOMER_SMS_PROVIDER_READY==='true'&&process.env.CUSTOMER_SMS_LOGIN_ENABLED==='true'&&!!tencentSmsConfiguration()&&typeof process.env.CUSTOMER_SMS_HMAC_SECRET==='string'&&process.env.CUSTOMER_SMS_HMAC_SECRET.length>=32
+  console.log('Staging customer phone feature readiness',JSON.stringify({identityMapping:mapping,wechatPhoneBinding:phoneBinding,independentPhoneSessions:accountSessions,smsLogin:sms}))
+
 }
 const pool = new Pool({
   ...(approvedStaging?parsedDatabase(connectionString,approvedStaging):{connectionString,
@@ -264,7 +271,7 @@ const server = http.createServer(async (req, res) => {
 let stopInventoryWorker=async()=>{}
 let stopTrackingRetention=()=>{}
 let stopSandboxPayments=async()=>{}
-server.listen(port, host, () => { console.log(`Stall API listening on ${host}:${port}`);void pool.query("SELECT current_user AS role, current_database() AS database, has_table_privilege(current_user,'public.stores','UPDATE') AS stores_update,has_table_privilege(current_user,'public.categories','UPDATE') AS categories_update").then(({rows})=>{const x=rows[0]||{};console.log('Staging DB role diagnostic',JSON.stringify({role:x.role,database:x.database,storesUpdate:x.stores_update,categoriesUpdate:x.categories_update}))}).catch(e=>console.error('Staging DB role diagnostic failed',e?.code||'unknown'));stopInventoryWorker=startInventoryWorker(pool);stopTrackingRetention=startTrackingRetention(pool) })
+server.listen(port, host, () => { console.log(`Stall API listening on ${host}:${port}`);void pool.query("SELECT current_user AS role, current_database() AS database, has_table_privilege(current_user,'public.stores','UPDATE') AS stores_update,has_table_privilege(current_user,'public.categories','UPDATE') AS categories_update").then(({rows})=>{const x=rows[0]||{};console.log('Staging DB role diagnostic',JSON.stringify({role:x.role,database:x.database,storesUpdate:x.stores_update,categoriesUpdate:x.categories_update}))}).catch(e=>console.error('Staging DB role diagnostic failed',e?.code||'unknown'));void pool.query("SELECT to_regclass('public.customer_verified_phones') IS NOT NULL AS verified_phones_table, to_regclass('public.customer_account_sessions') IS NOT NULL AS account_sessions_table, has_table_privilege(current_user,'public.customer_verified_phones','SELECT') AS can_read_verified_phones, has_table_privilege(current_user,'public.customer_verified_phones','INSERT') AS can_bind_verified_phones, CASE WHEN to_regclass('public.customer_account_sessions') IS NOT NULL THEN has_table_privilege(current_user,'public.customer_account_sessions','SELECT') ELSE false END AS can_read_account_sessions").then(({rows})=>{const r=rows[0]||{};console.log('Staging customer phone database readiness',JSON.stringify({verifiedPhonesTable:r.verified_phones_table===true,accountSessionsTable:r.account_sessions_table===true,canReadVerifiedPhones:r.can_read_verified_phones===true,canBindVerifiedPhones:r.can_bind_verified_phones===true,canReadAccountSessions:r.can_read_account_sessions===true}))}).catch(e=>console.error('Staging customer phone database readiness failed',e?.code||'unknown'));stopInventoryWorker=startInventoryWorker(pool);stopTrackingRetention=startTrackingRetention(pool) })
 server.on('listening',()=>{stopSandboxPayments=startSandboxPaymentWorker(pool)})
 async function shutdown() { server.close(); stopTrackingRetention(); await stopSandboxPayments(); await stopInventoryWorker(); await pool.end() }
 process.on('SIGTERM', shutdown)
