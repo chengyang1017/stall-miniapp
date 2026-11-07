@@ -3,7 +3,7 @@
   <view class="notice" wx:if="{{cloudError}}">订单读取失败：{{cloudError}}</view>
   <view class="order-store-counts">店铺全部订单：{{countsKnown ? globalTotal : '—'}} · 待接单：{{countsKnown ? globalPending : '—'}}</view>
   <view class="admin-order-date-bar">
-    <text class="admin-order-date-label">北京时间</text>
+    <text class="admin-order-date-label">日期</text>
     <button size="mini" bindtap="selectTodayOrders" disabled="{{operationBusy}}">今天</button>
     <picker mode="date" start="2000-01-01" end="2100-12-31" value="{{dateFrom}}" data-key="dateFrom" bindchange="selectOrderDate" disabled="{{operationBusy}}"><view class="admin-order-date-select">{{dateFrom || '开始日期'}}</view></picker>
     <text>至</text>
@@ -16,7 +16,7 @@
     <view wx:if="{{queryDirty}}" class="order-search-count">{{refreshRequired ? '数据已变化，等待刷新' : '新条件尚未执行'}}</view>
     <view wx:elif="{{cloudBusy}}" class="order-search-count">正在查询匹配数量…</view>
     <view wx:elif="{{cloudError}}" class="order-search-count">查询未完成，请刷新核对</view>
-    <view wx:else class="order-search-count">本次查询匹配 {{matchingCount}} 单，已加载 {{dateResults.length}} 单</view>
+    <view wx:else class="order-search-count">共 {{matchingCount}} 单 · 已显示 {{dateResults.length}} 单</view>
     <view wx:if="{{queryDirty}}" class="notice">{{refreshRequired ? '订单数据已变化，请刷新后操作。' : '条件已变化，请搜索。'}}旧勾选已清空，暂不能操作旧结果。</view>
   </view>
   <!-- order-status-tabs-v1 -->
@@ -33,7 +33,7 @@
   <view wx:if="{{batchMode}}" class="order-batch-panel">
     <view class="row"><text>已选择 {{selectedCount}} 单（最多50单）</text><button size="mini" bindtap="selectAll" disabled="{{operationBusy || cloudBusy || queryDirty}}">{{allSelected ? '取消全选' : '全选已加载可选订单'}}</button></view>
     <button size="mini" bindtap="clearBatchSelection" disabled="{{operationBusy || !selectedCount}}">取消选择（{{selectedCount}}）</button>
-    <text class="muted">仅可勾选已加载的待接单、已接单订单。混合状态或不符合支付／库存规则的订单计为失败；全选不包含未加载订单。</text>
+    <text class="muted">仅选择已加载且可操作的订单（最多50单）</text>
     <view class="order-query-actions"><button data-status="accepted" bindtap="runBatch" disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !selectedCount}}">批量接单（{{selectedCount}}）</button><button data-status="preparing" bindtap="runBatch" disabled="{{operationBusy || cloudBusy || loadingMore || queryDirty || !selectedCount}}">批量开始备货（{{selectedCount}}）</button></view>
   </view>
   <view wx:if="{{operationBusy}}" class="notice">{{operationProgress}}，请勿重复操作。</view>
@@ -49,7 +49,7 @@
     <view class="order-card-keyline"><text>{{item.receiverName}}</text><text>¥{{item.totalText}}</text></view>
     <view class="muted">配送时段：{{item.slotText || '待确认'}}</view>
     <view class="order-card-toolbar">
-      <button size="mini" data-id="{{item.id}}" bindtap="toggleOrderDetails">{{expandedOrderIds[item.id] ? '收起详情' : '展开订单详情'}}</button>
+      <button size="mini" data-id="{{item.id}}" bindtap="toggleOrderDetails">{{expandedOrderIds[item.id] ? '收起' : '详情'}}</button>
       <button wx:if="{{cloudMode}}" size="mini" data-id="{{item.id}}" bindtap="viewSandboxPayment">支付 / 退款 / 小票</button>
     </view>
     <view wx:if="{{sandboxOrderId === item.id}}" class="order-payment-panel">

@@ -1,9 +1,10 @@
 <import src="./product-placeholder.wxml"/>
 <template name="productCard">
-<view class="product-media" data-id="{{item.id}}" bindtap="openProduct">
+<view class="product-media {{!item.available ? 'product-media-unavailable' : ''}}" data-id="{{item.id}}" bindtap="openProduct">
 <image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFill"/>
 <template wx:else is="productPlaceholder" data="{{placeholderStyle,customPlaceholderUrl}}"/>
-<text wx:if="{{item.discounted}}" class="discount-badge">-{{item.discountPercent}}%</text>
+<text wx:if="{{!item.available}}" class="sold-out-badge">已售罄</text>
+<text wx:elif="{{item.discounted}}" class="discount-badge">-{{item.discountPercent}}%</text>
 </view>
 <view class="product-copy">
 <view class="product-name" data-id="{{item.id}}" bindtap="openProduct">{{item.name}}</view>

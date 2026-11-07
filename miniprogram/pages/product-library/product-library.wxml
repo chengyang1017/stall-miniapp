@@ -1,5 +1,5 @@
 <view class="library-page">
-  <view class="library-tabs"><button class="{{kind === 'favorites' ? 'selected' : ''}}" data-kind="favorites" bindtap="chooseKind">♡ 我的收藏</button><button class="{{kind === 'history' ? 'selected' : ''}}" data-kind="history" bindtap="chooseKind">◷ 浏览记录</button></view>
+  <view class="library-heading">{{kind === 'favorites' ? '我的收藏' : '浏览记录'}}</view>
   <view class="library-notice">仅保存在当前设备，按账号和店铺分别记录，不跨设备同步。浏览记录最多保留最近100件商品。</view>
   <view class="library-toolbar"><text>{{rows.length}} 件商品</text><button size="mini" disabled="{{!rows.length || loading || clearing}}" bindtap="clearRecords">清空{{kind === 'favorites' ? '收藏' : '记录'}}</button></view>
   <view wx:if="{{loading}}" class="library-status" aria-live="polite">正在确认商品信息…</view>

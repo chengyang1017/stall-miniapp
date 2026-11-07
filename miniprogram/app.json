@@ -80,7 +80,9 @@
       },
       {
         "pagePath": "pages/orders/orders",
-        "text": "订单"
+        "text": "订单",
+        "iconPath": "assets/tabbar/orders.png",
+        "selectedIconPath": "assets/tabbar/orders_active.png"
       },
       {
         "pagePath": "pages/profile/profile",

@@ -73,3 +73,7 @@
 
 
 .category .category-icon{display:block;width:38rpx;height:38rpx;margin:0 auto 10rpx}.side-category .category-icon{width:36rpx;height:36rpx;flex:0 0 36rpx}
+
+.product-media-unavailable{filter:grayscale(1);opacity:.65}
+.sold-out-badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(30,30,30,.72);color:#fff;font-size:21rpx;padding:8rpx 13rpx;border-radius:10rpx;white-space:nowrap}
+.product .round-add[disabled]{opacity:.45}
