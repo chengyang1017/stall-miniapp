@@ -110,39 +110,3 @@ Page({
   finally{if(serial===this.pendingSerial&&context===businessContextKey())this.setData({pendingLoading:false})}
  }
 })
-).test(raw)||Number(raw)>1000){wx.showToast({title:'请输入 ¥0–1000 的金额',icon:'none'});return}
-   const cfg=getCloudContext(),context=businessContextKey()
-   if(!cfg||context!==this.loadedContext){this.refreshMinimum();return}
-   this.setData({deliveryFeeSaving:true,settingsError:''})
-   try{this.revision=await patchMerchantBusiness(cfg,this.revision,{deliveryFeeCents:Math.round(Number(raw)*100)});if(context!==businessContextKey())throw Error('context_changed');this.setData({deliveryFeeInput:Number(raw).toFixed(2),deliveryFeeEditing:false});wx.showToast({title:'配送费已保存',icon:'success'})}
-   catch(_){this.setData({settingsReady:false,settingsError:'配送费保存失败，请重新读取设置'});this.refreshMinimum()}
-   finally{this.setData({deliveryFeeSaving:false})}
-  },
-  beginMinimumEdit(){if(this.data.settingsReady&&!this.data.settingsLoading&&!this.data.settingsSaving)this.setData({minimumEditing:true})},
- cancelMinimumEdit(){if(!this.data.settingsSaving)this.setData({minimumEditing:false})},
- async saveMinimumOrder(){
-  if(this.data.settingsSaving||!this.data.settingsReady)return
-  const raw=this.data.minimumOrderInput.trim()
-  if(!/^\d+(?:\.\d{1,2})?$/.test(raw)||!Number.isFinite(Number(raw))||Number(raw)>999999){wx.showToast({title:'请输入有效金额（最多两位小数）',icon:'none'});return}
-  const cfg=getCloudContext(),context=businessContextKey()
-  if(context!==this.loadedContext){this.refreshMinimum();return}
-  this.setData({settingsSaving:true,settingsError:''})
-  try{
-   if(cfg)this.revision=await patchMerchantBusiness(cfg,this.revision,{minimumOrderCents:Math.round(Number(raw)*100)})
-   else saveMinimumOrder(Number(raw))
-   if(context!==businessContextKey())throw Error('context_changed')
-   this.setData({minimumOrderInput:Number(raw).toFixed(2),minimumEditing:false});wx.showToast({title:'起送金额已保存',icon:'success'})
-  }catch(_){this.setData({settingsError:'保存失败，输入已保留；设置可能已变化，请刷新核对后重试',settingsReady:false})}
-  finally{this.setData({settingsSaving:false})}
- },
- async refreshNewOrderNotice(){
-  const cfg=getCloudContext(),context=businessContextKey(),serial=++this.pendingSerial
-  this.setData({pendingLoading:!!cfg,pendingError:''})
-  try{
-   const summary=cfg?await fetchMerchantOrderSummary(cfg):{pendingCount:loadWorkflowOrders().filter(o=>String(o.fulfillmentStatus||'new')==='new'&&String(o.paymentStatus)==='paid').length,unpaidCount:loadWorkflowOrders().filter(o=>String(o.paymentStatus||'unpaid')==='unpaid').length}
-   if(serial!==this.pendingSerial||context!==businessContextKey())return
-   this.setData({pendingNewOrderCount:summary.pendingCount,unpaidOrderCount:summary.unpaidCount})
-  }catch(_){if(serial===this.pendingSerial&&context===businessContextKey())this.setData({pendingError:'待处理订单读取失败，当前数量可能过期，请进入订单管理核对'})}
-  finally{if(serial===this.pendingSerial&&context===businessContextKey())this.setData({pendingLoading:false})}
- }
-})
