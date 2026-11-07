@@ -49,7 +49,7 @@
       <view class="sheet-handle"></view>
       <view class="sheet-title">{{avatarMissing ? '设置头像' : '更换头像'}}</view>
       <view class="sheet-caption">可使用微信头像，也可选择自己喜欢的照片</view>
-      <button class="sheet-wechat" open-type="chooseAvatar" bindchooseavatar="useWechatAvatar" disabled="{{photoBusy}}">使用微信头像</button>
+      <button class="sheet-wechat" open-type="chooseAvatar" bindtap="closeAvatarMenu" bindchooseavatar="useWechatAvatar" disabled="{{photoBusy}}">使用微信头像</button>
       <button class="sheet-album" bindtap="chooseAvatarPhoto" disabled="{{photoBusy}}">从相册选择或拍照</button>
       <button class="sheet-cancel" bindtap="closeAvatarMenu" disabled="{{photoBusy}}">稍后再说</button>
     </view>
