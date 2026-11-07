@@ -25,3 +25,8 @@ page{background:#f7f5ff}
 .save-button{margin-top:20rpx;border-radius:40rpx;background:linear-gradient(90deg,#6540e8,#a168f4);color:white;font-size:30rpx;font-weight:600;height:89rpx;line-height:89rpx}.save-button::after{border:0}
 .inline-message{padding:15rpx 20rpx;font-size:23rpx;color:#7754a6;line-height:1.5}
 .login-note{padding:32rpx;text-align:center;color:#86769e}
+
+.avatar-actions{display:flex;gap:16rpx;padding:18rpx 0 10rpx}
+.avatar-actions button{flex:1;margin:0;font-size:24rpx;border-radius:16rpx;padding:0 10rpx;background:#eee6ff;color:#6738c5}
+.avatar-actions button::after{border:0}
+.avatar-actions .avatar-wechat-action{background:#693cd8;color:#fff}

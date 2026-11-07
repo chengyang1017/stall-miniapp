@@ -12,6 +12,7 @@
  </view>
  <view class="account-content">
   <view wx:if="{{loggedIn}}" class="settings-card">
+   <view class="avatar-actions"><button class="avatar-wechat-action" open-type="chooseAvatar" bindchooseavatar="useWechatAvatar" disabled="{{photoBusy}}">使用微信头像</button><button class="avatar-album-action" bindtap="chooseAvatarPhoto" disabled="{{photoBusy}}">相册 / 拍照</button></view>
    <view wx:if="{{photoStatus}}" class="inline-message">{{photoStatus}}</view>
    <view class="settings-row nickname-row">
     <view class="outline-icon">✎</view><view class="row-main"><view class="row-title">昵称</view><view class="row-hint">最多30个字符</view></view>

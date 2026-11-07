@@ -79,27 +79,38 @@ Page({
       }
     })
   },
+  useWechatAvatar(e:any){
+    const path=String(e?.detail?.avatarUrl||'')
+    if(!path){this.setData({photoStatus:'未选择微信头像'});return}
+    this.uploadAvatarPath(path)
+  },
   chooseAvatarPhoto(){
+    if(!getSessionToken()||!getCloudContext()||this.data.photoBusy)return
+    wx.chooseMedia({count:1,mediaType:['image'],sourceType:['album','camera'],sizeType:['compressed'],
+      success:(selection:any)=>{const file=selection.tempFiles?.[0];if(file?.tempFilePath)this.uploadAvatarPath(file.tempFilePath,file.size)}
+    })
+  },
+  uploadAvatarPath(path:string,size?:number){
     const token=getSessionToken(),cfg=getCloudContext()
     if(!token||!cfg||this.data.photoBusy)return
-    wx.chooseMedia({count:1,mediaType:['image'],sourceType:['album','camera'],sizeType:['compressed'],success:(selection:any)=>{
-      const file=selection.tempFiles?.[0]
-      if(!file)return
-      if(file.size>512*1024){this.setData({photoStatus:'图片超过512KB，请选择更小的照片'});return}
-      this.setData({photoBusy:true,photoStatus:'正在上传头像…'})
-      wx.getFileSystemManager().readFile({filePath:file.tempFilePath,encoding:'base64',success:(content:any)=>{
-        wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/avatar-photo',
-          method:'PUT',header:{Authorization:'Bearer '+token,'content-type':'application/json'},
-          data:{dataBase64:content.data},timeout:20000,
-          success:(res:any)=>{
-            if(getSessionToken()!==token)return
-            if(res.statusCode===200){this.setData({avatarPhotoPath:file.tempFilePath,photoStatus:'照片头像已保存到云端'})}
-            else this.setData({photoStatus:'上传失败：'+String(res.data?.error||res.statusCode)})
-          },fail:()=>this.setData({photoStatus:'网络异常，上传失败'}),
-          complete:()=>this.setData({photoBusy:false})
-        })
-      },fail:()=>this.setData({photoBusy:false,photoStatus:'无法读取所选图片'})})
-    }})
+    if(size&&size>512*1024){this.setData({photoStatus:'图片超过512KB，请换一张较小的照片'});return}
+    const serial=this.profileReadSerial
+    this.setData({photoBusy:true,photoStatus:'正在保存头像…'})
+    wx.getFileSystemManager().readFile({filePath:path,encoding:'base64',success:(content:any)=>{
+      if(getSessionToken()!==token||serial!==this.profileReadSerial){this.setData({photoBusy:false});return}
+      const encoded=String(content?.data||'')
+      if(!encoded||encoded.length>Math.ceil(512*1024/3)*4+4){this.setData({photoBusy:false,photoStatus:'头像超过512KB，请换一张较小的照片'});return}
+      wx.request({url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/avatar-photo',
+        method:'PUT',header:{Authorization:'Bearer '+token,'content-type':'application/json'},
+        data:{dataBase64:encoded},timeout:20000,
+        success:(res:any)=>{
+          if(getSessionToken()!==token||serial!==this.profileReadSerial)return
+          if(res.statusCode===200){this.setData({avatarPhotoPath:path,photoStatus:'头像已保存到云端'})}
+          else this.setData({photoStatus:'上传失败：'+String(res.data?.error||res.statusCode)})
+        },fail:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoStatus:'网络异常，头像上传失败'})},
+        complete:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoBusy:false})}
+      })
+    },fail:()=>this.setData({photoBusy:false,photoStatus:'无法读取所选头像'})})
   },
   async chooseAvatarStyle(e:any){
     if(!getSessionToken()||this.data.avatarBusy)return
