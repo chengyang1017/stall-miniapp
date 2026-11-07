@@ -27,7 +27,7 @@
       </view>
       <view class="settings-row phone-row">
         <view class="row-main"><view class="row-title">手机号</view><view class="row-hint">目前支持中国大陆 +86 手机号</view></view>
-        <view class="phone-right"><view class="row-value">{{phoneLoading ? '读取中…' : (phoneBound ? maskedPhone : '未绑定')}}</view><button class="phone-action" open-type="getPhoneNumber" bindgetphonenumber="bindWechatPhone" loading="{{phoneLoading}}" disabled="{{phoneLoading}}">{{phoneBound ? '换绑' : '绑定'}}</button></view>
+        <view class="phone-right"><view class="row-value">{{phoneLoading ? '读取中…' : (phoneBound ? maskedPhone : '未绑定')}}</view><button wx:if="{{phoneStatusLoaded && phoneVerificationAvailable && !phoneBound}}" class="phone-action" open-type="getPhoneNumber" bindgetphonenumber="bindWechatPhone" loading="{{phoneLoading}}" disabled="{{phoneLoading}}">绑定</button><text wx:elif="{{phoneBound}}" class="phone-state">已绑定</text><text wx:elif="{{phoneStatusLoaded}}" class="phone-state">暂未开放</text></view>
       </view>
       <view wx:if="{{phoneStatus}}" class="inline-message">{{phoneStatus}}</view>
       <picker mode="region" value="{{regionParts}}" bindchange="onRegionChange">

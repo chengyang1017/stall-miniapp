@@ -3,14 +3,14 @@ import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/co
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
 Page({
-  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',avatarMissing:false,photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneReadSerial:0,regionParts:[] as string[],regionLabel:'',customerId:'' },
+  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',avatarMissing:false,photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneStatusLoaded:false,phoneReadSerial:0,regionParts:[] as string[],regionLabel:'',customerId:'' },
   profileReadSerial:0,
   editSerial:0,
   async onShow() {
     const token=getSessionToken(), loggedIn=!!token
     const serial=++this.profileReadSerial
     const editAtStart=this.editSerial
-    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',avatarMissing:false,photoStatus:'',nickname:loggedIn?cachedCustomerNickname():'',phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false})
+    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',avatarMissing:false,photoStatus:'',nickname:loggedIn?cachedCustomerNickname():'',phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneStatusLoaded:false})
     if(!token)return
     this.loadPhoneStatus(token)
     this.loadAvatarPhoto(token,serial)
@@ -33,9 +33,9 @@ Page({
     try{
       const result=await authorizedGet(cfg.apiBase,'/v1/customer/phone')
       if(getSessionToken()!==token||this.data.phoneReadSerial!==readSerial)return
-      this.setData({phoneBound:result.bound===true,maskedPhone:String(result.maskedPhone||''),phoneVerificationAvailable:result.verificationAvailable===true})
+      this.setData({phoneBound:result.bound===true,maskedPhone:String(result.maskedPhone||''),phoneVerificationAvailable:result.verificationAvailable===true,phoneStatusLoaded:true,phoneStatus:''})
     }catch(error:any){
-      if(getSessionToken()===token&&this.data.phoneReadSerial===readSerial)this.setData({phoneVerificationAvailable:false,phoneStatus:'手机号状态尚不可用，请稍后重试'})
+      if(getSessionToken()===token&&this.data.phoneReadSerial===readSerial)this.setData({phoneVerificationAvailable:false,phoneStatusLoaded:false,phoneStatus:'手机号状态尚不可用，请稍后重试'})
     }finally{if(getSessionToken()===token&&this.data.phoneReadSerial===readSerial)this.setData({phoneLoading:false})}
   },
   bindWechatPhone(e:any){
@@ -45,7 +45,7 @@ Page({
       return
     }
     const token=getSessionToken(),cfg=getCloudContext()
-    if(!token||!cfg||this.data.phoneLoading)return
+    if(!token||!cfg||this.data.phoneLoading||!this.data.phoneVerificationAvailable||this.data.phoneBound)return
     this.setData({phoneLoading:true,phoneStatus:'正在通过微信官方验证手机号…'})
     wx.request({
       url:cfg.apiBase.replace(/\/$/,'')+'/v1/customer/phone/wechat-bind',
@@ -58,7 +58,7 @@ Page({
           this.loadPhoneStatus(token)
         }else{
           const error=String(r.data?.error||r.statusCode)
-          this.setData({phoneStatus:error==='phone_already_bound'?'该手机号已绑定其他账号，不能自动合并':error==='not_enabled'?'手机号绑定服务尚未启用':error==='wechat_phone_verification_failed'?'微信未能验证该号码，仅支持中国大陆 +86 手机号':error==='unauthorized'?'登录状态已失效，请重新登录':'绑定未成功，请稍后重试'})
+          this.setData({phoneStatus:error==='phone_change_requires_reverification'?'更换手机号需要独立安全验证，暂未开放':error==='phone_already_bound'?'该手机号已绑定其他账号，不能自动合并':error==='not_enabled'?'手机号绑定服务尚未启用':error==='wechat_phone_verification_failed'?'微信未能验证该号码，仅支持中国大陆 +86 手机号':error==='unauthorized'?'登录状态已失效，请重新登录':'绑定未成功，请稍后重试'})
         }
       },
       fail:()=>{if(getSessionToken()===token)this.setData({phoneStatus:'连接服务器失败，请重试'})},
