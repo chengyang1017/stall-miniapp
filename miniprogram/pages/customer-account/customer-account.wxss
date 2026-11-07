@@ -5,6 +5,8 @@ page{background:#f7f5fb}
 .hero-wave{position:absolute;right:-50rpx;top:-155rpx;width:340rpx;height:340rpx;background:rgba(255,255,255,.06);border-radius:50%}
 .hero-user{position:relative;z-index:1;display:flex;align-items:center;gap:26rpx;padding:48rpx 40rpx}
 .hero-avatar{width:132rpx;height:132rpx;flex-shrink:0;position:relative;border:4rpx solid rgba(255,255,255,.9);border-radius:50%;background:#ded2f9;display:flex;align-items:center;justify-content:center;box-sizing:border-box;overflow:visible}
+.hero-avatar-button{margin:0;padding:0;line-height:normal;min-width:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:visible}
+.hero-avatar-button::after{border:0}
 .avatar-photo{width:100%;height:100%;border-radius:50%;display:block}.avatar-placeholder{font-size:77rpx;color:#866ac2}
 .avatar-camera{position:absolute;right:-4rpx;bottom:-4rpx;width:39rpx;height:39rpx;border-radius:50%;background:#fff;color:#6944cc;border:3rpx solid #6d42d7;display:flex;align-items:center;justify-content:center;font-size:24rpx}
 .hero-details{min-width:0;flex:1}.hero-name{font-size:39rpx;color:#fff;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -23,11 +25,4 @@ page{background:#f7f5fb}
 .danger-card{margin-top:22rpx}.danger-card .row-title{color:#a54959}
 .save-button{margin:35rpx auto 0;width:78%;height:88rpx;line-height:88rpx;border-radius:44rpx;background:linear-gradient(100deg,#6438dc,#9765ed);color:white;font-size:29rpx;font-weight:650}.save-button::after{border:0}
 .inline-message{padding:12rpx 15rpx;font-size:23rpx;color:#7754a6;line-height:1.5}.login-note{padding:38rpx;text-align:center;color:#877a99}
-.avatar-overlay{position:fixed;inset:0;z-index:9999;background:rgba(19,11,39,.46);display:flex;align-items:flex-end}
-.avatar-sheet{width:100%;box-sizing:border-box;background:#fff;border-radius:30rpx 30rpx 0 0;padding:20rpx 32rpx calc(42rpx + env(safe-area-inset-bottom))}
-.sheet-handle{width:70rpx;height:7rpx;background:#e7e0f0;border-radius:9rpx;margin:0 auto 25rpx}
-.sheet-title{text-align:center;font-size:34rpx;font-weight:700;color:#2e2244}.sheet-caption{text-align:center;font-size:23rpx;color:#8f829c;margin:13rpx 0 30rpx}
-.avatar-sheet button{margin:14rpx 0;font-size:29rpx;border-radius:19rpx;height:90rpx;line-height:90rpx}.avatar-sheet button::after{border:0}
-.sheet-wechat{background:#6d42dc;color:#fff}.sheet-album{background:#eee8fb;color:#603ab8}.sheet-cancel{background:#f7f6fa;color:#857991}
-
 .avatar-retry{color:#6238d1;text-decoration:underline;margin-left:12rpx}

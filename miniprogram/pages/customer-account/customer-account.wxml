@@ -2,15 +2,16 @@
   <view class="profile-hero">
     <view class="hero-orb"></view><view class="hero-wave wave-back"></view>
     <view class="hero-user">
-      <view class="hero-avatar" bindtap="openAvatarMenu">
+      <button wx:if="{{loggedIn}}" class="hero-avatar hero-avatar-button" open-type="chooseAvatar" bindchooseavatar="useWechatAvatar" disabled="{{photoBusy}}" aria-label="更换头像">
         <image wx:if="{{avatarPhotoPath}}" class="avatar-photo" src="{{avatarPhotoPath}}" mode="aspectFill"/>
         <text wx:else class="avatar-placeholder">☺</text>
-        <view wx:if="{{loggedIn}}" class="avatar-camera">✎</view>
-      </view>
+        <view class="avatar-camera">✎</view>
+      </button>
+      <view wx:else class="hero-avatar"><text class="avatar-placeholder">☺</text></view>
       <view class="hero-details">
         <view class="hero-name">{{loggedIn ? (nickname || '微信用户') : '未登录'}}</view>
         <view class="hero-subtitle">{{loggedIn ? '微信账号已连接' : '请先登录微信账号'}}</view>
-        <view wx:if="{{loggedIn}}" class="avatar-edit-link" bindtap="openAvatarMenu">{{avatarMissing ? '点击设置头像' : '点击头像更换'}} ›</view>
+        <view wx:if="{{loggedIn}}" class="avatar-edit-link">点击头像更换</view>
       </view>
     </view>
   </view>
@@ -43,15 +44,5 @@
     <button wx:if="{{loggedIn}}" class="save-button" loading="{{profileBusy}}" disabled="{{profileBusy}}" bindtap="saveNickname">保存资料</button>
     <view wx:if="{{profileStatus}}" class="inline-message">{{profileStatus}}</view>
     <view wx:if="{{!loggedIn}}" class="settings-card login-note">请先返回「我的」登录微信账号</view>
-  </view>
-  <view wx:if="{{avatarMenu && loggedIn}}" class="avatar-overlay" catchtap="closeAvatarMenu">
-    <view class="avatar-sheet" catchtap="keepAvatarMenu">
-      <view class="sheet-handle"></view>
-      <view class="sheet-title">{{avatarMissing ? '设置头像' : '更换头像'}}</view>
-      <view class="sheet-caption">可使用微信头像，也可选择自己喜欢的照片</view>
-      <button class="sheet-wechat" open-type="chooseAvatar" bindtap="closeAvatarMenu" bindchooseavatar="useWechatAvatar" disabled="{{photoBusy}}">使用微信头像</button>
-      <button class="sheet-album" bindtap="chooseAvatarPhoto" disabled="{{photoBusy}}">从相册选择或拍照</button>
-      <button class="sheet-cancel" bindtap="closeAvatarMenu" disabled="{{photoBusy}}">稍后再说</button>
-    </view>
   </view>
 </view>

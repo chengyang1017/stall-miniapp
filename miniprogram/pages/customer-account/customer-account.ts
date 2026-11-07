@@ -3,14 +3,14 @@ import { getSessionToken,getCloudContext } from '../../modules/shared/runtime/co
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 const NICKNAME_KEY='stall_customer_nickname_v1' // Legacy local value; no longer used as account profile.
 Page({
-  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',avatarMenu:false,avatarMissing:false,photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneReadSerial:0,regionParts:[] as string[],regionLabel:'',customerId:'' },
+  data: { loggedIn:false,nickname:'',profileBusy:false,profileStatus:'',avatarStyle:'violet',avatarBusy:false,avatarStatus:'',avatarPhotoPath:'',avatarMissing:false,photoBusy:false,photoStatus:'',phoneLoading:false,phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false,phoneReadSerial:0,regionParts:[] as string[],regionLabel:'',customerId:'' },
   profileReadSerial:0,
   editSerial:0,
   async onShow() {
     const token=getSessionToken(), loggedIn=!!token
     const serial=++this.profileReadSerial
     const editAtStart=this.editSerial
-    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',avatarMenu:false,avatarMissing:false,photoStatus:'',nickname:loggedIn?cachedCustomerNickname():'',phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false})
+    this.setData({loggedIn,profileStatus:'',avatarPhotoPath:'',avatarMissing:false,photoStatus:'',nickname:loggedIn?cachedCustomerNickname():'',phoneBound:false,maskedPhone:'',phoneStatus:'',phoneVerificationAvailable:false})
     if(!token)return
     this.loadPhoneStatus(token)
     this.loadAvatarPhoto(token,serial)
@@ -68,9 +68,6 @@ Page({
   showPhoneBindNotice(){
     wx.showModal({title:'手机号绑定',content:'手机号必须通过微信官方手机号授权或短信验证码验证后才能绑定。当前测试环境尚未启用验证服务，因此暂不接受手工填写号码作为已绑定手机号。',showCancel:false,confirmText:'知道了'})
   },
-  openAvatarMenu(){if(this.data.loggedIn&&!this.data.photoBusy)this.setData({avatarMenu:true})},
-  closeAvatarMenu(){if(!this.data.photoBusy)this.setData({avatarMenu:false})},
-  keepAvatarMenu(){},
   retryAvatarRead(){const token=getSessionToken();if(token){this.setData({photoStatus:''});this.loadAvatarPhoto(token,this.profileReadSerial)}},
   async loadAvatarPhoto(token:string,serial:number){
     const cfg=getCloudContext();if(!cfg)return
@@ -79,7 +76,7 @@ Page({
       success:(r:any)=>{
         if(getSessionToken()!==token||serial!==this.profileReadSerial)return
         if(r.statusCode===404&&r.data?.error==='no_avatar_photo'){
-          this.setData({avatarMissing:true,avatarMenu:false,photoStatus:''})
+          this.setData({avatarMissing:true,photoStatus:''})
           return
         }
         if(r.statusCode!==200||!r.data?.dataBase64){
@@ -102,15 +99,7 @@ Page({
   useWechatAvatar(e:any){
     const path=String(e?.detail?.avatarUrl||'')
     if(!path){this.setData({photoStatus:'未选择微信头像'});return}
-    this.setData({avatarMenu:false})
     this.uploadAvatarPath(path)
-  },
-  chooseAvatarPhoto(){
-    if(!getSessionToken()||!getCloudContext()||this.data.photoBusy)return
-    this.setData({avatarMenu:false})
-    wx.chooseMedia({count:1,mediaType:['image'],sourceType:['album','camera'],sizeType:['compressed'],
-      success:(selection:any)=>{const file=selection.tempFiles?.[0];if(file?.tempFilePath)this.uploadAvatarPath(file.tempFilePath,file.size)}
-    })
   },
   uploadAvatarPath(path:string,size?:number){
     const token=getSessionToken(),cfg=getCloudContext()
@@ -127,7 +116,7 @@ Page({
         data:{dataBase64:encoded},timeout:20000,
         success:(res:any)=>{
           if(getSessionToken()!==token||serial!==this.profileReadSerial)return
-          if(res.statusCode===200){this.setData({avatarPhotoPath:path,avatarMissing:false,avatarMenu:false,photoStatus:'头像已保存到云端'})}
+          if(res.statusCode===200){this.setData({avatarPhotoPath:path,avatarMissing:false,photoStatus:'头像已保存到云端'})}
           else {const code=String(res.data?.error||'');const hint=code==='not_found'||code==='not_enabled'?'头像服务尚未在当前服务器启用':code==='private_avatar_storage_not_configured'?'服务器尚未配置头像存储':code==='profile_not_found'?'当前微信身份尚未建立顾客档案':code==='invalid_image'?'图片格式不受支持，请选择 JPEG 或 PNG':code==='too_large'?'图片超过512KB':code==='avatar_storage_unavailable'?'服务器图片存储不可用':code==='unauthorized'?'登录已过期，请重新登录':'HTTP '+res.statusCode+' · '+code;this.setData({photoStatus:'头像保存失败：'+hint})}
         },fail:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoStatus:'网络异常，头像上传失败'})},
         complete:()=>{if(getSessionToken()===token&&serial===this.profileReadSerial)this.setData({photoBusy:false})}
