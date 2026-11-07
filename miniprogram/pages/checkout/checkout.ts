@@ -102,7 +102,7 @@ Page({
       const [{cart,rules,business}]=await Promise.all([loadCloudCheckout(),refreshCloudAddresses()])
       const current=cloudCartConfig();if(serial!==this.cloudSerial||!current||supportIdentity()!==key)return
       const min=localDate(0,rules),max=localDate(7,rules),validDate=date<min||date>max?min:date
-      const fee=business.deliveryFeeEnabled===true&&Number.isSafeInteger(business.deliveryFeeCents)?business.deliveryFeeCents:0
+      const fee=business.deliveryFeeEnabled===true&&Number.isSafeInteger(business.deliveryFeeCents)?(business.deliveryFeeCents??0):0
       const subtotalCents=Math.round(Number(cart.totalText)*100)
       this.setData({items:cart.items,totalText:cart.totalText,payableText:((subtotalCents+fee)/100).toFixed(2),deliveryFeeText:(fee/100).toFixed(2),totalCount:cart.totalCount,cloudRules:rules,noteShortcuts:(business.noteTags||[]).map(label=>({label})),
         cloudAreas:rules.areas.filter(a=>a.enabled),deliveryDate:validDate,deliveryDateMin:min,deliveryDateMax:max,
