@@ -23,5 +23,8 @@ export function readPhoneProfile(file) {
 }
 export function cloudSource(profile) {
   const p = validatePhoneProfile(profile)
-  return `// Generated public staging configuration. No credentials.\nexport const PUBLIC_API_BASE:string=${JSON.stringify(p.apiBase)}\nexport const DEFAULT_STORE_SLUG:string=${JSON.stringify(p.storeSlug)}\nexport const CLOUD_ONLY:boolean=true\nexport const PREVIEW_APP_ID:string=${JSON.stringify(p.appId)}\n`
+  // The dedicated, allowlisted Stripe TEST backend is the only phone preview that
+  // exposes Sandbox payment controls; all previews disable real WeChat Pay.
+  const sandboxUi=new URL(p.apiBase).hostname==='stall-miniapp-stripe-test.onrender.com'
+  return `// Generated public staging configuration. No credentials.\nexport const PUBLIC_API_BASE:string=${JSON.stringify(p.apiBase)}\nexport const DEFAULT_STORE_SLUG:string=${JSON.stringify(p.storeSlug)}\nexport const CLOUD_ONLY:boolean=true\nexport const PREVIEW_APP_ID:string=${JSON.stringify(p.appId)}\nexport const LIVE_WECHAT_PAY_ENABLED:boolean=false\nexport const PAYMENT_SANDBOX_UI_ENABLED:boolean=${sandboxUi}\n`
 }
