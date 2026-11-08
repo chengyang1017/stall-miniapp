@@ -40,6 +40,8 @@ function providerState(data,refund,config){
   data.amount?.refund!==Number(refund.amount_cents)||
   (data.amount?.currency!==undefined&&data.amount.currency!==refund.currency))
    throw fail('wechatpay_refund_mismatch')
+ if(data.refund_status!==undefined&&data.status!==undefined&&data.refund_status!==data.status)
+  throw fail('wechatpay_refund_conflicting_status')
  const code=data.refund_status||data.status
  if(!['SUCCESS','PROCESSING','ABNORMAL','CLOSED'].includes(code))throw fail('wechatpay_unknown_refund_status')
  return {state:{SUCCESS:'succeeded',PROCESSING:'processing',ABNORMAL:'abnormal',CLOSED:'closed'}[code],
