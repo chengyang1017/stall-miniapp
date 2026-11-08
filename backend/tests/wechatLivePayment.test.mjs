@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {createCipheriv,createSign,createVerify,generateKeyPairSync} from 'node:crypto'
 import {wechatPayLiveConfig,tradeNo,orderIdFromTradeNo,verifyWechatSignature,decodeWechatNotification,trustedWechatSuccess,wechatPayV3} from '../src/wechatPayV3.mjs'
-import {wechatLivePaymentRoute,verifiedWechatPaidOrder} from '../src/wechatLivePaymentRoute.mjs'
+import {wechatLivePaymentRoute,verifiedWechatPaidOrder,verifiedWechatOrderStatus} from '../src/wechatLivePaymentRoute.mjs'
 
 const merchant=generateKeyPairSync('rsa',{modulusLength:2048})
 const platform=generateKeyPairSync('rsa',{modulusLength:2048})
@@ -102,4 +102,12 @@ test('live paid shortcut requires a verified live WeChat payment source',()=>{
  assert.equal(verifiedWechatPaidOrder({payment_status:'paid',payment_source:null}),false)
  assert.equal(verifiedWechatPaidOrder({payment_status:'unpaid',payment_source:'wechatpay:live'}),false)
  assert.equal(verifiedWechatPaidOrder(null),false)
+})
+
+test('payment lookup preserves trusted partial and full refund states',()=>{
+ assert.equal(verifiedWechatOrderStatus({payment_status:'paid',payment_source:'wechatpay:live'}),'paid')
+ assert.equal(verifiedWechatOrderStatus({payment_status:'partially_refunded',payment_source:'wechatpay:live'}),'partially_refunded')
+ assert.equal(verifiedWechatOrderStatus({payment_status:'refunded',payment_source:'wechatpay:live'}),'refunded')
+ assert.equal(verifiedWechatOrderStatus({payment_status:'refunded',payment_source:'stripe:sandbox'}),null)
+ assert.equal(verifiedWechatOrderStatus({payment_status:'unpaid',payment_source:'wechatpay:live'}),null)
 })
