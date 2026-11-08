@@ -4,10 +4,12 @@ on:
     branches: [main]
     paths:
       - 'backend/src/wechatLive*.mjs'
+      - 'backend/src/paymentSettlementTransaction.mjs'
       - 'backend/src/wechatPayV3.mjs'
       - 'backend/src/billing.mjs'
       - 'backend/sql/036_wechat_refund_reconcile.sql'
       - 'backend/tests/wechatLive*.test.mjs'
+      - 'backend/tests/paymentSettlementTransaction.test.mjs'
       - 'miniprogram/modules/shared/api/wechatLiveReceipt.ts'
       - 'miniprogram/pages/order-detail/**'
       - 'miniprogram/pages/admin-orders/**'
@@ -16,8 +18,10 @@ on:
   pull_request:
     paths:
       - 'backend/src/wechatLive*.mjs'
+      - 'backend/src/paymentSettlementTransaction.mjs'
       - 'backend/src/billing.mjs'
       - 'backend/tests/wechatLive*.test.mjs'
+      - 'backend/tests/paymentSettlementTransaction.test.mjs'
       - 'miniprogram/pages/admin-billing/**'
       - '.github/workflows/wechat-live-delivery.yml'
   workflow_dispatch:
@@ -40,9 +44,10 @@ jobs:
           node --check backend/src/wechatLiveRefundReconcile.mjs
           node --check backend/src/wechatLiveRefundRoute.mjs
           node --check backend/src/wechatLivePaymentRoute.mjs
+          node --check backend/src/paymentSettlementTransaction.mjs
           node --check backend/src/server.mjs
           node --check backend/src/billing.mjs
-          node --test backend/tests/wechatLiveDelivery.test.mjs backend/tests/wechatLivePayment.test.mjs backend/tests/wechatLiveRefund.test.mjs
+          node --test backend/tests/wechatLiveDelivery.test.mjs backend/tests/wechatLivePayment.test.mjs backend/tests/wechatLiveRefund.test.mjs backend/tests/paymentSettlementTransaction.test.mjs
       - name: Install frontend dependencies
         run: npm ci
       - name: Check frontend types
