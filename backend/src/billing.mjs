@@ -16,8 +16,14 @@ export async function readAbnormalWechatCollections(client,params,where){
   ORDER BY e.received_at DESC,e.id DESC LIMIT 51`,params)
  return {items:rows.slice(0,50),hasMore:rows.length>50}
 }
+export function abnormalCollectionsCsv(rows){
+ const lines=[['核对说明','仅供内部核对，refund_required 不代表退款完成；请与微信商户平台的官方交易及退款账单逐笔核实。'],
+  ['订单编号','微信交易号','异常到账金额（元）','异常记录时间（UTC）','处理状态'],
+  ...rows.map(r=>[r.orderId,r.transactionId,(Number(r.amountCents)/100).toFixed(2),new Date(r.receivedAt).toISOString(),'待人工复核'])]
+ return '\uFEFF'+lines.map(line=>line.map(cell).join(',')).join('\r\n')+'\r\n'
+}
 export async function billingRoute(req,res,url,pool){
- const m=/^\/v1\/merchant\/stores\/([a-z0-9][a-z0-9-]{1,62})\/billing(?:\/(export))?$/.exec(url.pathname)
+ const m=/^\/v1\/merchant\/stores\/([a-z0-9][a-z0-9-]{1,62})\/billing(?:\/(export|abnormal-export))?$/.exec(url.pathname)
  if(!m)return false
  if(req.method!=='GET'){response(res,405,{error:'method_not_allowed'});return true}
  const who=await authenticate(pool,req);if(!who){response(res,401,{error:'login_required'});return true}
@@ -41,6 +47,28 @@ export async function billingRoute(req,res,url,pool){
  try{
   await client.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');open=true
   await client.query("SET LOCAL statement_timeout='5000ms'")
+  if(m[2]==='abnormal-export'){
+   if(process.env.APP_ENV!=='production'||process.env.WECHAT_PAY_LIVE_ENABLED!=='true'){
+    response(res,404,{error:'not_found'});return true
+   }
+   const {rows}=await client.query(`SELECT e.order_id AS "orderId",e.provider_event_id AS "transactionId",
+    e.amount_cents::text AS "amountCents",e.received_at AS "receivedAt"
+    FROM payment_events e JOIN orders o ON o.id=e.order_id
+    WHERE e.provider='wechatpay:live' AND e.event_type='refund_required' AND `+where.join(' AND ')+`
+    ORDER BY e.received_at DESC,e.id DESC LIMIT 10001`,params)
+   if(rows.length>10000){response(res,413,{error:'export_too_large_narrow_date_range'});return true}
+   if(rows.some(row=>!Number.isSafeInteger(Number(row.amountCents))||Number(row.amountCents)<0)){
+    response(res,413,{error:'billing_amount_too_large'});return true
+   }
+   const csv=abnormalCollectionsCsv(rows),filename='wechat-abnormal-'+(all?'all':from+'-'+to)+'.csv'
+   if(Buffer.byteLength(csv)>5*1024*1024){response(res,413,{error:'export_too_large_narrow_date_range'});return true}
+   await client.query('COMMIT');open=false
+   if(q.get('format')==='json')response(res,200,{csv,filename})
+   else{res.writeHead(200,{'content-type':'text/csv; charset=utf-8',
+    'content-disposition':'attachment; filename="'+filename+'"','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(csv)}
+   return true
+  }
+
   const summaryResult=await client.query(`SELECT COUNT(*)::int AS "orderCount",COUNT(*) FILTER(WHERE fulfillment_status='cancelled')::int AS "cancelCount",COUNT(*) FILTER(WHERE fulfillment_status='delivered')::int AS "deliveredCount",COUNT(*) FILTER(WHERE fulfillment_status='new' AND payment_status='paid')::int AS "pendingCount",COALESCE(SUM(total_cents) FILTER(WHERE fulfillment_status<>'cancelled'),0)::text AS "orderCents",COALESCE(SUM(o.total_cents) FILTER(WHERE o.payment_source='wechatpay:live'
  AND o.payment_status IN ('paid','partially_refunded','refunded')
  AND EXISTS(SELECT 1 FROM payment_events e WHERE e.order_id=o.id AND e.provider='wechatpay:live'

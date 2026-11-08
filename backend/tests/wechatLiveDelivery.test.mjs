@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {buildLiveReceipt,wechatLiveReceiptRoute} from '../src/wechatLiveReceipt.mjs'
-import {readAbnormalWechatCollections} from '../src/billing.mjs'
+import {readAbnormalWechatCollections,abnormalCollectionsCsv} from '../src/billing.mjs'
 import {nextDelaySeconds,reconcileEnabled,runWechatRefundReconciliation} from '../src/wechatLiveRefundReconcile.mjs'
 const uuid='12345678-1234-4234-8234-123456789abc'
 const order={id:uuid,store_id:'99999999-9999-4999-8999-999999999999',store_name:'商家小店',
@@ -113,4 +113,20 @@ test('read-only abnormal collection ledger caps rows and preserves provider refe
 test('read-only abnormal collection ledger returns empty result',async()=>{
  const result=await readAbnormalWechatCollections({query:async()=>({rows:[]})},['store-id'],['o.store_id=$1'])
  assert.deepEqual(result,{items:[],hasMore:false})
+})
+
+test('abnormal collection CSV preserves evidence and is safe to open in spreadsheet',()=>{
+ const csv=abnormalCollectionsCsv([
+  {orderId:'12345678-1234-4234-8234-123456789abc',transactionId:'4200001234567890123456789012',
+   amountCents:'1234',receivedAt:new Date('2026-11-08T02:00:00Z')},
+  {orderId:'=HYPERLINK("evil")',transactionId:'+SUM(1,1)',
+   amountCents:'200',receivedAt:new Date('2026-11-08T03:00:00Z')}
+ ])
+ assert.equal(csv.charCodeAt(0),0xFEFF)
+ assert.ok(csv.includes('\r\n'))
+ assert.ok(csv.includes('12.34'))
+ assert.ok(csv.includes('待人工复核'))
+ assert.ok(csv.includes("'=HYPERLINK"))
+ assert.ok(csv.includes("'+SUM"))
+ assert.equal(csv.includes('退款已完成'),false)
 })

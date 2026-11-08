@@ -58,6 +58,20 @@ Page({
   }catch(error){if(serial===this.serial)this.setData(reset?{error:cfg?'账单读取失败，请检查网络、商家权限和后端版本；未回退演示数据。':'本机演示账单读取失败，请检查本地订单数据。'}:{moreError:'加载更多失败，请重试或刷新列表'})}
   finally{if(serial===this.serial){this.setData({loading:false,loadingMore:false});if(context!==businessContextKey())this.setData({rows:[],error:'店铺或模式已变化，请重新刷新账单'})}}
  },
+ async exportAbnormalCsv(){
+  if(this.data.loading||this.data.exporting||!this.data.cloudMode||!this.data.livePayEnabled)return
+  const cfg=getCloudContext(),context=businessContextKey()
+  if(!cfg||context!==this.context){this.refresh();return}
+  this.setData({exporting:true})
+  try{
+   const file=await authorizedGet(cfg.apiBase,`/v1/merchant/stores/${cfg.storeSlug}/billing/abnormal-export`,{...this.query(),format:'json'})
+   if(context!==businessContextKey())throw Error('context_changed')
+   if(typeof file?.csv!=='string'||typeof file?.filename!=='string')throw Error('invalid_abnormal_export')
+   await shareCsvFile(file.csv,file.filename)
+  }catch(error){
+   wx.showModal({title:'异常到账导出失败',content:String(error).includes('413')?'记录超过限制，请缩小账单日期范围。':'请确认网络、正式支付配置和商家权限。',showCancel:false})
+  }finally{this.setData({exporting:false})}
+ },
  async exportCsv(){
   if(this.data.loading||this.data.loadingMore||this.data.exporting||this.data.error||!this.data.rows.length)return
   const cfg=getCloudContext(),context=businessContextKey();if(context!==this.context){this.refresh();return}
