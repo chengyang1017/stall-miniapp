@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {buildLiveReceipt,wechatLiveReceiptRoute} from '../src/wechatLiveReceipt.mjs'
-import {readAbnormalWechatCollections,abnormalCollectionsCsv} from '../src/billing.mjs'
+import {readAbnormalWechatCollections,abnormalCollectionsCsv,billingRoute} from '../src/billing.mjs'
 import {nextDelaySeconds,reconcileEnabled,runWechatRefundReconciliation} from '../src/wechatLiveRefundReconcile.mjs'
 const uuid='12345678-1234-4234-8234-123456789abc'
 const order={id:uuid,store_id:'99999999-9999-4999-8999-999999999999',store_name:'商家小店',
@@ -129,4 +129,53 @@ test('abnormal collection CSV preserves evidence and is safe to open in spreadsh
  assert.ok(csv.includes("'=HYPERLINK"))
  assert.ok(csv.includes("'+SUM"))
  assert.equal(csv.includes('退款已完成'),false)
+})
+
+test('abnormal collection export endpoint checks merchant permission before database export',async()=>{
+ const calls=[]
+ const pool={query:async(sql)=>{calls.push(sql);return {rows:[]}},
+  connect:async()=>{throw Error('unauthorized export must not connect')}}
+ const res={status:null,body:null,writeHead(code){this.status=code},end(text){this.body=JSON.parse(text)}}
+ const handled=await billingRoute({method:'GET',headers:{}},res,
+  new URL('https://example.com/v1/merchant/stores/store-1/billing/abnormal-export?all=1&format=json'),pool)
+ assert.equal(handled,true)
+ assert.equal(res.status,401)
+ assert.equal(res.body.error,'login_required')
+ assert.equal(calls.length,0)
+})
+test('merchant abnormal export is read-only, scoped and returns usable CSV',async()=>{
+ const prevApp=process.env.APP_ENV,prevLive=process.env.WECHAT_PAY_LIVE_ENABLED
+ process.env.APP_ENV='production';process.env.WECHAT_PAY_LIVE_ENABLED='true'
+ try{
+  const queries=[]
+  const db={query:async(sql,args)=>{
+   queries.push({sql,args})
+   if(sql.startsWith('SELECT e.order_id AS "orderId"'))return {rows:[{
+    orderId:uuid,transactionId:'4200001234567890123456789012',
+    amountCents:'850',receivedAt:new Date('2026-11-08T02:00:00Z')}]}
+   if(sql==='BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY'||sql.startsWith('SET LOCAL')||sql==='COMMIT')return {rows:[]}
+   throw Error('unanticipated export query')
+  },release(){}}
+  const pool={query:async sql=>{
+   if(sql.includes('FROM auth_sessions'))return {rows:[{external_subject:'merchant-1'}]}
+   if(sql.includes('FROM merchant_members'))return {rows:[{id:'store-id',slug:'store-1',role:'owner'}]}
+   throw Error('unknown authentication query')
+  },connect:async()=>db}
+  const res={status:null,body:null,writeHead(code){this.status=code},end(value){this.body=JSON.parse(value)}}
+  const handled=await billingRoute({method:'GET',headers:{authorization:'Bearer '+'a'.repeat(40)}},res,
+   new URL('https://example.com/v1/merchant/stores/store-1/billing/abnormal-export?all=1&format=json'),pool)
+  assert.equal(handled,true)
+  assert.equal(res.status,200)
+  assert.ok(res.body.csv.includes('4200001234567890123456789012'))
+  assert.ok(res.body.csv.includes('8.50'))
+  assert.ok(res.body.filename.endsWith('.csv'))
+  assert.equal(queries[0].sql.startsWith('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY'),true)
+  const evidence=queries.find(q=>q.sql.includes("e.event_type='refund_required'"))
+  assert.ok(evidence)
+  assert.equal(evidence.args[0],'store-id')
+  assert.ok(queries.some(q=>q.sql==='COMMIT'))
+ }finally{
+  if(prevApp===undefined)delete process.env.APP_ENV;else process.env.APP_ENV=prevApp
+  if(prevLive===undefined)delete process.env.WECHAT_PAY_LIVE_ENABLED;else process.env.WECHAT_PAY_LIVE_ENABLED=prevLive
+ }
 })
