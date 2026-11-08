@@ -87,3 +87,40 @@ test('late Stripe sandbox payment refund marker is idempotent',async()=>{
  assert.equal(result.action,'refund_required');assert.equal(result.replayed,true)
  assert.ok(!m.calls.some(q=>q.includes('INSERT INTO payment_events')))
 })
+
+async function verifiedLiveEvent(transactionId='4200001234567890123456789012'){
+ const gateway=createPaymentGateway({provider:'wechatpay',mode:'live',createPayment:async()=>({}),
+  verifyNotification:async()=>({verifiedByProvider:true,provider:'wechatpay',mode:'live',
+   orderId:id,amountCents:1599,currency:'CNY',transactionId,status:'succeeded'})})
+ return gateway.verifyNotification('signed',{request,headers:{}})
+}
+test('live callback for a different-provider unpaid order only records manual refund review',async()=>{
+ const order={...baseOrder,payment_source:'stripe:sandbox'}
+ const m=mock(order)
+ const result=await settleVerifiedOrderPayment(m.pool,{event:await verifiedLiveEvent(),
+  expectedProvider:'wechatpay',expectedMode:'live'})
+ assert.equal(result.action,'refund_required')
+ assert.equal(result.replayed,false)
+ assert.ok(m.calls.some(q=>q.includes("'refund_required'")))
+ assert.equal(m.calls.some(q=>q.includes("UPDATE orders SET payment_status='paid'")),false)
+ assert.equal(m.calls.some(q=>q.includes("INSERT INTO payment_events")&&q.includes("'payment_succeeded'")),false)
+ assert.ok(m.calls.includes('COMMIT'))
+})
+test('repeated cross-provider live callback keeps one manual-review event',async()=>{
+ const m=mock({...baseOrder,payment_source:'staging_simulated'},
+  [{order_id:id,amount_cents:'1599',event_type:'refund_required'}])
+ const result=await settleVerifiedOrderPayment(m.pool,{event:await verifiedLiveEvent(),
+  expectedProvider:'wechatpay',expectedMode:'live'})
+ assert.equal(result.action,'refund_required')
+ assert.equal(result.replayed,true)
+ assert.equal(m.calls.some(q=>q.includes('INSERT INTO payment_events')),false)
+ assert.equal(m.calls.some(q=>q.includes("UPDATE orders SET payment_status='paid'")),false)
+})
+test('new live callback without competing provider still settles valid fresh order',async()=>{
+ const m=mock({...baseOrder,payment_source:null})
+ const result=await settleVerifiedOrderPayment(m.pool,{event:await verifiedLiveEvent(),
+  expectedProvider:'wechatpay',expectedMode:'live'})
+ assert.equal(result.action,'settle')
+ assert.ok(m.calls.some(q=>q.includes("'payment_succeeded'")))
+ assert.ok(m.calls.some(q=>q.includes("UPDATE orders SET payment_status='paid'")))
+})
