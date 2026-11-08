@@ -162,3 +162,40 @@ test('live prepay rejects unpaid orders tagged with another provider',async()=>{
   assert.equal(calls.some(sql=>sql.includes('wechat_live_prepays')),false)
  }
 })
+
+test('uninitiated unpaid order returns unpaid without official WeChat query',async()=>{
+ const queries=[]
+ const pool={query:async(sql)=>{
+  queries.push(sql)
+  if(sql.includes('FROM auth_sessions'))return {rows:[{external_subject:customer}]}
+  if(sql.includes('FROM orders o JOIN stores s'))return {rows:[{...order,payment_status:'unpaid',payment_source:null}]}
+  if(sql.includes('FROM wechat_live_prepays'))return {rows:[]}
+  throw Error('unexpected database query')
+ }}
+ const res=response()
+ const handled=await wechatLivePaymentRoute(
+  {method:'GET',headers:{authorization:'Bearer '+'a'.repeat(40)}},
+  res,new URL('https://example.com/v1/stores/store-1/orders/'+orderId+'/wechat-pay'),
+  pool,env,{pay:{query:()=>{throw Error('never call provider when no prepay exists')}}})
+ assert.equal(handled,true)
+ assert.equal(res.code,200)
+ assert.deepEqual(res.data,{paymentStatus:'unpaid',tradeState:'NOT_INITIATED',verified:true})
+ assert.equal(queries.length,3)
+})
+test('previously initiated payment still consults WeChat provider',async()=>{
+ const pool={query:async(sql)=>{
+  if(sql.includes('FROM auth_sessions'))return {rows:[{external_subject:customer}]}
+  if(sql.includes('FROM orders o JOIN stores s'))return {rows:[{...order,payment_status:'unpaid',payment_source:null}]}
+  if(sql.includes('FROM wechat_live_prepays'))return {rows:[{exists:1}]}
+  throw Error('unexpected database query')
+ }}
+ let calls=0
+ const res=response()
+ await wechatLivePaymentRoute({method:'GET',headers:{authorization:'Bearer '+'a'.repeat(40)}},
+  res,new URL('https://example.com/v1/stores/store-1/orders/'+orderId+'/wechat-pay'),pool,env,
+  {pay:{query:async()=>{calls++;return {out_trade_no:tradeNo(orderId),appid,mchid,trade_state:'NOTPAY'}}}})
+ assert.equal(calls,1)
+ assert.equal(res.code,200)
+ assert.equal(res.data.paymentStatus,'unpaid')
+ assert.equal(res.data.tradeState,'NOTPAY')
+})
