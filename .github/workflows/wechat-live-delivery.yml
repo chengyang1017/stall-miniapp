@@ -5,6 +5,8 @@ on:
     paths:
       - 'backend/src/wechatLive*.mjs'
       - 'backend/scripts/preflight.mjs'
+      - 'backend/scripts/migration-source-inventory.mjs'
+      - 'backend/tests/migrationSourceInventory.test.mjs'
       - 'scripts/phone-preview-profile.mjs'
       - 'backend/tests/phone-preview-payment-config.test.mjs'
       - 'backend/scripts/migrate-dev.mjs'
@@ -31,6 +33,8 @@ on:
     paths:
       - 'backend/src/wechatLive*.mjs'
       - 'backend/scripts/preflight.mjs'
+      - 'backend/scripts/migration-source-inventory.mjs'
+      - 'backend/tests/migrationSourceInventory.test.mjs'
       - 'scripts/phone-preview-profile.mjs'
       - 'backend/tests/phone-preview-payment-config.test.mjs'
       - 'backend/scripts/migrate-dev.mjs'
@@ -77,6 +81,8 @@ jobs:
         run: npm run preflight --prefix backend
       - name: Run full backend offline regression suite
         run: npm test --prefix backend
+      - name: Verify migration source audit guardrails (no DB connection)
+        run: node --test backend/tests/migrationSourceInventory.test.mjs
       - name: Install frontend dependencies
         run: npm ci
       - name: Check frontend types
