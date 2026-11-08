@@ -12,7 +12,7 @@ const fail=code=>Object.assign(Error(code),{code})
 const reply=(res,status,data)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(data))}
 const exposed=row=>({id:row.id,orderId:row.order_id,amountCents:Number(row.amount_cents),
  status:row.status,outRefundNo:row.out_refund_no,createdAt:row.created_at,
- updatedAt:row.updated_at,reviewRequired:row.status==='review'||row.status==='abnormal'})
+ updatedAt:row.updated_at,reviewRequired:['unknown','review','abnormal'].includes(row.status)})
 async function readBody(req){
  let parts=[],size=0
  for await (const p of req){size+=p.length;if(size>65536)throw fail('too_large');parts.push(Buffer.from(p))}
