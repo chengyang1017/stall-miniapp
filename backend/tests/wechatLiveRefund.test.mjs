@@ -139,3 +139,29 @@ test('replayed refund callback requires identical provider event identity',async
  assert.equal(altered.queries.some(q=>q.sql==='ROLLBACK'),true)
  assert.equal(altered.queries.some(q=>q.sql.startsWith('UPDATE orders SET payment_status=')),false)
 })
+
+test('conflicting CLOSED then SUCCESS does not credit order as refunded',async()=>{
+ const pool=mockPool('closed')
+ const result=await applyVerifiedRefund(pool,{refundId,storeId:original.store_id,config:cfg,
+  observation:observed('SUCCESS')})
+ assert.equal(result.status,'review')
+ assert.equal(result.reviewRequired,true)
+ const refundUpdate=pool.queries.find(q=>q.sql.startsWith('UPDATE wechat_live_refunds SET status='))
+ assert.equal(refundUpdate.params[1],'review')
+ assert.equal(refundUpdate.params[4],'terminal_state_conflict_manual_review')
+ assert.equal(pool.queries.some(q=>q.sql.startsWith('UPDATE orders SET payment_status=')),false)
+})
+test('a CLOSED result replay remains closed and never updates the order',async()=>{
+ const pool=mockPool('closed')
+ const result=await applyVerifiedRefund(pool,{refundId,storeId:original.store_id,config:cfg,
+  observation:observed('CLOSED')})
+ assert.equal(result.status,'closed')
+ assert.equal(pool.queries.some(q=>q.sql.startsWith('UPDATE orders SET payment_status=')),false)
+})
+test('independently successful refund still credits order after PROCESSING',async()=>{
+ const pool=mockPool('processing')
+ const result=await applyVerifiedRefund(pool,{refundId,storeId:original.store_id,config:cfg,
+  observation:observed('SUCCESS')})
+ assert.equal(result.status,'succeeded')
+ assert.equal(pool.queries.filter(q=>q.sql.startsWith('UPDATE orders SET payment_status=')).length,1)
+})
