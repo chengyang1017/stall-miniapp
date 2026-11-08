@@ -64,9 +64,10 @@ export async function applyVerifiedRefund(pool,{refundId,storeId,observation,con
   if(eventId){
    if(typeof eventId!=='string'||eventId.length>128||!['REFUND.SUCCESS','REFUND.CLOSED','REFUND.ABNORMAL'].includes(eventType)||
     eventType.split('.')[1]!==providerStatus)throw fail('wechatpay_refund_event_mismatch')
-   const prior=await db.query('SELECT refund_id FROM wechat_live_refund_events WHERE provider_event_id=$1',[eventId])
+   const prior=await db.query('SELECT refund_id,event_type,observed_status FROM wechat_live_refund_events WHERE provider_event_id=$1',[eventId])
    if(prior.rows.length){
-    if(prior.rows[0].refund_id!==refund.id)throw fail('wechatpay_event_reused')
+    if(prior.rows[0].refund_id!==refund.id||prior.rows[0].event_type!==eventType||
+      prior.rows[0].observed_status!==providerStatus)throw fail('wechatpay_event_reused')
     return exposed(refund)
    }
    await db.query('INSERT INTO wechat_live_refund_events(provider_event_id,refund_id,event_type,observed_status) VALUES($1,$2,$3,$4)',
