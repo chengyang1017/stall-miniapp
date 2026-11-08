@@ -22,7 +22,7 @@ test('source and first restored snapshot with matching counts pass without openi
 })
 test('missing tables, changed count and extra tables all block cutover',()=>{
  const source=fixture()
- const target=variant(source,f=>{f.tables=[{name:'public.orders',exactRows:5},{name:'public.extra',exactRows:1}]})
+ const target=variant(source,f=>{f.tables=[{name:'public.orders',exactRows:5},{name:'public.extra',exactRows:1}];f.objectReferences=[]})
  const out=compareRestoredInventories(source,target)
  assert.equal(out.passed,false)
  assert.deepEqual(out.problems.filter(p=>p.kind.includes('table')).map(x=>x.kind),
