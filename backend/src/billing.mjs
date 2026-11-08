@@ -20,7 +20,7 @@ export function abnormalCollectionsCsv(rows){
  const lines=[['核对说明','仅供内部核对，refund_required 不代表退款完成；请与微信商户平台的官方交易及退款账单逐笔核实。'],
   ['订单编号','微信交易号','异常到账金额（元）','异常记录时间（UTC）','处理状态'],
   ...rows.map(r=>[r.orderId,r.transactionId,(Number(r.amountCents)/100).toFixed(2),new Date(r.receivedAt).toISOString(),'待人工复核'])]
- return '\\uFEFF'+lines.map(line=>line.map(cell).join(',')).join('\\r\\n')+'\\r\\n'
+ return '\uFEFF'+lines.map(line=>line.map(cell).join(',')).join('\r\n')+'\r\n'
 }
 export async function billingRoute(req,res,url,pool){
  const m=/^\/v1\/merchant\/stores\/([a-z0-9][a-z0-9-]{1,62})\/billing(?:\/(export|abnormal-export))?$/.exec(url.pathname)
