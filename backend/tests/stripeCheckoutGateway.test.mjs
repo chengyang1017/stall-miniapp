@@ -8,12 +8,22 @@ const request={orderId,amountCents:1999,currency:'MYR',requestKey:'request-001'}
 const make=(settings={})=>createStripeCheckoutGateway({secretKey:key,webhookSecret:secret,
  successUrl:'https://example.com/success',cancelUrl:'https://example.com/cancel',now:1700000000,...settings})
 const checkout={id:'cs_test_abc',url:'https://checkout.stripe.com/c/pay/cs_test_abc'}
+const checkoutFromRequest=options=>{
+ const form=new URLSearchParams(options.body)
+ return {...checkout,object:'checkout.session',livemode:false,mode:'payment',status:'open',
+  payment_status:'unpaid',client_reference_id:form.get('client_reference_id'),
+  metadata:{orderId:form.get('metadata[orderId]'),channel:form.get('metadata[channel]'),
+   paymentAttemptKey:form.get('metadata[paymentAttemptKey]')},
+  amount_total:Number(form.get('line_items[0][price_data][unit_amount]')),
+  currency:form.get('line_items[0][price_data][currency]'),
+  payment_method_types:form.getAll('allowed_payment_method_types[0]')}
+}
 const payload={livemode:false,type:'checkout.session.completed',data:{object:{object:'checkout.session',id:'cs_test_abc',
  payment_status:'paid',status:'complete',client_reference_id:orderId,metadata:{orderId},amount_total:1999,currency:'myr'}}}
 const signed=(obj=payload,ts=1700000000)=>{const raw=JSON.stringify(obj);return {raw,headers:{'stripe-signature':'t='+ts+',v1='+createHmac('sha256',secret).update(ts+'.'+raw).digest('hex')}}}
 test('test mode only; production key rejected',()=>assert.throws(()=>make({secretKey:'sk_live_abcd'}),/stripe_test_key_required/))
 test('creates real Stripe Checkout request with server amount and idempotency',async()=>{
- let args;const gateway=make({fetchImpl:async (url,options)=>(args={url,options},{ok:true,json:async()=>checkout})})
+ let args;const gateway=make({fetchImpl:async (url,options)=>(args={url,options},{ok:true,json:async()=>checkoutFromRequest(options)})})
  const result=await gateway.create(request)
  assert.equal(result.sessionId,checkout.id)
  assert.equal(args.url,'https://api.stripe.com/v1/checkout/sessions')
@@ -53,7 +63,7 @@ for(const channel of ['card','alipay','wechat_pay']){
  test(channel+' uses configured hosted Checkout and isolated idempotency',async()=>{
   let options
   const gateway=make({channel,paymentMethodConfiguration:'pmc_Test123',fetchImpl:async(_,o)=>{
-   options=o;return {ok:true,json:async()=>checkout}
+   options=o;return {ok:true,json:async()=>checkoutFromRequest(options)}
   }})
   const result=await gateway.create({...request,currency:'CNY'})
   const body=new URLSearchParams(options.body)
