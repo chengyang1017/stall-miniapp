@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {createCipheriv,createSign,createVerify,generateKeyPairSync} from 'node:crypto'
 import {wechatPayLiveConfig,tradeNo,orderIdFromTradeNo,verifyWechatSignature,decodeWechatNotification,trustedWechatSuccess,wechatPayV3} from '../src/wechatPayV3.mjs'
-import {wechatLivePaymentRoute} from '../src/wechatLivePaymentRoute.mjs'
+import {wechatLivePaymentRoute,verifiedWechatPaidOrder} from '../src/wechatLivePaymentRoute.mjs'
 
 const merchant=generateKeyPairSync('rsa',{modulusLength:2048})
 const platform=generateKeyPairSync('rsa',{modulusLength:2048})
@@ -92,4 +92,14 @@ test('disabled production route neither queries DB nor starts a payment',async()
  const handled=await wechatLivePaymentRoute({method:'POST',headers:{}},res,new URL('https://example.com/v1/stores/store-1/orders/'+orderId+'/wechat-pay'),db,{...env,WECHAT_PAY_LIVE_ENABLED:'false'})
  assert.equal(handled,true)
  assert.equal(res.code,404)
+})
+
+// A paid order from a different payment provider must never be reported as verified WeChat funds.
+test('live paid shortcut requires a verified live WeChat payment source',()=>{
+ assert.equal(verifiedWechatPaidOrder({payment_status:'paid',payment_source:'wechatpay:live'}),true)
+ assert.equal(verifiedWechatPaidOrder({payment_status:'paid',payment_source:'stripe:sandbox'}),false)
+ assert.equal(verifiedWechatPaidOrder({payment_status:'paid',payment_source:'staging:simulated'}),false)
+ assert.equal(verifiedWechatPaidOrder({payment_status:'paid',payment_source:null}),false)
+ assert.equal(verifiedWechatPaidOrder({payment_status:'unpaid',payment_source:'wechatpay:live'}),false)
+ assert.equal(verifiedWechatPaidOrder(null),false)
 })

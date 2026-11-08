@@ -93,6 +93,14 @@ test('mismatched provider amount aborts transaction without changing order',asyn
  assert.equal(pool.queries.some(q=>q.sql.startsWith('UPDATE orders SET payment_status=')),false)
  assert.equal(pool.queries.some(q=>q.sql==='ROLLBACK'),true)
 })
+test('refund evidence with an explicitly wrong currency cannot update the order',async()=>{
+ const pool=mockPool()
+ await assert.rejects(()=>applyVerifiedRefund(pool,{refundId,storeId:original.store_id,config:cfg,
+  observation:{...observed(),amount:{total:15000,refund:5000,currency:'USD'}}}),
+  /wechatpay_refund_mismatch/)
+ assert.equal(pool.queries.some(q=>q.sql.startsWith('UPDATE orders SET payment_status=')),false)
+ assert.equal(pool.queries.some(q=>q.sql==='ROLLBACK'),true)
+})
 test('processing callback after success never reverts successful refund',async()=>{
  const pool=mockPool('succeeded')
  const result=await applyVerifiedRefund(pool,{refundId,storeId:original.store_id,config:cfg,
