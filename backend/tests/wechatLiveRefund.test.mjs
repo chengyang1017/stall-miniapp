@@ -165,3 +165,19 @@ test('independently successful refund still credits order after PROCESSING',asyn
  assert.equal(result.status,'succeeded')
  assert.equal(pool.queries.filter(q=>q.sql.startsWith('UPDATE orders SET payment_status=')).length,1)
 })
+
+test('contradictory signed refund status fields are rejected without any ledger mutation',async()=>{
+ const pool=mockPool('processing')
+ await assert.rejects(()=>applyVerifiedRefund(pool,{refundId,storeId:original.store_id,config:cfg,
+  observation:{...observed('SUCCESS'),status:'CLOSED'}}),/wechatpay_refund_conflicting_status/)
+ assert.equal(pool.queries.some(q=>q.sql.startsWith('UPDATE orders SET payment_status=')),false)
+ assert.equal(pool.queries.some(q=>q.sql.startsWith('UPDATE wechat_live_refunds SET status=')),false)
+ assert.equal(pool.queries.some(q=>q.sql==='ROLLBACK'),true)
+})
+test('matching signed status fields are accepted and preserve the normal refund path',async()=>{
+ const pool=mockPool('processing')
+ const result=await applyVerifiedRefund(pool,{refundId,storeId:original.store_id,config:cfg,
+  observation:{...observed('SUCCESS'),status:'SUCCESS'}})
+ assert.equal(result.status,'succeeded')
+ assert.equal(pool.queries.some(q=>q.sql.startsWith('UPDATE orders SET payment_status=')),true)
+})
