@@ -37,17 +37,25 @@ test('compiled merchant page reads receipts and discards stale store context',as
  const second=f.p.viewSandboxPayment({currentTarget:{dataset:{id}}});f.switchIdentity();f.requests[1].resolve(status);await second
  assert.equal(f.p.data.sandbox,null)
 })
-test('merchant refund requires server canRefund and validates entered amount before HTTP',async()=>{
- const f=page('admin-orders','merchant');f.p.data.sandboxOrderId=id;f.p.data.sandbox=view({...status,canRefund:false})
- f.p.requestSandboxRefund();assert.equal(f.modal(),undefined)
- f.p.data.sandbox=view(status);f.p.requestSandboxRefund()
- await f.modal().success({confirm:true,content:'-1.00'});assert.equal(f.requests.length,0)
- const job=f.modal().success({confirm:true,content:'2.50'})
- assert.equal(f.requests[0].args[3],'sandbox-refund');assert.equal(f.requests[0].args[4].amountCents,250)
- const key=f.requests[0].args[5];assert.match(key,/^refund_/)
- f.requests[0].reject(Error('network_result_unknown'));await job
- assert.match(f.p.data.sandboxError,/未确认/);assert.equal(f.p.data.sandboxRefundBusy,false)
+test('merchant refund requires fresh server balance and refuses invalid amount before HTTP',async()=>{
+ const f=page('admin-orders','merchant')
+ f.p.data.sandboxOrderId=id
+ f.p.data.sandbox=view({...status,canRefund:false})
+ await f.p.requestSandboxRefund({currentTarget:{dataset:{mode:'partial'}}})
+ assert.equal(f.requests.length,0)
+ f.p.data.sandbox=view(status)
+ const pending=f.p.requestSandboxRefund({currentTarget:{dataset:{mode:'partial'}}})
+ assert.equal(f.requests.length,1)
+ assert.equal(f.requests[0].args[3],undefined) // GET fresh server-backed balance first
+ f.requests[0].resolve({...status,refundableAmountCents:1000})
+ await new Promise(setImmediate)
+ assert.ok(f.modal())
+ f.modal().success({confirm:true,content:'-1.00'})
+ await pending
+ assert.equal(f.requests.length,1) // no refund POST for invalid input
+ assert.equal(f.p.data.sandboxRefundBusy,false)
 })
+
 test('compiled checkout selects only supported external sandbox channels',()=>{
  const f=page('checkout');f.p.chooseSandboxChannel({currentTarget:{dataset:{channel:'alipay'}}});assert.equal(f.p.data.sandboxChannel,'alipay')
  f.p.chooseSandboxChannel({currentTarget:{dataset:{channel:'fake'}}});assert.equal(f.p.data.sandboxChannel,'alipay')
