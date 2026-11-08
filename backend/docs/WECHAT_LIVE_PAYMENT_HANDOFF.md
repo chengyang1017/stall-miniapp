@@ -11,7 +11,7 @@ Stripe Sandbox 独立保留；不允许以测试凭据操作生产。
 禁止把密钥发送在聊天、提交 GitHub、存入小程序或写入客户端。
 
 ## 部署前审查
-1. 选定正式小程序、店铺及腾讯云生产数据库，审查并按顺序执行 001—036 迁移，在独立测试库验收备份/回滚及权限。
+1. 选定正式小程序、店铺及腾讯云生产数据库，审查并按顺序执行 001—037 迁移，在独立测试库验收备份/回滚及权限。
 2. 正式环境必须 APP_ENV=production 且 PAYMENT_DB_ENV 不是 isolated-test。
 3. 在可信的腾讯云服务器私密环境配置 WX_APPID、WX_APPSECRET、WECHAT_PAY_MCH_ID、
    WECHAT_PAY_STORE_SLUG、WECHAT_PAY_MERCHANT_SERIAL、
@@ -61,6 +61,13 @@ Stripe Sandbox 独立保留；不允许以测试凭据操作生产。
 - 对处理中、结果未知、异常退款实施渐进式查询。对原路失败、异常到账、对账差异只报警并交由商家处理，不自动把资金转到其他银行卡。
 - 此工作器不替代退款通知、运营人工复核或官方对账。
 - 首次启用前必须在商家数据库验证表结构、角色权限、调用频率、日志与恢复行为，并测试网络超时与重复通知。
+
+## 异常到账人工核对审计（默认不启用）
+- 数据库 037 增加仅追加的 `wechat_abnormal_collection_reviews`，部署前须检查迁移、生产 runtime SELECT/INSERT 最小权限，禁止更新或删除审计记录。
+- `GET /v1/merchant/stores/:slug/wechat-abnormal-collections/:transactionId/reviews`：商家 owner/manager 查看**本店**已记录为 `refund_required` 的微信交易的人工处理日志。
+- 同路径 `POST` 接收 `{requestKey,action,note}`，其中 action 仅可为 `provider_checked`、`support_contacted`、`refund_requested`、`escalated`；必须使用新的请求键记录新操作，重试同一键返回原记录。
+- 日志记录处理者、服务器时间及说明；**它是人工陈述，不是官方退款完成凭据**，不会更新支付/退款/库存/配送状态，也不会自动调用退款 API。
+- 接口要求生产环境并启用正式微信支付，且强制商家身份及店铺授权。真实商户验收前不能开启正式支付开关。
 
 ## 仍须完成的独立生产工作
 - 退款申请、查询、回调与商家操作入口已有初版；**并未在商家真实微信支付账号验收**。人工复核流程、超时退款任务自动恢复、微信账户对账、异常到账的补偿退款、退款告警及企业操作审计仍须完善，不能直接当作已验收的正式资金操作。
