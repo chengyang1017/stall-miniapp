@@ -5,14 +5,15 @@ import { getCloudContext } from '../../modules/shared/runtime/context'
 import { authorizedGet } from '../../modules/shared/runtime/auth'
 import { businessContextKey } from '../../modules/merchant/api/business'
 import {shareCsvFile} from '../../utils/shareCsvFile'
+import {getAbnormalReviews,appendAbnormalReview} from '../../utils/wechatAbnormalReview'
 function localDay(value=new Date().toISOString()):string{const t=Date.parse(value);return Number.isFinite(t)?new Date(t+8*3600000).toISOString().slice(0,10):''}
 function localTime(value:string):string{return new Date(Date.parse(value)+8*3600000).toISOString().slice(11,16)}
 function yuan(cents:number):string{return (cents/100).toFixed(2)}
 function cell(v:unknown):string{let s=String(v==null?'':v);if(/^[\s\u0000-\u001f]*[=+@-]/.test(s)||/^[\t\r\n]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
 const cloudStatuses:Record<string,string>={new:'新订单',accepted:'已接单',preparing:'备货中',delivering:'配送中',delivered:'已送达',cancelled:'已取消',abnormal:'配送异常'}
 Page({
- serial:0,context:'',cursor:'',
- data:{livePayEnabled:LIVE_WECHAT_PAY_ENABLED,day:localDay(),allDates:false,rows:[] as any[],count:0,pending:0,delivered:0,cancelled:0,orderValue:'0.00',received:'0.00',refunded:'0.00',pendingRefunds:'0.00',netReceived:'0.00',abnormalCollections:'0.00',abnormalRecords:[] as any[],abnormalRecordsMore:false,reviewRefunds:0,unpaid:'0.00',notice:'',cloudMode:false,loading:false,loadingMore:false,exporting:false,error:'',moreError:'',hasMore:false},
+ serial:0,context:'',cursor:'',reviewPendingKeys:{} as Record<string,string>,
+ data:{livePayEnabled:LIVE_WECHAT_PAY_ENABLED,day:localDay(),allDates:false,rows:[] as any[],count:0,pending:0,delivered:0,cancelled:0,orderValue:'0.00',received:'0.00',refunded:'0.00',pendingRefunds:'0.00',netReceived:'0.00',abnormalCollections:'0.00',abnormalRecords:[] as any[],abnormalRecordsMore:false,reviewBusy:false,reviewRefunds:0,unpaid:'0.00',notice:'',cloudMode:false,loading:false,loadingMore:false,exporting:false,error:'',moreError:'',hasMore:false},
  onShow(){this.refresh()},onUnload(){this.serial++},
  async onPullDownRefresh(){try{if(!this.data.exporting)await this.refresh()}finally{wx.stopPullDownRefresh()}},
  chooseDay(e:any){if(this.data.exporting)return;this.setData({day:String(e.detail.value),allDates:false});this.refresh()},
@@ -57,6 +58,55 @@ Page({
    }
   }catch(error){if(serial===this.serial)this.setData(reset?{error:cfg?'账单读取失败，请检查网络、商家权限和后端版本；未回退演示数据。':'本机演示账单读取失败，请检查本地订单数据。'}:{moreError:'加载更多失败，请重试或刷新列表'})}
   finally{if(serial===this.serial){this.setData({loading:false,loadingMore:false});if(context!==businessContextKey())this.setData({rows:[],error:'店铺或模式已变化，请重新刷新账单'})}}
+ },
+ async reviewAbnormal(e:any){
+  if(this.data.reviewBusy||this.data.exporting||this.data.loading||!this.data.livePayEnabled||!this.data.cloudMode)return
+  const transactionId=String(e?.currentTarget?.dataset?.transaction||'')
+  if(!/^[0-9]{8,32}$/.test(transactionId))return
+  const context=businessContextKey()
+  this.setData({reviewBusy:true})
+  try{
+   const options=['查看已有复核记录','已核对微信商户平台','已联系微信客服','已提交退款申请','升级人工处理']
+   const selection:number=await new Promise((resolve,reject)=>wx.showActionSheet({
+    itemList:options,success:r=>resolve(r.tapIndex),fail:reject
+   }))
+   if(context!==businessContextKey())return
+   if(selection===0){
+    const result=await getAbnormalReviews(transactionId)
+    if(context!==businessContextKey())return
+    const rows=Array.isArray(result?.reviews)?result.reviews:[]
+    const labels:Record<string,string>={provider_checked:'已核对官方交易',support_contacted:'已联系客服',refund_requested:'已提交退款申请',escalated:'升级人工处理'}
+    const lines=rows.slice(0,8).map((v:any)=>String(v.createdAt||'').slice(0,16)+' '+(labels[v.action]||'人工记录')+'：'+String(v.note||''))
+    await new Promise<void>(resolve=>wx.showModal({title:'人工复核记录',content:lines.length?lines.join('\n')+(result.hasMore?'\n还有更早记录':''):'暂无人工复核记录',showCancel:false,success:()=>resolve(),fail:()=>resolve()}))
+    return
+   }
+   const actions=['','provider_checked','support_contacted','refund_requested','escalated']
+   const action=actions[selection]
+   if(!action)return
+   const note:string|null=await new Promise(resolve=>wx.showModal({
+    title:'追加人工复核记录',content:'仅记录已实际执行的操作，不代表退款成功。',editable:true,
+    placeholderText:'填写具体核对结果或处理说明（最多 500 字）',
+    success:(r:any)=>resolve(r.confirm?String(r.content||'').trim():null),fail:()=>resolve(null)
+   } as any))
+   if(note===null)return
+   if(!note||note.length>500){wx.showToast({title:'请输入 1–500 字说明',icon:'none'});return}
+   if(context!==businessContextKey())return
+   const key=transactionId+':'+action+':'+note
+   let requestKey=this.reviewPendingKeys[key]
+   if(!requestKey){
+    requestKey='rev'+Date.now().toString(36)+Math.random().toString(36).slice(2).padEnd(12,'0')
+    this.reviewPendingKeys[key]=requestKey
+   }
+   const reply=await appendAbnormalReview(transactionId,{requestKey,action,note})
+   if(context!==businessContextKey())return
+   if(!reply?.review?.manualEvidenceOnly)throw Error('review_unverified')
+   delete this.reviewPendingKeys[key]
+   wx.showToast({title:'已保存复核记录',icon:'success'})
+  }catch(error){
+   if(context===businessContextKey()&& !String(error).includes('cancel')){
+    wx.showModal({title:'复核记录未确认',content:'无法确认记录是否保存。再次提交相同内容会使用原请求编号，避免重复写入；不会影响资金状态。',showCancel:false})
+   }
+  }finally{this.setData({reviewBusy:false})}
  },
  async exportAbnormalCsv(){
   if(this.data.loading||this.data.exporting||!this.data.cloudMode||!this.data.livePayEnabled)return
