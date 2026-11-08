@@ -5,6 +5,8 @@ on:
     paths:
       - 'backend/src/wechatLive*.mjs'
       - 'backend/scripts/preflight.mjs'
+      - 'scripts/phone-preview-profile.mjs'
+      - 'backend/tests/phone-preview-payment-config.test.mjs'
       - 'backend/scripts/migrate-dev.mjs'
       - 'backend/docs/DELIVERY_CANDIDATE_2026-11-08.md'
       - 'backend/src/wechatAbnormalReview.mjs'
@@ -29,6 +31,8 @@ on:
     paths:
       - 'backend/src/wechatLive*.mjs'
       - 'backend/scripts/preflight.mjs'
+      - 'scripts/phone-preview-profile.mjs'
+      - 'backend/tests/phone-preview-payment-config.test.mjs'
       - 'backend/scripts/migrate-dev.mjs'
       - 'backend/docs/DELIVERY_CANDIDATE_2026-11-08.md'
       - 'backend/src/wechatAbnormalReview.mjs'
@@ -79,3 +83,5 @@ jobs:
         run: npx tsc --noEmit
       - name: Verify all three frontend build targets and offline UX contracts
         run: npm run verify:frontend
+      - name: Verify phone preview profile and payment feature isolation
+        run: node --test backend/tests/phone-preview-payment-config.test.mjs
