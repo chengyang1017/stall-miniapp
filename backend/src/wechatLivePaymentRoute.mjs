@@ -84,6 +84,10 @@ export async function wechatLivePaymentRoute(req,res,url,pool,env=process.env,de
     const decision=await trustedSettlement(pool,tx,config,order)
     response(res,200,{paymentStatus:decision.action==='refund_required'?'refund_required':'paid',verified:true});return true
    }
+   if(tx.trade_state==='REFUND'){
+    // An officially refunded trade must never be presented as a fresh unpaid checkout.
+    response(res,200,{paymentStatus:'refund_required',tradeState:'REFUND',verified:true});return true
+   }
    response(res,200,{paymentStatus:'unpaid',tradeState:typeof tx.trade_state==='string'?tx.trade_state:'UNKNOWN',verified:true});return true
   }
   // POST: the same order always has the same merchant out_trade_no.
