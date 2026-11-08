@@ -78,8 +78,9 @@ export async function applyVerifiedRefund(pool,{refundId,storeId,observation,con
    next='succeeded'
    if(state!=='succeeded')error='terminal_state_conflict_manual_review'
   }else if(refund.status==='closed'&&state!=='closed'){
-   // Preserve a newly verified SUCCESS fact, but flag contradictory final states.
-   next=state==='succeeded'?'succeeded':'review'
+   // CLOSED and SUCCESS are contradictory terminal provider observations.
+   // Never book money as refunded from a conflicting terminal state alone.
+   next='review'
    error='terminal_state_conflict_manual_review'
   }else if(refund.status==='review'){next='review';error='manual_review_required'}
   if(refund.status==='abnormal'&&state==='processing'){next='abnormal'}
