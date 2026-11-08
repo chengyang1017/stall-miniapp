@@ -111,3 +111,24 @@ test('payment lookup preserves trusted partial and full refund states',()=>{
  assert.equal(verifiedWechatOrderStatus({payment_status:'refunded',payment_source:'stripe:sandbox'}),null)
  assert.equal(verifiedWechatOrderStatus({payment_status:'unpaid',payment_source:'wechatpay:live'}),null)
 })
+
+test('GET route returns verified refund status without a new payment provider query',async()=>{
+ for(const status of ['partially_refunded','refunded']){
+  const queries=[]
+  const pool={query:async(sql)=>{
+   queries.push(sql)
+   if(sql.includes('FROM auth_sessions'))return {rows:[{external_subject:customer}]}
+   if(sql.includes('FROM orders o JOIN stores s'))return {rows:[{...order,payment_status:status,payment_source:'wechatpay:live'}]}
+   throw Error('unexpected query')
+  }}
+  const res=response()
+  const url=new URL('https://example.com/v1/stores/store-1/orders/'+orderId+'/wechat-pay')
+  const handled=await wechatLivePaymentRoute(
+   {method:'GET',headers:{authorization:'Bearer '+'a'.repeat(40)}},
+   res,url,pool,env,{pay:{query:()=>{throw Error('refund status must not be re-settled')}}})
+  assert.equal(handled,true)
+  assert.equal(res.code,200)
+  assert.deepEqual(res.data,{paymentStatus:status,verified:true})
+  assert.equal(queries.length,2)
+ }
+})
