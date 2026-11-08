@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {buildLiveReceipt,wechatLiveReceiptRoute} from '../src/wechatLiveReceipt.mjs'
+import {readAbnormalWechatCollections} from '../src/billing.mjs'
 import {nextDelaySeconds,reconcileEnabled,runWechatRefundReconciliation} from '../src/wechatLiveRefundReconcile.mjs'
 const uuid='12345678-1234-4234-8234-123456789abc'
 const order={id:uuid,store_id:'99999999-9999-4999-8999-999999999999',store_name:'商家小店',
@@ -94,4 +95,22 @@ test('status reconciliation uses backoff and never retries refund POST',async()=
  assert.equal(nextDelaySeconds(9,'unknown'),21600)
  assert.equal(nextDelaySeconds(4,'abnormal'),21600)
  assert.equal(nextDelaySeconds(5,'succeeded'),0)
+})
+
+test('read-only abnormal collection ledger caps rows and preserves provider references',async()=>{
+ const seen=[]
+ const rows=Array.from({length:51},(_,i)=>({orderId:uuid,transactionId:'transaction-'+i,amountCents:'1500',receivedAt:'2026-11-08T02:00:00Z'}))
+ const db={query:async(sql,args)=>{seen.push({sql,args});return {rows}}}
+ const result=await readAbnormalWechatCollections(db,['store-id'],['o.store_id=$1'])
+ assert.equal(result.items.length,50)
+ assert.equal(result.hasMore,true)
+ assert.equal(result.items[0].transactionId,'transaction-0')
+ assert.equal(seen[0].args[0],'store-id')
+ assert.ok(seen[0].sql.includes("e.event_type='refund_required'"))
+ assert.ok(seen[0].sql.includes("e.provider='wechatpay:live'"))
+ assert.ok(seen[0].sql.includes('LIMIT 51'))
+})
+test('read-only abnormal collection ledger returns empty result',async()=>{
+ const result=await readAbnormalWechatCollections({query:async()=>({rows:[]})},['store-id'],['o.store_id=$1'])
+ assert.deepEqual(result,{items:[],hasMore:false})
 })
