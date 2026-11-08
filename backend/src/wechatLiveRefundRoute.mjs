@@ -10,9 +10,10 @@ const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const requestKey=/^[A-Za-z0-9_-]{20,100}$/
 const fail=code=>Object.assign(Error(code),{code})
 const reply=(res,status,data)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(data))}
+export const refundNeedsReview=status=>['unknown','review','abnormal'].includes(status)
 const exposed=row=>({id:row.id,orderId:row.order_id,amountCents:Number(row.amount_cents),
  status:row.status,outRefundNo:row.out_refund_no,createdAt:row.created_at,
- updatedAt:row.updated_at,reviewRequired:['unknown','review','abnormal'].includes(row.status)})
+ updatedAt:row.updated_at,reviewRequired:refundNeedsReview(row.status)})
 async function readBody(req){
  let parts=[],size=0
  for await (const p of req){size+=p.length;if(size>65536)throw fail('too_large');parts.push(Buffer.from(p))}
@@ -94,7 +95,7 @@ export async function applyVerifiedRefund(pool,{refundId,storeId,observation,con
     "WHERE id=$1 AND payment_source='wechatpay:live' AND payment_status IN ('paid','partially_refunded','refunded')",
     [refund.order_id,refunded===total?'refunded':'partially_refunded'])
   }
-  return {...exposed(refund),status:next,reviewRequired:next==='review'||next==='abnormal'}
+  return {...exposed(refund),status:next,reviewRequired:refundNeedsReview(next)}
  })
 }
 async function reserveRefund(pool,store,orderId,subject,data){
