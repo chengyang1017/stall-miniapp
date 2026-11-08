@@ -71,7 +71,7 @@ export async function wechatLivePaymentRoute(req,res,url,pool,env=process.env,de
    const verifiedStatus=verifiedWechatOrderStatus(order)
    if(verifiedStatus){response(res,200,{paymentStatus:verifiedStatus,verified:true});return true}
    // Do not report a sandbox, simulated, or unrelated provider's payment as live WeChat money.
-   if(order.payment_status==='paid'||order.payment_source&&order.payment_source!=='wechatpay:live'){
+   if(order.payment_status!=='unpaid'||order.payment_source&&order.payment_source!=='wechatpay:live'){
     response(res,409,{error:'payment_source_mismatch'});return true
    }
    // A fresh unpaid order has no WeChat transaction until a prepay is stored.
