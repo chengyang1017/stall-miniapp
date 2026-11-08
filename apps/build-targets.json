@@ -82,7 +82,8 @@
     "storePresentation": "shared",
     "support": "shared",
     "supportCloud": "shared",
-    "util": "shared"
+    "util": "shared",
+    "wechatAbnormalReview": "merchant"
   },
   "targets": {
     "combined": {
