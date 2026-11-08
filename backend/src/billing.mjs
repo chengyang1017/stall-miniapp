@@ -6,6 +6,16 @@ function response(res,status,data){res.writeHead(status,headers);res.end(JSON.st
 function dateOk(v){return /^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T00:00:00Z'))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v&&v>='2000-01-01'&&v<='2100-12-31'}
 function cell(v){let s=String(v??'');if(/^[\s\u0000-\u001f]*[=+@-]/.test(s)||/^[\t\r\n]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
 const notice='此为内部订单核对账，成功退款按原订单日期统计，未扣除渠道手续费；并非微信支付官方结算账单。真实到账请以微信商户平台下载的交易和结算账单复核。'
+// Merchant-only, read-only evidence for late/abnormal verified live collections.
+// Never infer that a refund happened; refund_required is an outstanding review marker.
+export async function readAbnormalWechatCollections(client,params,where){
+ const {rows}=await client.query(`SELECT e.order_id AS "orderId",e.provider_event_id AS "transactionId",
+  e.amount_cents::text AS "amountCents",e.received_at AS "receivedAt"
+  FROM payment_events e JOIN orders o ON o.id=e.order_id
+  WHERE e.provider='wechatpay:live' AND e.event_type='refund_required' AND `+where.join(' AND ')+`
+  ORDER BY e.received_at DESC,e.id DESC LIMIT 51`,params)
+ return {items:rows.slice(0,50),hasMore:rows.length>50}
+}
 export async function billingRoute(req,res,url,pool){
  const m=/^\/v1\/merchant\/stores\/([a-z0-9][a-z0-9-]{1,62})\/billing(?:\/(export))?$/.exec(url.pathname)
  if(!m)return false
@@ -42,6 +52,7 @@ export async function billingRoute(req,res,url,pool){
   summary.refundPendingCents='0'
   summary.refundReviewCount=0
   summary.abnormalCollectionCents='0'
+  let abnormalCollections={items:[],hasMore:false}
   if(process.env.APP_ENV==='production'&&process.env.WECHAT_PAY_LIVE_ENABLED==='true'){
    const payments=await client.query(`SELECT
     COALESCE(SUM(r.amount_cents) FILTER(WHERE r.status='succeeded'),0)::text AS "refundedCents",
@@ -54,6 +65,7 @@ export async function billingRoute(req,res,url,pool){
     FROM payment_events e JOIN orders o ON o.id=e.order_id
     WHERE e.provider='wechatpay:live' AND e.event_type='refund_required' AND `+where.join(' AND '),params)
    summary.abnormalCollectionCents=anomalies.rows[0]?.abnormalCollectionCents||'0'
+   if(!m[2])abnormalCollections=await readAbnormalWechatCollections(client,params,where)
   }
   summary.netVerifiedCents=String(Number(summary.paidCents)-Number(summary.refundedCents))
   if(Object.values(summary).some(v=>!Number.isSafeInteger(Number(v))||Number(v)<0)){response(res,413,{error:'billing_amount_too_large'});return true}
@@ -81,7 +93,7 @@ export async function billingRoute(req,res,url,pool){
    else{res.writeHead(200,{'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename="'+filename+'"','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(csv)}
   }else{
    const last=items[items.length-1],nextCursor=hasMore?Buffer.from(JSON.stringify({f:fingerprint,id:last.id,at:last.cursorAt})).toString('base64url'):null
-   response(res,200,{all,from:all?null:from,to:all?null:to,summary,items:result,nextCursor,hasMore,notice})
+   response(res,200,{all,from:all?null:from,to:all?null:to,summary,items:result,nextCursor,hasMore,abnormalCollections,notice})
   }
  }finally{if(open)await client.query('ROLLBACK').catch(()=>{});client.release()}
  return true
