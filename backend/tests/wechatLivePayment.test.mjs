@@ -199,3 +199,21 @@ test('previously initiated payment still consults WeChat provider',async()=>{
  assert.equal(res.data.paymentStatus,'unpaid')
  assert.equal(res.data.tradeState,'NOTPAY')
 })
+
+test('GET rejects non-live paid and refunded states without querying provider',async()=>{
+ for(const status of ['paid','partially_refunded','refunded','cancelled']){
+  const pool={query:async sql=>{
+   if(sql.includes('FROM auth_sessions'))return {rows:[{external_subject:customer}]}
+   if(sql.includes('FROM orders o JOIN stores s'))return {rows:[{...order,payment_status:status,payment_source:null}]}
+   throw Error('should not reach prepay ledger or provider')
+  }}
+  const res=response()
+  const result=await wechatLivePaymentRoute(
+   {method:'GET',headers:{authorization:'Bearer '+'a'.repeat(40)}},
+   res,new URL('https://example.com/v1/stores/store-1/orders/'+orderId+'/wechat-pay'),
+   pool,env,{pay:{query:async()=>{throw Error('provider must not be called')}}})
+  assert.equal(result,true)
+  assert.equal(res.code,409)
+  assert.equal(res.data.error,'payment_source_mismatch')
+ }
+})
