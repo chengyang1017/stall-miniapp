@@ -48,12 +48,11 @@ export async function settleVerifiedOrderPayment(pool,{event,expectedProvider,ex
     if(!transaction)await db.query('COMMIT');active=false
     return {action:'refund_required',orderId:order.id,replayed:previous.rows.length>0}
   }
-  // A payment may succeed at Stripe after our 15-minute inventory hold has
-  // expired. Record the paid transaction durably for refund reconciliation,
-  // but NEVER mark the cancelled/expired order paid or re-reserve stock.
-  // This branch applies only to the explicitly isolated Stripe sandbox.
+  // Late, cancelled, expired, or cross-provider collections need manual review.
+  // Record verified funds without changing fulfillment, inventory or the original payment source.
   if(((event.provider==='stripe'&&event.mode==='sandbox')||(event.provider==='wechatpay'&&event.mode==='live'))&&
-    (order.payment_window_open!==true||order.fulfillment_status!=='new'||!['held','none'].includes(order.inventory_state)||order.payment_status!=='unpaid')){
+    (order.payment_window_open!==true||order.fulfillment_status!=='new'||!['held','none'].includes(order.inventory_state)||order.payment_status!=='unpaid'||
+     (event.provider==='wechatpay'&&event.mode==='live'&&order.payment_source!=null&&order.payment_source!=='wechatpay:live'))){
     const previous=await db.query(`SELECT order_id,amount_cents,event_type FROM payment_events
       WHERE provider=$1 AND provider_event_id=$2`,[provider,event.transactionId])
     if(previous.rows.length){
