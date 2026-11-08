@@ -38,6 +38,30 @@ the script fixes.
 
 ### Comparing restored data
 
+Save the two JSON inventory outputs as `source-inventory.json` and
+`target-inventory.json` in an **access-controlled local directory**, outside
+Git. On the first restore, **before applying pending migrations** to the target:
+
+```sh
+cd backend
+node scripts/compare-migration-inventories.mjs \
+  /secure/source-inventory.json /secure/target-inventory.json
+```
+
+The comparator runs **entirely offline**. It reports missing/extra tables,
+row-count mismatches, migration-ledger summary differences, extension versions
+and object-reference count differences. Exit code 0 means these limited checks
+match; exit code 2 means a discrepancy; exit code 1 means invalid or unreadable
+input. The tool does not connect to Neon, Render, Tencent Cloud or S3, and does
+not move or change any data.
+
+**Do not treat a matching report as proof of all data being identical.** Table
+counts and the count digest cannot detect changed row values, missing S3
+objects, role/privilege differences, or inconsistent exports while writes
+continue. Obtain a consistent backup and test actual restoration separately.
+
+
+
 After restoring a consistent PostgreSQL dump into an **isolated** target database, run
 the same read-only inventory against the target using its own expected hostname.
 Compare the `tables` entries and `tableCountSha256` fields. A different
