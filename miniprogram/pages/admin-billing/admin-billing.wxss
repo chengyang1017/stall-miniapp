@@ -19,4 +19,8 @@
 .bill-order-bottom,.bill-id { color:var(--brand-muted); font-size:22rpx; margin:8rpx 0; }
 .bill-money { font-size:30rpx; font-weight:700; color:var(--brand-primary); }
 
+.bill-anomaly-section { margin:24rpx 0; }
+.bill-anomaly-row { background:#fff; border:1rpx solid #eadcc7; border-radius:18rpx; padding:20rpx 24rpx; margin-bottom:12rpx; font-size:25rpx; }
+.bill-anomaly-row .bill-id { overflow-wrap:anywhere; }
+
 @import "../../styles/merchant-theme.wxss";
