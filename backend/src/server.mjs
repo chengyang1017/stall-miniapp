@@ -15,6 +15,7 @@ import { stripeTestPaymentRoute } from './stripeTestPaymentRoute.mjs'
 import { wechatLivePaymentRoute } from './wechatLivePaymentRoute.mjs'
 import { wechatLiveRefundRoute } from './wechatLiveRefundRoute.mjs'
 import { wechatAbnormalReviewRoute } from './wechatAbnormalReview.mjs'
+import { wechatBillReconciliationRoute } from './wechatBillReconciliation.mjs'
 import { wechatLiveReceiptRoute } from './wechatLiveReceipt.mjs'
 import { startWechatRefundReconciliation } from './wechatLiveRefundReconcile.mjs'
 import { stripeTestReturnRoute } from './stripeTestReturnRoute.mjs'
@@ -113,6 +114,7 @@ const server = http.createServer(async (req, res) => {
     if (await wechatLiveReceiptRoute(req,res,url,pool)) return
     if (await wechatLiveRefundRoute(req,res,url,pool)) return
     if (await wechatAbnormalReviewRoute(req,res,url,pool)) return
+    if (await wechatBillReconciliationRoute(req,res,url,pool)) return
     if (await wechatLivePaymentRoute(req,res,url,pool)) return
     if (await stripeTestPaymentRoute(req,res,url,pool)) return
     if (await stagingPaymentRoute(req,res,url,pool)) return
