@@ -13,6 +13,11 @@ on:
       - 'miniprogram/pages/admin-orders/**'
       - 'miniprogram/pages/admin-billing/**'
       - '.github/workflows/wechat-live-delivery.yml'
+  pull_request:
+    paths:
+      - 'backend/src/wechatLive*.mjs'
+      - 'backend/tests/wechatLive*.test.mjs'
+      - '.github/workflows/wechat-live-delivery.yml'
   workflow_dispatch:
 permissions:
   contents: read
