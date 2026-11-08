@@ -74,6 +74,10 @@ export async function wechatLivePaymentRoute(req,res,url,pool,env=process.env,de
    if(order.payment_status==='paid'||order.payment_source&&order.payment_source!=='wechatpay:live'){
     response(res,409,{error:'payment_source_mismatch'});return true
    }
+   // A fresh unpaid order has no WeChat transaction until a prepay is stored.
+   // Avoid querying the provider for a trade number that was never submitted.
+   const prepay=await pool.query('SELECT 1 FROM wechat_live_prepays WHERE order_id=$1 AND mchid=$2',[id,config.mchid])
+   if(!prepay.rows.length){response(res,200,{paymentStatus:'unpaid',tradeState:'NOT_INITIATED',verified:true});return true}
    const tx=await pay.query(id)
    if(tx?.out_trade_no!==requestKey(order)||tx?.mchid!==config.mchid||tx?.appid!==config.appId)throw Error('wechatpay_query_mismatch')
    if(tx.trade_state==='SUCCESS'){
