@@ -237,7 +237,10 @@ Page({
       this.setData({livePaymentText:'正在通过服务器核实支付结果…'})
       const status=await queryWechatPayment(cfg,id)
       if(!current())return
-      if(status==='paid'){this.setData({livePaymentText:'付款已核实'});await this.onShow()}
+      if(['paid','partially_refunded','refunded'].includes(status)){
+        this.setData({livePaymentText:status==='refunded'?'该订单已全额退款':status==='partially_refunded'?'该订单已部分退款':'付款已核实'})
+        await this.onShow()
+      }
       else this.setData({livePaymentText:status==='refund_required'?'该笔付款需商家核对退款，请联系客服':'付款尚未确认。如已扣款，请勿重复支付，稍后刷新核实。'})
     }catch(_){if(current())this.setData({livePaymentText:'支付结果未确认，请先刷新状态；如已扣款请勿再次付款。'})}
     finally{if(current())this.setData({livePaymentBusy:false})}
@@ -250,7 +253,10 @@ Page({
     try{
       const status=await queryWechatPayment(cfg,id)
       if(!current())return
-      if(status==='paid'){this.setData({livePaymentText:'付款已核实'});await this.onShow()}
+      if(['paid','partially_refunded','refunded'].includes(status)){
+        this.setData({livePaymentText:status==='refunded'?'该订单已全额退款':status==='partially_refunded'?'该订单已部分退款':'付款已核实'})
+        await this.onShow()
+      }
       else this.setData({livePaymentText:status==='refund_required'?'到账异常，请联系商家处理退款':'暂未确认到账；如已经扣款，请勿重复支付。'})
     }catch(_){if(current())this.setData({livePaymentText:'暂时无法验证支付状态，请稍后再试。'})}
     finally{if(current())this.setData({livePaymentBusy:false})}
