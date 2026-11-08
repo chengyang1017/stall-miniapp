@@ -381,7 +381,7 @@ test('merchant refund button eligibility requires trusted unreserved collected b
    if(sql.includes('FROM sandbox_payment_attempts WHERE order_id'))return {rows:[]}
    if(sql.includes('FROM stripe_test_refund_jobs WHERE order_id'))return {rows:[]}
    if(sql.includes('FROM sandbox_payment_receipts WHERE order_id'))return {rows:[]}
-   if(sql.includes('FROM payment_events e')&&sql.includes('AS "canRefund"')){balanceQueries++;return {rows:[{canRefund:eligible}]}}
+   if(sql.includes('SELECT GREATEST(0,')&&sql.includes('AS "remaining"')){balanceQueries++;return {rows:[{remaining:eligible?1000:0}]}}
    throw Error('unexpected query: '+sql)
   }}
   const response=res()
@@ -402,7 +402,7 @@ test('merchant status does not advertise refunds when Sandbox refund feature is 
    if(sql.includes('FROM sandbox_payment_attempts WHERE order_id'))return {rows:[]}
    if(sql.includes('FROM stripe_test_refund_jobs WHERE order_id'))return {rows:[]}
    if(sql.includes('FROM sandbox_payment_receipts WHERE order_id'))return {rows:[]}
-   if(sql.includes('FROM payment_events e')&&sql.includes('AS "canRefund"'))return {rows:[{canRefund:false}]}
+   if(sql.includes('SELECT GREATEST(0,')&&sql.includes('AS "remaining"'))return {rows:[{remaining:0}]}
    throw Error('unexpected query: '+sql)
   }}
   const response=res()
