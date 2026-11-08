@@ -89,6 +89,28 @@ webhook/scheduler configuration. Test `pg_restore` to a fresh isolated Tencent
 PostgreSQL instance, verify exact table counts and selected record checksums,
 run approved pending migrations, and rehearse rollback/restore before cutover.
 
+## Backup scripts and pairing (audit before restore)
+
+Existing operator scripts:
+
+- `backend/scripts/backup-db.mjs`: uses `pg_dump -Fc` and validates archive readability with `pg_restore --list`. It produces a SHA256 manifest but **does not test restore success**.
+- `backend/scripts/backup-r2.mjs`: downloads R2 objects and writes a hash manifest. **Important: this script ALSO writes to the source PostgreSQL database**, including discovered-image registration and backup retention pins. It is **NOT read-only** and must not be run without source identity, merchant approval, write permissions and a controlled retention plan.
+- `backend/scripts/verify-db-backup.mjs` and `backend/scripts/verify-r2-backup.mjs`: independently check local archived bytes, sizes, SHA256 and supported manifest structure without writing to DB/R2.
+- `backend/scripts/verify-paired-backups.mjs`: new **offline-only** check proving that the two v2 manifests explicitly reference the same `BACKUP_SET_ID`, and their declared files/object byte totals agree. It **never** reads or restores object bytes and cannot prove backup completeness.
+
+After **authorized** backup creation and independent actual-file verification, run the pairing audit on protected local manifest paths:
+
+```sh
+cd backend
+node scripts/verify-db-backup.mjs /secure/backups/stall-YYYY.dump
+node scripts/verify-r2-backup.mjs /secure/backups/r2-YYYY
+node scripts/verify-paired-backups.mjs \
+  /secure/backups/stall-YYYY.dump.manifest.json \
+  /secure/backups/r2-YYYY/manifest.json
+```
+
+The source DB and R2 backup scripts need the **same explicitly supplied** `BACKUP_SET_ID` at creation time. Never log or share full connection strings. Check `minutesBetweenCompletions` for drift; same ID does **not** make the snapshots atomic. Under approved maintenance conditions, freeze writes or use an appropriate synchronized backup strategy and verify all referenced files. **Do not turn on image-cleanup execution**, and do not delete old sources until the real isolated restore, business checks, refund reconciliation and merchant sign-off are complete.
+
 ## Known constraints (2026-11-08, read-only audit)
 
 - Render `stall-miniapp` follows GitHub `main` and reported database role
