@@ -132,3 +132,33 @@ test('GET route returns verified refund status without a new payment provider qu
   assert.equal(queries.length,2)
  }
 })
+
+test('live prepay rejects unpaid orders tagged with another provider',async()=>{
+ for(const paymentSource of ['stripe:sandbox','staging_simulated']){
+  const calls=[]
+  const db={query:async(sql)=>{
+   calls.push(sql)
+   if(sql==='BEGIN'||sql==='ROLLBACK')return {rows:[]}
+   if(sql.includes('FROM orders o JOIN stores s'))return {rows:[{
+    ...order,store_id:'99999999-9999-4999-8999-999999999999',slug:'store-1',
+    payment_status:'unpaid',payment_source:paymentSource,fulfillment_status:'new',
+    inventory_state:'held',created_at:new Date(),inventory_expires_at:new Date(Date.now()+600000)
+   }]}
+   throw Error('cross-provider prepay must not read or write prepay ledger')
+  },release(){}}
+  const pool={query:async(sql)=>{
+   assert.match(sql,/FROM auth_sessions/)
+   return {rows:[{external_subject:customer}]}
+  },connect:async()=>db}
+  const res=response()
+  const handled=await wechatLivePaymentRoute(
+   {method:'POST',headers:{authorization:'Bearer '+'a'.repeat(40)}},
+   res,new URL('https://example.com/v1/stores/store-1/orders/'+orderId+'/wechat-pay'),
+   pool,env,{pay:{prepay:()=>{throw Error('must not create payment')}}})
+  assert.equal(handled,true)
+  assert.equal(res.code,409)
+  assert.equal(res.data.error,'order_not_payable')
+  assert.ok(calls.includes('ROLLBACK'))
+  assert.equal(calls.some(sql=>sql.includes('wechat_live_prepays')),false)
+ }
+})
