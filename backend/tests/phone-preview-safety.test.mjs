@@ -75,6 +75,15 @@ for(const [name,change]of [
  ['tourist app',{appId:'touristappid'}],['missing store',{storeSlug:''}],['secret field',{appSecret:'SYNTHETIC_REJECTED'}],['role field',{role:'owner'}]
 ])test('phone profile rejects '+name,()=>assert.throws(()=>validatePhoneProfile({...profile,...change})))
 
+test('phone preview includes both payment flags and never enables real WeChat Pay',()=>{
+ const generic=cloudSource(profile)
+ assert.match(generic,/LIVE_WECHAT_PAY_ENABLED:boolean=false/)
+ assert.match(generic,/PAYMENT_SANDBOX_UI_ENABLED:boolean=false/)
+ const stripeTest=cloudSource({...profile,apiBase:'https://stall-miniapp-stripe-test.onrender.com'})
+ assert.match(stripeTest,/LIVE_WECHAT_PAY_ENABLED:boolean=false/)
+ assert.match(stripeTest,/PAYMENT_SANDBOX_UI_ENABLED:boolean=true/)
+ assert.doesNotMatch(stripeTest,/LIVE_WECHAT_PAY_ENABLED:boolean=true/)
+})
 test('preview bootstrap drops old sessions, preserves carts and is repeatable',()=>{
  const f=fixture(),cart=clone(f.storage.get('stall_cart_v1'));f.runtime.initializePhonePreview()
  assert.equal(f.storage.has('stall_server_session_v1'),false);assert.deepEqual(clone(f.cfg.getCloudContext()),profileContext())
