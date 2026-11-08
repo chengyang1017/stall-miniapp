@@ -35,7 +35,7 @@ function poolFactory(role='owner',evidence=true){
    if(sql.includes('FROM auth_sessions'))return {rows:[{external_subject:'owner-subject'}]}
    if(sql.includes('FROM merchant_members'))return {rows:[role?{id:store,role,slug:'store-1'}:undefined].filter(Boolean)}
    if(sql.includes('FROM payment_events e'))return {rows:evidence?[{id:event}]:[]}
-   if(sql.includes('FROM wechat_abnormal_collection_reviews'))return {rows:[...records.values()]}
+   if(sql.includes('wechat_abnormal_collection_reviews'))return {rows:[...records.values()]}
    throw Error('unexpected pool SQL')
   },connect:async()=>client
  }}
