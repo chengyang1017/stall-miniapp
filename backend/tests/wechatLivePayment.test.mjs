@@ -217,3 +217,22 @@ test('GET rejects non-live paid and refunded states without querying provider',a
   assert.equal(res.data.error,'payment_source_mismatch')
  }
 })
+
+test('official REFUND state is never presented as a fresh unpaid checkout',async()=>{
+ const pool={query:async sql=>{
+  if(sql.includes('FROM auth_sessions'))return {rows:[{external_subject:customer}]}
+  if(sql.includes('FROM orders o JOIN stores s'))return {rows:[{...order,payment_status:'unpaid',payment_source:null}]}
+  if(sql.includes('FROM wechat_live_prepays'))return {rows:[{exists:1}]}
+  throw Error('unexpected query')
+ }}
+ let calls=0
+ const res=response()
+ const handled=await wechatLivePaymentRoute(
+  {method:'GET',headers:{authorization:'Bearer '+'a'.repeat(40)}},
+  res,new URL('https://example.com/v1/stores/store-1/orders/'+orderId+'/wechat-pay'),
+  pool,env,{pay:{query:async()=>{calls++;return {out_trade_no:tradeNo(orderId),appid,mchid,trade_state:'REFUND'}}}})
+ assert.equal(handled,true)
+ assert.equal(calls,1)
+ assert.equal(res.code,200)
+ assert.deepEqual(res.data,{paymentStatus:'refund_required',tradeState:'REFUND',verified:true})
+})
