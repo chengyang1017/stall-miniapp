@@ -23,7 +23,7 @@ export function abnormalCollectionsCsv(rows){
  return '\\uFEFF'+lines.map(line=>line.map(cell).join(',')).join('\\r\\n')+'\\r\\n'
 }
 export async function billingRoute(req,res,url,pool){
- const m=/^\/v1\/merchant\/stores\/([a-z0-9][a-z0-9-]{1,62})\/billing(?:\/(export))?$/.exec(url.pathname)
+ const m=/^\/v1\/merchant\/stores\/([a-z0-9][a-z0-9-]{1,62})\/billing(?:\/(export|abnormal-export))?$/.exec(url.pathname)
  if(!m)return false
  if(req.method!=='GET'){response(res,405,{error:'method_not_allowed'});return true}
  const who=await authenticate(pool,req);if(!who){response(res,401,{error:'login_required'});return true}
