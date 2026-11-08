@@ -56,7 +56,8 @@ test('customer profile static links stay in customer build', () => {
   for (const match of wxml.matchAll(/<navigator\b[^>]*\burl\s*=\s*["'](\/pages\/[^"'{}]+)["']/g)) {
     assert.ok(customer.has(target(match[1])), match[1])
   }
-  assert.match(wxml, /bindtap="openOrders"/)
+  // The profile no longer exposes an order shortcut; Orders remain accessible via their registered tab.
+  assert.doesNotMatch(wxml, /bindtap="openOrders"/)
   assert.match(ts, /wx\.switchTab\(\{\s*url:\s*'\/pages\/orders\/orders'/)
   assert.equal(tabs.has('pages/orders/orders'),true);assert.ok(tabs.has('pages/category/category'))
 })
