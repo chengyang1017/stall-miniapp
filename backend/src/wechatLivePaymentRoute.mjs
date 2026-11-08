@@ -18,12 +18,13 @@ const isUuid=value=>new RegExp('^'+uuid+'$').test(value)
 const requestKey=order=>tradeNo(order.id)
 async function scopedOrder(db,slug,id,subject,lock=false){
  const sql=`SELECT o.id,o.store_id,o.customer_subject,o.total_cents,o.currency,o.created_at,o.inventory_expires_at,
- o.inventory_state,o.payment_status,o.fulfillment_status,s.slug
+ o.inventory_state,o.payment_status,o.payment_source,o.fulfillment_status,s.slug
  FROM orders o JOIN stores s ON s.id=o.store_id
  WHERE o.id=$1 AND o.customer_subject=$2 AND s.slug=$3 AND s.is_active=true`+(lock?' FOR UPDATE OF o':'')
  const {rows}=await db.query(sql,[id,subject,slug])
  return rows[0]||null
 }
+export const verifiedWechatPaidOrder=order=>order?.payment_status==='paid'&&order?.payment_source==='wechatpay:live'
 async function trustedSettlement(pool,tx,config,order){
  // Only call after a verified WeChat API response or verified notification.
  const confirmed=trustedWechatSuccess(tx,config,order)
@@ -64,7 +65,11 @@ export async function wechatLivePaymentRoute(req,res,url,pool,env=process.env,de
   if(req.method==='GET'){
    const order=await scopedOrder(pool,match[1],id,subject)
    if(!order){response(res,404,{error:'order_not_found'});return true}
-   if(order.payment_status==='paid'){response(res,200,{paymentStatus:'paid',verified:true});return true}
+   if(verifiedWechatPaidOrder(order)){response(res,200,{paymentStatus:'paid',verified:true});return true}
+   // Do not report a sandbox, simulated, or unrelated provider's payment as live WeChat money.
+   if(order.payment_status==='paid'||order.payment_source&&order.payment_source!=='wechatpay:live'){
+    response(res,409,{error:'payment_source_mismatch'});return true
+   }
    const tx=await pay.query(id)
    if(tx?.out_trade_no!==requestKey(order)||tx?.mchid!==config.mchid||tx?.appid!==config.appId)throw Error('wechatpay_query_mismatch')
    if(tx.trade_state==='SUCCESS'){
