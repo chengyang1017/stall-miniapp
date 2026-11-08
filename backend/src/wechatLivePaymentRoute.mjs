@@ -92,7 +92,9 @@ export async function wechatLivePaymentRoute(req,res,url,pool,env=process.env,de
    const expiresAt=Math.min(Date.parse(order.created_at)+15*60000,
      order.inventory_expires_at?Date.parse(order.inventory_expires_at):Infinity)
    if(order.currency!=='CNY'||!Number.isSafeInteger(Number(order.total_cents))||
-    Number(order.total_cents)<=0||order.payment_status!=='unpaid'||order.fulfillment_status!=='new'||
+    Number(order.total_cents)<=0||order.payment_status!=='unpaid'||
+    (order.payment_source!==null&&order.payment_source!==undefined&&order.payment_source!=='wechatpay:live')||
+    order.fulfillment_status!=='new'||
     !['none','held'].includes(order.inventory_state)||expiresAt<Date.now()+65000){
     await db.query('ROLLBACK');response(res,409,{error:'order_not_payable'});return true
    }
