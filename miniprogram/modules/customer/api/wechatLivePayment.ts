@@ -28,8 +28,8 @@ export async function prepareWechatPayment(cfg:Config,orderId:string):Promise<{
   throw Error('wechatpay_invalid_prepay')
  return {timeStamp:value.timeStamp,nonceStr:value.nonceStr,package:value.package,signType:'RSA',paySign:value.paySign}
 }
-export async function queryWechatPayment(cfg:Config,orderId:string):Promise<'paid'|'unpaid'|'refund_required'>{
+export async function queryWechatPayment(cfg:Config,orderId:string):Promise<'paid'|'unpaid'|'refund_required'|'partially_refunded'|'refunded'>{
  const data=await liveRequest(cfg,orderId,'GET')
- if(data.verified!==true||!['paid','unpaid','refund_required'].includes(data.paymentStatus))throw Error('wechatpay_unverified_status')
+ if(data.verified!==true||!['paid','unpaid','refund_required','partially_refunded','refunded'].includes(data.paymentStatus))throw Error('wechatpay_unverified_status')
  return data.paymentStatus
 }

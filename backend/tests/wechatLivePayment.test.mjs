@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {createCipheriv,createSign,createVerify,generateKeyPairSync} from 'node:crypto'
 import {wechatPayLiveConfig,tradeNo,orderIdFromTradeNo,verifyWechatSignature,decodeWechatNotification,trustedWechatSuccess,wechatPayV3} from '../src/wechatPayV3.mjs'
-import {wechatLivePaymentRoute,verifiedWechatPaidOrder} from '../src/wechatLivePaymentRoute.mjs'
+import {wechatLivePaymentRoute,verifiedWechatPaidOrder,verifiedWechatOrderStatus} from '../src/wechatLivePaymentRoute.mjs'
 
 const merchant=generateKeyPairSync('rsa',{modulusLength:2048})
 const platform=generateKeyPairSync('rsa',{modulusLength:2048})
@@ -102,4 +102,33 @@ test('live paid shortcut requires a verified live WeChat payment source',()=>{
  assert.equal(verifiedWechatPaidOrder({payment_status:'paid',payment_source:null}),false)
  assert.equal(verifiedWechatPaidOrder({payment_status:'unpaid',payment_source:'wechatpay:live'}),false)
  assert.equal(verifiedWechatPaidOrder(null),false)
+})
+
+test('payment lookup preserves trusted partial and full refund states',()=>{
+ assert.equal(verifiedWechatOrderStatus({payment_status:'paid',payment_source:'wechatpay:live'}),'paid')
+ assert.equal(verifiedWechatOrderStatus({payment_status:'partially_refunded',payment_source:'wechatpay:live'}),'partially_refunded')
+ assert.equal(verifiedWechatOrderStatus({payment_status:'refunded',payment_source:'wechatpay:live'}),'refunded')
+ assert.equal(verifiedWechatOrderStatus({payment_status:'refunded',payment_source:'stripe:sandbox'}),null)
+ assert.equal(verifiedWechatOrderStatus({payment_status:'unpaid',payment_source:'wechatpay:live'}),null)
+})
+
+test('GET route returns verified refund status without a new payment provider query',async()=>{
+ for(const status of ['partially_refunded','refunded']){
+  const queries=[]
+  const pool={query:async(sql)=>{
+   queries.push(sql)
+   if(sql.includes('FROM auth_sessions'))return {rows:[{external_subject:customer}]}
+   if(sql.includes('FROM orders o JOIN stores s'))return {rows:[{...order,payment_status:status,payment_source:'wechatpay:live'}]}
+   throw Error('unexpected query')
+  }}
+  const res=response()
+  const url=new URL('https://example.com/v1/stores/store-1/orders/'+orderId+'/wechat-pay')
+  const handled=await wechatLivePaymentRoute(
+   {method:'GET',headers:{authorization:'Bearer '+'a'.repeat(40)}},
+   res,url,pool,env,{pay:{query:()=>{throw Error('refund status must not be re-settled')}}})
+  assert.equal(handled,true)
+  assert.equal(res.code,200)
+  assert.deepEqual(res.data,{paymentStatus:status,verified:true})
+  assert.equal(queries.length,2)
+ }
 })
