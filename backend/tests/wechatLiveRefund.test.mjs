@@ -62,13 +62,13 @@ test('refund callback authenticates REFUND.SUCCESS before decryption',()=>{
  assert.throws(()=>decodeWechatNotification(event,signedHeaders(event),cfg),/wechatpay_invalid_notification/)
  assert.throws(()=>decodeWechatNotification(event,{...signedHeaders(event),'wechatpay-signature':'fake'},cfg),/wechatpay_invalid_signature/)
 })
-function mockPool(state='processing'){
+function mockPool(state='processing',priorEvent=null){
  const refund={...original,status:state},queries=[]
  const db={query:async(sql,params)=>{
   queries.push({sql,params})
   if(sql==='BEGIN'||sql==='COMMIT'||sql==='ROLLBACK'||sql.startsWith('SET LOCAL'))return {rows:[],rowCount:0}
   if(sql.includes('SELECT r.*,o.total_cents'))return {rows:[refund]}
-  if(sql.includes('SELECT refund_id FROM wechat_live_refund_events'))return {rows:[]}
+  if(sql.includes('FROM wechat_live_refund_events WHERE provider_event_id'))return {rows:priorEvent?[priorEvent]:[]}
   if(sql.includes('INSERT INTO wechat_live_refund_events'))return {rows:[],rowCount:1}
   if(sql.startsWith('UPDATE wechat_live_refunds SET status='))return {rows:[],rowCount:1}
   if(sql.includes('COALESCE(SUM(amount_cents)'))return {rows:[{total:'5000'}]}
@@ -124,4 +124,18 @@ test('unknown live refund outcome remains marked for merchant review on subseque
  for(const status of ['pending','submitting','processing','succeeded','closed']){
   assert.equal(refundNeedsReview(status),false)
  }
+})
+
+test('replayed refund callback requires identical provider event identity',async()=>{
+ const prior={refund_id:refundId,event_type:'REFUND.SUCCESS',observed_status:'SUCCESS'}
+ const replay=mockPool('succeeded',prior)
+ const ok=await applyVerifiedRefund(replay,{refundId,storeId:original.store_id,config:cfg,
+  observation:observed('SUCCESS'),eventId:'EVENT_SAME',eventType:'REFUND.SUCCESS'})
+ assert.equal(ok.status,'succeeded')
+ assert.equal(replay.queries.some(q=>q.sql.startsWith('UPDATE orders SET payment_status=')),false)
+ const altered=mockPool('succeeded',{...prior,event_type:'REFUND.CLOSED',observed_status:'CLOSED'})
+ await assert.rejects(()=>applyVerifiedRefund(altered,{refundId,storeId:original.store_id,config:cfg,
+  observation:observed('SUCCESS'),eventId:'EVENT_SAME',eventType:'REFUND.SUCCESS'}),/wechatpay_event_reused/)
+ assert.equal(altered.queries.some(q=>q.sql==='ROLLBACK'),true)
+ assert.equal(altered.queries.some(q=>q.sql.startsWith('UPDATE orders SET payment_status=')),false)
 })
