@@ -16,7 +16,9 @@ on:
   pull_request:
     paths:
       - 'backend/src/wechatLive*.mjs'
+      - 'backend/src/billing.mjs'
       - 'backend/tests/wechatLive*.test.mjs'
+      - 'miniprogram/pages/admin-billing/**'
       - '.github/workflows/wechat-live-delivery.yml'
   workflow_dispatch:
 permissions:

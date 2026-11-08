@@ -12,7 +12,7 @@ function cell(v:unknown):string{let s=String(v==null?'':v);if(/^[\s\u0000-\u001f
 const cloudStatuses:Record<string,string>={new:'新订单',accepted:'已接单',preparing:'备货中',delivering:'配送中',delivered:'已送达',cancelled:'已取消',abnormal:'配送异常'}
 Page({
  serial:0,context:'',cursor:'',
- data:{livePayEnabled:LIVE_WECHAT_PAY_ENABLED,day:localDay(),allDates:false,rows:[] as any[],count:0,pending:0,delivered:0,cancelled:0,orderValue:'0.00',received:'0.00',refunded:'0.00',pendingRefunds:'0.00',netReceived:'0.00',abnormalCollections:'0.00',reviewRefunds:0,unpaid:'0.00',notice:'',cloudMode:false,loading:false,loadingMore:false,exporting:false,error:'',moreError:'',hasMore:false},
+ data:{livePayEnabled:LIVE_WECHAT_PAY_ENABLED,day:localDay(),allDates:false,rows:[] as any[],count:0,pending:0,delivered:0,cancelled:0,orderValue:'0.00',received:'0.00',refunded:'0.00',pendingRefunds:'0.00',netReceived:'0.00',abnormalCollections:'0.00',abnormalRecords:[] as any[],abnormalRecordsMore:false,reviewRefunds:0,unpaid:'0.00',notice:'',cloudMode:false,loading:false,loadingMore:false,exporting:false,error:'',moreError:'',hasMore:false},
  onShow(){this.refresh()},onUnload(){this.serial++},
  async onPullDownRefresh(){try{if(!this.data.exporting)await this.refresh()}finally{wx.stopPullDownRefresh()}},
  chooseDay(e:any){if(this.data.exporting)return;this.setData({day:String(e.detail.value),allDates:false});this.refresh()},
@@ -24,7 +24,7 @@ Page({
  async loadPage(reset:boolean):Promise<void>{
   if(this.data.exporting)return
   const cfg=getCloudContext(),context=businessContextKey(),serial=++this.serial;this.context=context
-  if(reset){this.cursor='';this.setData({rows:[],count:0,pending:0,delivered:0,cancelled:0,orderValue:'0.00',received:'0.00',refunded:'0.00',pendingRefunds:'0.00',netReceived:'0.00',abnormalCollections:'0.00',reviewRefunds:0,unpaid:'0.00',cloudMode:!!cfg,loading:!!cfg,loadingMore:false,error:'',moreError:'',hasMore:false,notice:cfg?'云端订单核对，真实支付按服务端核验记录计算；不是官方结算账单。':'本机演示订单，确认收款为零。'})}
+  if(reset){this.cursor='';this.setData({rows:[],count:0,pending:0,delivered:0,cancelled:0,orderValue:'0.00',received:'0.00',refunded:'0.00',pendingRefunds:'0.00',netReceived:'0.00',abnormalCollections:'0.00',abnormalRecords:[] as any[],abnormalRecordsMore:false,reviewRefunds:0,unpaid:'0.00',cloudMode:!!cfg,loading:!!cfg,loadingMore:false,error:'',moreError:'',hasMore:false,notice:cfg?'云端订单核对，真实支付按服务端核验记录计算；不是官方结算账单。':'本机演示订单，确认收款为零。'})}
   else this.setData({loadingMore:true,moreError:''})
   try{
    if(cfg){
@@ -33,7 +33,14 @@ Page({
     if(!r?.summary||!Array.isArray(r.items)||typeof r.hasMore!=='boolean')throw Error('invalid_billing_response')
     const x=r.summary,rows=r.items.map((o:any)=>({id:o.id,date:localDay(o.createdAt),time:localTime(o.createdAt),name:'',items:o.itemsText,amount:yuan(Number(o.totalCents)),payment:paymentLabel(o),status:cloudStatuses[o.fulfillmentStatus]||'状态未识别'}))
     const seen=new Set(this.data.rows.map(o=>o.id)),add=rows.filter((o:any)=>!seen.has(o.id))
-    const update:Record<string,any>={count:Number(x.orderCount),pending:Number(x.pendingCount),delivered:Number(x.deliveredCount),cancelled:Number(x.cancelCount),orderValue:yuan(Number(x.orderCents)),received:yuan(Number(x.paidCents||0)),refunded:yuan(Number(x.refundedCents||0)),pendingRefunds:yuan(Number(x.refundPendingCents||0)),netReceived:yuan(Number(x.netVerifiedCents||0)),abnormalCollections:yuan(Number(x.abnormalCollectionCents||0)),reviewRefunds:Number(x.refundReviewCount||0),unpaid:yuan(Number(x.unpaidCents)),hasMore:r.hasMore,notice:r.notice}
+    const anomalies=r.abnormalCollections
+    if(anomalies!==undefined&&(!anomalies||!Array.isArray(anomalies.items)||typeof anomalies.hasMore!=='boolean'))throw Error('invalid_billing_anomalies')
+    const abnormalRecords=(anomalies?.items||[]).slice(0,10).map((e:any)=>({
+      orderId:String(e.orderId||''),transactionId:String(e.transactionId||''),
+      amount:yuan(Number(e.amountCents||0)),
+      date:localDay(String(e.receivedAt||'')),time:localTime(String(e.receivedAt||''))
+    }))
+    const update:Record<string,any>={count:Number(x.orderCount),pending:Number(x.pendingCount),delivered:Number(x.deliveredCount),cancelled:Number(x.cancelCount),orderValue:yuan(Number(x.orderCents)),received:yuan(Number(x.paidCents||0)),refunded:yuan(Number(x.refundedCents||0)),pendingRefunds:yuan(Number(x.refundPendingCents||0)),netReceived:yuan(Number(x.netVerifiedCents||0)),abnormalCollections:yuan(Number(x.abnormalCollectionCents||0)),reviewRefunds:Number(x.refundReviewCount||0),unpaid:yuan(Number(x.unpaidCents)),hasMore:r.hasMore,abnormalRecords,abnormalRecordsMore:!!anomalies&&(anomalies.hasMore||anomalies.items.length>10),notice:r.notice}
     if(reset)update.rows=rows;else add.forEach((o:any,i:number)=>{update['rows['+(this.data.rows.length+i)+']']=o})
     this.cursor=r.nextCursor||'';this.setData(update)
    }else{

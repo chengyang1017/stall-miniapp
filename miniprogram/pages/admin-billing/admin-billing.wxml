@@ -19,6 +19,16 @@
     <view class="bill-stat"><text>待确认退款金额</text><view>¥{{pendingRefunds}}</view></view>
     <view class="bill-stat"><text>异常到账待处理</text><view>¥{{abnormalCollections}}</view></view>
   </view>
+  <view wx:if="{{cloudMode && livePayEnabled && abnormalRecords.length && !error}}" class="bill-anomaly-section">
+    <view class="bill-section">异常到账记录（最近 {{abnormalRecords.length}} 笔）</view>
+    <view class="bill-warning">这些是需要核对的收款记录，并不代表已经退款。请以微信商户平台的交易记录为准。</view>
+    <view wx:for="{{abnormalRecords}}" wx:key="transactionId" class="bill-anomaly-row">
+      <view class="bill-order-top"><text>{{item.date}} {{item.time}}</text><text class="bill-money">¥{{item.amount}}</text></view>
+      <view class="bill-id">订单：{{item.orderId}}</view>
+      <view class="bill-id">微信交易号：{{item.transactionId}}</view>
+    </view>
+    <view wx:if="{{abnormalRecordsMore}}" class="bill-warning">只显示最近 10 笔。其余异常到账请在微信商户平台核对。</view>
+  </view>
   <view wx:if="{{cloudMode && livePayEnabled && reviewRefunds}}" class="bill-warning">需人工复核的退款 {{reviewRefunds}} 笔；请到订单页核对。</view>
   <view class="bill-warning">{{notice}} 即使订单已送达，也不代表已付款。</view>
   <view class="bill-section"><text>订单明细（已加载 {{rows.length}} / {{count}}）</text><button disabled="{{exporting}}" size="mini" type="primary" bindtap="exportCsv">{{exporting ? '导出中…' : '导出账单（CSV）'}}</button></view>
