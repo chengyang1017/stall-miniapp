@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {createSign,generateKeyPairSync} from 'node:crypto'
 import {wechatPayLiveConfig,wechatPayV3,tradeNo,decodeWechatNotification} from '../src/wechatPayV3.mjs'
-import {wechatLiveRefundRoute,applyVerifiedRefund} from '../src/wechatLiveRefundRoute.mjs'
+import {wechatLiveRefundRoute,applyVerifiedRefund,refundNeedsReview} from '../src/wechatLiveRefundRoute.mjs'
 const merchant=generateKeyPairSync('rsa',{modulusLength:2048})
 const platform=generateKeyPairSync('rsa',{modulusLength:2048})
 const orderId='12345678-1234-4234-8234-123456789abc', refundId='4d965111-853b-4525-9530-357163283946'
@@ -115,4 +115,13 @@ test('disabled refund API never touches database',async()=>{
   {...env,WECHAT_PAY_LIVE_REFUNDS_ENABLED:'false'})
  assert.equal(handled,true)
  assert.equal(res.status,404)
+})
+
+test('unknown live refund outcome remains marked for merchant review on subsequent reads',()=>{
+ assert.equal(refundNeedsReview('unknown'),true)
+ assert.equal(refundNeedsReview('abnormal'),true)
+ assert.equal(refundNeedsReview('review'),true)
+ for(const status of ['pending','submitting','processing','succeeded','closed']){
+  assert.equal(refundNeedsReview(status),false)
+ }
 })
