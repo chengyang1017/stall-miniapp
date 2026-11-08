@@ -31,10 +31,31 @@ before opening the connection; it starts a repeatable-read, **READ ONLY** SQL
 transaction, runs bounded catalog checks and verifies all recorded migration
 file checksums against the checked-out repository. The output includes a
 truncated hash of the host, the role/database name, installed/missing migrations,
-table names with **estimated** row counts and PostgreSQL extensions. It excludes
+**exact per-table row counts** (bounded to 200 public tables), a SHA256 digest of the count inventory, counts of non-null object-storage key references, and PostgreSQL extensions. It excludes
 passwords, the original connection URL, and customer rows. Error messages are
 intentionally generic. A missing or changed ledger is a blocker, not something
 the script fixes.
+
+### Comparing restored data
+
+After restoring a consistent PostgreSQL dump into an **isolated** target database, run
+the same read-only inventory against the target using its own expected hostname.
+Compare the `tables` entries and `tableCountSha256` fields. A different
+migration state will naturally introduce new tables; **compare pre-migration
+tables against the initial restore first**, then apply reviewed 022–037
+migrations to the target as applicable, and take a new baseline.
+
+The inventory reports only counts, never customer rows or image keys.
+`objectReferences` counts how many database rows contain storage object
+references; **it does not verify actual S3/R2 object existence** or integrity.
+Back up and hash-check S3/R2 objects independently, including private proof,
+review and customer avatar files. Row-count equality is a necessary check,
+not proof of content equality or transactional consistency.
+
+For large datasets, `count(*)` can be expensive and the read-only audit may
+stop at the five-second per-statement timeout. Do not remove timeouts to
+force a report on a busy source database; schedule an approved maintenance
+window or run from a properly restored read-only copy.
 
 For actual migration completeness, this is only the **source identity gate**:
 create a consistent `pg_dump -Fc` from a controlled backup/maintenance window,

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {migrationTarget,compareMigrationLedger} from '../scripts/migration-source-inventory.mjs'
+import {migrationTarget,compareMigrationLedger,quotePgIdentifier,inventoryDigest,inventoryTables} from '../scripts/migration-source-inventory.mjs'
 
 test('source identity is derived without ever returning credentials',()=>{
  const t=migrationTarget('postgresql://app_user:SECRET@ep-source.example.neon.tech:5432/neondb?sslmode=require','ep-source.example.neon.tech')
@@ -34,4 +34,27 @@ test('out-of-order, unknown and changed migration checksums block deployment',()
  const unknown=compareMigrationLedger(files,[files[0],{filename:'999_unknown.sql',sha256:'x'}])
  assert.equal(unknown.cleanPrefix,false)
  assert.equal(unknown.issues[0].kind,'unknown')
+})
+
+test('inventory counts all tables with catalog-derived escaped SQL identifiers',async()=>{
+ const statements=[]
+ const db={async query(sql){
+  statements.push(sql)
+  if(sql==='SELECT count(*)::text AS n FROM "public"."normal"')return {rows:[{n:'11'}]}
+  if(sql==='SELECT count(*)::text AS n FROM "public"."has""quote"')return {rows:[{n:'0'}]}
+  throw Error('unexpected_sql')
+ }}
+ const rows=await inventoryTables(db,[{schema:'public',name:'has"quote'},{schema:'public',name:'normal'}])
+ assert.deepEqual(rows,[{name:'public.has"quote',exactRows:0},{name:'public.normal',exactRows:11}])
+ assert.equal(statements.length,2)
+ assert.equal(inventoryDigest(rows),inventoryDigest([...rows].reverse()))
+ assert.equal(inventoryDigest(rows).length,64)
+ assert.throws(()=>quotePgIdentifier(''),/invalid_catalog_identifier/)
+ assert.throws(()=>quotePgIdentifier('a'.repeat(64)),/invalid_catalog_identifier/)
+})
+test('reject implausibly large, non-integer or malformed counts',async()=>{
+ const db={query:async()=>({rows:[{n:'9007199254740992'}]})}
+ await assert.rejects(()=>inventoryTables(db,[{schema:'public',name:'orders'}]),/invalid_inventory_count/)
+ await assert.rejects(()=>inventoryTables(db,Array.from({length:201},()=>({schema:'public',name:'orders'}))),/too_many_tables/)
+ assert.throws(()=>inventoryDigest([{name:'public.orders',exactRows:-1}]),/invalid_inventory_count/)
 })
