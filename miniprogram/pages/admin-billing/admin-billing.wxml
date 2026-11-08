@@ -26,6 +26,7 @@
       <view class="bill-order-top"><text>{{item.date}} {{item.time}}</text><text class="bill-money">¥{{item.amount}}</text></view>
       <view class="bill-id">订单：{{item.orderId}}</view>
       <view class="bill-id">微信交易号：{{item.transactionId}}</view>
+      <button size="mini" disabled="{{reviewBusy || exporting || loading}}" data-transaction="{{item.transactionId}}" bindtap="reviewAbnormal">查看 / 追加复核记录</button>
     </view>
     <view wx:if="{{abnormalRecordsMore}}" class="bill-warning">只显示最近 10 笔。其余异常到账请在微信商户平台核对。</view>
   </view>
