@@ -39,7 +39,7 @@ async function opened(o,channel='card'){
 }
 function session(a,status='paid'){
  return {id:a.session_id,object:'checkout.session',mode:'payment',livemode:false,status:status==='expired'?'expired':status==='open'?'open':'complete',
-  payment_status:status==='paid'?'paid':'unpaid',currency:'cny',amount_total:1000,client_reference_id:a.order_id,metadata:{orderId:a.order_id},
+  payment_status:status==='paid'?'paid':'unpaid',currency:'cny',amount_total:1000,client_reference_id:a.order_id,metadata:{orderId:a.order_id,channel:a.channel,paymentAttemptKey:a.request_key},
   payment_intent:{id:'pi_'+a.id.replaceAll('-',''),livemode:false,status:status==='paid'?'succeeded':status==='failed'?'requires_payment_method':'processing',amount:1000,currency:'cny',latest_charge:{created:Math.floor(Date.now()/1000),payment_method_details:{type:a.channel}}}}
 }
 const lookup=(a,s)=>createStripeSandboxClient(env,async()=>({ok:true,json:async()=>s||session(a)})).getSession(a)

@@ -166,9 +166,12 @@ export function fixture({ stock = 10, secondStock = 10, mode = 'finite' } = {}) 
       return result(rows)
     }
     if (s.startsWith('INSERT INTO orders(')) {
-      assert.ok(![...all(c, 'orders').values()].some(o => o.store_id === args[0] && o.customer_subject === args[1] && o.checkout_key === args[3]), 'duplicate scoped checkout key')
-      const key = id(); put(c, 'orders', key, { id: key, store_id: args[0], customer_subject: args[1], subtotal_cents: args[2], total_cents: args[2],
-        checkout_key: args[3], checkout_fingerprint: args[4], contact_snapshot: JSON.parse(args[5]), delivery_slot_snapshot: JSON.parse(args[6]),
+      // Current checkout INSERT has delivery_fee_cents and total_cents before
+      // the scoped idempotency key; keep this model aligned with the real SQL.
+      assert.ok(![...all(c, 'orders').values()].some(o => o.store_id === args[0] && o.customer_subject === args[1] && o.checkout_key === args[5]), 'duplicate scoped checkout key')
+      const key = id(); put(c, 'orders', key, { id: key, store_id: args[0], customer_subject: args[1], subtotal_cents: args[2],
+        delivery_fee_cents: args[3], total_cents: args[4],checkout_key: args[5],
+        checkout_fingerprint: args[6], contact_snapshot: JSON.parse(args[7]), delivery_slot_snapshot: JSON.parse(args[8]),
         currency:'CNY',created_at:new Date(db.now),payment_status: 'unpaid', fulfillment_status: 'new', inventory_state: 'none', inventory_expires_at: null })
       return result([{ id: key }])
     }

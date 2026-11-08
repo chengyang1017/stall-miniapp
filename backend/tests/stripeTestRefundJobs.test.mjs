@@ -108,7 +108,7 @@ test('missing refund status data requires review',async()=>{
 test('refund evidence is persisted atomically before releasing the lease',async()=>{
  const m=fake([{rowCount:1,rows:[{id:job.id}]}])
  await finishStripeTestRefund(m.db,job,{refundId:'re_abc',amountCents:1599,completed:false,paymentIntentId:'pi_expected',status:'pending'})
- assert.match(m.calls[0].sql,/payment_intent_id=COALESCE\(\$5,payment_intent_id\)/)
+ assert.match(m.calls[0].sql,/payment_intent_id=COALESCE\(payment_intent_id,\$5\)/)
  assert.match(m.calls[0].sql,/provider_status=COALESCE\(\$6,provider_status\)/)
  assert.deepEqual(m.calls[0].args.slice(4),['pi_expected','pending'])
 })

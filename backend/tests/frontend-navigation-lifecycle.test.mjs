@@ -28,13 +28,13 @@ function fixture({cloud=true}={}){
   let identity='customer-A'
   const requests=[],proofs=[],calls=[]
   const wx={showToast:a=>calls.push(['toast',a.title]),previewImage:a=>calls.push(['preview',a.current])}
-  const globals={wx,
+  const globals={wx,PAYMENT_SANDBOX_UI_ENABLED:false,LIVE_WECHAT_PAY_ENABLED:false,
     customerOrdersConfig:()=>cloud?{storeSlug:'store-A'}:null,
     customerOrdersRequest:()=>{const gate=deferred();requests.push(gate);return gate.promise},
     supportIdentity:()=>identity,
     proofUrl:()=>{const gate=deferred();proofs.push(gate);return gate.promise},
     paymentLabel:()=> '支付状态待核实',loadWorkflowOrders:()=>[],chinaTime:x=>x,workflowText:x=>x}
-  const p={detailSerial:0,detailVisible:false,detailContext:'',simulationOperation:0,loadSimulationCapability(){},
+  const p={detailSerial:0,detailVisible:false,detailContext:'',simulationOperation:0,loadSimulationCapability(){},stopSandboxPolling(){},
     data:{order:{id:'order-A'},found:false,proofImage:'',proofError:'',proofLoading:false,cloudMode:false,items:[]},
     setData(v){Object.assign(this.data,v)}}
   for(const [name,next] of [
@@ -74,7 +74,8 @@ test('order detail: obsolete fetch failure does not show toast',async()=>{
 test('order detail: current fetch failure shows error, not fabricated order',async()=>{
   const f=fixture(),pending=f.p.onShow();f.requests[0].reject(Error('offline'));await pending
   assert.equal(f.p.data.found,false)
-  assert.deepEqual(f.calls,[['toast','订单详情加载失败']])
+  assert.equal(f.calls.length,0)
+  assert.match(f.p.data.detailError,/订单详情读取失败/)
 })
 test('proof: concurrent refreshes make one request and show latest URL',async()=>{
   const f=fixture();f.p.detailVisible=true;f.p.data.found=true
