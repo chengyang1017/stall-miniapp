@@ -1,0 +1,30 @@
+# TEMPLATE ONLY — substitute API_DOMAIN and TLS certificate paths after DNS/ICP.
+# The upstream Node API must listen ONLY on 127.0.0.1:8787.
+limit_req_zone $binary_remote_addr zone=stall_api:10m rate=8r/s;
+server {
+    listen 80;
+    server_name API_DOMAIN;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl http2;
+    server_name API_DOMAIN;
+    ssl_certificate /etc/ssl/stall/fullchain.pem;
+    ssl_certificate_key /etc/ssl/stall/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    client_max_body_size 6m;
+    proxy_connect_timeout 5s;
+    proxy_send_timeout 25s;
+    proxy_read_timeout 25s;
+    add_header X-Content-Type-Options nosniff always;
+    location / {
+        limit_req zone=stall_api burst=24 nodelay;
+        proxy_pass http://127.0.0.1:8787;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_hide_header X-Powered-By;
+    }
+}

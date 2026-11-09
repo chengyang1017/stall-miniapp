@@ -5,6 +5,9 @@ on:
     paths:
       - 'backend/src/wechatLive*.mjs'
       - 'backend/scripts/preflight.mjs'
+      - 'backend/scripts/check-tencent-production-env.mjs'
+      - 'backend/tests/tencentProductionEnv.test.mjs'
+      - 'deploy/tencent/**'
       - 'backend/scripts/migration-source-inventory.mjs'
       - 'backend/scripts/verify-paired-backups.mjs'
       - 'backend/tests/pairedBackups.test.mjs'
@@ -37,6 +40,9 @@ on:
     paths:
       - 'backend/src/wechatLive*.mjs'
       - 'backend/scripts/preflight.mjs'
+      - 'backend/scripts/check-tencent-production-env.mjs'
+      - 'backend/tests/tencentProductionEnv.test.mjs'
+      - 'deploy/tencent/**'
       - 'backend/scripts/migration-source-inventory.mjs'
       - 'backend/scripts/verify-paired-backups.mjs'
       - 'backend/tests/pairedBackups.test.mjs'
@@ -91,6 +97,8 @@ jobs:
         run: npm test --prefix backend
       - name: Verify migration source audit guardrails (no DB connection)
         run: node --test backend/tests/migrationSourceInventory.test.mjs backend/tests/migrationRestoreCompare.test.mjs backend/tests/pairedBackups.test.mjs
+      - name: Verify Tencent deployment preflight and safety flags
+        run: node --test backend/tests/tencentProductionEnv.test.mjs
       - name: Install frontend dependencies
         run: npm ci
       - name: Check frontend types

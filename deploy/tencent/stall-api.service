@@ -1,0 +1,34 @@
+# Template only. Install after creating stall-api system user and protected secrets.
+# Replace paths to match the approved Tencent CVM release layout.
+[Unit]
+Description=Stall Miniapp API (Tencent CVM)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=stall-api
+Group=stall-api
+WorkingDirectory=/opt/stall/current/backend
+Environment=NODE_ENV=production
+EnvironmentFile=/etc/stall/api.env
+ExecStart=/usr/bin/node /opt/stall/current/backend/src/server.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+ReadWritePaths=/var/lib/stall /var/log/stall
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
