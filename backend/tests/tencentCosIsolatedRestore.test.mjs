@@ -110,9 +110,14 @@ test('bad declared MIME blocks COS upload even if bytes and SHA256 match',async(
 test('second corrupt backup blocks upload of first valid backup: full local preflight',async()=>{
  const a=await fixture(),b=await fixture()
  try{
-  const paired=sealMetadata({...b.manifest,backupSetId:a.setId,bucket:'r2-different-bucket'})
+  const secondKey='stores/'+id+'/products/b.jpg'
+  const secondName='00000000-'+sha(secondKey)+'.blob'
+  const secondObj={...b.object,key:secondKey,file:secondName}
+  const paired=sealMetadata({...b.manifest,backupSetId:a.setId,
+   bucket:'r2-different-bucket',objects:[secondObj],
+   files:[{file:'objects/'+secondName,bytes:bytes.length,sha256:sha(bytes)}]})
   await writeFile(path.join(b.folder,'manifest.json'),JSON.stringify(paired))
-  await writeFile(path.join(b.folder,'objects',name),Buffer.from('broken'))
+  await writeFile(path.join(b.folder,'objects',secondName),Buffer.from('broken'))
   const client=mockClient()
   const authorized={...env,TENCENT_COS_RESTORE_AUTHORIZE:'APPLY_TO_ISOLATED_EMPTY_BUCKETS',
    TENCENT_COS_EXPECTED_BACKUP_SET_ID:a.setId}
