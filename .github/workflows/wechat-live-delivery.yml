@@ -129,6 +129,8 @@ jobs:
         run: node --test backend/tests/tencentSqlPolicyPlan.test.mjs backend/tests/tencentRestoredSourceReview.test.mjs
       - name: Verify opt-in isolated TencentDB migration drill using fake PostgreSQL
         run: node --test backend/tests/tencentIsolatedDbDrill.test.mjs backend/tests/tencentIsolatedRoleGrants.test.mjs backend/tests/tencentRuntimePermissionsAudit.test.mjs
+      - name: Verify Tencent column-level permissions review without a database
+        run: node --test backend/tests/tencentRuntimePermissionsAudit.test.mjs
       - name: Verify Tencent COS transfer planning (offline)
         run: node --test backend/tests/tencentCosTransferPlan.test.mjs backend/tests/tencentCosIsolatedRestore.test.mjs
       - name: Install frontend dependencies
