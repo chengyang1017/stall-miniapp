@@ -26,7 +26,12 @@ merchant certificates or API v3 key via chat or GitHub**.
    endpoint `ep-cold-fire-b5ali2cv.c-7.us-east-2.aws.neon.tech`, `neondb`,
    known migration ledger 001–021. Actual production data migration must be explicit:
    verify consistency, pg_dump, restore into isolated target, compare counts, then
-   review/apply 022–037 and role privileges. Do not copy the Neon password to Tencent.
+   **do not blindly apply 022–037**: 022 is Stripe-test-only, 021 also contains
+   staging-specific tables already present in the source. First review the
+   production-eligible migration subset, dependencies and new production migration
+   ledger strategy in an isolated restored DB; do not delete or rewrite existing
+   staging/test history just to make a ledger look clean. Review roles and grants.
+   Do not copy the Neon password to Tencent.
 4. Decide whether existing R2 files are staying temporarily or being copied to COS.
    PostgreSQL dumps **do not include object bytes**. Private proof/review/avatars must
    not be placed in public product image bucket. Actual COS S3-signing, HEAD, upload,
