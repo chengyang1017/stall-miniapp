@@ -117,6 +117,65 @@ TencentDB, review role grants and SQL dependencies, obtain authorization,
 and rehearse rollback. Do not silently synthesize source migration ledger
 rows for excluded test migrations.
 
+## R2 → Tencent COS private/public file migration
+
+Files cannot be migrated with `pg_dump`. The app stores object keys in
+PostgreSQL and uses S3-compatible APIs, but the object bytes, bucket policies,
+signed URL behavior and public image domain are separate concerns.
+
+**Important:** `backup-r2.mjs` downloads only one R2 bucket per run and **also
+writes retention records to its connected PostgreSQL database**. It is not a
+read-only source audit. Do not run it on an unapproved source or assume it
+already includes proof, review and avatar buckets.
+
+Use separate approved backup snapshots for each actual source bucket, passing
+the same explicit `BACKUP_SET_ID` for the coordinated batch. Before transfer,
+run `verify-r2-backup.mjs` on each saved directory and separately verify
+database backup integrity.
+
+Create a local `/secure/cos-route.json` file **outside the repository**:
+
+```json
+{
+  "product_public": "merchant-products-1250000000",
+  "delivery_proof_private": "merchant-proofs-1250000000",
+  "review_private": "merchant-reviews-1250000000",
+  "review_staging_private": "merchant-reviews-1250000000",
+  "avatar_private": "merchant-avatars-1250000000"
+}
+```
+
+These bucket names are illustrative and must be replaced with the
+merchant-owned verified COS buckets. Keep all non-product data private.
+
+Then run this **offline, non-copying** inventory:
+
+```sh
+node backend/scripts/tencent-cos-transfer-plan.mjs \
+  /secure/cos-route.json \
+  /secure/r2-products/manifest.json \
+  /secure/r2-proofs/manifest.json \
+  /secure/r2-reviews/manifest.json \
+  /secure/r2-avatars/manifest.json
+```
+
+It checks manifest pairing, object counts, byte totals, key categories and
+public/private bucket assignments. It does not open any database, connect to
+R2/COS, transfer a single object or display sensitive object keys. Any
+unrecognized key remains blocked for manual classification.
+
+**This is not yet a COS uploader or restore verifier.** Once an isolated COS
+bucket is available, an authorized operator must upload each backed-up byte
+stream with original object key, MIME and private/public cache policy, then
+GET each destination and compare local SHA256 (not just ETag).
+Review `stored_images.storage_bucket`, `product_review_images.storage_bucket`,
+avatar keys and stored historical proof references in the **restored**
+TencentDB before switching application configuration. Verify public product
+URLs, time-limited private proof/review links and customer avatar GET on a
+real device. Never expose private images through the public product domain.
+Do not delete original R2 objects until merchant acceptance and rollback
+evidence are complete.
+
 ## Separation and rollback
 Keep the old Render and Neon environments until cutover validation and merchant sign-off.
 Never turn on `WECHAT_PAY_LIVE_ENABLED`, refund or reconciliation, or image-cleanup delete
