@@ -72,7 +72,7 @@ test('Tencent CVM startup gate blocks unsafe config before listening',()=>{
  assert.throws(()=>enforceTencentProductionStartupGate(unsafe),e=>{
   assert.equal(e.message,'tencent_production_startup_preflight_failed')
   assert(e.issues.includes('DATABASE_URL_not_new_cloud_database'))
-  assert(e.issues.includes('WECHAT_PAY_LIVE_ENABLED_must_start_disabled'))
+  assert(e.issues.includes('wechatpay_merchant_activation_approval_missing'))
   assert.doesNotMatch(JSON.stringify(e.issues),/ep-old|neondb/)
   return true
  })
