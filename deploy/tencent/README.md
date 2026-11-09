@@ -59,6 +59,38 @@ merchant certificates or API v3 key via chat or GitHub**.
    (flags off), actual mini program login and Chinese-network accessibility tests.
    Merchant must approve controlled real-money tests and payment switch-on later.
 
+## SQL migration eligibility — mandatory offline gate
+
+From a checked-out, reviewed Git commit, run:
+
+```sh
+node backend/scripts/tencent-sql-policy-plan.mjs
+node --test backend/tests/tencentSqlPolicyPlan.test.mjs
+```
+
+The policy classifies all 37 SQL migration filenames and computes their SHA256
+for review. It **does not connect to any database or execute SQL**, and always
+reports `canApplyToProduction: false`: a passing classification does not grant
+approval to apply any SQL.
+
+- `001–020`: source history, already applied on the known Neon source.
+- `021`: already present in source and contains staging-only structures;
+  **preserve existing ledger**, never replay it as a new production migration.
+- `022` and `027–030`: **sandbox-only, exclude from merchant production**.
+  Migration 027 also directly alters the Stripe refund table created by 022.
+- `023–026`: customer identity/profile changes require review; 024–026
+  reference the `stall_payment_app_limited` staging role.
+- `031–033`: isolated staging avatar, customer session and business-setting
+  permissions. Review designs and replace staging-only role assumptions.
+- `034–037`: real WeChat Pay/refund structures. Review dependencies, runtime
+  GRANTs and actual provider integration before applying to a restored target.
+
+**Important:** this source has migrations up to 021 but cannot simply use the
+developer migration runner, which requires a continuous 001–037 history and
+refuses remote databases. Production requires its own **reviewed, separately
+authorized** target-only migration plan and ledger strategy. Do not manually
+invent migration ledger entries to fill 022 or 027–030.
+
 ## Separation and rollback
 Keep the old Render and Neon environments until cutover validation and merchant sign-off.
 Never turn on `WECHAT_PAY_LIVE_ENABLED`, refund or reconciliation, or image-cleanup delete
