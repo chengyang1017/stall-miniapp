@@ -11,6 +11,7 @@ User=stall-api
 Group=stall-api
 WorkingDirectory=/opt/stall/current/backend
 Environment=NODE_ENV=production
+Environment=TENCENT_PRODUCTION_GATE=required
 EnvironmentFile=/etc/stall/api.env
 ExecStart=/usr/bin/node /opt/stall/current/backend/src/server.mjs
 Restart=on-failure
