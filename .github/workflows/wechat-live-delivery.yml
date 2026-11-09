@@ -5,6 +5,8 @@ on:
     paths:
       - 'backend/src/wechatLive*.mjs'
       - 'backend/scripts/preflight.mjs'
+      - 'backend/scripts/tencent-sql-policy-plan.mjs'
+      - 'backend/tests/tencentSqlPolicyPlan.test.mjs'
       - 'backend/scripts/check-tencent-production-env.mjs'
       - 'backend/tests/tencentProductionEnv.test.mjs'
       - 'deploy/tencent/**'
@@ -40,6 +42,8 @@ on:
     paths:
       - 'backend/src/wechatLive*.mjs'
       - 'backend/scripts/preflight.mjs'
+      - 'backend/scripts/tencent-sql-policy-plan.mjs'
+      - 'backend/tests/tencentSqlPolicyPlan.test.mjs'
       - 'backend/scripts/check-tencent-production-env.mjs'
       - 'backend/tests/tencentProductionEnv.test.mjs'
       - 'deploy/tencent/**'
@@ -99,6 +103,8 @@ jobs:
         run: node --test backend/tests/migrationSourceInventory.test.mjs backend/tests/migrationRestoreCompare.test.mjs backend/tests/pairedBackups.test.mjs
       - name: Verify Tencent deployment preflight and safety flags
         run: node --test backend/tests/tencentProductionEnv.test.mjs
+      - name: Verify Tencent production SQL classification and sandbox exclusion
+        run: node --test backend/tests/tencentSqlPolicyPlan.test.mjs
       - name: Install frontend dependencies
         run: npm ci
       - name: Check frontend types
