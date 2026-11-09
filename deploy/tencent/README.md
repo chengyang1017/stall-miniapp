@@ -108,6 +108,38 @@ to the Tencent production gate. This gate tests configuration syntax only:
 real DB/COS authorization, schema compatibility, ownership, TLS and full
 merchant device acceptance must still be verified separately.
 
+## Later merchant-authorized WeChat Pay activation (not initial deployment)
+
+The initial service environment **must** keep `WECHAT_PAY_LIVE_ENABLED=false`,
+refunds and reconciliation disabled. Previously the startup gate rejected
+`WECHAT_PAY_LIVE_ENABLED=true` forever, making actual merchant go-live
+impossible without bypassing the gate. The guarded follow-up activation now
+permits only **WeChat payments** (not refunds) after the merchant's written
+authorization, verified account/AppID–merchant ID binding, compatible approved
+database schema, real HTTPS callback reachability and controlled payment tests.
+
+The operator must install the actual private WeChat Pay API v3 merchant key,
+platform public key, serials, 32-byte v3 secret, merchant ID, store slug and
+approved notification URL in protected server secrets, then explicitly set:
+
+```sh
+WECHAT_PAY_LIVE_ACTIVATION_APPROVED=MERCHANT_APPROVED_WECHAT_PAY_LIVE
+WECHAT_PAY_LIVE_ENABLED=true
+WECHAT_PAY_LIVE_REFUNDS_ENABLED=false
+WECHAT_PAY_REFUND_RECONCILE_ENABLED=false
+```
+
+This flag is a **human-approval record marker**, not evidence or a substitute
+for merchant authorization; do not set it until the authorization and real
+provider end-to-end checks are documented. The runtime startup gate invokes
+the same WeChat Pay v3 configuration parser used by the API itself before
+allowing this mode. Invalid keys, absent fields, wrong notification format
+and missing approval block startup. The offline gate does **not** verify a
+payment account, signatures from live WeChat, actual refund correctness or
+merchant ownership. Real activation remains blocked until these outside-code
+requirements are satisfied. Refunds and automatic refund reconciliation
+remain off and need separately reviewed activation work.
+
 ## SQL migration eligibility — mandatory offline gate
 
 From a checked-out, reviewed Git commit, run:
