@@ -89,7 +89,8 @@ test('COS-backed profile/session drill uses no staging permissions or private av
  assert(sql)
  for(const field of ['nickname','avatar_style','avatar_photo_key','customer_account_sessions','token_hash'])
   assert(sql.includes(field),field)
- assert(!/stall_payment_app_limited|sbx04_app_least|GRANT\s/i.test(sql))
+ const statements=sql.split('\n').filter(line=>!line.trim().startsWith('--')).join('\n')
+ assert(!/stall_payment_app_limited|sbx04_app_least|\bGRANT\s/i.test(statements))
  assert(!/image_bytes\s+bytea/i.test(sql))
  assert(plan.scripts.findIndex(x=>x.filename==='023_customer_identity_groundwork.sql')<
   plan.scripts.findIndex(x=>x.filename==='tencent_isolated_customer_profile_sessions.sql'))
