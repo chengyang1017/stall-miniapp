@@ -53,10 +53,11 @@ test('bundled template placeholders never pass production preflight',()=>{
  }
  assert.doesNotMatch(JSON.stringify(out),/SET_WITH_SECRET_MANAGER|CHANGE_ME/)
 })
-test('R2 host cannot be silently reused as public Tencent COS endpoint',()=>{
- const x=good();x.S3_ENDPOINT='https://demo.r2.cloudflarestorage.com'
- // Valid HTTPS URLs alone do not certify Tencent ownership; operator must verify.
- const result=checkTencentProductionEnvironment(x)
- assert.equal(result.safeToStart,true)
- assert.match(result.warning,/not proof/)
+test('legacy R2 or AWS S3 endpoints cannot be reused as Tencent COS',()=>{
+ for(const endpoint of ['https://demo.r2.cloudflarestorage.com','https://s3.us-east-1.amazonaws.com']){
+  const x=good();x.S3_ENDPOINT=endpoint
+  const result=checkTencentProductionEnvironment(x)
+  assert.equal(result.safeToStart,false)
+  assert(result.issues.includes('object_storage_not_tencent_cos'))
+ }
 })
