@@ -46,6 +46,9 @@ export function checkTencentProductionEnvironment(env){
      !['false','DISABLED'].includes(env[key]))fail('test_only_environment_variable_present')
  }
  if(env.PAYMENT_DB_ENV==='isolated-test')fail('test_database_environment_forbidden')
+ const storageHost=(()=>{try{return new URL(env.S3_ENDPOINT).hostname}catch{return ''}})()
+ if(storageHost.endsWith('.r2.cloudflarestorage.com')||storageHost.endsWith('.amazonaws.com'))
+   fail('object_storage_not_tencent_cos')
  if(!secureUrl(env.S3_ENDPOINT)||['S3_BUCKET','S3_REGION',
    'S3_ACCESS_KEY_ID','S3_SECRET_ACCESS_KEY'].some(key=>missingOrPlaceholder(env[key])))
    fail('object_storage_not_configured')
