@@ -128,7 +128,7 @@ Default (no connection/no writes):
 node backend/scripts/tencent-isolated-db-drill.mjs --plan
 ```
 
-The plan includes exactly `023` and `034–037`, with source 001–021 SHA256
+The plan includes original `023`, a new **Tencent-only profile/session/COS avatar extension**, and `034–037`, with source 001–021 SHA256
 checks and individual SQL file hashes. Those SQL migrations contain their own
 `BEGIN/COMMIT`; this runner validates and strips only their strict outer
 transaction wrappers so the SQL and its **separate drill ledger record** can
@@ -153,10 +153,16 @@ the isolated migrations in separate bounded transactions with same-transaction
 ledger insertion. Failure rolls back the active transaction and stops; prior
 committed migrations remain for inspection.
 
-**Important limits:** This executable intentionally skips `024–026` and
-`031–033` because they are tied to staging roles/decisions. The resulting
-database is **not a complete deployable merchant production schema**; it lacks
-approved customer-profile/session schema and production runtime GRANTs.
+**Important limits:** This executable intentionally skips the original
+`024–026` and `031–033` because they are tied to staging roles/decisions.
+Instead, the Tencent-only extension creates the **equivalent necessary**
+`nickname`, `avatar_style`, `avatar_photo_key` and `customer_account_sessions`
+schema for a private COS avatar design. It does not enable the currently
+staging-guarded customer HTTP routes or phone login. It does not create
+`customer_avatar_photos` bytea storage or synthesize old ledger entries.
+The resulting database is **not a complete deployable merchant production
+schema**; it still lacks tested legacy 001–021 runtime grants, production-only
+feature activation and actual runtime permission tests.
 Do not point the live Node application or real WeChat Pay at this drill, or
 rename the drill database into production. Test real constraints, privilege
 separation, failure recovery and dependencies before designing the separately
@@ -166,13 +172,12 @@ mock PostgreSQL responses until a real isolated TencentDB is provisioned.
 ## Runtime database permissions — isolated partial template
 
 `deploy/tencent/isolated-runtime-grants.sql.template` contains a **review-only**
-permission proposal for customer identity `023` and live WeChat Pay `034–037`
-tables. It is guarded to the restored isolated database named
+permission proposal for customer identity `023`, Tencent-only profile/session
+fields and live WeChat Pay `034–037` tables. It is guarded to the restored isolated database named
 `stall_tencent_drill`, a pre-provisioned `stall_tencent_migrator` SQL
 executor, and a separate, non-superuser `stall_tencent_runtime` role. It
-does not create any role or set a password. It deliberately omits permission
-grants on the legacy `001–021` tables, customer nickname/avatar data and
-customer sessions, which require a wider verified application query inventory.
+does not create any role or set a password. It deliberately omits permission grants on the legacy `001–021` business
+tables, which require a wider verified application query inventory.
 
 Key runtime permissions: customer accounts and identities have SELECT/INSERT;
 payment prepay rows are SELECT/INSERT; refund rows have scoped state changes;

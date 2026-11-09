@@ -1,5 +1,5 @@
 -- REVIEW-ONLY TEMPLATE. DO NOT APPLY TO NEON, PRODUCTION OR THE DRILL AUTOMATICALLY.
--- This covers ONLY 023 and 034-037 candidate tables. It is NOT a full
+-- This covers 023, the isolated profile/session extension, and 034-037. NOT a full
 -- privilege manifest for the existing 001-021 application schema.
 -- Require target-only isolated restore, explicit merchant approval and
 -- review of all referenced runtime queries and role ownership before use.
@@ -30,7 +30,8 @@ BEGIN
       AND granted.rolname IN ('pg_read_all_data','pg_write_all_data')
   ) THEN RAISE EXCEPTION 'runtime_role_has_global_data_privileges';
   END IF;
-  IF to_regclass('public.customer_accounts') IS NULL
+  IF to_regclass('public.customer_account_sessions') IS NULL
+    OR to_regclass('public.customer_accounts') IS NULL
     OR to_regclass('public.customer_login_identities') IS NULL
     OR to_regclass('public.customer_verified_phones') IS NULL
     OR to_regclass('public.wechat_live_prepays') IS NULL
@@ -40,7 +41,8 @@ BEGIN
     RAISE EXCEPTION 'expected_reviewed_tables_missing';
   END IF;
 END $guard$;
-REVOKE ALL ON public.customer_accounts, public.customer_login_identities,
+REVOKE ALL ON public.customer_account_sessions,
+  public.customer_accounts, public.customer_login_identities,
   public.customer_verified_phones, public.wechat_live_prepays,
   public.wechat_live_refunds, public.wechat_live_refund_events,
   public.wechat_abnormal_collection_reviews FROM PUBLIC;
@@ -48,6 +50,11 @@ GRANT USAGE ON SCHEMA public TO stall_tencent_runtime;
 
 -- Customer identity creation, login, and verified phone binding.
 GRANT SELECT, INSERT ON public.customer_accounts TO stall_tencent_runtime;
+GRANT UPDATE (nickname,avatar_style,avatar_photo_key,updated_at)
+ ON public.customer_accounts TO stall_tencent_runtime;
+GRANT SELECT (account_id,token_hash,expires_at,revoked_at),
+ INSERT (account_id,token_hash,expires_at), UPDATE (revoked_at)
+ ON public.customer_account_sessions TO stall_tencent_runtime;
 GRANT SELECT, INSERT ON public.customer_login_identities TO stall_tencent_runtime;
 GRANT SELECT, INSERT, UPDATE (phone_e164, verified_at)
   ON public.customer_verified_phones TO stall_tencent_runtime;

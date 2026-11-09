@@ -27,10 +27,18 @@ test('payment review and refund event records are append-only to runtime',async(
 })
 test('narrow explicit grant covers refund reconciliation columns and no ledger writes',async()=>{
  const sql=await readFile(template,'utf8')
- const match=sql.match(/GRANT UPDATE \(([\s\S]*?)\) ON public\.wechat_live_refunds TO stall_tencent_runtime;/)
+ const match=sql.match(/^GRANT UPDATE \(([^;]*?)\) ON public\.wechat_live_refunds TO stall_tencent_runtime;/m)
  assert(match)
  for(const name of ['status','provider_refund_id','provider_status','last_error',
   'claimed_at','updated_at','reconcile_next_at','reconcile_attempts','reconcile_lease_token','reconcile_lease_until'])
   assert(match[1].split(',').map(x=>x.trim()).includes(name),name)
  assert.doesNotMatch(sql,/GRANT (?:INSERT|UPDATE|DELETE).*stall_tencent_drill_migrations/i)
+})
+
+test('profile, avatar and customer sessions use narrowly scoped Tencent runtime privileges',async()=>{
+ const sql=await readFile(template,'utf8')
+ assert.match(sql,/GRANT UPDATE \(nickname,avatar_style,avatar_photo_key,updated_at\)\s+ON public\.customer_accounts TO stall_tencent_runtime;/)
+ assert.match(sql,/GRANT SELECT \(account_id,token_hash,expires_at,revoked_at\),\s+INSERT \(account_id,token_hash,expires_at\), UPDATE \(revoked_at\)\s+ON public\.customer_account_sessions TO stall_tencent_runtime;/)
+ assert.match(sql,/to_regclass\('public.customer_account_sessions'\)/)
+ assert.doesNotMatch(sql,/\bTO\s+(?:stall_payment_app_limited|sbx04_app_least)\b/)
 })
