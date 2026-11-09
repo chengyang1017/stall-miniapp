@@ -59,6 +59,37 @@ merchant certificates or API v3 key via chat or GitHub**.
    (flags off), actual mini program login and Chinese-network accessibility tests.
    Merchant must approve controlled real-money tests and payment switch-on later.
 
+## Create a minimal API release package (offline)
+
+The runtime release builder copies only backend `src/*.mjs`,
+`package.json`, and `package-lock.json` into a new release directory,
+without tests, staging SQL, source backups, local .env, credentials,
+the Git history, front-end files or temporary backup copies.
+
+Run from a reviewed checkout, choosing an **empty output directory outside
+the backend source** (Node.js 22 or newer):
+
+```sh
+# Optional: RELEASE_COMMIT_SHA=<approved 40-character Git commit>
+node backend/scripts/tencent-api-release-bundle.mjs --build /secure/stall-release
+node backend/scripts/tencent-api-release-bundle.mjs --verify /secure/stall-release
+```
+
+The output contains `backend/src`, Node package metadata, and a SHA256
+`release-manifest.json`. The verifier refuses tampering and extra files.
+The manifest deliberately reports `releaseReadyForProduction=false`: artifact
+integrity does NOT imply valid cloud credentials, customer records, or live
+payment approval. Keep any secrets outside this directory.
+
+On the authorized CVM, verify the artifact **before** running
+`npm ci --omit=dev` in its `backend` directory. Installing dependencies
+changes the release directory, so verify the original unmodified artifact
+prior to installation, and perform the install in a dedicated, controlled
+deployment copy. After approval, set `/opt/stall/current` to point to that
+tested release and use the reviewed systemd template. Roll back by restoring
+the previous verified release and matching DB compatibility; never assume a
+code rollback reverses database migrations.
+
 ## SQL migration eligibility — mandatory offline gate
 
 From a checked-out, reviewed Git commit, run:

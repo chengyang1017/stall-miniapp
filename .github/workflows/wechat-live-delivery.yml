@@ -8,6 +8,8 @@ on:
       - 'backend/scripts/tencent-sql-policy-plan.mjs'
       - 'backend/scripts/tencent-cos-transfer-plan.mjs'
       - 'backend/scripts/tencent-cos-isolated-restore.mjs'
+      - 'backend/scripts/tencent-api-release-bundle.mjs'
+      - 'backend/tests/tencentApiReleaseBundle.test.mjs'
       - 'backend/tests/tencentCosIsolatedRestore.test.mjs'
       - 'backend/tests/tencentCosTransferPlan.test.mjs'
       - 'backend/scripts/tencent-restored-source-review.mjs'
@@ -56,6 +58,8 @@ on:
       - 'backend/scripts/tencent-sql-policy-plan.mjs'
       - 'backend/scripts/tencent-cos-transfer-plan.mjs'
       - 'backend/scripts/tencent-cos-isolated-restore.mjs'
+      - 'backend/scripts/tencent-api-release-bundle.mjs'
+      - 'backend/tests/tencentApiReleaseBundle.test.mjs'
       - 'backend/tests/tencentCosIsolatedRestore.test.mjs'
       - 'backend/tests/tencentCosTransferPlan.test.mjs'
       - 'backend/scripts/tencent-restored-source-review.mjs'
@@ -133,6 +137,8 @@ jobs:
         run: node --test backend/tests/tencentRuntimePermissionsAudit.test.mjs
       - name: Verify Tencent COS transfer planning (offline)
         run: node --test backend/tests/tencentCosTransferPlan.test.mjs backend/tests/tencentCosIsolatedRestore.test.mjs
+      - name: Verify Tencent runtime release packaging and release integrity
+        run: node --test backend/tests/tencentApiReleaseBundle.test.mjs
       - name: Install frontend dependencies
         run: npm ci
       - name: Check frontend types
