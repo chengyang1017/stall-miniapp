@@ -196,6 +196,56 @@ CREATEROLE/DDL privileges. Make no claims of finished least-privilege
 isolation until negative authorization tests run against an actual PostgreSQL
 instance. Test grant/deny as a separate role while all payment flags remain off.
 
+## Runtime grant audit across historical business tables
+
+The historical schema SQL `001–020` contains the merchant, catalog, orders,
+inventory, customer addresses, support, image lifecycle, delivery tracking,
+archives and review tables. A review-only grant template for newer tables is
+**not** enough to let the existing application run.
+
+The script `backend/scripts/tencent-runtime-permissions-audit.mjs`
+enumerates 36 historical business tables, 8 newer candidate tables and both
+migration ledgers and checks permissions for the dedicated
+`stall_tencent_runtime` role. It verifies an initial set of required
+business SELECT/INSERT/UPDATE grants, checks for unexpected TRUNCATE on
+historical tables, DELETE/UPDATE on append-only records and any write access
+to either migration ledger. It also checks role elevation and global
+data-access membership. The list is a **minimum baseline**, not a full
+column-by-column application contract.
+
+Default offline mode (no database connection):
+
+```sh
+node backend/scripts/tencent-runtime-permissions-audit.mjs --plan
+```
+
+After a separate, approved isolated restore is ready and the runtime role
+has been provisioned, a **read-only** inspection is available:
+
+```sh
+# In a protected operator shell, never put a database password in Git:
+# APP_ENV=isolated-migration
+# PG_SSL=true
+# DATABASE_URL=...  (new audit-user login, not the runtime role)
+# TENCENT_DRILL_EXPECTED_HOST=<exact approved TencentDB hostname>
+# TENCENT_ROLE_AUDIT_TARGET=stall_tencent_drill
+# TENCENT_ROLE_AUDIT=READ_ONLY_ISOLATED
+node backend/scripts/tencent-runtime-permissions-audit.mjs --check
+```
+
+The query opens a repeatable-read, read-only PostgreSQL transaction. A failure
+to find any expected table or a required privilege, or any unwanted sensitive
+privilege, reports an explicit failure. It neither grants permissions nor
+mutates data. Only the precise `stall_tencent_drill` target is allowed; the
+Neon connection is rejected. Do not use this audit as a production migration
+script or as an approval to activate payment.
+
+A successful table-level audit does **not** establish column-level privileges,
+sequence and function rights, row-level security behavior, account isolation,
+the full Node query matrix, or successful integration and negative-authorization
+tests. These require an isolated TencentDB and end-to-end execution using the
+actual runtime identity before final production grants can be approved.
+
 ## R2 → Tencent COS private/public file migration
 
 Files cannot be migrated with `pg_dump`. The app stores object keys in
