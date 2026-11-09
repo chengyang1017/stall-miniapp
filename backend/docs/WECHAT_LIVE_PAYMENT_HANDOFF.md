@@ -11,7 +11,7 @@ Stripe Sandbox 独立保留；不允许以测试凭据操作生产。
 禁止把密钥发送在聊天、提交 GitHub、存入小程序或写入客户端。
 
 ## 部署前审查
-1. 选定正式小程序、店铺及腾讯云生产数据库，审查并按顺序执行 001—037 迁移，在独立测试库验收备份/回滚及权限。
+1. 选定正式小程序、店铺及腾讯云生产数据库，先备份并在隔离库恢复原始 001—021 账本与数据。**禁止直接将 022—037 视为一条可用于正式库的连续迁移链**：`022_stripe_test_refund_jobs.sql` 明确限定隔离测试分支，`021_staging_payment.sql` 也含 staging 专用表。须先审查并制定正式环境专用、可验证摘要与角色授权的迁移清单，按受控方案在隔离恢复库演练，验收备份/回滚及权限后再决定正式执行。
 2. 正式环境必须 APP_ENV=production 且 PAYMENT_DB_ENV 不是 isolated-test。
 3. 在可信的腾讯云服务器私密环境配置 WX_APPID、WX_APPSECRET、WECHAT_PAY_MCH_ID、
    WECHAT_PAY_STORE_SLUG、WECHAT_PAY_MERCHANT_SERIAL、
