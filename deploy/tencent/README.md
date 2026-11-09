@@ -90,6 +90,24 @@ tested release and use the reviewed systemd template. Roll back by restoring
 the previous verified release and matching DB compatibility; never assume a
 code rollback reverses database migrations.
 
+## CVM startup gate — mandatory for merchant release
+
+The Tencent CVM `stall-api.service` template and `api.env.example`
+now set `TENCENT_PRODUCTION_GATE=required`. The runtime performs the same
+offline configuration checks as `check-tencent-production-env.mjs` **before**
+creating its PostgreSQL pool, opening the listening port or starting background
+workers. It refuses launch when legacy Neon credentials, placeholder secrets,
+non-loopback bind, unapproved live-payment flags or non-Tencent storage are
+detected; logs contain issue identifiers only, never secrets.
+
+The required guard code lives inside `backend/src/` and is included by the
+77-file Tencent API release bundle. The CLI script under `backend/scripts/`
+is useful for advance operator checks, but is not required in the runtime
+bundle. Existing Render deployment is unchanged unless it explicitly opts in
+to the Tencent production gate. This gate tests configuration syntax only:
+real DB/COS authorization, schema compatibility, ownership, TLS and full
+merchant device acceptance must still be verified separately.
+
 ## SQL migration eligibility — mandatory offline gate
 
 From a checked-out, reviewed Git commit, run:
