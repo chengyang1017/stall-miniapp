@@ -37,6 +37,11 @@ merchant certificates or API v3 key via chat or GitHub**.
 6. Run `node backend/scripts/check-tencent-production-env.mjs` in a protected shell.
    It **only** checks local syntax/obvious unsafe values, does not connect to any service.
    Green is not proof of correct settings, table permissions, completed migrations or TLS.
+   Placeholder values in the example (including dummy database host, AppSecret and storage
+   credentials) now explicitly FAIL the preflight. Legacy R2/S3 endpoints also FAIL:
+   this handoff is for Tencent COS, not continued external R2 hosting. A custom COS
+   domain must still be verified in Tencent's actual console; a valid URL alone
+   cannot establish bucket ownership, privacy, or signing correctness.
 7. Provision `stall-api` as an unprivileged system user, `/opt/stall/current/backend`
    application directory and protected writable `/var/lib/stall` / `/var/log/stall`.
    Review and install `stall-api.service`; validate Nginx config after substituting
