@@ -6,6 +6,8 @@ on:
       - 'backend/src/wechatLive*.mjs'
       - 'backend/scripts/preflight.mjs'
       - 'backend/scripts/tencent-sql-policy-plan.mjs'
+      - 'backend/scripts/tencent-cos-transfer-plan.mjs'
+      - 'backend/tests/tencentCosTransferPlan.test.mjs'
       - 'backend/scripts/tencent-restored-source-review.mjs'
       - 'backend/tests/tencentRestoredSourceReview.test.mjs'
       - 'backend/tests/tencentSqlPolicyPlan.test.mjs'
@@ -45,6 +47,8 @@ on:
       - 'backend/src/wechatLive*.mjs'
       - 'backend/scripts/preflight.mjs'
       - 'backend/scripts/tencent-sql-policy-plan.mjs'
+      - 'backend/scripts/tencent-cos-transfer-plan.mjs'
+      - 'backend/tests/tencentCosTransferPlan.test.mjs'
       - 'backend/scripts/tencent-restored-source-review.mjs'
       - 'backend/tests/tencentRestoredSourceReview.test.mjs'
       - 'backend/tests/tencentSqlPolicyPlan.test.mjs'
@@ -109,6 +113,8 @@ jobs:
         run: node --test backend/tests/tencentProductionEnv.test.mjs
       - name: Verify Tencent production SQL classification and sandbox exclusion
         run: node --test backend/tests/tencentSqlPolicyPlan.test.mjs backend/tests/tencentRestoredSourceReview.test.mjs
+      - name: Verify Tencent COS transfer planning (offline)
+        run: node --test backend/tests/tencentCosTransferPlan.test.mjs
       - name: Install frontend dependencies
         run: npm ci
       - name: Check frontend types
