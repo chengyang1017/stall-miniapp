@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {LEGACY_TABLES,CANDIDATE_TABLES,LEDGERS,validateRuntimeAuditTarget,auditRuntimePrivileges}
+import {LEGACY_TABLES,CANDIDATE_TABLES,LEDGERS,REQUIRED_COLUMN_GRANTS,validateRuntimeAuditTarget,auditRuntimePrivileges}
  from '../scripts/tencent-runtime-permissions-audit.mjs'
 
 const baseEnv=()=>({
@@ -11,7 +11,7 @@ const baseEnv=()=>({
  DATABASE_URL:'postgresql://reviewer:fake-for-test@db.tencent.internal:5432/stall_tencent_drill'
 })
 const all=[...new Set([...LEGACY_TABLES,...CANDIDATE_TABLES,...LEDGERS])]
-function mockDb({missing=[],extraGrants={},denyGrants={},attributes={},dbName='stall_tencent_drill'}={}){
+function mockDb({missing=[],extraGrants={},denyGrants={},denyColumns={},missingColumns={},attributes={},dbName='stall_tencent_drill'}={}){
  const calls=[]
  const existing=all.filter(t=>!missing.includes(t))
  const db={calls,async query(sql,params=[]){
@@ -23,6 +23,16 @@ function mockDb({missing=[],extraGrants={},denyGrants={},attributes={},dbName='s
   if(sql.includes('JOIN pg_roles member ON'))return {rows:[]}
   if(sql.includes('has_schema_privilege'))return {rows:[{allowed:true}]}
   if(sql.includes('c.relname=ANY'))return {rows:existing.map(name=>({name}))}
+  if(sql.includes('FROM pg_attribute a')){
+   const [table,columns]=params
+   return {rows:columns.filter(column=>!missingColumns[table]?.includes(column)).map(attname=>({attname}))}
+  }
+  if(sql.includes('has_column_privilege')){
+   const [role,table,column,privilege]=params
+   assert.equal(role,'stall_tencent_runtime')
+   const valid=REQUIRED_COLUMN_GRANTS[table]?.[privilege]?.includes(column)===true
+   return {rows:[{allowed:valid&&!denyColumns[table]?.includes(column+':'+privilege)}]}
+  }
   if(sql.includes('has_table_privilege')){
    const [role,table,privilege]=params
    assert.equal(role,'stall_tencent_runtime')
@@ -92,4 +102,25 @@ test('mismatched database forces rollback and no misleading success report',asyn
  const db=mockDb({dbName:'neondb'})
  await assert.rejects(()=>auditRuntimePrivileges(db),/isolated_role_audit_identity_mismatch/)
  assert.equal(db.calls.at(-1).sql,'ROLLBACK')
+})
+
+test('column-specific grants count without requiring whole-table UPDATE',async()=>{
+ const db=mockDb()
+ const out=await auditRuntimePrivileges(db)
+ assert(out.checkedColumnPrivileges>=20)
+ assert.equal(out.passed,true)
+ assert(db.calls.some(c=>c.sql.includes('has_column_privilege')&&c.params[1]==='customer_account_sessions'&&c.params[3]==='UPDATE'))
+})
+test('missing account-session revoke column privilege is actionable',async()=>{
+ const db=mockDb({denyColumns:{customer_account_sessions:['revoked_at:UPDATE']}})
+ const out=await auditRuntimePrivileges(db)
+ assert.equal(out.passed,false)
+ assert(out.violations.some(v=>v.code==='missing_column_update'&&v.table==='customer_account_sessions.revoked_at'))
+})
+test('missing refund reconciliation privilege and absent avatar column block validation',async()=>{
+ const db=mockDb({denyColumns:{wechat_live_refunds:['reconcile_lease_token:UPDATE']},
+ missingColumns:{customer_accounts:['avatar_photo_key']}})
+ const out=await auditRuntimePrivileges(db)
+ assert(out.violations.some(v=>v.code==='missing_column_update'&&v.table==='wechat_live_refunds.reconcile_lease_token'))
+ assert(out.violations.some(v=>v.code==='required_column_missing'&&v.table==='customer_accounts.avatar_photo_key'))
 })
