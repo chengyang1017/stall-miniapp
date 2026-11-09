@@ -15,6 +15,10 @@ function workflowText(st: string): string {
   return labels[st] || '待接单'
 }
 Page({
+  // Stripe / Alipay entries belong exclusively to the isolated test build.
+  // Guard event handlers as well as WXML so programmatic calls cannot open
+  // test Checkout from a merchant production build.
+  sandboxPaymentAllowed(){return PAYMENT_SANDBOX_UI_ENABLED&&!LIVE_WECHAT_PAY_ENABLED},
   sandboxPollTimer:null as ReturnType<typeof setTimeout>|null,
   sandboxPollRemaining:0,
   stopSandboxPolling(message=''){
@@ -23,6 +27,7 @@ Page({
     this.setData({sandboxPollText:message})
   },
   scheduleSandboxPolling(){
+    if(!this.sandboxPaymentAllowed())return
     if(this.sandboxPollTimer){clearTimeout(this.sandboxPollTimer);this.sandboxPollTimer=null}
     if(!this.detailVisible||this.phoneReadOnly||!this.data.cloudMode)return
     const attempts=this.data.sandbox?.attempts||[]
@@ -57,6 +62,7 @@ Page({
     this.setData({receiptExpandedId:this.data.receiptExpandedId===id?'':id})
   },
   copySandboxReceipt(e:any){
+    if(!this.sandboxPaymentAllowed())return
     if(!this.detailVisible||this.phoneReadOnly)return
     const id=String(e.currentTarget.dataset.id||'')
     const receipt=this.data.sandbox?.receipts?.find((r:any)=>r.id===id&&r.orderId===this.data.order.id)
@@ -65,6 +71,7 @@ Page({
     wx.setClipboardData({data:content,fail:()=>wx.showToast({title:'复制小票失败，请重试',icon:'none'})})
   },
   async loadSandboxPayment(){
+    if(!this.sandboxPaymentAllowed())return
     const cfg=customerOrdersConfig(),serial=this.detailSerial,identity=supportIdentity(),id=String(this.data.order.id)
     if(!cfg||this.phoneReadOnly)return
     try{const result=await sandboxPaymentRequest(cfg,id)
@@ -84,6 +91,7 @@ Page({
     }}
   },
   copyActiveSandboxCheckout(){
+    if(!this.sandboxPaymentAllowed())return
     if(!this.detailVisible||this.phoneReadOnly||this.data.order.paymentStatus!=='unpaid')return
     const url=this.data.sandbox?.resumeCheckout?.url
     if(typeof url!=='string'||!/^https:\/\/checkout\.stripe\.com\//.test(url))return
@@ -99,6 +107,7 @@ Page({
     }))
   },
   async cancelSandboxPayment(){
+    if(!this.sandboxPaymentAllowed())return
     const cfg=customerOrdersConfig(),serial=this.detailSerial,identity=supportIdentity(),id=String(this.data.order.id)
     if(!cfg||this.phoneReadOnly||this.sandboxBusy||!this.detailVisible)return
     const confirmed=await this.confirmSandboxChange()
@@ -125,6 +134,7 @@ Page({
     }
   },
   async switchSandboxChannel(e:any){
+    if(!this.sandboxPaymentAllowed())return
     const cfg=customerOrdersConfig(),id=String(this.data.order.id),channel=String(e.currentTarget.dataset.channel||'') as SandboxChannel
     const serial=this.detailSerial,identity=supportIdentity()
     if(!cfg||!['card','alipay','wechat_pay'].includes(channel)||this.phoneReadOnly||!this.detailVisible||this.sandboxBusy||this.data.order.paymentStatus!=='unpaid'||!this.data.sandbox?.resumeCheckout)return
@@ -156,6 +166,7 @@ Page({
     }
   },
   async createSandboxCheckoutLink(cfg:any,id:string,channel:SandboxChannel,current:()=>boolean){
+    if(!this.sandboxPaymentAllowed())return
     const identity=supportIdentity(),key=[identity,id,channel].join(':')
     if(!this.sandboxKeys[key])this.sandboxKeys[key]='sandbox_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)
     const url=await createSandboxCheckout(cfg,id,channel,this.sandboxKeys[key])
@@ -166,11 +177,13 @@ Page({
     }})
   },
   retrySandboxCheckout(){
+    if(!this.sandboxPaymentAllowed())return
     const channel=this.data.sandbox?.retryChannel
     if(!['card','alipay','wechat_pay'].includes(channel))return
     this.openSandboxCheckout({currentTarget:{dataset:{channel}}})
   },
   async openSandboxCheckout(e:any){
+    if(!this.sandboxPaymentAllowed())return
     const cfg=customerOrdersConfig(),channel=e.currentTarget.dataset.channel as SandboxChannel
     if(!cfg||this.phoneReadOnly||this.sandboxBusy||this.data.sandboxActionBusy||!this.detailVisible||this.data.order.paymentStatus!=='unpaid'||this.data.sandboxUnavailable)return
     if(this.data.sandbox?.resumeCheckout){
@@ -266,7 +279,7 @@ Page({
   onLoad(options: Record<string, string | undefined>) {
     this.phoneReadOnly=options.phone==='1'
     this.setData({phoneReadOnly:this.phoneReadOnly})
-    if(['card','alipay','wechat_pay'].includes(options.sandboxChannel||''))this.setData({sandboxChannel:options.sandboxChannel})
+    if(this.sandboxPaymentAllowed()&&['card','alipay','wechat_pay'].includes(options.sandboxChannel||''))this.setData({sandboxChannel:options.sandboxChannel})
     this.setData({ order: { id: options.id || '' } })
   },
   reloadOrderDetail(){if(this.detailVisible&&!this.data.detailLoading)this.onShow()},
