@@ -1,3 +1,4 @@
+import {generateKeyPairSync} from 'node:crypto'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {checkTencentProductionEnvironment} from '../scripts/check-tencent-production-env.mjs'
@@ -78,4 +79,32 @@ test('Tencent CVM startup gate blocks unsafe config before listening',()=>{
 })
 test('existing Render deployment stays unchanged unless Tencent gate explicitly enabled',()=>{
  assert.deepEqual(enforceTencentProductionStartupGate({...good(),APP_ENV:'production'}),{enforced:false})
+})
+
+test('merchant-authorized live payment can pass configuration gate without enabling refunds',()=>{
+ const merchant=generateKeyPairSync('rsa',{modulusLength:2048})
+ const platform=generateKeyPairSync('rsa',{modulusLength:2048})
+ const live={...good(),
+  WECHAT_PAY_LIVE_ENABLED:'true',
+  WECHAT_PAY_MCH_ID:'1900001234',
+  WECHAT_PAY_STORE_SLUG:'store-1',
+  WECHAT_PAY_MERCHANT_SERIAL:'A'.repeat(40),
+  WECHAT_PAY_PLATFORM_SERIAL:'PUB_KEY_ID_1234567890',
+  WECHAT_PAY_MERCHANT_PRIVATE_KEY:merchant.privateKey.export({type:'pkcs8',format:'pem'}).toString(),
+  WECHAT_PAY_PLATFORM_PUBLIC_KEY:platform.publicKey.export({type:'spki',format:'pem'}).toString(),
+  WECHAT_PAY_API_V3_KEY:'x'.repeat(32),
+  WECHAT_PAY_NOTIFY_URL:'https://pay.merchant-shop.cn/v1/payments/wechat-pay/notify'
+ }
+ const withoutApproval=checkTencentProductionEnvironment(live)
+ assert.equal(withoutApproval.safeToStart,false)
+ assert(withoutApproval.issues.includes('wechatpay_merchant_activation_approval_missing'))
+ live.WECHAT_PAY_LIVE_ACTIVATION_APPROVED='MERCHANT_APPROVED_WECHAT_PAY_LIVE'
+ assert.equal(checkTencentProductionEnvironment(live).safeToStart,true)
+ assert.deepEqual(enforceTencentProductionStartupGate({...live,TENCENT_PRODUCTION_GATE:'required'}),{enforced:true})
+ live.WECHAT_PAY_MERCHANT_PRIVATE_KEY='INVALID_KEY'
+ assert(checkTencentProductionEnvironment(live).issues.includes('wechatpay_live_configuration_invalid'))
+ assert.doesNotMatch(JSON.stringify(checkTencentProductionEnvironment(live)),/INVALID_KEY/)
+
+ const disabled={...good(),WECHAT_PAY_LIVE_ACTIVATION_APPROVED:'MERCHANT_APPROVED_WECHAT_PAY_LIVE'}
+ assert(checkTencentProductionEnvironment(disabled).issues.includes('wechatpay_activation_approval_without_live_payment'))
 })
