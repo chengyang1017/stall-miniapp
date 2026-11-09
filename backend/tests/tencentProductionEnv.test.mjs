@@ -30,7 +30,7 @@ test('live payment, cleanup and Stripe test contamination are blocked',()=>{
  const x=good();x.WECHAT_PAY_LIVE_ENABLED='true';x.IMAGE_CLEANUP_EXECUTION_ENABLED='true';x.STRIPE_TEST_PAYMENTS_ENABLED='true'
  const result=checkTencentProductionEnvironment(x)
  assert.equal(result.safeToStart,false)
- assert(result.issues.some(x=>x.startsWith('WECHAT_PAY_LIVE_ENABLED')))
+ assert(result.issues.includes('wechatpay_merchant_activation_approval_missing'))
  assert(result.issues.some(x=>x.startsWith('IMAGE_CLEANUP_EXECUTION_ENABLED')))
  assert(result.issues.includes('test_only_environment_variable_present'))
 })
