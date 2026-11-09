@@ -37,6 +37,27 @@ const requiredWrites={
  inventory_movements:['INSERT'],
  payment_events:['INSERT']
 }
+// Explicitly exercised columns in customer sessions/profile and WeChat refunds.
+// has_table_privilege() alone misses valid column-level GRANTs.
+export const REQUIRED_COLUMN_GRANTS=Object.freeze({
+ customer_accounts:{
+  UPDATE:['nickname','avatar_style','avatar_photo_key','updated_at']
+ },
+ customer_account_sessions:{
+  SELECT:['account_id','token_hash','expires_at','revoked_at'],
+  INSERT:['account_id','token_hash','expires_at'],
+  UPDATE:['revoked_at']
+ },
+ wechat_live_refunds:{
+  UPDATE:['status','provider_refund_id','provider_status','last_error','claimed_at',
+   'updated_at','reconcile_next_at','reconcile_attempts','reconcile_lease_token',
+   'reconcile_lease_until']
+ },
+ store_delivery_rules:{
+  INSERT:['store_id','configuration'],
+  UPDATE:['configuration','updated_at']
+ }
+})
 const appendOnly=['wechat_live_refund_events','wechat_abnormal_collection_reviews',
  'order_status_events','image_cleanup_audit','product_review_moderation_events']
 export function validateRuntimeAuditTarget(env){
@@ -107,6 +128,32 @@ export async function auditRuntimePrivileges(db,{role='stall_tencent_runtime'}={
    if(LEDGERS.includes(table))
     for(const privilege of writePriv)if(status[privilege])add('migration_ledger_write_exposure',table)
   }
+  let columnsChecked=0
+  for(const [table,grants] of Object.entries(REQUIRED_COLUMN_GRANTS)){
+   if(!present.has(table))continue
+   const expected=[...new Set(Object.values(grants).flat())]
+   const columnResult=await db.query(`SELECT a.attname
+     FROM pg_attribute a
+     JOIN pg_class c ON c.oid=a.attrelid
+     JOIN pg_namespace n ON n.oid=c.relnamespace
+     WHERE n.nspname='public' AND c.relname=$1 AND c.relkind IN ('r','p')
+       AND a.attnum>0 AND NOT a.attisdropped AND a.attname=ANY($2::text[])`,
+      [table,expected])
+   const available=new Set(columnResult.rows.map(x=>x.attname))
+   for(const column of expected)if(!available.has(column))
+    add('required_column_missing',table+'.'+column)
+   for(const [privilege,columns] of Object.entries(grants)){
+    for(const column of columns){
+     if(!available.has(column))continue
+     columnsChecked++
+     const result=(await db.query(
+      "SELECT has_column_privilege($1,format('%I.%I','public',$2),$3,$4) AS allowed",
+       [role,table,column,privilege])).rows[0]
+     if(result?.allowed!==true)
+      add('missing_column_'+privilege.toLowerCase(),table+'.'+column)
+    }
+   }
+  }
   // High-risk extras: detect accidental universal destructive grants on legacy tables.
   for(const table of LEGACY_TABLES)if(privileges[table]?.TRUNCATE)
    add('legacy_truncate_exposure',table)
@@ -114,8 +161,9 @@ export async function auditRuntimePrivileges(db,{role='stall_tencent_runtime'}={
   return {audit:'tencent_runtime_privileges_read_only',database:'stall_tencent_drill',
    role,expectedTables:required.length,presentTables:present.size,
    legacyTables:LEGACY_TABLES.length,checkedTablePrivileges:Object.keys(privileges).length*7,
+   checkedColumnPrivileges:columnsChecked,
    passed:violations.length===0,violations,
-   caution:'This is a narrow baseline, NOT proof of complete query permissions, column grants, RLS, sequence/function grants or merchant production readiness.'}
+   caution:'This is a narrow baseline, NOT proof of complete query permissions, all column grants, RLS, sequence/function grants or merchant production readiness.'}
  }finally{
   if(open)await db.query('ROLLBACK').catch(()=>{})
  }

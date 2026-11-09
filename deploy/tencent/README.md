@@ -240,7 +240,15 @@ mutates data. Only the precise `stall_tencent_drill` target is allowed; the
 Neon connection is rejected. Do not use this audit as a production migration
 script or as an approval to activate payment.
 
-A successful table-level audit does **not** establish column-level privileges,
+The audit now also inspects **required column-level grants** for customer
+nickname/avatar updates, independent customer-account session read/issue/revoke,
+refund status/reconciliation fields, and merchant delivery-rule configuration.
+It verifies those columns exist and calls PostgreSQL `has_column_privilege`.
+A table-level UPDATE grant is **not** required when reviewed column-only grants
+are sufficient. Any missing column/grant fails the read-only report. This is a
+targeted initial contract, not a comprehensive inventory of every SQL query.
+
+A successful table-level and targeted column audit does **not** establish
 sequence and function rights, row-level security behavior, account isolation,
 the full Node query matrix, or successful integration and negative-authorization
 tests. These require an isolated TencentDB and end-to-end execution using the
