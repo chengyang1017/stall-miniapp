@@ -1,3 +1,4 @@
+import {enforceTencentProductionStartupGate} from './tencentProductionStartupGate.mjs'
 import {tencentSmsConfiguration,sendTencentSms} from './customerTencentSms.mjs'
 import {customerSmsSendRoute} from './customerSmsSend.mjs'
 import {customerSmsLoginRoute} from './customerSmsLogin.mjs'
@@ -45,6 +46,13 @@ import { resolveVerifiedWechatAccount } from './customerIdentity.mjs'
 
 // Public read-only API. Do not add merchant writes or customer checkout before
 // implementing verified WeChat identity, tenant authorization and rate limits.
+// A Tencent CVM deployment must set TENCENT_PRODUCTION_GATE=required.
+ // Reject unsafe configuration before creating the DB pool or starting workers.
+try {enforceTencentProductionStartupGate(process.env)}
+catch(err) {
+ console.error('Tencent production startup blocked',JSON.stringify({issues:err?.issues||['unknown_config_error']}))
+ throw Error('tencent_production_startup_blocked')
+}
 const port = Number(process.env.PORT || 8787)
 const host = process.env.HOST || '127.0.0.1'
 const connectionString = process.env.DATABASE_URL

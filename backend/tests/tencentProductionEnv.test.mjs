@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {checkTencentProductionEnvironment} from '../scripts/check-tencent-production-env.mjs'
+import {enforceTencentProductionStartupGate} from '../src/tencentProductionStartupGate.mjs'
 const good=()=>({
  APP_ENV:'production',HOST:'127.0.0.1',PORT:'8787',PG_SSL:'true',
  DATABASE_URL:'postgresql://newrole:fixture-pass-not-a-real-secret@db.production.internal:5432/stall',
@@ -60,4 +61,21 @@ test('legacy R2 or AWS S3 endpoints cannot be reused as Tencent COS',()=>{
   assert.equal(result.safeToStart,false)
   assert(result.issues.includes('object_storage_not_tencent_cos'))
  }
+})
+
+test('Tencent CVM startup gate blocks unsafe config before listening',()=>{
+ const goodEnv={...good(),TENCENT_PRODUCTION_GATE:'required'}
+ assert.deepEqual(enforceTencentProductionStartupGate(goodEnv),{enforced:true})
+ const unsafe={...goodEnv,DATABASE_URL:'postgresql://x:y@ep-old.neon.tech/neondb',
+  WECHAT_PAY_LIVE_ENABLED:'true'}
+ assert.throws(()=>enforceTencentProductionStartupGate(unsafe),e=>{
+  assert.equal(e.message,'tencent_production_startup_preflight_failed')
+  assert(e.issues.includes('DATABASE_URL_not_new_cloud_database'))
+  assert(e.issues.includes('WECHAT_PAY_LIVE_ENABLED_must_start_disabled'))
+  assert.doesNotMatch(JSON.stringify(e.issues),/ep-old|neondb/)
+  return true
+ })
+})
+test('existing Render deployment stays unchanged unless Tencent gate explicitly enabled',()=>{
+ assert.deepEqual(enforceTencentProductionStartupGate({...good(),APP_ENV:'production'}),{enforced:false})
 })
