@@ -9,6 +9,7 @@ import {buildMigrationPolicyPlan} from './tencent-sql-policy-plan.mjs'
 
 export const DRILL_FILES=Object.freeze([
  '023_customer_identity_groundwork.sql',
+ 'tencent_isolated_customer_profile_sessions.sql',
  '034_wechat_live_prepays.sql',
  '035_wechat_live_refunds.sql',
  '036_wechat_refund_reconcile.sql',
@@ -22,11 +23,15 @@ export async function prepareTencentDrill(){
  const source=policy.migrations.slice(0,21).map(e=>({filename:e.filename,sha256:e.sha256}))
  const scripts=[]
  for(const filename of DRILL_FILES){
-  const entry=byName.get(filename)
-  if(!entry||!entry.policy.startsWith('review_'))throw Error('drill_sql_policy_changed')
-  const raw=await readFile(path.join(sqlDir,filename),'utf8')
-  if(sha(raw)!==entry.sha256)throw Error('drill_sql_hash_changed')
-  scripts.push({filename,sha256:entry.sha256,sql:unwrapSingleTransaction(raw)})
+  const special=filename==='tencent_isolated_customer_profile_sessions.sql'
+  const entry=special?null:byName.get(filename)
+  if(!special&&(!entry||!entry.policy.startsWith('review_')))
+   throw Error('drill_sql_policy_changed')
+  const file=special?fileURLToPath(new URL('../../deploy/tencent/isolated-customer-profile-sessions.sql',import.meta.url)):path.join(sqlDir,filename)
+  const raw=await readFile(file,'utf8')
+  const checksum=sha(raw)
+  if(!special&&checksum!==entry.sha256)throw Error('drill_sql_hash_changed')
+  scripts.push({filename,sha256:checksum,sql:unwrapSingleTransaction(raw)})
  }
  return {mode:'isolated_tencentdb_drill_plan',database:'stall_tencent_drill',source,
   scripts,executed:false,productionApproved:false}
@@ -86,7 +91,7 @@ export async function applyDrill(client,plan){
    // If there is no drill ledger, refuse preexisting target tables (untracked DDL).
    const present=(await run("SELECT to_regclass('public.stall_tencent_drill_migrations') IS NOT NULL AS found")).rows[0].found
    if(!present){
-    const preexisting=(await run("SELECT to_regclass('public.customer_accounts') IS NOT NULL OR to_regclass('public.wechat_live_prepays') IS NOT NULL OR to_regclass('public.wechat_live_refunds') IS NOT NULL OR to_regclass('public.wechat_abnormal_collection_reviews') IS NOT NULL AS found")).rows[0].found
+    const preexisting=(await run("SELECT to_regclass('public.customer_accounts') IS NOT NULL OR to_regclass('public.customer_account_sessions') IS NOT NULL OR to_regclass('public.wechat_live_prepays') IS NOT NULL OR to_regclass('public.wechat_live_refunds') IS NOT NULL OR to_regclass('public.wechat_abnormal_collection_reviews') IS NOT NULL AS found")).rows[0].found
     if(preexisting)throw Error('untracked_target_tables_present')
    }
    await run('CREATE TABLE IF NOT EXISTS public.stall_tencent_drill_migrations (filename text PRIMARY KEY,sha256 char(64) NOT NULL,applied_at timestamptz NOT NULL DEFAULT now())')
