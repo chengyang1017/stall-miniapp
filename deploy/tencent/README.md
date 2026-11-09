@@ -117,6 +117,52 @@ TencentDB, review role grants and SQL dependencies, obtain authorization,
 and rehearse rollback. Do not silently synthesize source migration ledger
 rows for excluded test migrations.
 
+## Isolated TencentDB migration execution drill — NOT production
+
+A narrowly scoped executable proof-of-concept now exists at
+`backend/scripts/tencent-isolated-db-drill.mjs`.
+
+Default (no connection/no writes):
+
+```sh
+node backend/scripts/tencent-isolated-db-drill.mjs --plan
+```
+
+The plan includes exactly `023` and `034–037`, with source 001–021 SHA256
+checks and individual SQL file hashes. Those SQL migrations contain their own
+`BEGIN/COMMIT`; this runner validates and strips only their strict outer
+transaction wrappers so the SQL and its **separate drill ledger record** can
+commit atomically. It does not synthesize missing 022 or 027–030 records or
+alter the original `stall_schema_migrations` table.
+
+**Only after** an approved snapshot is fully restored and compared in a
+brand-new, isolated TencentDB database named **exactly**
+`stall_tencent_drill`, the operator may provide, through a protected shell:
+
+- `DATABASE_URL`: new TencentDB migrator credentials pointing at
+  `stall_tencent_drill`, not Neon or the merchant live database
+- `TENCENT_DRILL_EXPECTED_HOST`: the exact actual TencentDB endpoint hostname
+- `APP_ENV=isolated-migration`, `PG_SSL=true`
+- `TENCENT_DRILL_APPLY=APPLY_ONLY_ISOLATED_RESTORED_DB`
+- `WECHAT_PAY_LIVE_ENABLED=false`, `WECHAT_PAY_LIVE_REFUNDS_ENABLED=false`
+
+Then `node backend/scripts/tencent-isolated-db-drill.mjs --apply`.
+The runner holds a session-level advisory lock, checks the source migration
+ledger matches 001–021 exactly, detects untracked target tables, and runs
+the isolated migrations in separate bounded transactions with same-transaction
+ledger insertion. Failure rolls back the active transaction and stops; prior
+committed migrations remain for inspection.
+
+**Important limits:** This executable intentionally skips `024–026` and
+`031–033` because they are tied to staging roles/decisions. The resulting
+database is **not a complete deployable merchant production schema**; it lacks
+approved customer-profile/session schema and production runtime GRANTs.
+Do not point the live Node application or real WeChat Pay at this drill, or
+rename the drill database into production. Test real constraints, privilege
+separation, failure recovery and dependencies before designing the separately
+authorized production migration path. This tool has been tested only with
+mock PostgreSQL responses until a real isolated TencentDB is provisioned.
+
 ## R2 → Tencent COS private/public file migration
 
 Files cannot be migrated with `pg_dump`. The app stores object keys in
