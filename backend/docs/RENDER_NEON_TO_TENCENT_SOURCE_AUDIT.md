@@ -66,8 +66,12 @@ After restoring a consistent PostgreSQL dump into an **isolated** target databas
 the same read-only inventory against the target using its own expected hostname.
 Compare the `tables` entries and `tableCountSha256` fields. A different
 migration state will naturally introduce new tables; **compare pre-migration
-tables against the initial restore first**, then apply reviewed 022–037
-migrations to the target as applicable, and take a new baseline.
+tables against the initial restore first**. **Do not run 022–037 as an unreviewed
+production sequence**: `022_stripe_test_refund_jobs.sql` explicitly requires an
+isolated test branch, while the existing source already has staging-only schema
+from 021. Identify production-safe dependencies, reconcile the original ledger,
+and obtain a separate reviewed, authorized migration plan for the restored
+production database. Take a fresh baseline only after those operations pass.
 
 The inventory reports only counts, never customer rows or image keys.
 `objectReferences` counts how many database rows contain storage object
