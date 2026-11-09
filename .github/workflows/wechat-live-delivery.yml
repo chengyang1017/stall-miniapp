@@ -7,6 +7,8 @@ on:
       - 'backend/scripts/preflight.mjs'
       - 'backend/scripts/tencent-sql-policy-plan.mjs'
       - 'backend/scripts/tencent-cos-transfer-plan.mjs'
+      - 'backend/scripts/tencent-cos-isolated-restore.mjs'
+      - 'backend/tests/tencentCosIsolatedRestore.test.mjs'
       - 'backend/tests/tencentCosTransferPlan.test.mjs'
       - 'backend/scripts/tencent-restored-source-review.mjs'
       - 'backend/tests/tencentRestoredSourceReview.test.mjs'
@@ -48,6 +50,8 @@ on:
       - 'backend/scripts/preflight.mjs'
       - 'backend/scripts/tencent-sql-policy-plan.mjs'
       - 'backend/scripts/tencent-cos-transfer-plan.mjs'
+      - 'backend/scripts/tencent-cos-isolated-restore.mjs'
+      - 'backend/tests/tencentCosIsolatedRestore.test.mjs'
       - 'backend/tests/tencentCosTransferPlan.test.mjs'
       - 'backend/scripts/tencent-restored-source-review.mjs'
       - 'backend/tests/tencentRestoredSourceReview.test.mjs'
@@ -114,7 +118,7 @@ jobs:
       - name: Verify Tencent production SQL classification and sandbox exclusion
         run: node --test backend/tests/tencentSqlPolicyPlan.test.mjs backend/tests/tencentRestoredSourceReview.test.mjs
       - name: Verify Tencent COS transfer planning (offline)
-        run: node --test backend/tests/tencentCosTransferPlan.test.mjs
+        run: node --test backend/tests/tencentCosTransferPlan.test.mjs backend/tests/tencentCosIsolatedRestore.test.mjs
       - name: Install frontend dependencies
         run: npm ci
       - name: Check frontend types
