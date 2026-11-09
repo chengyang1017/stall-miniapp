@@ -3,11 +3,11 @@ import assert from 'node:assert/strict'
 import {checkTencentProductionEnvironment} from '../scripts/check-tencent-production-env.mjs'
 const good=()=>({
  APP_ENV:'production',HOST:'127.0.0.1',PORT:'8787',PG_SSL:'true',
- DATABASE_URL:'postgresql://newrole:SYNTHETIC@db.private.tencentcloud.example:5432/stall',
- WX_APPID:'wx1234567890abcdef',WX_APPSECRET:'synthetic-private-appsecret',
- S3_ENDPOINT:'https://cos.internal.example',S3_REGION:'ap-beijing',
- S3_BUCKET:'public-products',S3_ACCESS_KEY_ID:'synthetic',S3_SECRET_ACCESS_KEY:'synthetic',
- IMAGE_PUBLIC_BASE_URL:'https://images.example.cn',
+ DATABASE_URL:'postgresql://newrole:fixture-pass-not-a-real-secret@db.production.internal:5432/stall',
+ WX_APPID:'wx1234567890abcdef',WX_APPSECRET:'fixture-private-appsecret-123',
+ S3_ENDPOINT:'https://cos.ap-beijing.myqcloud.com',S3_REGION:'ap-beijing',
+ S3_BUCKET:'public-products',S3_ACCESS_KEY_ID:'fixture-id',S3_SECRET_ACCESS_KEY:'fixture-secret',
+ IMAGE_PUBLIC_BASE_URL:'https://images.store.example-shop.cn',
  WECHAT_PAY_LIVE_ENABLED:'false',WECHAT_PAY_LIVE_REFUNDS_ENABLED:'false',
  WECHAT_PAY_REFUND_RECONCILE_ENABLED:'false'
 })
@@ -36,4 +36,27 @@ test('missing private bucket confirmation is blocked',()=>{
  const x=good();x.PROOF_STORAGE_PRIVATE_CONFIRMED='true'
  const result=checkTencentProductionEnvironment(x)
  assert(result.issues.includes('proof_private_bucket_missing'))
+})
+
+test('bundled template placeholders never pass production preflight',()=>{
+ const x=good()
+ x.DATABASE_URL='postgresql://APP_ROLE:SET_WITH_SECRET_MANAGER@PRIVATE_POSTGRES_HOST:5432/stall'
+ x.WX_APPSECRET='CHANGE_ME_NOT_LIVE'
+ x.S3_ENDPOINT='https://cos.internal.example'
+ x.S3_ACCESS_KEY_ID='SET_WITH_SECRET_MANAGER'
+ x.IMAGE_PUBLIC_BASE_URL='https://images.example.cn'
+ const out=checkTencentProductionEnvironment(x)
+ assert.equal(out.safeToStart,false)
+ for(const kind of ['DATABASE_URL_invalid','DATABASE_URL_not_new_cloud_database',
+  'WX_APPSECRET_not_configured','object_storage_not_configured','public_image_domain_not_configured']){
+  assert(out.issues.includes(kind),kind)
+ }
+ assert.doesNotMatch(JSON.stringify(out),/SET_WITH_SECRET_MANAGER|CHANGE_ME/)
+})
+test('R2 host cannot be silently reused as public Tencent COS endpoint',()=>{
+ const x=good();x.S3_ENDPOINT='https://demo.r2.cloudflarestorage.com'
+ // Valid HTTPS URLs alone do not certify Tencent ownership; operator must verify.
+ const result=checkTencentProductionEnvironment(x)
+ assert.equal(result.safeToStart,true)
+ assert.match(result.warning,/not proof/)
 })
