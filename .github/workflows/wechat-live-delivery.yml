@@ -13,6 +13,7 @@ on:
       - 'backend/scripts/tencent-restored-source-review.mjs'
       - 'backend/scripts/tencent-isolated-db-drill.mjs'
       - 'backend/tests/tencentIsolatedDbDrill.test.mjs'
+      - 'backend/tests/tencentIsolatedRoleGrants.test.mjs'
       - 'backend/tests/tencentRestoredSourceReview.test.mjs'
       - 'backend/tests/tencentSqlPolicyPlan.test.mjs'
       - 'backend/scripts/check-tencent-production-env.mjs'
@@ -58,6 +59,7 @@ on:
       - 'backend/scripts/tencent-restored-source-review.mjs'
       - 'backend/scripts/tencent-isolated-db-drill.mjs'
       - 'backend/tests/tencentIsolatedDbDrill.test.mjs'
+      - 'backend/tests/tencentIsolatedRoleGrants.test.mjs'
       - 'backend/tests/tencentRestoredSourceReview.test.mjs'
       - 'backend/tests/tencentSqlPolicyPlan.test.mjs'
       - 'backend/scripts/check-tencent-production-env.mjs'
@@ -122,7 +124,7 @@ jobs:
       - name: Verify Tencent production SQL classification and sandbox exclusion
         run: node --test backend/tests/tencentSqlPolicyPlan.test.mjs backend/tests/tencentRestoredSourceReview.test.mjs
       - name: Verify opt-in isolated TencentDB migration drill using fake PostgreSQL
-        run: node --test backend/tests/tencentIsolatedDbDrill.test.mjs
+        run: node --test backend/tests/tencentIsolatedDbDrill.test.mjs backend/tests/tencentIsolatedRoleGrants.test.mjs
       - name: Verify Tencent COS transfer planning (offline)
         run: node --test backend/tests/tencentCosTransferPlan.test.mjs backend/tests/tencentCosIsolatedRestore.test.mjs
       - name: Install frontend dependencies
