@@ -16,11 +16,10 @@ test('Tencent isolated role grant template is limited to verified restored drill
 test('payment review and refund event records are append-only to runtime',async()=>{
  const sql=await readFile(template,'utf8')
  for(const table of ['wechat_abnormal_collection_reviews','wechat_live_refund_events']){
-  const grants=[...sql.matchAll(/GRANT\s+([\s\S]*?)\s+ON\s+public\.(\w+)\s+TO\s+stall_tencent_runtime\s*;/gi)]
+  const grants=[...sql.matchAll(/^GRANT\s+([^;\n]+)\s+ON\s+public\.(\w+)\s+TO\s+stall_tencent_runtime\s*;/gmi)]
    .filter(x=>x[2]===table)
   assert.equal(grants.length,1)
-  assert.match(grants[0][1],/SELECT, INSERT/)
-  assert.doesNotMatch(grants[0][1],/\b(?:UPDATE|DELETE|TRUNCATE|REFERENCES|TRIGGER)\b/)
+  assert.equal(grants[0][1].trim(),'SELECT, INSERT')
  }
  assert.doesNotMatch(sql,/GRANT\s+ALL\b/i)
  assert.doesNotMatch(sql,/GRANT\s+.*\bTO\s+PUBLIC\b/i)
