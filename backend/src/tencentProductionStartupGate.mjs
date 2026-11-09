@@ -1,3 +1,4 @@
+import {wechatPayLiveConfig} from './wechatPayV3.mjs'
 // Tencent CVM production startup safety gate: offline validation, never connects.
 // The gate is opt-in and MUST be enabled by merchant deployment's environment.
 // No secrets are logged; failures expose only configuration issue codes.
@@ -35,7 +36,23 @@ export function checkTencentProductionEnvironment(env){
  }
  if(!/^wx[a-z0-9]{16}$/i.test(env.WX_APPID||''))fail('WX_APPID_not_configured')
  if(missingOrPlaceholder(env.WX_APPSECRET)||env.WX_APPSECRET.length<12)fail('WX_APPSECRET_not_configured')
- for(const key of ['WECHAT_PAY_LIVE_ENABLED','WECHAT_PAY_LIVE_REFUNDS_ENABLED',
+ // The first CVM boot must keep live payment disabled. A later, explicitly
+ // authorized activation can open ONLY payments, after complete WeChat Pay v3
+ // settings pass the provider's own configuration validator.
+ if(env.WECHAT_PAY_LIVE_ENABLED!==undefined&&
+    !['false','true'].includes(env.WECHAT_PAY_LIVE_ENABLED))
+   fail('WECHAT_PAY_LIVE_ENABLED_invalid')
+ if(env.WECHAT_PAY_LIVE_ENABLED==='true'){
+  if(env.WECHAT_PAY_LIVE_ACTIVATION_APPROVED!=='MERCHANT_APPROVED_WECHAT_PAY_LIVE')
+    fail('wechatpay_merchant_activation_approval_missing')
+  try{
+   if(!wechatPayLiveConfig(env))fail('wechatpay_live_configuration_invalid')
+  }catch{fail('wechatpay_live_configuration_invalid')}
+  if(!secureUrl(env.WECHAT_PAY_NOTIFY_URL))fail('wechatpay_notify_url_invalid')
+ }else if(env.WECHAT_PAY_LIVE_ACTIVATION_APPROVED!==undefined&&
+          env.WECHAT_PAY_LIVE_ACTIVATION_APPROVED!=='')
+  fail('wechatpay_activation_approval_without_live_payment')
+ for(const key of ['WECHAT_PAY_LIVE_REFUNDS_ENABLED',
   'WECHAT_PAY_REFUND_RECONCILE_ENABLED','IMAGE_CLEANUP_EXECUTION_ENABLED',
   'IMAGE_CONDITIONAL_DELETE_VERIFIED','IMAGE_BACKUP_INVENTORY_CONFIRMED']){
   if(env[key]!==undefined&&env[key]!=='false')fail(key+'_must_start_disabled')
