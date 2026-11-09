@@ -164,10 +164,42 @@ public/private bucket assignments. It does not open any database, connect to
 R2/COS, transfer a single object or display sensitive object keys. Any
 unrecognized key remains blocked for manual classification.
 
-**This is not yet a COS uploader or restore verifier.** Once an isolated COS
-bucket is available, an authorized operator must upload each backed-up byte
-stream with original object key, MIME and private/public cache policy, then
-GET each destination and compare local SHA256 (not just ETag).
+**Isolated restore implementation is now available, but has not been tested on real Tencent COS.**
+`backend/scripts/tencent-cos-isolated-restore.mjs` defaults to an offline
+preview and requires protected local backup *directories*, not bare manifest paths:
+
+```sh
+node backend/scripts/tencent-cos-isolated-restore.mjs \
+  /secure/cos-route.json /secure/r2-products /secure/r2-proofs
+```
+
+After verifying each local backup using `verify-r2-backup.mjs`,
+provisioning **new empty isolated Tencent COS buckets**, confirming their
+access policies, and obtaining the merchant's authorization, the operator may
+set the environment variables `TENCENT_COS_REGION`,
+`TENCENT_COS_ENDPOINT` (official `https://cos.<region>.myqcloud.com`),
+`TENCENT_COS_ACCESS_KEY_ID`, `TENCENT_COS_SECRET_ACCESS_KEY`,
+`TENCENT_COS_EXPECTED_BACKUP_SET_ID`, and
+`TENCENT_COS_RESTORE_AUTHORIZE=APPLY_TO_ISOLATED_EMPTY_BUCKETS`, and run:
+
+```sh
+node backend/scripts/tencent-cos-isolated-restore.mjs --apply \
+  /secure/cos-route.json /secure/r2-products /secure/r2-proofs
+```
+
+The tool refuses existing objects, requests conditional no-overwrite PUT,
+and downloads each uploaded object to compare SHA256 and byte length.
+**If Tencent COS does not enforce the conditional PUT as required, stop and
+review the cloud behavior in an empty test bucket; do not work around it by
+overwriting live files.** No delete operation is implemented. The tool is
+bounded to 8 MiB per file; larger objects require a separately reviewed
+streaming/multipart mechanism. Interrupted runs do not auto-resume and may
+leave already verified objects in isolated COS. Reconcile manually before any
+retry; do not delete or overwrite blindly. Storage credentials never go to Git.
+
+This executable still **does not prove end-to-end production restore**:
+the source bucket inventory may be incomplete, private permissions have not
+been exercised, and DB references remain unchanged.
 Review `stored_images.storage_bucket`, `product_review_images.storage_bucket`,
 avatar keys and stored historical proof references in the **restored**
 TencentDB before switching application configuration. Verify public product
