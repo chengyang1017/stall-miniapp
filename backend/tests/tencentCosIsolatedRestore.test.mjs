@@ -8,7 +8,7 @@ import {sealMetadata} from '../scripts/backup-metadata.mjs'
 import {restoreCosSnapshots,restoreVerifiedObject,validateCosRestoreTarget} from '../scripts/tencent-cos-isolated-restore.mjs'
 const sha=b=>createHash('sha256').update(b).digest('hex')
 const id='11111111-2222-4333-8444-555555555555'
-const key='stores/'+id+'/products/a.jpg',bytes=Buffer.from('known-photo-bytes'),name='00000000-'+sha(key)+'.blob'
+const key='stores/'+id+'/products/a.jpg',bytes=Buffer.from([0xff,0xd8,0xff,0xe0,0,16,0x4a,0x46,0x49,0x46,0xff,0xd9]),name='00000000-'+sha(key)+'.blob'
 const route={product_public:'merchant-prod-1251000000',delivery_proof_private:'merchant-proofs-1251000000',
  review_private:'merchant-reviews-1251000000',review_staging_private:'merchant-reviews-1251000000',
  avatar_private:'merchant-avatars-1251000000'}
@@ -26,7 +26,7 @@ async function fixture(){
   objectCount:1,bytes:bytes.length,objects:[object],
   files:[{file:'objects/'+name,sha256:sha(bytes),bytes:bytes.length}]})
  await writeFile(path.join(folder,'manifest.json'),JSON.stringify(manifest))
- return {folder,setId,object,cleanup:()=>rm(folder,{recursive:true,force:true})}
+ return {folder,setId,object,manifest,cleanup:()=>rm(folder,{recursive:true,force:true})}
 }
 class HeadObjectCommand{constructor(input){this.input=input}}
 class PutObjectCommand{constructor(input){this.input=input}}
@@ -93,4 +93,49 @@ test('reject arbitrary endpoints and wrong region or missing credentials',()=>{
  assert.throws(()=>validateCosRestoreTarget({...env,TENCENT_COS_ENDPOINT:'https://attacker.example.com'}),/cos_target_endpoint_invalid/)
  assert.throws(()=>validateCosRestoreTarget({...env,TENCENT_COS_REGION:'ap-shanghai'}),/cos_target_endpoint_invalid/)
  assert.throws(()=>validateCosRestoreTarget({...env,TENCENT_COS_SECRET_ACCESS_KEY:''}),/cos_target_credentials_missing/)
+})
+
+test('bad declared MIME blocks COS upload even if bytes and SHA256 match',async()=>{
+ const f=await fixture()
+ try{
+  const edited=sealMetadata({...f.manifest,objects:[{...f.object,contentType:'image/png'}]})
+  await writeFile(path.join(f.folder,'manifest.json'),JSON.stringify(edited))
+  const client=mockClient()
+  const authorized={...env,TENCENT_COS_RESTORE_AUTHORIZE:'APPLY_TO_ISOLATED_EMPTY_BUCKETS',
+   TENCENT_COS_EXPECTED_BACKUP_SET_ID:f.setId}
+  await assert.rejects(()=>restoreCosSnapshots({folders:[f.folder],route,env:authorized,apply:true,client,commands}),/cos_restore_stopped_verify_destination_before_retry/)
+  assert.equal(client.calls.length,0)
+ }finally{await f.cleanup()}
+})
+test('second corrupt backup blocks upload of first valid backup: full local preflight',async()=>{
+ const a=await fixture(),b=await fixture()
+ try{
+  const secondKey='stores/'+id+'/products/b.jpg'
+  const secondName='00000000-'+sha(secondKey)+'.blob'
+  const secondObj={...b.object,key:secondKey,file:secondName}
+  const paired=sealMetadata({...b.manifest,backupSetId:a.setId,
+   bucket:'r2-different-bucket',objects:[secondObj],
+   files:[{file:'objects/'+secondName,bytes:bytes.length,sha256:sha(bytes)}]})
+  await writeFile(path.join(b.folder,'manifest.json'),JSON.stringify(paired))
+  await writeFile(path.join(b.folder,'objects',secondName),Buffer.from('broken'))
+  const client=mockClient()
+  const authorized={...env,TENCENT_COS_RESTORE_AUTHORIZE:'APPLY_TO_ISOLATED_EMPTY_BUCKETS',
+   TENCENT_COS_EXPECTED_BACKUP_SET_ID:a.setId}
+  await assert.rejects(()=>restoreCosSnapshots({folders:[a.folder,b.folder],route,
+   env:authorized,apply:true,client,commands}),/cos_restore_stopped_verify_destination_before_retry/)
+  assert.equal(client.calls.length,0)
+ }finally{await a.cleanup();await b.cleanup()}
+})
+test('content type can be reconstructed from verified image bytes when R2 metadata is null',async()=>{
+ const f=await fixture()
+ try{
+  const noType=sealMetadata({...f.manifest,objects:[{...f.object,contentType:null}]})
+  await writeFile(path.join(f.folder,'manifest.json'),JSON.stringify(noType))
+  const client=mockClient()
+  const authorized={...env,TENCENT_COS_RESTORE_AUTHORIZE:'APPLY_TO_ISOLATED_EMPTY_BUCKETS',
+   TENCENT_COS_EXPECTED_BACKUP_SET_ID:f.setId}
+  const out=await restoreCosSnapshots({folders:[f.folder],route,env:authorized,apply:true,client,commands})
+  assert.equal(out.verifiedObjects,1)
+  assert.equal(client.calls[1].input.ContentType,'image/jpeg')
+ }finally{await f.cleanup()}
 })

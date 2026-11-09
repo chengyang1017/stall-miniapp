@@ -324,8 +324,7 @@ node backend/scripts/tencent-cos-isolated-restore.mjs --apply \
   /secure/cos-route.json /secure/r2-products /secure/r2-proofs
 ```
 
-The tool refuses existing objects, requests conditional no-overwrite PUT,
-and downloads each uploaded object to compare SHA256 and byte length.
+The tool first checks **all provided local backup files and their SHA256 values before any upload**, and validates JPEG/PNG/WebP file signatures against declared R2 MIME types. If the old R2 manifest has no MIME type, the MIME is inferred from verified file bytes; a conflicting declared MIME blocks the run. It then refuses existing destination objects, requests conditional no-overwrite PUT, and downloads each uploaded object to compare SHA256 and byte length.
 **If Tencent COS does not enforce the conditional PUT as required, stop and
 review the cloud behavior in an empty test bucket; do not work around it by
 overwriting live files.** No delete operation is implemented. The tool is

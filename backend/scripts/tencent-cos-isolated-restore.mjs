@@ -22,6 +22,15 @@ export function validateCosRestoreTarget(env){
  return {endpoint:url.origin,region}
 }
 const sha256=b=>createHash('sha256').update(b).digest('hex')
+export function detectImageMime(bytes){
+ if(bytes.length>=4&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff&&
+    bytes[bytes.length-2]===0xff&&bytes[bytes.length-1]===0xd9)return 'image/jpeg'
+ if(bytes.length>=24&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
+    bytes.toString('ascii',12,16)==='IHDR')return 'image/png'
+ if(bytes.length>=12&&bytes.toString('ascii',0,4)==='RIFF'&&
+    bytes.toString('ascii',8,12)==='WEBP')return 'image/webp'
+ return null
+}
 export async function validateLocalRestorableFiles(manifest,folder,{maxFileBytes=8*1024*1024}={}){
  const items=[]
  for(const obj of manifest.objects){
@@ -30,8 +39,12 @@ export async function validateLocalRestorableFiles(manifest,folder,{maxFileBytes
   const bytes=await readFile(file)
   if(bytes.length>maxFileBytes||bytes.length!==obj.bytes||sha256(bytes)!==obj.sha256)
    throw Error('local_cos_restore_bytes_invalid')
+  const kind=cosClassifyKey(obj.key),detected=detectImageMime(bytes)
+  const declared=typeof obj.contentType==='string'?obj.contentType.split(';')[0].trim().toLowerCase():null
+  if(!detected||(declared&&declared!==detected))
+   throw Error('local_cos_restore_mime_mismatch')
   items.push({key:obj.key,bytes,sha256:obj.sha256,
-   kind:cosClassifyKey(obj.key),contentType:obj.contentType})
+   kind,contentType:detected})
  }
  return items
 }
@@ -105,6 +118,11 @@ export async function restoreCosSnapshots({folders,route,env,apply=false,client=
   maxAttempts:1}) 
  let verified=0
  try{
+  // Complete local preflight BEFORE any destination network writes. Do not
+  // retain all blobs in memory: validate each batch, discard, then re-read
+  // and hash each batch immediately before its COS upload.
+  for(let i=0;i<parsed.length;i++)
+   await validateLocalRestorableFiles(parsed[i],folders[i])
   for(let i=0;i<parsed.length;i++){
    const items=await validateLocalRestorableFiles(parsed[i],folders[i])
    for(const object of items){
