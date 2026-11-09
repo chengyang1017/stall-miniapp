@@ -79,6 +79,14 @@ export async function restoreCosSnapshots({folders,route,env,apply=false,client=
  }))
  const plan=planCosTransfer(parsed,route)
  if(plan.blockedByUnknownKeys)throw Error('unknown_object_routing_blocked')
+ // Even separate source buckets can contain identical keys that collide
+ // after routing into the same COS destination; never silently overwrite.
+ const destKeys=new Set()
+ for(const manifest of parsed)for(const item of manifest.objects){
+  const key=route[cosClassifyKey(item.key)]+'\\0'+item.key
+  if(destKeys.has(key))throw Error('duplicate_cos_destination_key')
+  destKeys.add(key)
+ }
  const preview={mode:apply?'isolated_cos_restore':'offline_plan',objectCount:plan.objectCount,
   counts:plan.counts,destinationBuckets:plan.destinationBuckets,writePerformed:false,
   note:'Plan does not verify backup bytes. Restore requires verified files, isolated empty COS buckets and explicit approval.'}
