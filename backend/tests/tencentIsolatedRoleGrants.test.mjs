@@ -27,7 +27,7 @@ test('payment review and refund event records are append-only to runtime',async(
 })
 test('narrow explicit grant covers refund reconciliation columns and no ledger writes',async()=>{
  const sql=await readFile(template,'utf8')
- const match=sql.match(/GRANT UPDATE \(([\s\S]*?)\) ON public\.wechat_live_refunds TO stall_tencent_runtime;/)
+ const match=sql.match(/^GRANT UPDATE \(([^;]*?)\) ON public\.wechat_live_refunds TO stall_tencent_runtime;/m)
  assert(match)
  for(const name of ['status','provider_refund_id','provider_status','last_error',
   'claimed_at','updated_at','reconcile_next_at','reconcile_attempts','reconcile_lease_token','reconcile_lease_until'])
