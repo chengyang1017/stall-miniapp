@@ -91,6 +91,32 @@ refuses remote databases. Production requires its own **reviewed, separately
 authorized** target-only migration plan and ledger strategy. Do not manually
 invent migration ledger entries to fill 022 or 027–030.
 
+## Review the exact restored-source migration candidates
+
+After the authorized source audit produces a JSON report from the correct
+database, the **offline-only** review script can narrow down what must be
+decided before writing SQL:
+
+```sh
+node backend/scripts/tencent-restored-source-review.mjs /secure/source-inventory.json
+```
+
+This requires the known 001–021 source history, a clean filename/hash check,
+and all 16 later filenames marked missing. It outputs SHA256-reviewed candidate
+groups: `023` account identity, `024–026/033` requiring production grant
+rewrites, `031–032` requiring an avatar/session design decision, and
+`034–037` real WeChat payment schema. It always excludes
+`022/027–030` and always reports `sqlExecutionAuthorized=false`.
+No database connection or automatic DDL is performed.
+
+**It is not a production migrator.** The original 021 source contains
+staging-related structures. A separately reviewed target-only migration and
+ledger scheme must address the skipped Sandbox numbers. Before production
+DDL, the operator must restore and verify the snapshot in a nonproduction
+TencentDB, review role grants and SQL dependencies, obtain authorization,
+and rehearse rollback. Do not silently synthesize source migration ledger
+rows for excluded test migrations.
+
 ## Separation and rollback
 Keep the old Render and Neon environments until cutover validation and merchant sign-off.
 Never turn on `WECHAT_PAY_LIVE_ENABLED`, refund or reconciliation, or image-cleanup delete
