@@ -7,7 +7,7 @@ const good=()=>({
  WX_APPID:'wx1234567890abcdef',WX_APPSECRET:'fixture-private-appsecret-123',
  S3_ENDPOINT:'https://cos.ap-beijing.myqcloud.com',S3_REGION:'ap-beijing',
  S3_BUCKET:'public-products',S3_ACCESS_KEY_ID:'fixture-id',S3_SECRET_ACCESS_KEY:'fixture-secret',
- IMAGE_PUBLIC_BASE_URL:'https://images.store.example-shop.cn',
+ IMAGE_PUBLIC_BASE_URL:'https://images.merchant-shop.cn',
  WECHAT_PAY_LIVE_ENABLED:'false',WECHAT_PAY_LIVE_REFUNDS_ENABLED:'false',
  WECHAT_PAY_REFUND_RECONCILE_ENABLED:'false'
 })
