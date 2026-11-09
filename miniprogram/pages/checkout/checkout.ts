@@ -19,7 +19,7 @@ import { getSessionToken } from '../../modules/shared/runtime/context'
 const DRAFT_KEY = 'stall_checkout_draft_v1'
 
 Page({
-  chooseSandboxChannel(e:any){const channel=String(e.currentTarget.dataset.channel||'');if(['card','alipay','wechat_pay'].includes(channel))this.setData({sandboxChannel:channel})},
+  chooseSandboxChannel(e:any){if(!PAYMENT_SANDBOX_UI_ENABLED||LIVE_WECHAT_PAY_ENABLED)return;const channel=String(e.currentTarget.dataset.channel||'');if(['card','alipay','wechat_pay'].includes(channel))this.setData({sandboxChannel:channel})},
   checkoutContext:'',
   draftStorageKey(){const cfg=cloudCartConfig();return cfg?(getSessionToken()?DRAFT_KEY+':'+cloudCacheSuffix(cfg.storeSlug):''):DRAFT_KEY+':demo'},
   restoreDraft(){this.checkoutContext=supportIdentity();const key=this.draftStorageKey(),draft=key?wx.getStorageSync(key):null;this.setData({note:draft&&typeof draft.note==='string'?draft.note:'',selectedAddress:null,hasAddress:false,selectedSlotId:'',noteShortcuts:[]})},
@@ -137,7 +137,7 @@ Page({
     this.recheckCloudSelection(date)
   },
   async submitCloudOrder() {
-    if(CLOUD_ONLY&&!LIVE_WECHAT_PAY_ENABLED&&!PAYMENT_SANDBOX_UI_ENABLED){this.setData({cloudError:'本店支付尚未开通，暂不能提交订单'});return}
+    if(CLOUD_ONLY&&(!LIVE_WECHAT_PAY_ENABLED&&!PAYMENT_SANDBOX_UI_ENABLED||LIVE_WECHAT_PAY_ENABLED&&PAYMENT_SANDBOX_UI_ENABLED)){this.setData({cloudError:'本店支付配置尚未准备好，暂不能提交订单'});return}
     if(this.data.orderSubmitting)return
     if(this.checkoutContext!==supportIdentity()){this.restoreDraft();await this.refreshCloudCheckout();return}
     if(this.data.cloudBusy||this.data.cloudError||this.data.deliveryError)return

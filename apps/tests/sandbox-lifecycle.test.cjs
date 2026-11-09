@@ -4,9 +4,9 @@ const view=require(path.join(base,'modules/shared/domain/sandboxPayment.js')).sa
 const label=require(path.join(base,'modules/shared/domain/payment.js')).paymentLabel
 const cfg={apiBase:'https://sandbox.invalid',storeSlug:'sandbox-test'},id='11111111-1111-4111-8111-111111111111'
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b});return {promise,resolve,reject}}
-function page(name,target='customer'){
+function page(name,target='customer',paymentMode='sandbox'){
  let definition,identity='synthetic-A',requests=[],orders=[],modal,navigations=[]
- const mock={cloudIdentity:()=>identity,customerOrdersConfig:()=>cfg,merchantOrderConfig:()=>cfg,merchantOrderContextKey:()=>identity,
+ const mock={LIVE_WECHAT_PAY_ENABLED:paymentMode==='live',PAYMENT_SANDBOX_UI_ENABLED:paymentMode==='sandbox',cloudIdentity:()=>identity,customerOrdersConfig:()=>cfg,merchantOrderConfig:()=>cfg,merchantOrderContextKey:()=>identity,
   sandboxPaymentView:view,paymentLabel:label,sandboxPaymentRequest:(...args)=>{const d=deferred();requests.push({...d,args});return d.promise},customerOrdersRequest:()=>{const d=deferred();orders.push(d);return d.promise}}
  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname,'../../dist/'+target+'/miniprogram/pages/'+name+'/'+name+'.js'),'utf8'),{
   exports:{},require:()=>mock,Page:p=>{definition=p},wx:{navigateTo:o=>navigations.push(o.url),showModal:o=>{modal=o},showToast(){},setClipboardData(){}}
@@ -59,6 +59,15 @@ test('merchant refund requires fresh server balance and refuses invalid amount b
 test('compiled checkout selects only supported external sandbox channels',()=>{
  const f=page('checkout');f.p.chooseSandboxChannel({currentTarget:{dataset:{channel:'alipay'}}});assert.equal(f.p.data.sandboxChannel,'alipay')
  f.p.chooseSandboxChannel({currentTarget:{dataset:{channel:'fake'}}});assert.equal(f.p.data.sandboxChannel,'alipay')
+})
+test('compiled merchant production build refuses Alipay sandbox event handlers',async()=>{
+ const checkout=page('checkout','customer','live')
+ checkout.p.chooseSandboxChannel({currentTarget:{dataset:{channel:'alipay'}}})
+ assert.equal(checkout.p.data.sandboxChannel,'card')
+ const detail=page('order-detail','customer','live')
+ await detail.p.loadSandboxPayment()
+ await detail.p.openSandboxCheckout({currentTarget:{dataset:{channel:'alipay'}}})
+ assert.equal(detail.requests.length,0)
 })
 test('view models preserve all payment, refund and original receipt states',()=>{
  const data=view({attempts:['creating','processing','failed','cancelled','expired','succeeded','refund_required'].map(status=>({status,channel:'wechat_pay',amountCents:1000})),refunds:['pending','processing','submitted','succeeded','review'].map(status=>({status,amountCents:250})),receipts:[{totalCents:1000,items:[{unitPriceCents:500,quantity:2}]}]})
