@@ -163,6 +163,34 @@ separation, failure recovery and dependencies before designing the separately
 authorized production migration path. This tool has been tested only with
 mock PostgreSQL responses until a real isolated TencentDB is provisioned.
 
+## Runtime database permissions — isolated partial template
+
+`deploy/tencent/isolated-runtime-grants.sql.template` contains a **review-only**
+permission proposal for customer identity `023` and live WeChat Pay `034–037`
+tables. It is guarded to the restored isolated database named
+`stall_tencent_drill`, a pre-provisioned `stall_tencent_migrator` SQL
+executor, and a separate, non-superuser `stall_tencent_runtime` role. It
+does not create any role or set a password. It deliberately omits permission
+grants on the legacy `001–021` tables, customer nickname/avatar data and
+customer sessions, which require a wider verified application query inventory.
+
+Key runtime permissions: customer accounts and identities have SELECT/INSERT;
+payment prepay rows are SELECT/INSERT; refund rows have scoped state changes;
+refund events and abnormal-collection review logs are SELECT/INSERT only
+without UPDATE or DELETE. The script never grants privileges to PUBLIC.
+These are **design candidates**, not a verified final runtime privilege model.
+
+**Do not apply the template to the existing Neon source, any merchant
+production database or an unexamined restore.** Even on an isolated restore,
+verify ownership, existing inherited role privileges, default privileges,
+sequence access, function execution rights, permissions on 001–021 business
+tables, the absence of sandbox/test grants, and the actual SQL queries executed
+by Node. The script's `REVOKE FROM PUBLIC` does not revoke preexisting explicit
+grants to other roles. The application login role must not be the owner or have
+CREATEROLE/DDL privileges. Make no claims of finished least-privilege
+isolation until negative authorization tests run against an actual PostgreSQL
+instance. Test grant/deny as a separate role while all payment flags remain off.
+
 ## R2 → Tencent COS private/public file migration
 
 Files cannot be migrated with `pg_dump`. The app stores object keys in
