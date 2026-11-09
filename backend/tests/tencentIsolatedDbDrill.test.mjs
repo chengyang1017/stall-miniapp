@@ -9,7 +9,7 @@ const env=()=>({
  TENCENT_DRILL_APPLY:'APPLY_ONLY_ISOLATED_RESTORED_DB',
  WECHAT_PAY_LIVE_ENABLED:'false'
 })
-test('default plan contains only identity + live payment SQL, never sandbox',async()=>{
+test('default drill plan contains identity, COS profile/session, live payment, never sandbox',async()=>{
  const p=await prepareTencentDrill()
  assert.equal(p.source.length,21)
  assert.deepEqual(p.scripts.map(s=>s.filename),DRILL_FILES)
@@ -55,8 +55,8 @@ function fakeClient(plan,{ledgerChanged=false,existingTables=false,sqlFails=fals
 test('successful isolated drill inserts each ledger row inside its SQL transaction',async()=>{
  const plan=await prepareTencentDrill(),db=fakeClient(plan)
  const result=await applyDrill(db,plan)
- assert.equal(result.applied.length,5)
- assert.equal(db.records.length,5)
+ assert.equal(result.applied.length,6)
+ assert.equal(db.records.length,6)
  const statements=db.logs.map(x=>x.sql)
  for(const file of DRILL_FILES){
   const i=db.logs.findIndex(x=>x.sql.startsWith('INSERT INTO public.stall_tencent_drill_migrations')&&x.params[0]===file)
@@ -77,8 +77,22 @@ test('mismatched source ledger and untracked schema refuse before any DDL',async
 test('migration SQL failure rolls back the target transaction and never records failed file',async()=>{
  const plan=await prepareTencentDrill(),db=fakeClient(plan,{sqlFails:true})
  await assert.rejects(()=>applyDrill(db,plan),/simulated DDL failure/)
- assert.deepEqual(db.records.map(x=>x.filename),['023_customer_identity_groundwork.sql'])
+ assert.deepEqual(db.records.map(x=>x.filename),['023_customer_identity_groundwork.sql','tencent_isolated_customer_profile_sessions.sql'])
  const log=db.logs.map(x=>x.sql)
  assert(log.includes('ROLLBACK'))
  assert(log.includes('SELECT pg_advisory_unlock(552193, 20261109)'))
+})
+
+test('COS-backed profile/session drill uses no staging permissions or private avatar bytea',async()=>{
+ const plan=await prepareTencentDrill()
+ const sql=plan.scripts.find(x=>x.filename==='tencent_isolated_customer_profile_sessions.sql')?.sql
+ assert(sql)
+ for(const field of ['nickname','avatar_style','avatar_photo_key','customer_account_sessions','token_hash'])
+  assert(sql.includes(field),field)
+ assert(!/stall_payment_app_limited|sbx04_app_least|GRANT\s/i.test(sql))
+ assert(!/image_bytes\s+bytea/i.test(sql))
+ assert(plan.scripts.findIndex(x=>x.filename==='023_customer_identity_groundwork.sql')<
+  plan.scripts.findIndex(x=>x.filename==='tencent_isolated_customer_profile_sessions.sql'))
+ assert(plan.scripts.findIndex(x=>x.filename==='tencent_isolated_customer_profile_sessions.sql')<
+  plan.scripts.findIndex(x=>x.filename==='034_wechat_live_prepays.sql'))
 })
