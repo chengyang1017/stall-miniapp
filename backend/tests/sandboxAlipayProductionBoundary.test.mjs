@@ -20,9 +20,9 @@ test('sandbox handlers reject production or simultaneous live flags, including d
  for(const method of ['scheduleSandboxPolling','copySandboxReceipt','loadSandboxPayment',
    'copyActiveSandboxCheckout','cancelSandboxPayment','switchSandboxChannel',
    'createSandboxCheckoutLink','retrySandboxCheckout','openSandboxCheckout']){
-  const start=detail.indexOf(method+'(')
-  assert(start>=0,method)
-  assert(detail.slice(start,start+250).includes('if(!this.sandboxPaymentAllowed())return'),method)
+  const match=new RegExp('^  (?:async )?'+method+'\\\\([^\\\\n]*\\\\)\\\\{','m').exec(detail)
+  assert(match,method)
+  assert(detail.slice(match.index,match.index+280).includes('if(!this.sandboxPaymentAllowed())return'),method)
  }
  assert.match(checkout,/LIVE_WECHAT_PAY_ENABLED&&PAYMENT_SANDBOX_UI_ENABLED/)
 })
