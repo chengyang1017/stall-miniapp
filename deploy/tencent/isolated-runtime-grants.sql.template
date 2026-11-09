@@ -1,0 +1,70 @@
+-- REVIEW-ONLY TEMPLATE. DO NOT APPLY TO NEON, PRODUCTION OR THE DRILL AUTOMATICALLY.
+-- This covers ONLY 023 and 034-037 candidate tables. It is NOT a full
+-- privilege manifest for the existing 001-021 application schema.
+-- Require target-only isolated restore, explicit merchant approval and
+-- review of all referenced runtime queries and role ownership before use.
+BEGIN;
+DO $guard$
+BEGIN
+  IF current_database() <> 'stall_tencent_drill' THEN
+    RAISE EXCEPTION 'isolated_database_only';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='stall_tencent_runtime') THEN
+    RAISE EXCEPTION 'approved_runtime_role_missing';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='stall_tencent_migrator') THEN
+    RAISE EXCEPTION 'approved_migrator_role_missing';
+  END IF;
+  IF current_user <> 'stall_tencent_migrator' THEN
+    RAISE EXCEPTION 'wrong_migrator_role';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM pg_roles WHERE rolname='stall_tencent_runtime'
+      AND (rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication)
+  ) THEN RAISE EXCEPTION 'runtime_role_has_unsafe_role_attributes';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM pg_auth_members m JOIN pg_roles member ON member.oid=m.member
+    JOIN pg_roles granted ON granted.oid=m.roleid
+    WHERE member.rolname='stall_tencent_runtime'
+      AND granted.rolname IN ('pg_read_all_data','pg_write_all_data')
+  ) THEN RAISE EXCEPTION 'runtime_role_has_global_data_privileges';
+  END IF;
+  IF to_regclass('public.customer_accounts') IS NULL
+    OR to_regclass('public.customer_login_identities') IS NULL
+    OR to_regclass('public.customer_verified_phones') IS NULL
+    OR to_regclass('public.wechat_live_prepays') IS NULL
+    OR to_regclass('public.wechat_live_refunds') IS NULL
+    OR to_regclass('public.wechat_live_refund_events') IS NULL
+    OR to_regclass('public.wechat_abnormal_collection_reviews') IS NULL THEN
+    RAISE EXCEPTION 'expected_reviewed_tables_missing';
+  END IF;
+END $guard$;
+REVOKE ALL ON public.customer_accounts, public.customer_login_identities,
+  public.customer_verified_phones, public.wechat_live_prepays,
+  public.wechat_live_refunds, public.wechat_live_refund_events,
+  public.wechat_abnormal_collection_reviews FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO stall_tencent_runtime;
+
+-- Customer identity creation, login, and verified phone binding.
+GRANT SELECT, INSERT ON public.customer_accounts TO stall_tencent_runtime;
+GRANT SELECT, INSERT ON public.customer_login_identities TO stall_tencent_runtime;
+GRANT SELECT, INSERT, UPDATE (phone_e164, verified_at)
+  ON public.customer_verified_phones TO stall_tencent_runtime;
+
+-- Live prepay inserts only; old prepay records must not be silently rewritten.
+GRANT SELECT, INSERT ON public.wechat_live_prepays TO stall_tencent_runtime;
+-- Refund status and reconciliation need narrow writes. Final column-by-column
+-- restrictions must be validated against all current backend refund queries.
+GRANT SELECT, INSERT ON public.wechat_live_refunds TO stall_tencent_runtime;
+GRANT UPDATE (status,provider_refund_id,provider_status,last_error,claimed_at,
+  updated_at,reconcile_next_at,reconcile_attempts,reconcile_lease_token,
+  reconcile_lease_until) ON public.wechat_live_refunds TO stall_tencent_runtime;
+GRANT SELECT, INSERT ON public.wechat_live_refund_events TO stall_tencent_runtime;
+-- Append-only review: NEVER grant UPDATE or DELETE.
+GRANT SELECT, INSERT ON public.wechat_abnormal_collection_reviews
+  TO stall_tencent_runtime;
+
+-- Application must not be able to alter migration bookkeeping.
+REVOKE ALL ON public.stall_tencent_drill_migrations FROM PUBLIC;
+COMMIT;
