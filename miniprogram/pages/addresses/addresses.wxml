@@ -1,56 +1,124 @@
-<view class="page">
-  <view class="heading">我的地址</view>
-  <view wx:if="{{phoneAddressLoading || phoneAddressStatus || phoneAddressList.length}}" class="card">
-    <view class="subheading">手机号顾客地址（只读）</view>
-    <view class="tip">{{phoneAddressStatus}}</view>
-    <view wx:for="{{phoneAddressList}}" wx:key="id" class="address-detail">
-      <view>{{item.receiverName}} · {{item.phone}}</view>
-      <view>{{item.area}} {{item.detail}}</view>
-      <button size="mini" data-id="{{item.id}}" bindtap="phoneEdit" disabled="{{phoneWriteBusy}}">编辑</button>
-      <button wx:if="{{!item.isDefault}}" size="mini" data-id="{{item.id}}" bindtap="phoneDefault" disabled="{{phoneWriteBusy}}">设为默认</button>
-      <button size="mini" data-id="{{item.id}}" bindtap="phoneRemove" disabled="{{phoneWriteBusy}}">删除</button>
+<view class="address-page">
+  <view class="address-heading">
+    <view class="address-heading-main">
+      <view class="address-heading-title">收货地址</view>
+      <view class="address-heading-desc">管理常用地址，方便下单配送</view>
     </view>
-    <button size="mini" bindtap="phoneNew" disabled="{{phoneWriteBusy}}">新增手机号地址</button>
-    <view class="field"><text>收货人</text><input data-field="phoneName" bindinput="phoneField" value="{{phoneName}}" disabled="{{phoneWriteBusy}}"/></view>
-    <view class="field"><text>中国大陆手机号</text><input data-field="phoneNumber" type="number" maxlength="11" bindinput="phoneField" value="{{phoneNumber}}" disabled="{{phoneWriteBusy}}"/></view>
-    <view class="field"><text>配送区域 ID</text><input data-field="phoneAreaId" bindinput="phoneField" value="{{phoneAreaId}}" disabled="{{phoneWriteBusy}}"/></view>
-    <view class="field"><text>详细地址</text><input data-field="phoneDetail" bindinput="phoneField" value="{{phoneDetail}}" disabled="{{phoneWriteBusy}}"/></view>
-    <button size="mini" bindtap="phoneSave" loading="{{phoneWriteBusy}}" disabled="{{phoneWriteBusy}}">保存手机号地址（测试）</button>
+    <view class="address-heading-count">{{addresses.length}} 个地址</view>
   </view>
-  <view class="tip">{{cloudMode ? '当前登录顾客的云端地址 · 当前店铺配送区域' : '本机演示配送规则'}} · {{deliveryStatus}}</view>
-  <button wx:if="{{cloudMode}}" size="mini" bindtap="login" disabled="{{addressBusy}}">微信登录／重新验证身份</button>
-  <view wx:if="{{deliveryError}}" class="tip">{{deliveryError}}<button size="mini" bindtap="refresh">重新读取区域</button></view>
-  <view wx:if="{{addresses.length===0}}" class="empty">尚未保存地址，请先在下面添加</view>
-  <view wx:for="{{addresses}}" wx:key="id" class="card">
-    <view class="address-name">{{item.receiverName}} · {{item.phone}}</view>
-    <view class="address-detail">{{item.area}} {{item.detail}}</view>
-    <view wx:if="{{cloudMode && item.deliveryIssue}}" class="tip">{{item.deliveryIssue}}</view>
-    <view wx:if="{{item.isDefault}}" class="default-tag">默认地址</view>
-    <view class="actions">
-      <button size="mini" data-id="{{item.id}}" bindtap="choose" disabled="{{cloudMode && (addressBusy || addressListSync || deliveryBusy || deliveryError || item.deliveryIssue)}}">使用</button>
-      <button size="mini" data-id="{{item.id}}" bindtap="edit" disabled="{{addressBusy || addressListSync}}">编辑</button>
-      <button wx:if="{{!item.isDefault}}" size="mini" data-id="{{item.id}}" bindtap="setDefault" disabled="{{addressBusy || addressListSync}}">设为默认</button>
-      <button size="mini" data-id="{{item.id}}" bindtap="remove" disabled="{{addressBusy || addressListSync}}">删除</button>
-    </view>
+
+  <view wx:if="{{cloudMode}}" class="address-cloud-state">
+    <view class="address-cloud-dot"></view>
+    <text class="address-cloud-text">{{deliveryBusy ? '正在同步配送区域与地址…' : '云端地址 · 按当前店铺配送范围校验'}}</text>
+    <button class="address-text-button" size="mini" bindtap="login" disabled="{{addressBusy}}">验证登录</button>
   </view>
-  <view class="card">
-    <view class="subheading">{{editingId ? '编辑地址' : '新增地址'}}</view>
-    <view class="field"><text>收货人姓名 *</text><input value="{{receiverName}}" maxlength="40" placeholder="请输入姓名" bindinput="changeName" disabled="{{addressBusy}}" /></view>
-    <view class="field"><text>中国大陆手机号 *</text><input value="{{phone}}" type="number" maxlength="11" placeholder="请输入11位手机号" bindinput="changePhone" disabled="{{addressBusy}}" /></view>
-    <view class="field"><text>配送地区 *</text><picker range="{{areas}}" range-key="name" bindchange="changeArea" disabled="{{addressBusy || deliveryBusy || !areas.length || deliveryError}}"><view class="select">{{area || '请选择配送地区'}}</view></picker></view>
-    <view class="field"><text>详细地址 *</text><input value="{{detail}}" maxlength="150" placeholder="楼栋、单元、门牌号" bindinput="changeDetail" disabled="{{addressBusy}}" /></view>
-    <view class="field">
-      <text>地图位置（选填）</text>
-      <button size="mini" bindtap="chooseMapLocation" disabled="{{addressBusy}}">在地图上选择位置</button>
-      <view wx:if="{{mapAddress || locationName}}" class="map-location-preview">
-        <text>{{locationName}}</text>
-        <text>{{mapAddress}}</text>
-        <text>请确认配送地区并另外填写楼栋、单元、门牌号</text>
+  <view wx:if="{{!cloudMode}}" class="address-hint">当前为本机演示地址，不会同步到其他设备。</view>
+  <view wx:if="{{deliveryError}}" class="address-alert">
+    <view class="address-alert-text">{{deliveryError}}</view>
+    <button size="mini" class="address-text-button" bindtap="refresh" disabled="{{deliveryBusy}}">重试</button>
+  </view>
+
+  <view class="address-section-head">
+    <text>常用地址</text>
+    <text class="address-section-note">{{addresses.length}} 条</text>
+  </view>
+
+  <view wx:if="{{addresses.length === 0}}" class="address-empty">
+    <view class="address-empty-icon">⌖</view>
+    <view class="address-empty-title">还没有收货地址</view>
+    <view class="address-empty-desc">填写下方信息，保存你的第一个配送地址</view>
+  </view>
+
+  <view wx:for="{{addresses}}" wx:key="id" class="address-card">
+    <view class="address-card-head">
+      <view class="address-pin">⌖</view>
+      <view class="address-card-identity">
+        <view class="address-name-row">
+          <text class="address-name">{{item.receiverName}}</text>
+          <text class="address-phone">{{item.phone}}</text>
+        </view>
+        <text wx:if="{{item.isDefault}}" class="default-tag">默认地址</text>
       </view>
     </view>
-    <view wx:if="{{addressFeedback}}" class="tip">{{addressFeedback}}</view>
-    <button type="primary" bindtap="save" loading="{{addressBusy}}" disabled="{{addressBusy || (cloudMode && (deliveryBusy || deliveryError))}}">{{addressBusy ? (addressSync === 'confirmed' ? '已保存，正在同步列表…' : '保存中…') : '保存地址'}}</button>
-    <button wx:if="{{editingId}}" bindtap="clearForm" disabled="{{addressBusy}}">取消编辑</button>
+    <view class="address-card-location">{{item.area}} {{item.detail}}</view>
+    <view wx:if="{{cloudMode && item.deliveryIssue}}" class="address-issue">{{item.deliveryIssue}}</view>
+    <view class="address-actions">
+      <button class="address-use-btn" size="mini" data-id="{{item.id}}" bindtap="choose" disabled="{{cloudMode && (addressBusy || addressListSync || deliveryBusy || deliveryError || item.deliveryIssue)}}">使用地址</button>
+      <button class="address-action-btn" size="mini" data-id="{{item.id}}" bindtap="edit" disabled="{{addressBusy || addressListSync}}">编辑</button>
+      <button wx:if="{{!item.isDefault}}" class="address-action-btn" size="mini" data-id="{{item.id}}" bindtap="setDefault" disabled="{{addressBusy || addressListSync}}">设为默认</button>
+      <button class="address-action-btn address-danger-btn" size="mini" data-id="{{item.id}}" bindtap="remove" disabled="{{addressBusy || addressListSync}}">删除</button>
+    </view>
   </view>
-  <view class="tip">{{cloudMode ? '地址保存到服务器，按顾客身份与店铺隔离，可跨设备读取；历史订单地址不随修改变化。' : '演示阶段仅保存在当前微信设备本地，不会同步到其他手机。'}}</view>
+
+  <view id="address-form" class="address-form-card">
+    <view class="address-form-head">
+      <view class="address-form-symbol">＋</view>
+      <view class="address-form-title">{{editingId ? '编辑收货地址' : '新增收货地址'}}</view>
+    </view>
+    <view class="address-form-subtitle">请填写完整的收货信息，带 * 的项目为必填</view>
+
+    <view class="address-field">
+      <text class="address-field-label">收货人姓名 <text class="address-required">*</text></text>
+      <input class="address-input" value="{{receiverName}}" maxlength="40" placeholder="请输入收货人姓名" bindinput="changeName" disabled="{{addressBusy}}"/>
+    </view>
+    <view class="address-field">
+      <text class="address-field-label">联系电话 <text class="address-required">*</text></text>
+      <input class="address-input" value="{{phone}}" type="number" maxlength="11" placeholder="请输入中国大陆 11 位手机号" bindinput="changePhone" disabled="{{addressBusy}}"/>
+    </view>
+    <view class="address-field">
+      <text class="address-field-label">配送地区 <text class="address-required">*</text></text>
+      <picker range="{{areas}}" range-key="name" bindchange="changeArea" disabled="{{addressBusy || deliveryBusy || !areas.length || deliveryError}}">
+        <view class="address-select {{area ? 'address-select-chosen' : ''}}">
+          <text>{{area || '请选择可配送地区'}}</text><text class="address-select-arrow">⌄</text>
+        </view>
+      </picker>
+    </view>
+    <view class="address-field">
+      <text class="address-field-label">详细地址 <text class="address-required">*</text></text>
+      <input class="address-input" value="{{detail}}" maxlength="150" placeholder="楼栋、单元、门牌号等详细信息" bindinput="changeDetail" disabled="{{addressBusy}}"/>
+    </view>
+
+    <view class="address-map-row">
+      <view class="address-map-copy">
+        <view class="address-field-label">地图位置 <text class="address-optional">选填</text></view>
+        <view class="address-map-caption">可辅助定位，仍需填写详细门牌地址</view>
+      </view>
+      <button class="address-map-button" size="mini" bindtap="chooseMapLocation" disabled="{{addressBusy}}">选择位置</button>
+    </view>
+    <view wx:if="{{mapAddress || locationName}}" class="address-map-preview">
+      <text wx:if="{{locationName}}">{{locationName}}</text>
+      <text wx:if="{{mapAddress}}">{{mapAddress}}</text>
+      <text class="address-map-reminder">请核对配送地区与楼栋、单元、门牌号</text>
+    </view>
+
+    <view wx:if="{{addressFeedback}}" class="address-feedback">{{addressFeedback}}</view>
+    <button class="address-save-btn" bindtap="save" loading="{{addressBusy}}" disabled="{{addressBusy || (cloudMode && (deliveryBusy || deliveryError))}}">{{addressBusy ? (addressSync === 'confirmed' ? '已保存，正在同步列表…' : '保存中…') : (editingId ? '保存修改' : '保存地址')}}</button>
+    <button wx:if="{{editingId}}" class="address-cancel-btn" bindtap="clearForm" disabled="{{addressBusy}}">取消编辑</button>
+  </view>
+
+  <view class="address-bottom-note">{{cloudMode ? '地址按顾客身份和店铺隔离保存，历史订单中的地址不会随此处修改。' : '演示地址仅保存在本机微信，不会同步到其他设备。'}}</view>
+
+  <view wx:if="{{phoneAddressLoading || phoneAddressStatus || phoneAddressList.length}}" class="address-phone-testing">
+    <view class="address-testing-head">
+      <view class="address-testing-title">手机号账号地址</view>
+      <text class="address-testing-tag">测试功能</text>
+    </view>
+    <view class="address-testing-desc">独立手机号身份的地址管理，不与微信顾客地址自动合并。</view>
+    <view wx:if="{{phoneAddressStatus}}" class="address-testing-status">{{phoneAddressStatus}}</view>
+    <view wx:for="{{phoneAddressList}}" wx:key="id" class="address-testing-item">
+      <view class="address-testing-name">{{item.receiverName}} · {{item.phone}}</view>
+      <view class="address-testing-location">{{item.area}} {{item.detail}}</view>
+      <view class="address-testing-actions">
+        <button size="mini" data-id="{{item.id}}" bindtap="phoneEdit" disabled="{{phoneWriteBusy}}">编辑</button>
+        <button wx:if="{{!item.isDefault}}" size="mini" data-id="{{item.id}}" bindtap="phoneDefault" disabled="{{phoneWriteBusy}}">设为默认</button>
+        <button size="mini" data-id="{{item.id}}" bindtap="phoneRemove" disabled="{{phoneWriteBusy}}">删除</button>
+      </view>
+    </view>
+    <button class="address-testing-new" size="mini" bindtap="phoneNew" disabled="{{phoneWriteBusy}}">新增手机号地址</button>
+    <view class="address-testing-field"><text>收货人</text><input data-field="phoneName" bindinput="phoneField" value="{{phoneName}}" disabled="{{phoneWriteBusy}}" placeholder="收货人姓名"/></view>
+    <view class="address-testing-field"><text>中国大陆手机号</text><input data-field="phoneNumber" type="number" maxlength="11" bindinput="phoneField" value="{{phoneNumber}}" disabled="{{phoneWriteBusy}}" placeholder="11 位手机号"/></view>
+    <view class="address-testing-field"><text>配送区域 ID</text><input data-field="phoneAreaId" bindinput="phoneField" value="{{phoneAreaId}}" disabled="{{phoneWriteBusy}}" placeholder="配送区域 ID"/></view>
+    <view class="address-testing-field"><text>详细地址</text><input data-field="phoneDetail" bindinput="phoneField" value="{{phoneDetail}}" disabled="{{phoneWriteBusy}}" placeholder="详细地址"/></view>
+    <button class="address-testing-save" bindtap="phoneSave" loading="{{phoneWriteBusy}}" disabled="{{phoneWriteBusy}}">保存手机号地址（测试）</button>
+  </view>
 </view>
