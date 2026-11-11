@@ -11,6 +11,7 @@
     </block>
     <button type="primary" loading="{{busy}}" disabled="{{busy}}" bindtap="loginWechat">微信登录并验证商家身份</button>
     <view class="merchant-login-result">{{status}}</view>
+    <button wx:if="{{authenticated}}" type="primary" bindtap="openAuthorizedWorkspace">进入商家工作台</button>
     <button wx:if="{{authenticated}}" bindtap="logout">退出本机商家登录</button>
   </view>
   <view class="merchant-login-card">
