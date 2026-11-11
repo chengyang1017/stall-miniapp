@@ -11,6 +11,7 @@
     "pages/cloud-catalog/cloud-catalog",
     "pages/admin-backup/admin-backup",
     "pages/admin/admin",
+    "pages/admin-banner/admin-banner",
     "pages/merchant-login/merchant-login",
     "pages/merchant-members/merchant-members",
     "pages/cart/cart",
