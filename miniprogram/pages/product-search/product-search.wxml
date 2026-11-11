@@ -1,6 +1,5 @@
 <view class="search-page">
   <view class="search-header">
-    <view class="search-back" bindtap="goBack" role="button" aria-label="返回">‹</view>
     <view class="search-bar">
       <text class="search-icon">⌕</text>
       <input class="search-field" maxlength="100" value="{{input}}" bindinput="inputSearch" bindconfirm="searchProducts" confirm-type="search" placeholder="搜索商品名称" focus="{{true}}"/>
