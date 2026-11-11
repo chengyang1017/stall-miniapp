@@ -24,8 +24,8 @@
 <view class="service-row" bindtap="openHistory">
 <text class="service-icon">◷</text><text class="profile-row-label">浏览记录</text><text class="profile-row-count">{{historyCount === null ? '—' : historyCount}}</text><text class="profile-row-arrow">›</text>
 </view>
-<navigator class="service-row" url="/pages/sandbox-receipts/sandbox-receipts">
-<text class="service-icon">▤</text><text class="profile-row-label">我的测试电子小票</text><text class="profile-row-arrow">›</text>
+<navigator wx:if="{{receiptAvailable}}" class="service-row" url="/pages/sandbox-receipts/sandbox-receipts">
+<text class="service-icon">▤</text><text class="profile-row-label">我的电子小票</text><text class="profile-row-arrow">›</text>
 </navigator>
 <navigator class="service-row" url="/pages/customer-reviews/customer-reviews">
 <text class="service-icon">☆</text><text class="profile-row-label">我的商品评价</text><text class="profile-row-arrow">›</text>

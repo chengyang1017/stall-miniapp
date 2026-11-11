@@ -3,11 +3,11 @@ import { cachedCustomerNickname,cacheCustomerNickname } from '../../modules/shar
 import { getSessionToken } from '../../modules/shared/runtime/context'
 import { getCloudContext } from '../../modules/shared/runtime/context'
 import { authorizedGet,loginWithWechat,logoutCurrentSession,hasRecentMerchantPermission } from '../../modules/shared/runtime/auth'
-import { CLOUD_ONLY,PUBLIC_API_BASE } from '../../config/cloud'
+import { CLOUD_ONLY,PUBLIC_API_BASE,LIVE_WECHAT_PAY_ENABLED,PAYMENT_SANDBOX_UI_ENABLED } from '../../config/cloud'
 import { supportConfig,customerSupportGet,supportIdentity } from '../../modules/customer/api/support'
 import { CAN_OPEN_MERCHANT,openMerchantWorkspace,openMerchantJoin } from '../../modules/integration/singleAppHost'
 Page({
-  data:{canJoinMerchant:CAN_OPEN_MERCHANT,favoriteCount:0 as number|null,historyCount:0 as number|null,libraryError:'',accountName:'未登录',avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
+  data:{receiptAvailable:LIVE_WECHAT_PAY_ENABLED||PAYMENT_SANDBOX_UI_ENABLED,canJoinMerchant:CAN_OPEN_MERCHANT,favoriteCount:0 as number|null,historyCount:0 as number|null,libraryError:'',accountName:'未登录',avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:'登录后管理订单与配送',orderEntries:[{label:'待付款',icon:'♧',tab:'unpaid',fulfillment:''},{label:'待发货',icon:'◇',tab:'active',fulfillment:'pending'},{label:'配送中',icon:'♧',tab:'active',fulfillment:'delivering'},{label:'已完成',icon:'✓',tab:'completed',fulfillment:''},{label:'售后/退款',icon:'↔',tab:'other',fulfillment:'refund'}],supportUnread:null as number|null,cloudSupport:false,merchantAuthorized:false,
     loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:'',loginMethod:'wechat',phoneNumber:'',smsCode:'',smsBusy:false,smsLoginBusy:false,customerPhoneSessionActive:false,customerPhoneLoginBusy:false,customerPhoneLoginStatus:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
   loginSerial:0,
   serial:0,

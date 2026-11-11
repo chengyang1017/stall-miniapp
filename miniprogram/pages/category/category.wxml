@@ -33,7 +33,6 @@
 </scroll-view>
 <view class="category-content">
 <view class="category-banner">
-<text class="feature-label">{{storeName}}</text>
 <view class="feature-title">{{categoryTitle}}</view>
 <view>发现你需要的好物</view>
 </view>

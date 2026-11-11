@@ -55,7 +55,7 @@
 .side-category text{font-size:33rpx;color:#8652da}
 .side-category.active text{color:white}
 .category-content{flex:1;min-width:0}
-.category-banner{height:195rpx;display:block;margin:0;padding:24rpx}
+.category-banner{height:195rpx;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:10rpx;margin:0;padding:24rpx}
 .category-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8rpx;font-size:23rpx;margin-top:26rpx;font-weight:650}
 .category-toolbar>view{color:#807192;font-size:21rpx;flex-shrink:0}
 .category-toolbar>text{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
