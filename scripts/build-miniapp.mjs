@@ -85,6 +85,12 @@ for(const f of artifacts){
 }
 fs.writeFileSync(path.join(output,'build-manifest.json'),JSON.stringify({target,compile:'TypeScript to CommonJS JavaScript',wechatPlatformCompilation:'not performed',appid:project.appid,pages:app.pages,sources:[...files.keys()].map(relative),artifacts},null,2)+'\n')
 checkOutput(target,outputFolder)
+if(phone){
+  const sizes=walk(miniapp).map(file=>({name:path.relative(miniapp,file).split(path.sep).join('/'),bytes:fs.statSync(file).size})).sort((a,b)=>b.bytes-a.bytes)
+  const total=sizes.reduce((sum,file)=>sum+file.bytes,0)
+  console.log('Phone Preview raw package: '+(total/1024).toFixed(1)+' KB ('+total+' bytes), top resources: '+sizes.slice(0,5).map(f=>f.name+' '+(f.bytes/1024).toFixed(1)+' KB').join('; '))
+  if(total>1900*1024)console.warn('Phone Preview raw package is near the WeChat 2MB main-package limit; consider subpackages if it keeps growing.')
+}
 if(phone) {
   const emitted=fs.readFileSync(path.join(miniapp,'config/cloud.js'),'utf8')
   if(!emitted.includes(phone.apiBase)||!emitted.includes('CLOUD_ONLY = true'))throw Error('Missing cloud-only preview configuration')
