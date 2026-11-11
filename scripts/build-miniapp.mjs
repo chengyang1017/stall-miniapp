@@ -68,14 +68,14 @@ for(const [file] of files){
 }
 for(const p of copied){if(!p.endsWith('.wxml'))continue;const text=fs.readFileSync(p,'utf8');for(const m of text.matchAll(/\/pages\/[a-z0-9-]+\/[a-z0-9-]+/g))if(!app.pages.includes(m[0].slice(1)))throw Error('Template navigation outside target '+m[0])}
 const baseConfig=JSON.parse(fs.readFileSync(path.join(ROOT,'tsconfig.json'),'utf8'))
-const tsconfig={compilerOptions:{...baseConfig.compilerOptions,allowJs:false,rootDir:stage,outDir:miniapp,noEmitOnError:true,sourceMap:false,typeRoots:[path.join(ROOT,'typings')]},files:[...walk(path.join(ROOT,'typings')).filter(p=>p.endsWith('.d.ts')),...files.keys()].map(f=>f.startsWith(stage)?f:files.has(f)?path.join(stage,location(f)):f),include:[]}
+const tsconfig={compilerOptions:{...baseConfig.compilerOptions,allowJs:false,rootDir:stage,outDir:miniapp,noEmitOnError:true,sourceMap:false,removeComments:true,typeRoots:[path.join(ROOT,'typings')]},files:[...walk(path.join(ROOT,'typings')).filter(p=>p.endsWith('.d.ts')),...files.keys()].map(f=>f.startsWith(stage)?f:files.has(f)?path.join(stage,location(f)):f),include:[]}
 fs.writeFileSync(path.join(output,'tsconfig.json'),JSON.stringify(tsconfig,null,2)+'\n')
 const compiled=spawnSync(process.execPath,[path.join(ROOT,'node_modules/typescript/lib/tsc.js'),'--project',path.join(output,'tsconfig.json'),'--pretty','false'],{cwd:ROOT,stdio:'inherit'})
 if(compiled.status!==0)throw Error('TypeScript compilation failed: '+target)
 const baseProject=JSON.parse(fs.readFileSync(path.join(ROOT,'project.config.json'),'utf8'))
 const supplied=target==='customer'?process.env.STALL_CUSTOMER_APPID:target==='merchant'?process.env.STALL_MERCHANT_APPID:undefined
 if(supplied&&!/^wx[a-f0-9]{16}$/.test(supplied))throw Error('Invalid build AppID')
-const project={...baseProject,appid:phone?.appId||supplied||(target==='merchant'?'touristappid':baseProject.appid),projectname:phone?'stall-staging-phone':'stall-'+target,miniprogramRoot:'miniprogram/',srcMiniprogramRoot:'miniprogram/',setting:{...baseProject.setting,useCompilerPlugins:[],...phone?{urlCheck:true}:{}},packOptions:{ignore:[],include:[]}}
+const project={...baseProject,appid:phone?.appId||supplied||(target==='merchant'?'touristappid':baseProject.appid),projectname:phone?'stall-staging-phone':'stall-'+target,miniprogramRoot:'miniprogram/',srcMiniprogramRoot:'miniprogram/',setting:{...baseProject.setting,useCompilerPlugins:[],minified:true,uploadWithSourceMap:false,...phone?{urlCheck:true}:{}},packOptions:{ignore:[],include:[]}}
 fs.writeFileSync(path.join(output,'project.config.json'),JSON.stringify(project,null,2)+'\n')
 const artifacts=walk(miniapp).map(p=>path.relative(miniapp,p).split(path.sep).join('/'))
 for(const f of artifacts){
