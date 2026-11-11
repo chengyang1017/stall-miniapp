@@ -43,7 +43,8 @@ export async function imageReferences(db,store,key){
  (SELECT count(*)::int FROM product_drafts WHERE store_id=$1 AND payload->>'imageObjectKey'=$2) AS drafts,
  (SELECT count(*)::int FROM orders WHERE store_id=$1 AND delivery_proof_key=$2) AS proofs,
  (SELECT count(*)::int FROM order_items i JOIN orders o ON o.id=i.order_id WHERE o.store_id=$1 AND i.image_object_key_snapshot=$2) AS "orderSnapshots",
- (SELECT count(*)::int FROM image_reference_history WHERE store_id=$1 AND object_key=$2) AS history`,[store,key]);return r.rows[0]
+ (SELECT count(*)::int FROM image_reference_history WHERE store_id=$1 AND object_key=$2) AS history,
+ (SELECT count(*)::int FROM store_delivery_rules WHERE store_id=$1 AND (configuration->>'promoBannerImageKey'=$2 OR configuration->>'placeholderImageKey'=$2)) AS "storeSettings"`,[store,key]);return r.rows[0]
 }
 export function candidateReason(image,refs,h,now=Date.now()){
  if(image.kind!=='product'||!PRODUCT_KEY.test(image.object_key))return 'proof_or_invalid_key_protected'
