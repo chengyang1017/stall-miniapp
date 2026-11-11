@@ -52,7 +52,7 @@
   </view>
   <view wx:if="{{cloudMode && livePayEnabled}}" class="checkout-section checkout-payment">
     <view class="section-head"><text class="section-icon">¥</text><text>付款方式</text></view>
-    <view class="payment-explainer">微信支付（可在微信收银台选择零钱或已绑定银行卡）。下单后到订单详情完成付款，实际结果以服务端确认为准。</view>
+    <view class="payment-explainer">本店仅支持微信支付。下单后在订单详情进入微信收银台付款，实际结果以服务端确认为准。</view>
   </view>
   <view wx:if="{{cloudMode && !livePayEnabled && !sandboxUiEnabled}}" class="checkout-section checkout-payment">
     <view class="section-head"><text class="section-icon">¥</text><text>付款方式</text></view>
