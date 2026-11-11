@@ -56,14 +56,20 @@ test('merchant refund requires fresh server balance and refuses invalid amount b
  assert.equal(f.p.data.sandboxRefundBusy,false)
 })
 
-test('compiled checkout selects only supported external sandbox channels',()=>{
- const f=page('checkout');f.p.chooseSandboxChannel({currentTarget:{dataset:{channel:'alipay'}}});assert.equal(f.p.data.sandboxChannel,'alipay')
- f.p.chooseSandboxChannel({currentTarget:{dataset:{channel:'fake'}}});assert.equal(f.p.data.sandboxChannel,'alipay')
+test('compiled checkout accepts only WeChat sandbox channel',()=>{
+ const f=page('checkout')
+ assert.equal(f.p.data.sandboxChannel,'wechat_pay')
+ for(const channel of ['alipay','card','fake']){
+  f.p.chooseSandboxChannel({currentTarget:{dataset:{channel}}})
+  assert.equal(f.p.data.sandboxChannel,'wechat_pay')
+ }
+ f.p.chooseSandboxChannel({currentTarget:{dataset:{channel:'wechat_pay'}}})
+ assert.equal(f.p.data.sandboxChannel,'wechat_pay')
 })
 test('compiled merchant production build refuses Alipay sandbox event handlers',async()=>{
  const checkout=page('checkout','customer','live')
  checkout.p.chooseSandboxChannel({currentTarget:{dataset:{channel:'alipay'}}})
- assert.equal(checkout.p.data.sandboxChannel,'card')
+ assert.equal(checkout.p.data.sandboxChannel,'wechat_pay')
  const detail=page('order-detail','customer','live')
  await detail.p.loadSandboxPayment()
  await detail.p.openSandboxCheckout({currentTarget:{dataset:{channel:'alipay'}}})
