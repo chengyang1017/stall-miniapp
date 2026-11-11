@@ -63,6 +63,7 @@
       <view class="merchant-setting-desc">商家可上传或更换图片。未上传时首页不会显示横幅，不影响上方的折扣专区。建议使用横向宽图。</view>
       <image wx:if="{{promoBannerUrl}}" class="merchant-promo-preview" src="{{promoBannerUrl}}" mode="aspectFill"/>
       <view wx:else class="merchant-promo-empty">尚未上传 · 首页自动隐藏</view>
+      <view wx:if="{{promoBannerError}}" class="merchant-setting-desc merchant-promo-error">{{promoBannerError}}</view>
       <view class="merchant-promo-actions">
         <button class="merchant-save" size="mini" bindtap="uploadPromoBanner" loading="{{promoBannerBusy}}" disabled="{{promoBannerBusy || !settingsReady || settingsSaving || homeSubtitleSaving}}">{{promoBannerImageKey ? '更换图片' : '上传图片'}}</button>
         <button wx:if="{{promoBannerImageKey}}" size="mini" bindtap="hidePromoBanner" disabled="{{promoBannerBusy || !settingsReady}}">隐藏横幅</button>
