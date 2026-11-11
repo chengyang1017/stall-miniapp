@@ -67,3 +67,17 @@
 .merchant-subtitle-input{margin-top:20rpx;width:100%;box-sizing:border-box}
 
 /* Carousel manager: 4:1 previews, compact controls, fixed storefront height. */
+
+/* Merchant business-setting typography follows the same brand scale as account pages.
+   Keep hierarchy intentional: section 30, field heading 28, control 27, description 23. */
+.merchant-page .merchant-section-title{font-size:30rpx;line-height:1.45}
+.merchant-minimum .merchant-setting-heading{font-size:28rpx;line-height:1.45;font-weight:700}
+.merchant-minimum .merchant-setting-desc{font-size:23rpx;line-height:1.6}
+.merchant-minimum .merchant-minimum-row{min-height:76rpx;gap:14rpx}
+.merchant-minimum .merchant-setting-amount{font-size:29rpx;line-height:1.4;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.merchant-minimum .merchant-yen{font-size:29rpx;line-height:1.4}
+.merchant-minimum .merchant-minimum-input{font-size:28rpx}
+.merchant-minimum .merchant-save{min-width:96rpx;font-size:25rpx!important}
+.merchant-minimum .merchant-setting-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16rpx}
+.merchant-minimum .merchant-setting-toggle-label{flex:1;min-width:0;font-size:27rpx;line-height:1.45;font-weight:500}
+.merchant-minimum .merchant-setting-toggle-row switch{flex-shrink:0}
