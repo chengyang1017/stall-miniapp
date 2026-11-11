@@ -25,21 +25,6 @@
 .home-catalog .store-status-label{font-size:21rpx}
 .home-catalog .store-status-notice{font-size:20rpx}
 
-/* Adaptive discount cards: fill the section for 1 or 2 items, scroll for more. */
-.deals-track-single,.deals-track-double{width:100%;box-sizing:border-box;display:flex;gap:12rpx}
-.deals-track-single .deal-product{flex:1 1 100%;width:100%;min-width:0;padding:12rpx}
-.deals-track-single .deal-product-content{display:flex;align-items:center;gap:20rpx;min-height:146rpx}
-.deals-track-single .deal-media{flex:0 0 148rpx;width:148rpx;height:148rpx}
-.deals-track-single .deal-copy{flex:1;min-width:0}
-.deals-track-single .deal-name{font-size:29rpx;margin:0 0 12rpx;white-space:normal;max-height:76rpx;line-height:38rpx;overflow:hidden}
-.deals-track-single .deal-prices{flex-wrap:wrap;white-space:normal}
-.deals-track-single .deal-price{font-size:31rpx}
-.deals-track-single .deal-original{font-size:20rpx}
-.deals-track-double .deal-product{flex:1 1 0;width:0;min-width:0}
-.deals-track-double .deal-media{height:150rpx}
-.deals-track-double .deal-name{font-size:25rpx}
-.deals-track-double .deal-price{font-size:27rpx}
-
 /* Merchant-managed promotion banner; entirely absent without an uploaded image. */
 .home-promo-banner{width:100%;height:180rpx;overflow:hidden;border-radius:24rpx;margin:12rpx 0}
 .home-promo-image{display:block;width:100%;height:100%}
