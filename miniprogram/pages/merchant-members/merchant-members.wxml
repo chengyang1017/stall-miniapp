@@ -1,0 +1,28 @@
+<view class="members-page">
+  <view class="members-intro"><view class="members-heading">成员与权限管理</view><view class="members-subheading">{{storeName}} · 店主可授权其他微信账号协助经营</view></view>
+  <view wx:if="{{loading}}" class="members-loading"><view class="global-loading-spinner"></view></view>
+  <view wx:if="{{error}}" class="members-card members-error">{{error}}<button size="mini" bindtap="refresh">重试</button></view>
+  <block wx:if="{{!loading && !error}}">
+    <view class="members-card">
+      <view class="members-card-title">邀请新成员</view>
+      <view class="members-desc">生成邀请码发给对方。对方使用自己的微信账号登录并输入邀请码，即可加入工作台。</view>
+      <button class="members-primary" loading="{{busy}}" disabled="{{busy}}" bindtap="createInvitation">生成邀请码</button>
+      <view wx:if="{{invitationCode}}" class="members-invitation">
+        <text selectable="true">{{invitationCode}}</text>
+        <button size="mini" bindtap="copyInvitation">复制</button>
+      </view>
+      <view wx:if="{{invitationMessage}}" class="members-hint">{{invitationMessage}}</view>
+    </view>
+    <view class="members-card">
+      <view class="members-card-title">已授权成员 <text class="members-count">{{members.length}}</text></view>
+      <view class="members-desc">成员使用各自的微信账号。撤销权限后，将无法继续访问受服务器保护的商家接口。</view>
+      <view wx:if="{{!members.length}}" class="members-empty">暂无成员</view>
+      <view wx:for="{{members}}" wx:key="memberKey" class="members-item">
+        <view class="members-avatar">♙</view>
+        <view class="members-meta"><view class="members-name">{{item.label}}</view><view class="members-role">{{item.role === 'owner' ? '店主' : item.role === 'manager' ? '管理员' : '员工'}}</view></view>
+        <button wx:if="{{!item.isSelf && item.role !== 'owner'}}" size="mini" class="members-remove" data-id="{{item.memberKey}}" bindtap="removeMember" disabled="{{busy}}">移除</button>
+      </view>
+      <button class="members-refresh" bindtap="refresh" disabled="{{busy}}">刷新成员列表</button>
+    </view>
+  </block>
+</view>
