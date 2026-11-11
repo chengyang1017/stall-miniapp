@@ -19,7 +19,7 @@ function verifiedLiveDisplay(receipt:WechatLiveReceipt,sha256:string,orderId:str
     totalText:cash(receipt.totalCents),subtotalText:cash(receipt.subtotalCents),
     deliveryFeeText:cash(receipt.deliveryFeeCents),refundedText:cash(receipt.refundedCents),
     refundPendingText:cash(receipt.refundPendingCents),netText:cash(receipt.netCents),
-    items:receipt.lines.map(line=>({...line,lineTotalText:cash(line.lineCents)}))}
+    items:receipt.lines.map((line,i)=>({...line,productId:String(i),lineTotalText:cash(line.lineCents)}))}
 }
 
 Page({
