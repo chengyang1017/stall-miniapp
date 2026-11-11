@@ -149,7 +149,7 @@ Page({
     if(changed)this.clearForm()
     if(changed)this.cloudRules=null
     if(!cfg){this.setData({cloudMode:false,deliveryBusy:false,deliveryError:'',deliveryStatus:'本机演示配送区域',addresses:loadAddresses(),areas:availableAreas()});return}
-    this.setData({cloudMode:true,deliveryBusy:true,deliveryError:'',deliveryStatus:'正在读取自己的云端地址及配送区域…'})
+    this.setData({cloudMode:true,deliveryBusy:true,deliveryError:'',deliveryStatus:'正在读取收货地址及配送地区…'})
     try{
       const [addressesResult,rulesResult]=await Promise.allSettled([refreshCloudAddresses(),loadCloudDelivery(cfg)]),current=getCloudContext()
       if(serial!==this.deliverySerial||identity!==supportIdentity())return
@@ -158,8 +158,8 @@ Page({
       const rules=rulesResult.value
       if(serial!==this.deliverySerial||!current||deliveryStoreKey(current)!==key)return
       this.cloudRules=rules
-      this.setData({areas:rules.areas.filter(a=>a.enabled),deliveryStatus:cloudDeliveryReason(rules)||'区域以云端规则为准，地图半径由下单服务器最终校验',addresses:loadAddresses().map(a=>({...a,area:resolveDeliveryArea(a,rules.areas,key)?.name||a.area,deliveryIssue:deliveryAddressReason(a,rules.areas,key)}))})
-    }catch(error){if(serial===this.deliverySerial&&!this.disposed&&identity===supportIdentity())this.setData({.../http_40[13]/.test(String(error))?{addresses:[],areas:[]}: {},deliveryError:'云端地址读取失败，请先微信登录或重试；未使用本机地址替代',deliveryStatus:'地址及配送信息未确认'})}
+      this.setData({areas:rules.areas.filter(a=>a.enabled),deliveryStatus:cloudDeliveryReason(rules)||'配送范围以下单时的服务器校验为准',addresses:loadAddresses().map(a=>({...a,area:resolveDeliveryArea(a,rules.areas,key)?.name||a.area,deliveryIssue:deliveryAddressReason(a,rules.areas,key)}))})
+    }catch(error){if(serial===this.deliverySerial&&!this.disposed&&identity===supportIdentity())this.setData({.../http_40[13]/.test(String(error))?{addresses:[],areas:[]}: {},deliveryError:'地址读取失败，请重新登录或重试',deliveryStatus:'地址及配送信息未确认'})}
     finally{if(serial===this.deliverySerial){this.setData({deliveryBusy:false});const current=getCloudContext();if(!current||deliveryStoreKey(current)!==key)this.setData({deliveryError:'店铺或模式已变化，请重新读取配送区域',areas:[]})}}
   },
   async login(){const cfg=getCloudContext();if(!cfg||this.data.addressBusy)return;this.setData({addressBusy:true});try{await loginWithWechat(cfg.apiBase);await this.refresh()}catch(_){wx.showToast({title:'微信登录失败，请重试',icon:'none'})}finally{this.setData({addressBusy:false})}},
@@ -184,7 +184,7 @@ Page({
   addressAllowed(address:SavedAddress):boolean {
     const cfg=getCloudContext()
     if(!cfg){const allowed=isPointDeliverable(address.area,address.latitude??null,address.longitude??null);if(!allowed)wx.showToast({title:'地址不在配送范围内',icon:'none'});return allowed}
-    if(this.data.deliveryBusy||this.data.deliveryError||!this.cloudRules||deliveryStoreKey(cfg)!==this.deliveryContext){wx.showToast({title:'请先重新读取云端区域',icon:'none'});return false}
+    if(this.data.deliveryBusy||this.data.deliveryError||!this.cloudRules||deliveryStoreKey(cfg)!==this.deliveryContext){wx.showToast({title:'请先刷新配送地区',icon:'none'});return false}
     const issue=deliveryAddressReason(address,this.cloudRules.areas,this.deliveryContext)
     if(issue){wx.showModal({title:'暂不可配送',content:issue,showCancel:false});return false}
     return true
@@ -268,7 +268,7 @@ Page({
       const fp=JSON.stringify(body);if(this.createRequest.fingerprint!==fp)this.createRequest={fingerprint:fp,key:supportKey()}
       this.setData({addressTiming:{validationMs:Date.now()-validationStart,writeMs:0,listMs:0}})
       const ok=await this.cloudChange(current?'PATCH':'POST',current?.id||'',{...body,...current?{expectedVersion:current.version}:{clientKey:this.createRequest.key}})
-      if(ok){this.clearForm();this.createRequest={fingerprint:'',key:''};wx.showToast({title:'云端地址已保存'})}return
+      if(ok){this.clearForm();this.createRequest={fingerprint:'',key:''};wx.showToast({title:'地址已保存'})}return
     }
     if(!this.addressAllowed(candidate))return
     const items=loadAddresses()
@@ -305,7 +305,7 @@ Page({
   remove(e: WechatMiniprogram.TouchEvent) {
     const id=String(e.currentTarget.dataset.id)
     if(this.data.addressBusy)return
-    if(getCloudContext()){const address=loadAddresses().find(a=>a.id===id),identity=supportIdentity();if(!address)return;wx.showModal({title:'删除这个云端地址？',content:'仅删除常用地址，不影响历史订单地址快照。',success:async r=>{if(r.confirm&&identity===supportIdentity())await this.cloudChange('DELETE',id,{expectedVersion:address.version})}});return}
+    if(getCloudContext()){const address=loadAddresses().find(a=>a.id===id),identity=supportIdentity();if(!address)return;wx.showModal({title:'删除这个地址？',content:'仅删除常用地址，不影响历史订单地址快照。',success:async r=>{if(r.confirm&&identity===supportIdentity())await this.cloudChange('DELETE',id,{expectedVersion:address.version})}});return}
     wx.showModal({title:'删除这个地址？',success:r=>{
       if (!r.confirm) return
       const old=loadAddresses()
