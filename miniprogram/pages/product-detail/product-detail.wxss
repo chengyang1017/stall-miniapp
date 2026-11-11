@@ -31,3 +31,7 @@
 .detail-cart-icon{width:42rpx;height:42rpx;display:block;margin:0 auto}
 
 .favorite-active{color:#7137db}
+
+/* Draw a geometric chevron to avoid font glyph baseline offsets. */
+.gallery .back-button{display:flex;align-items:center;justify-content:center;padding:0}
+.gallery .back-arrow{display:block;box-sizing:border-box;width:17rpx;height:17rpx;border-left:4rpx solid #fff;border-bottom:4rpx solid #fff;transform:translateX(3rpx) rotate(45deg);font-size:0;line-height:0}
