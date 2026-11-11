@@ -31,13 +31,13 @@
   <text wx:if="{{businessInfo.label}}" class="store-status-label">{{businessInfo.label}}</text>
   <text wx:if="{{businessInfo.notice}}" class="store-status-notice">{{businessInfo.notice}}</text>
 </view>
-<view class="deals-section {{discountedProducts.length === 1 && !dealsHasMore ? 'deals-single' : (discountedProducts.length === 2 && !dealsHasMore ? 'deals-double' : '')}}">
+<view class="deals-section">
   <view class="deals-heading">
     <view class="deals-title"><text class="deals-title-icon">%</text><text>折扣专区</text></view>
-    <text class="deals-subtitle">{{dealsHasMore ? '更多优惠 · 向右滑 ›' : (discountedProducts.length > 2 ? '向右滑查看更多 ›' : '精选优惠商品')}}</text>
+    <text class="deals-subtitle">{{discountedProducts.length}} 件优惠 · 向右滑 ›</text>
   </view>
   <scroll-view wx:if="{{discountedProducts.length}}" scroll-x class="deals-scroll" show-scrollbar="{{false}}" lower-threshold="100" bindscrolltolower="loadMoreDeals" enhanced="{{true}}">
-    <view class="deals-track {{discountedProducts.length === 1 && !dealsHasMore ? 'deals-track-single' : (discountedProducts.length === 2 && !dealsHasMore ? 'deals-track-double' : '')}}">
+    <view class="deals-track">
       <view wx:for="{{discountedProducts}}" wx:key="id" class="deal-product" data-trace-list="discountedProducts" data-trace-key="{{item.id}}">
         <render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="home" list-name="discountedProducts" row-key="{{item.id}}"/>
         <view class="deal-product-content" data-id="{{item.id}}" bindtap="openProduct" role="button">
@@ -46,8 +46,8 @@
             <view wx:else class="deal-placeholder"><template is="productPlaceholder" data="{{placeholderStyle,customPlaceholderUrl}}"/></view>
             <text class="deal-percent">-{{item.discountPercent}}%</text>
           </view>
-          <view class="deal-copy"><view class="deal-name">{{item.name}}</view>
-          <view class="deal-prices"><text class="deal-price">¥{{item.current}}</text><text class="deal-original">¥{{item.original}}</text></view></view>
+          <view class="deal-name">{{item.name}}</view>
+          <view class="deal-prices"><text class="deal-price">¥{{item.current}}</text><text class="deal-original">¥{{item.original}}</text></view>
         </view>
       </view>
     </view>
