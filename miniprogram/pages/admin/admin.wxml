@@ -59,14 +59,26 @@
 
     <view class="merchant-section-title">首页宣传横幅</view>
     <view class="merchant-minimum">
-      <view class="merchant-setting-heading">精选优惠宣传图</view>
-      <view class="merchant-setting-desc">商家可上传或更换图片。未上传时首页不会显示横幅，不影响上方的折扣专区。建议使用横向宽图。</view>
-      <image wx:if="{{promoBannerUrl}}" class="merchant-promo-preview" src="{{promoBannerUrl}}" mode="aspectFill"/>
+      <view class="merchant-setting-heading">精选优惠宣传图（{{promoBanners.length}}/10）</view>
+      <view class="merchant-setting-desc">建议上传 4:1 横向图片，例如 1200 × 300 像素。重要内容请放在中央，避免手机屏幕裁切边缘。支持 JPG、PNG、WebP，单张不超过 5MB。</view>
+      <view class="merchant-setting-desc">顾客可左右滑动查看，超过一张时自动轮播。未上传时隐藏此区域，不影响折扣专区。</view>
+      <view wx:if="{{promoBanners.length}}" class="merchant-promo-list">
+        <view wx:for="{{promoBanners}}" wx:key="key" class="merchant-promo-item">
+          <view class="merchant-promo-meta"><text>第 {{index + 1}} 张</text><text>{{index === 0 ? '首图' : '轮播图'}}</text></view>
+          <image class="merchant-promo-preview" src="{{item.url}}" mode="aspectFill"/>
+          <view class="merchant-promo-actions">
+            <button size="mini" bindtap="uploadPromoBanner" data-index="{{index}}" disabled="{{promoBannerBusy || !settingsReady}}">更换</button>
+            <button size="mini" bindtap="changePromoOrder" data-index="{{index}}" data-offset="-1" disabled="{{promoBannerBusy || index === 0}}">上移</button>
+            <button size="mini" bindtap="changePromoOrder" data-index="{{index}}" data-offset="1" disabled="{{promoBannerBusy || index === promoBanners.length - 1}}">下移</button>
+            <button size="mini" bindtap="removePromoBanner" data-index="{{index}}" disabled="{{promoBannerBusy}}">删除</button>
+          </view>
+        </view>
+      </view>
       <view wx:else class="merchant-promo-empty">尚未上传 · 首页自动隐藏</view>
       <view wx:if="{{promoBannerError}}" class="merchant-setting-desc merchant-promo-error">{{promoBannerError}}</view>
-      <view class="merchant-promo-actions">
-        <button class="merchant-save" size="mini" bindtap="uploadPromoBanner" loading="{{promoBannerBusy}}" disabled="{{promoBannerBusy || !settingsReady || settingsSaving || homeSubtitleSaving}}">{{promoBannerImageKey ? '更换图片' : '上传图片'}}</button>
-        <button wx:if="{{promoBannerImageKey}}" size="mini" bindtap="hidePromoBanner" disabled="{{promoBannerBusy || !settingsReady}}">隐藏横幅</button>
+      <view class="merchant-promo-actions merchant-promo-footer">
+        <button class="merchant-save" size="mini" bindtap="uploadPromoBanner" loading="{{promoBannerBusy}}" disabled="{{promoBannerBusy || promoBanners.length >= 10 || !settingsReady || settingsSaving || homeSubtitleSaving}}">添加横幅</button>
+        <button wx:if="{{promoBanners.length}}" size="mini" bindtap="hidePromoBanner" disabled="{{promoBannerBusy || !settingsReady}}">全部隐藏</button>
       </view>
     </view>
 
