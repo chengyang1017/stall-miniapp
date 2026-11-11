@@ -19,7 +19,7 @@ import { getSessionToken } from '../../modules/shared/runtime/context'
 const DRAFT_KEY = 'stall_checkout_draft_v1'
 
 Page({
-  chooseSandboxChannel(e:any){if(!PAYMENT_SANDBOX_UI_ENABLED||LIVE_WECHAT_PAY_ENABLED)return;const channel=String(e.currentTarget.dataset.channel||'');if(['card','alipay','wechat_pay'].includes(channel))this.setData({sandboxChannel:channel})},
+  chooseSandboxChannel(e:any){if(!PAYMENT_SANDBOX_UI_ENABLED||LIVE_WECHAT_PAY_ENABLED)return;const channel=String(e.currentTarget.dataset.channel||'');if(channel==='wechat_pay')this.setData({sandboxChannel:channel})},
   checkoutContext:'',
   draftStorageKey(){const cfg=cloudCartConfig();return cfg?(getSessionToken()?DRAFT_KEY+':'+cloudCacheSuffix(cfg.storeSlug):''):DRAFT_KEY+':demo'},
   restoreDraft(){this.checkoutContext=supportIdentity();const key=this.draftStorageKey(),draft=key?wx.getStorageSync(key):null;this.setData({note:draft&&typeof draft.note==='string'?draft.note:'',selectedAddress:null,hasAddress:false,selectedSlotId:'',noteShortcuts:[]})},
@@ -42,7 +42,7 @@ Page({
     this.saveDraft()
   },
   data: {
-    sandboxChannel:'card',livePayEnabled:LIVE_WECHAT_PAY_ENABLED,sandboxUiEnabled:PAYMENT_SANDBOX_UI_ENABLED,paymentNotConfigured:CLOUD_ONLY&&!LIVE_WECHAT_PAY_ENABLED&&!PAYMENT_SANDBOX_UI_ENABLED,
+    sandboxChannel:'wechat_pay',livePayEnabled:LIVE_WECHAT_PAY_ENABLED,sandboxUiEnabled:PAYMENT_SANDBOX_UI_ENABLED,paymentNotConfigured:CLOUD_ONLY&&!LIVE_WECHAT_PAY_ENABLED&&!PAYMENT_SANDBOX_UI_ENABLED,
     demoConfirmBusy:false,
     orderSubmitting:false,
     cloudMode: false, cloudBusy: false, cloudError: '',deliveryError:'',selectionNotice:'',cloudAreaName:'', deliveryDate: '', deliveryDateMin: '', deliveryDateMax: '', cloudRules: null as any, cloudAreas: [] as Array<{id:string;name:string}>,
