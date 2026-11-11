@@ -1,4 +1,5 @@
 <import src="../../templates/customer-product.wxml"/>
+<import src="../../templates/product-placeholder.wxml"/>
 <view class="customer-hero">
 <view class="hero-title">{{storeName}}</view>
 <view class="hero-subtitle">精选好物 · 便捷选购</view>
@@ -38,7 +39,7 @@
         <view class="deal-product-content" data-id="{{item.id}}" bindtap="openProduct" role="button">
           <view class="deal-media">
             <image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFill"/>
-            <view wx:else class="deal-no-image">暂无图片</view>
+            <view wx:else class="deal-placeholder"><template is="productPlaceholder" data="{{placeholderStyle,customPlaceholderUrl}}"/></view>
             <text class="deal-percent">-{{item.discountPercent}}%</text>
           </view>
           <view class="deal-name">{{item.name}}</view>
