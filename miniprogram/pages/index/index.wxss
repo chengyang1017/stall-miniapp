@@ -1,1 +1,12 @@
 @import "../../styles/customer-catalog.wxss";
+
+/* Tighter storefront rhythm: keep content readable without tall empty bands. */
+.home-body{padding-top:0}
+.home-sync-status{height:auto;min-height:30rpx;line-height:30rpx;margin:4rpx 0}
+.deals-section{margin:8rpx 0 14rpx;padding:18rpx 16rpx}
+.feature-swiper{height:164rpx;margin-top:12rpx}
+.feature-swiper .feature-banner{height:164rpx}
+.feature-banner{height:164rpx;margin-top:12rpx;padding:18rpx 26rpx}
+.feature-banner image{height:130rpx}
+.quick-grid{gap:12rpx;margin:14rpx 0}
+.quick-grid>view{border-radius:20rpx;padding:12rpx 0}
