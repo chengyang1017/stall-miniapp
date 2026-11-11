@@ -142,7 +142,7 @@ Page({
         this.setData({memberBusy:true,membersError:''})
         try{
           await new Promise<void>((resolve,reject)=>wx.request({
-            url:cfg.apiBase.replace(/\\/+$/,'')+'/v1/merchant/stores/'+cfg.storeSlug+'/members/'+key,
+            url:cfg.apiBase.replace(/[/]+$/,'')+'/v1/merchant/stores/'+cfg.storeSlug+'/members/'+key,
             method:'DELETE',timeout:15000,header:{Authorization:'Bearer '+token,'content-type':'application/json'},
             success:(r:any)=>r.statusCode>=200&&r.statusCode<300?resolve():reject(Error('revoke_failed')),fail:()=>reject(Error('network_unavailable'))
           }))
