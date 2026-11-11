@@ -11,11 +11,17 @@ const receipt=read('../../miniprogram/pages/sandbox-receipts/sandbox-receipts.wx
 const receiptController=read('../../miniprogram/pages/sandbox-receipts/sandbox-receipts.ts')
 const receiptPage=JSON.parse(read('../../miniprogram/pages/sandbox-receipts/sandbox-receipts.json'))
 
-test('category banner has no redundant store-name badge',()=>{
+test('category content starts with product tools without redundant purple banner',()=>{
+ assert.doesNotMatch(category,/class="category-banner"/)
  assert.doesNotMatch(category,/class="feature-label"/)
- assert.match(category,/class="feature-title">{{categoryTitle}}/)
- assert.match(category,/发现你需要的好物/)
- assert.match(catalogStyles,/\.category-banner\{height:195rpx;display:flex;flex-direction:column;justify-content:center/)
+ assert.doesNotMatch(category,/发现你需要的好物/)
+ assert.match(category,/class="category-toolbar"/)
+ assert.match(category,/class="category-layout"/)
+ assert.match(category,/class="category-sidebar"/)
+ assert.match(category,/class="product-grid"/)
+ assert.doesNotMatch(catalogStyles,/\.category-banner/)
+ assert.match(catalogStyles,/\.category-toolbar\{[^}]*margin-top:14rpx/)
+ assert.match(catalogStyles,/\.feature-banner\{/)
 })
 
 test('profile labels receipts naturally only when an authorized payment mode is enabled',()=>{
