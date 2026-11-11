@@ -2,19 +2,11 @@
 
 page{background:#f6f3ff;color:#30243f}
 .address-page{padding:24rpx 24rpx calc(78rpx + env(safe-area-inset-bottom));box-sizing:border-box}
-.address-heading{display:flex;justify-content:space-between;align-items:center;gap:12rpx;padding:4rpx 4rpx 20rpx}
-.address-heading-main{flex:1;min-width:0}
-.address-heading-title{font-size:38rpx;line-height:1.35;font-weight:750;color:#302044}
-.address-heading-desc{font-size:23rpx;line-height:1.5;color:#8c7b9f;margin-top:5rpx}
-.address-heading-count{flex-shrink:0;border-radius:30rpx;padding:10rpx 17rpx;font-size:22rpx;font-weight:600;color:#7137db;background:#ece3fc}
-.address-cloud-state{display:flex;align-items:center;gap:10rpx;background:#f0eafd;border:1rpx solid #e4d7f8;border-radius:18rpx;padding:12rpx 16rpx;margin-bottom:20rpx}
-.address-cloud-dot{flex:0 0 12rpx;width:12rpx;height:12rpx;background:#8652e5;border-radius:50%}
-.address-cloud-text{flex:1;min-width:0;color:#735c95;font-size:22rpx;line-height:1.4}
 .address-text-button{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;margin:0;padding:0 8rpx!important;line-height:52rpx!important;height:52rpx!important;font-size:22rpx!important;color:#6736c7!important;background:transparent!important}
-.address-hint{font-size:22rpx;line-height:1.5;color:#867795;margin-bottom:20rpx}
-.address-alert{display:flex;gap:12rpx;align-items:center;background:#fff1f3;border:1rpx solid #f5d9df;border-radius:18rpx;padding:16rpx;margin-bottom:18rpx}
+.address-alert{display:flex;flex-wrap:wrap;gap:12rpx;align-items:center;background:#fff1f3;border:1rpx solid #f5d9df;border-radius:18rpx;padding:16rpx;margin-bottom:18rpx}
 .address-alert-text{flex:1;min-width:0;color:#ac4157;font-size:23rpx;line-height:1.5;overflow-wrap:anywhere}
-.address-section-head{display:flex;align-items:center;justify-content:space-between;margin:12rpx 4rpx 16rpx}
+.address-alert-actions{display:flex;gap:9rpx;margin-left:auto;flex-wrap:wrap}
+.address-section-head{display:flex;align-items:center;justify-content:space-between;margin:4rpx 4rpx 16rpx}
 .address-section-head>text:first-child{font-weight:700;color:#332547;font-size:29rpx}
 .address-section-note{font-size:22rpx;color:#8d7d9f}
 .address-empty,.address-card,.address-form-card,.address-phone-testing{background:#fff;border-radius:26rpx;box-shadow:0 6rpx 22rpx rgba(75,43,150,.055)}
@@ -65,7 +57,6 @@ page{background:#f6f3ff;color:#30243f}
 .address-save-btn{margin-top:28rpx!important;background:linear-gradient(135deg,#9559ee,#4930c3)!important;color:#fff!important;border-radius:18rpx!important;height:88rpx!important;line-height:88rpx!important;font-weight:700!important;font-size:28rpx!important}
 .address-save-btn[disabled]{opacity:.48}
 .address-cancel-btn{height:75rpx!important;line-height:75rpx!important;border-radius:17rpx!important;background:#f4effb!important;color:#765f9d!important;margin-top:12rpx!important;font-size:25rpx!important}
-.address-bottom-note{padding:18rpx 8rpx 5rpx;color:#9588a6;font-size:21rpx;line-height:1.6}
 .address-phone-testing{padding:24rpx;margin-top:27rpx}
 .address-testing-head{display:flex;justify-content:space-between;align-items:center;gap:12rpx}
 .address-testing-title{font-size:27rpx;font-weight:700;color:#3e3050}

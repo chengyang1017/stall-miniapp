@@ -17,7 +17,14 @@ test('address redesign uses matching purple customer cards and compact controls'
  assert.match(css,/\.default-tag\{[^}]*color:#6a38c7/)
  assert.equal(nav.navigationBarTitleText,'收货地址')
  assert.equal(nav.navigationBarTextStyle,'white')
- assert.match(xml,/class="address-heading-title">收货地址/)
+ assert.doesNotMatch(xml,/class="address-heading-title"/)
+ assert.doesNotMatch(xml,/class="address-cloud-state"/)
+ assert.doesNotMatch(xml,/class="address-bottom-note"/)
+ assert.doesNotMatch(xml,/云端地址/)
+ assert.match(xml,/class="address-section-head"/)
+ assert.match(xml,/wx:if="{{deliveryError}}" class="address-alert"/)
+ assert.match(xml,/bindtap="login"/)
+ assert.match(xml,/bindtap="refresh"/)
 })
 
 test('all existing address operations and cloud safety guards remain wired',()=>{
