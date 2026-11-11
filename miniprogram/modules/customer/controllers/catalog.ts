@@ -42,7 +42,7 @@ export function createCatalogPage(isCategory = false) { return catalogOptions({
 
   data: {
     allCategoryIcon:categoryIconView({iconKey:'grid'}),isCategory,sortMode:"default",onlyAvailable:false,onlyDeals:false,categoryTitle:"全部商品",uiTraceEnabled:false,entryBlocking:true,
-    storeName:'小摊商店',homeSubtitle:'精选好物 · 便捷选购',shareReady:false,entryLoading:false,entryError:'',dealRows:[] as any[],dealCursor:'',dealsHasMore:false,dealBusy:false,dealError:'',
+    storeName:'小摊商店',homeSubtitle:'精选好物 · 便捷选购',promoBannerUrl:'',shareReady:false,entryLoading:false,entryError:'',dealRows:[] as any[],dealCursor:'',dealsHasMore:false,dealBusy:false,dealError:'',
     placeholderStyle: 'premium',
     customPlaceholderUrl: '',
     categories: [] as Array<{
@@ -143,7 +143,7 @@ export function createCatalogPage(isCategory = false) { return catalogOptions({
 
   refresh() {
     if (this.data.cloudMode) { this.renderCloudProducts(); return }
-    this.setData({businessInfo:businessState(),homeSubtitle:'精选好物 · 便捷选购'});
+    this.setData({businessInfo:businessState(),homeSubtitle:'精选好物 · 便捷选购',promoBannerUrl:''});
     const store = loadStore()
 
     const allProducts: ProductView[] =
@@ -205,7 +205,7 @@ export function createCatalogPage(isCategory = false) { return catalogOptions({
       traceUi(this,'home.catalog.confirm',{rows:page.products.length})
       this.homeConfirmed=key;applyPagePresentation(this,business)
       const areas=rules?rules.areas.filter(a=>a.enabled):[]
-      this.setData({entryBlocking:false,storeName:business.storeName||'店铺',dealRows:deals.products,dealCursor:deals.nextCursor||'',dealsHasMore:deals.hasMore,remoteRows: page.products,...stableRowsPatch('categories',this.data.categories,page.categories.map(c=>({...c,...categoryIconView(c)})),'id'),hasMore:page.hasMore,nextCursor:page.nextCursor||'', businessInfo:business,homeSubtitle:business.homeSubtitle||'精选好物 · 便捷选购',cloudStatus: '', cloudBusy: false, cloudConnectionError:false,
+      this.setData({entryBlocking:false,storeName:business.storeName||'店铺',dealRows:deals.products,dealCursor:deals.nextCursor||'',dealsHasMore:deals.hasMore,remoteRows: page.products,...stableRowsPatch('categories',this.data.categories,page.categories.map(c=>({...c,...categoryIconView(c)})),'id'),hasMore:page.hasMore,nextCursor:page.nextCursor||'', businessInfo:business,homeSubtitle:business.homeSubtitle||'精选好物 · 便捷选购',promoBannerUrl:business.promoBannerUrl||'',cloudStatus: '', cloudBusy: false, cloudConnectionError:false,
         deliverySummary:rules?('启用配送区域 '+areas.length+' 个：'+areas.slice(0,3).map(a=>a.name).join('、')+(areas.length>3?' 等':'')+'；时段在结算时按区域、星期和日期核对'):'配送规则未配置或暂不可读取，当前不能确认配送，请进入结算重新核对' })
       this.renderCloudProducts();this.refreshCloudCartTotal()
     } catch (error) {
