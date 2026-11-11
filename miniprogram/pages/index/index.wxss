@@ -19,3 +19,22 @@
 .store-status-notice{flex:1;min-width:0;font-size:21rpx;color:#9a8cad;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .deals-subtitle{min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:right;font-size:20rpx}
 .deals-track{padding:2rpx 2rpx 7rpx}
+
+/* Compact trading status and prevent empty purple space when few deals exist. */
+.home-catalog .store-status-strip{min-height:32rpx;margin:2rpx 0 5rpx;padding:0 5rpx;gap:7rpx}
+.home-catalog .store-status-label{font-size:21rpx}
+.home-catalog .store-status-notice{font-size:20rpx}
+.home-catalog .deals-section{margin-top:5rpx}
+.deals-track-single,.deals-track-double{width:100%;box-sizing:border-box;display:flex;gap:12rpx}
+.deals-track-single .deal-product{flex:1 1 100%;width:100%;min-width:0;padding:12rpx}
+.deals-track-single .deal-product-content{display:flex;align-items:center;gap:20rpx;min-height:146rpx}
+.deals-track-single .deal-media{flex:0 0 148rpx;width:148rpx;height:148rpx}
+.deals-track-single .deal-name{font-size:29rpx;margin:0 0 12rpx;white-space:normal;max-height:76rpx;line-height:38rpx;overflow:hidden}
+.deals-track-single .deal-prices{flex-wrap:wrap;white-space:normal}
+.deals-track-single .deal-price{font-size:31rpx}
+.deals-track-single .deal-original{font-size:20rpx}
+.deals-track-single .deal-product-content>view:nth-child(2){flex:1;min-width:0}
+.deals-track-double .deal-product{flex:1 1 0;width:0;min-width:0}
+.deals-track-double .deal-media{height:150rpx}
+.deals-track-double .deal-name{font-size:25rpx}
+.deals-track-double .deal-price{font-size:27rpx}
