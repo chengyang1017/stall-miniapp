@@ -1,5 +1,5 @@
 <view class="members-page">
-  <view class="members-intro"><view class="members-heading">团队成员</view><view class="members-subheading">{{storeName}} · 店主可授权其他微信账号协助经营</view></view>
+  <view class="members-intro"><view class="members-subheading">{{storeName}} · 店主可授权其他微信账号协助经营</view></view>
   <view wx:if="{{loading}}" class="members-loading"><view class="global-loading-spinner"></view></view>
   <view wx:if="{{error}}" class="members-card members-error">{{error}}<button size="mini" bindtap="refresh">重试</button></view>
   <block wx:if="{{!loading && !error}}">
