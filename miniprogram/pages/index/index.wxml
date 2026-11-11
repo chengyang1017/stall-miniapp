@@ -2,7 +2,7 @@
 <import src="../../templates/product-placeholder.wxml"/>
 <view class="customer-hero">
 <view class="hero-title">{{storeName}}</view>
-<view class="hero-subtitle">精选好物 · 便捷选购</view>
+<view class="hero-subtitle">{{homeSubtitle}}</view>
 <view class="customer-search" bindtap="openSearch" role="button" aria-label="打开商品搜索">
   <view class="search-input-area">
     <text class="search-symbol">⌕</text>
