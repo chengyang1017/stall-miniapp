@@ -43,9 +43,6 @@
 .feature-title{font-size:36rpx;font-weight:750;margin:14rpx 0;max-width:390rpx;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .feature-banner view>view:last-child,.category-banner view:last-child{font-size:24rpx;color:#f6e9ff}
 .feature-art{font-size:100rpx;color:#f9d7ff}
-.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18rpx;margin:20rpx 0}
-.quick-grid>view{text-align:center;background:white;border-radius:28rpx;box-shadow:0 8rpx 18rpx #50308b0e;padding:15rpx 0;font-size:24rpx}
-.quick-grid text{display:block;font-size:40rpx;color:#a45cea;margin-bottom:5rpx}
 .category{min-width:94rpx;max-width:160rpx;overflow:hidden;text-overflow:ellipsis;text-align:center;border-radius:23rpx;background:#fff;padding:15rpx 12rpx;font-size:23rpx;color:#54416a}
 .category text{display:block;font-size:35rpx;color:#9b72df;margin-bottom:8rpx}
 .category.active,.side-category.active{color:#fff;background:linear-gradient(135deg,#9d66f1,#4b2ac2);box-shadow:0 8rpx 20rpx #6b3ac72a}
