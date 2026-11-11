@@ -279,3 +279,12 @@ page{background:#f7f6fb}
 .product-form-actions>button{box-sizing:border-box;width:100%;margin:14rpx 0;border-radius:15rpx;font-size:27rpx}
 .product-form-actions>button[type=primary]{background:#6636d2;color:#fff;border:none}
 .product-form-section .product-inventory-actions button{border-radius:12rpx}
+
+/* Compact editor controls; destructive operations stay in product management. */
+.product-form-page{padding:16rpx 22rpx 44rpx}
+.product-form-top{padding:8rpx 6rpx 16rpx}
+.product-form-section{padding:20rpx;margin-bottom:12rpx}
+.product-form-section-heading{padding-bottom:14rpx;margin-bottom:14rpx}
+.product-form-section .field{margin-bottom:16rpx}
+.product-form-section .line{padding:15rpx 0}
+.product-form-actions>button{margin:10rpx 0}
