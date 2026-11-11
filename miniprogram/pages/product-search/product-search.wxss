@@ -1,6 +1,5 @@
 page{background:#f7f5fb;color:#332742}.search-page{min-height:100vh;box-sizing:border-box}
-.search-header{display:flex;align-items:center;gap:12rpx;background:#fff;padding:22rpx 22rpx;border-bottom:1rpx solid #eee9f4}
-.search-back{flex:0 0 52rpx;height:66rpx;display:flex;align-items:center;justify-content:center;color:#66527e;font-size:54rpx;line-height:1}
+.search-header{display:flex;align-items:center;gap:12rpx;background:#fff;padding:18rpx 24rpx;border-bottom:1rpx solid #eee9f4}
 .search-bar{display:flex;align-items:center;flex:1;min-width:0;height:72rpx;box-sizing:border-box;border-radius:42rpx;background:#f5f2fa;padding:0 20rpx;gap:12rpx}
 .search-icon{font-size:36rpx;color:#9b8bac;line-height:1}.search-field{flex:1;min-width:0;width:0;height:58rpx;font-size:26rpx;color:#362847}
 .search-clear{font-size:30rpx;color:#9e92ad;width:38rpx;text-align:center}.search-action{flex:0 0 74rpx;text-align:right;font-size:27rpx;font-weight:650;color:#7138d0;white-space:nowrap}
