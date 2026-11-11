@@ -71,3 +71,5 @@
 .merchant-promo-empty{display:flex;align-items:center;justify-content:center;height:105rpx;margin:16rpx 0;border-radius:16rpx;background:#f6f3fb;color:#988aa7;font-size:23rpx}
 .merchant-promo-actions{display:flex;align-items:center;gap:14rpx;flex-wrap:wrap;margin-top:14rpx}
 .merchant-promo-actions button{margin:0;min-width:140rpx}
+
+.merchant-promo-error{margin:12rpx 0;color:#b34350;line-height:1.6;overflow-wrap:anywhere}
