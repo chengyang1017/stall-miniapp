@@ -63,16 +63,6 @@
     <image class="home-promo-image" src="{{item.url}}" mode="aspectFill" lazy-load="{{true}}"/>
   </swiper-item>
 </swiper>
-<view class="quick-grid">
-<view bindtap="goCategories">
-<text>✦</text>全部商品</view>
-<view bindtap="showDeals">
-<text>♢</text>优惠</view>
-<view bindtap="showDelivery">
-<text>♧</text>配送</view>
-<view bindtap="openFavorites">
-<text>♡</text>收藏</view>
-</view>
 <view class="section-heading">
 <text>▦ 商品分类</text>
 <text class="more" bindtap="goCategories">查看全部 ›</text>
