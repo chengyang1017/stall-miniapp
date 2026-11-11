@@ -1,0 +1,15 @@
+@import "../admin/admin.wxss";
+
+/* Banner editor lives on its own merchant page; not embedded in dashboard. */
+.merchant-promo-list{display:flex;flex-direction:column;gap:16rpx;margin-top:20rpx}
+.merchant-promo-item{border:1rpx solid #ebe4f2;border-radius:18rpx;padding:16rpx;background:#fdfbff}
+.merchant-promo-meta{display:flex;justify-content:space-between;align-items:center;color:#71538f;font-size:23rpx;font-weight:600}
+.merchant-promo-preview{display:block;width:100%;height:145rpx;margin:12rpx 0;border-radius:14rpx;background:#f3edf9}
+.merchant-promo-empty{display:flex;align-items:center;justify-content:center;height:105rpx;margin:16rpx 0;border-radius:16rpx;background:#f6f3fb;color:#988aa7;font-size:23rpx}
+.merchant-promo-actions{display:flex;align-items:center;gap:10rpx;flex-wrap:wrap;margin-top:12rpx}
+.merchant-promo-actions button{margin:0;min-width:104rpx;font-size:23rpx;padding:0 12rpx}
+.merchant-promo-footer{margin-top:20rpx}
+.merchant-promo-error{margin:12rpx 0;color:#b34350;line-height:1.6;overflow-wrap:anywhere}
+
+.merchant-banner-retry{margin-top:24rpx!important}
+.merchant-banner-login{margin-top:24rpx;color:var(--brand-primary);font-size:25rpx}

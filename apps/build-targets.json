@@ -43,7 +43,8 @@
     "pages/customer-account/customer-account": "customer",
     "pages/product-library/product-library": "customer",
     "pages/sandbox-receipts/sandbox-receipts": "customer",
-    "pages/product-search/product-search": "customer"
+    "pages/product-search/product-search": "customer",
+    "pages/admin-banner/admin-banner": "merchant"
   },
   "utils": {
     "addresses": "customer",
@@ -95,6 +96,7 @@
         "pages/cloud-catalog/cloud-catalog",
         "pages/admin-backup/admin-backup",
         "pages/admin/admin",
+        "pages/admin-banner/admin-banner",
         "pages/merchant-login/merchant-login",
         "pages/merchant-members/merchant-members",
         "pages/cart/cart",
@@ -164,6 +166,7 @@
     "merchant": {
       "pages": [
         "pages/admin/admin",
+        "pages/admin-banner/admin-banner",
         "pages/merchant-login/merchant-login",
         "pages/merchant-members/merchant-members",
         "pages/admin-products/admin-products",
