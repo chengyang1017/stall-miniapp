@@ -163,8 +163,13 @@ Page({
       if(!this.pageVisible||identity!==requestIdentity()||storeSlug!==this.data.storeSlug)return
       if(typeof r?.invitationCode==='string'&&/^[A-Za-z0-9_-]{32}$/.test(r.invitationCode))this.setData({invitationCode:r.invitationCode,memberStatus:'邀请码24小时内有效，仅可使用一次。'})
       else throw Error('invalid_invitation_response')
-    }catch(e:any){this.setData({memberStatus:'生成失败：'+String(e.message||e)})}
-    finally{this.setData({memberBusy:false})}
+    }catch(e:any){
+      if(this.pageVisible&&this.data.canInvite&&identity===requestIdentity()&&storeSlug===this.data.storeSlug)
+        this.setData({memberStatus:'生成失败：'+String(e.message||e)})
+    }finally{
+      if(this.pageVisible&&identity===requestIdentity()&&storeSlug===this.data.storeSlug)
+        this.setData({memberBusy:false})
+    }
   },
   copyMemberInvitation(){
     if(this.data.invitationCode)wx.setClipboardData({data:this.data.invitationCode})
