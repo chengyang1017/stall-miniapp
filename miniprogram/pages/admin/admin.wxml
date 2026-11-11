@@ -58,29 +58,14 @@
     </view>
 
     <view class="merchant-section-title">首页宣传横幅</view>
-    <view class="merchant-minimum">
-      <view class="merchant-setting-heading">精选优惠宣传图（{{promoBanners.length}}/10）</view>
-      <view class="merchant-setting-desc">建议上传 4:1 横向图片，例如 1200 × 300 像素。重要内容请放在中央，避免手机屏幕裁切边缘。支持 JPG、PNG、WebP，单张不超过 5MB。</view>
-      <view class="merchant-setting-desc">顾客可左右滑动查看，超过一张时自动轮播。未上传时隐藏此区域，不影响折扣专区。</view>
-      <view wx:if="{{promoBanners.length}}" class="merchant-promo-list">
-        <view wx:for="{{promoBanners}}" wx:key="key" class="merchant-promo-item">
-          <view class="merchant-promo-meta"><text>第 {{index + 1}} 张</text><text>{{index === 0 ? '首图' : '轮播图'}}</text></view>
-          <image class="merchant-promo-preview" src="{{item.url}}" mode="aspectFill"/>
-          <view class="merchant-promo-actions">
-            <button size="mini" bindtap="uploadPromoBanner" data-index="{{index}}" disabled="{{promoBannerBusy || !settingsReady}}">更换</button>
-            <button size="mini" bindtap="changePromoOrder" data-index="{{index}}" data-offset="-1" disabled="{{promoBannerBusy || index === 0}}">上移</button>
-            <button size="mini" bindtap="changePromoOrder" data-index="{{index}}" data-offset="1" disabled="{{promoBannerBusy || index === promoBanners.length - 1}}">下移</button>
-            <button size="mini" bindtap="removePromoBanner" data-index="{{index}}" disabled="{{promoBannerBusy}}">删除</button>
-          </view>
-        </view>
+    <navigator class="merchant-item" url="/pages/admin-banner/admin-banner">
+      <view class="merchant-item-symbol">🖼️</view>
+      <view class="merchant-item-text">
+        <view class="merchant-item-name">管理宣传横幅</view>
+        <view class="merchant-item-desc">{{settingsReady ? ('已上传 ' + promoBanners.length + ' / 10 张 · 点击管理') : '添加、排序或更换首页宣传图'}}</view>
       </view>
-      <view wx:else class="merchant-promo-empty">尚未上传 · 首页自动隐藏</view>
-      <view wx:if="{{promoBannerError}}" class="merchant-setting-desc merchant-promo-error">{{promoBannerError}}</view>
-      <view class="merchant-promo-actions merchant-promo-footer">
-        <button class="merchant-save" size="mini" bindtap="uploadPromoBanner" loading="{{promoBannerBusy}}" disabled="{{promoBannerBusy || promoBanners.length >= 10 || !settingsReady || settingsSaving || homeSubtitleSaving}}">添加横幅</button>
-        <button wx:if="{{promoBanners.length}}" size="mini" bindtap="hidePromoBanner" disabled="{{promoBannerBusy || !settingsReady}}">全部隐藏</button>
-      </view>
-    </view>
+      <text class="merchant-arrow">›</text>
+    </navigator>
 
     <view class="merchant-section-title">经营设置</view>
     <view class="merchant-minimum">
@@ -112,6 +97,5 @@
       <navigator class="merchant-item" url="/pages/merchant-members/merchant-members"><view class="merchant-item-symbol">👥</view><view class="merchant-item-text"><view class="merchant-item-name">成员与权限管理</view><view class="merchant-item-desc">邀请商家成员、查看及撤销授权</view></view><text class="merchant-arrow">›</text></navigator>
       <navigator class="merchant-item merchant-last" url="/pages/admin-backup/admin-backup"><view class="merchant-item-symbol">💾</view><view class="merchant-item-text"><view class="merchant-item-name">数据备份与恢复</view><view class="merchant-item-desc">导出与导入商家数据</view></view><text class="merchant-arrow">›</text></navigator>
     </view>
-    <view class="merchant-footnote">部分功能仍在逐步接入云端；操作结果以实际保存状态为准。</view>
   </view>
 </view>
