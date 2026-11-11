@@ -15,7 +15,7 @@ function workflowText(st: string): string {
   return labels[st] || '待接单'
 }
 Page({
-  // Stripe / Alipay entries belong exclusively to the isolated test build.
+  // Stripe Checkout stays isolated to Sandbox; merchant-facing new payment actions are WeChat-only.
   // Guard event handlers as well as WXML so programmatic calls cannot open
   // test Checkout from a merchant production build.
   sandboxPaymentAllowed(){return PAYMENT_SANDBOX_UI_ENABLED&&!LIVE_WECHAT_PAY_ENABLED},
@@ -94,7 +94,7 @@ Page({
     if(!this.sandboxPaymentAllowed())return
     if(!this.detailVisible||this.phoneReadOnly||this.data.order.paymentStatus!=='unpaid')return
     const url=this.data.sandbox?.resumeCheckout?.url
-    if(typeof url!=='string'||!/^https:\/\/checkout\.stripe\.com\//.test(url))return
+    if(this.data.sandbox?.resumeCheckout?.channel!=='wechat_pay'||typeof url!=='string'||!/^https:\/\/checkout\.stripe\.com\//.test(url))return
     wx.setClipboardData({data:url,fail:()=>wx.showToast({title:'复制付款链接失败',icon:'none'})})
   },
   sandboxKeys:{} as Record<string,string>,sandboxBusy:false,
@@ -137,7 +137,7 @@ Page({
     if(!this.sandboxPaymentAllowed())return
     const cfg=customerOrdersConfig(),id=String(this.data.order.id),channel=String(e.currentTarget.dataset.channel||'') as SandboxChannel
     const serial=this.detailSerial,identity=supportIdentity()
-    if(!cfg||!['card','alipay','wechat_pay'].includes(channel)||this.phoneReadOnly||!this.detailVisible||this.sandboxBusy||this.data.order.paymentStatus!=='unpaid'||!this.data.sandbox?.resumeCheckout)return
+    if(!cfg||channel!=='wechat_pay'||this.phoneReadOnly||!this.detailVisible||this.sandboxBusy||this.data.order.paymentStatus!=='unpaid'||!this.data.sandbox?.resumeCheckout)return
     if(channel===this.data.sandbox.resumeCheckout.channel){this.copyActiveSandboxCheckout();return}
     if(!await this.confirmSandboxChange())return
     const current=()=>this.detailVisible&&serial===this.detailSerial&&identity===supportIdentity()&&id===String(this.data.order.id)
@@ -166,7 +166,7 @@ Page({
     }
   },
   async createSandboxCheckoutLink(cfg:any,id:string,channel:SandboxChannel,current:()=>boolean){
-    if(!this.sandboxPaymentAllowed())return
+    if(!this.sandboxPaymentAllowed()||channel!=='wechat_pay')return
     const identity=supportIdentity(),key=[identity,id,channel].join(':')
     if(!this.sandboxKeys[key])this.sandboxKeys[key]='sandbox_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)
     const url=await createSandboxCheckout(cfg,id,channel,this.sandboxKeys[key])
@@ -179,13 +179,13 @@ Page({
   retrySandboxCheckout(){
     if(!this.sandboxPaymentAllowed())return
     const channel=this.data.sandbox?.retryChannel
-    if(!['card','alipay','wechat_pay'].includes(channel))return
-    this.openSandboxCheckout({currentTarget:{dataset:{channel}}})
+    if(!channel)return
+    this.openSandboxCheckout({currentTarget:{dataset:{channel:'wechat_pay'}}})
   },
   async openSandboxCheckout(e:any){
     if(!this.sandboxPaymentAllowed())return
     const cfg=customerOrdersConfig(),channel=e.currentTarget.dataset.channel as SandboxChannel
-    if(!cfg||this.phoneReadOnly||this.sandboxBusy||this.data.sandboxActionBusy||!this.detailVisible||this.data.order.paymentStatus!=='unpaid'||this.data.sandboxUnavailable)return
+    if(!cfg||channel!=='wechat_pay'||this.phoneReadOnly||this.sandboxBusy||this.data.sandboxActionBusy||!this.detailVisible||this.data.order.paymentStatus!=='unpaid'||this.data.sandboxUnavailable)return
     if(this.data.sandbox?.resumeCheckout){
       wx.showToast({title:'请先继续原付款或更换渠道',icon:'none'});return
     }
@@ -275,11 +275,11 @@ Page({
     finally{if(current())this.setData({livePaymentBusy:false})}
   },
   phoneReadOnly:false,detailSerial:0,detailVisible:false,detailContext:'',simulationKey:'',simulationOperation:0,
-  data: { livePayEnabled:LIVE_WECHAT_PAY_ENABLED,sandboxUiEnabled:PAYMENT_SANDBOX_UI_ENABLED,liveReceiptBusy:false,liveReceiptError:'',livePaymentBusy:false,livePaymentText:'',sandbox:null as any,receiptExpandedId:'',paymentHistoryExpanded:false,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'card',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
+  data: { livePayEnabled:LIVE_WECHAT_PAY_ENABLED,sandboxUiEnabled:PAYMENT_SANDBOX_UI_ENABLED,liveReceiptBusy:false,liveReceiptError:'',livePaymentBusy:false,livePaymentText:'',sandbox:null as any,receiptExpandedId:'',paymentHistoryExpanded:false,sandboxError:'',sandboxPollText:'',sandboxActionBusy:false,sandboxActionText:'',sandboxChannel:'wechat_pay',sandboxUnavailable:false,phoneReadOnly:false,simulationAuthorized:false,simulationEligible:false,simulationBusy:false,simulationError:'', found: false, detailLoading:false,detailError:'',detailNotFound:false, order: {} as any, items: [] as any[], statusText: '', paymentText: '', createdText: '', deliveredText: '', issueText: '', proofImage: '',proofError:'',proofLoading:false,cloudMode:false },
   onLoad(options: Record<string, string | undefined>) {
     this.phoneReadOnly=options.phone==='1'
     this.setData({phoneReadOnly:this.phoneReadOnly})
-    if(this.sandboxPaymentAllowed()&&['card','alipay','wechat_pay'].includes(options.sandboxChannel||''))this.setData({sandboxChannel:options.sandboxChannel})
+    if(this.sandboxPaymentAllowed()&&options.sandboxChannel==='wechat_pay')this.setData({sandboxChannel:'wechat_pay'})
     this.setData({ order: { id: options.id || '' } })
   },
   reloadOrderDetail(){if(this.detailVisible&&!this.data.detailLoading)this.onShow()},
