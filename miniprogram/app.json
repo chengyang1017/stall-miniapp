@@ -12,6 +12,7 @@
     "pages/admin-backup/admin-backup",
     "pages/admin/admin",
     "pages/merchant-login/merchant-login",
+    "pages/merchant-members/merchant-members",
     "pages/cart/cart",
     "pages/checkout/checkout",
     "pages/admin-billing/admin-billing",
