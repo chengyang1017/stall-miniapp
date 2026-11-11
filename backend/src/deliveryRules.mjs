@@ -1,6 +1,8 @@
 import { authenticate, permittedStore } from './auth.mjs'
 import { verifyProductImage } from './imageLifecycle.mjs'
 const styles=['classic','mountain','bag','playful','premium','custom']
+const promoKey=/^stores\/[0-9a-f-]{36}\/products\/[0-9a-f-]{36}\.(jpg|png|webp)$/
+const bannerKeys=rules=>Array.isArray(rules?.promoBannerImageKeys)?rules.promoBannerImageKeys:rules?.promoBannerImageKey?[rules.promoBannerImageKey]:[]
 const jsonHeader = { 'content-type':'application/json; charset=utf-8', 'cache-control':'no-store' }
 const response=(res,code,data)=>{res.writeHead(code,jsonHeader);res.end(JSON.stringify(data))}
 const hhmm=x=>typeof x==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(x)
@@ -16,7 +18,8 @@ export function validRules(c){
  if(c.placeholderStyle!==undefined&&!styles.includes(c.placeholderStyle))return false
  if(c.placeholderImageKey!==undefined&&c.placeholderImageKey!==null&&(typeof c.placeholderImageKey!=='string'||!/^stores\/[0-9a-f-]{36}\/products\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(c.placeholderImageKey)))return false
  if(c.placeholderStyle==='custom'&&!c.placeholderImageKey)return false
- if(c.promoBannerImageKey!==undefined&&c.promoBannerImageKey!==null&&(typeof c.promoBannerImageKey!=='string'||!/^stores\/[0-9a-f-]{36}\/products\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(c.promoBannerImageKey)))return false
+ if(c.promoBannerImageKey!==undefined&&c.promoBannerImageKey!==null&&(typeof c.promoBannerImageKey!=='string'||!promoKey.test(c.promoBannerImageKey)))return false
+ if(c.promoBannerImageKeys!==undefined&&(!Array.isArray(c.promoBannerImageKeys)||c.promoBannerImageKeys.length>10||!c.promoBannerImageKeys.every(key=>typeof key==='string'&&promoKey.test(key))||new Set(c.promoBannerImageKeys).size!==c.promoBannerImageKeys.length))return false
  if(c.shareDeliveryLocation!==undefined&&typeof c.shareDeliveryLocation!=='boolean')return false
  if(c.deliveryFeeEnabled!==undefined&&typeof c.deliveryFeeEnabled!=='boolean')return false
  if(c.deliveryFeeCents!==undefined&&(!Number.isSafeInteger(c.deliveryFeeCents)||c.deliveryFeeCents<0||c.deliveryFeeCents>100000))return false
@@ -50,9 +53,11 @@ export function businessView(rules,now=new Date(),storeName='') {
  const part=type=>today.find(p=>p.type===type)?.value, date=part('year')+'-'+part('month')+'-'+part('day')
  const todayDeliveryPaused=configured&&(rules.specialDates||[]).some(x=>x.date===date&&x.paused)
  const imageKey=configured?rules.placeholderImageKey||null:null,base=(process.env.IMAGE_PUBLIC_BASE_URL||'').replace(/\/+$/,'')
- return {storeName,configured,noteTags:configured?rules.noteTags||[]:[],placeholderStyle:configured?rules.placeholderStyle||'premium':'premium',placeholderImageKey:imageKey,customPlaceholderUrl:imageKey&&/^https:\/\/[^/]+/.test(base)?base+'/'+imageKey.split('/').map(encodeURIComponent).join('/'):null,
+ const imageUrl=key=>key&&/^https:\/\/[^/]+/.test(base)?base+'/'+key.split('/').map(encodeURIComponent).join('/'):null
+ const banners=configured?bannerKeys(rules):[]
+ return {storeName,configured,noteTags:configured?rules.noteTags||[]:[],placeholderStyle:configured?rules.placeholderStyle||'premium':'premium',placeholderImageKey:imageKey,customPlaceholderUrl:imageUrl(imageKey),
    homeSubtitle:configured?(rules.homeSubtitle||'精选好物 · 便捷选购'):'精选好物 · 便捷选购',
-   promoBannerImageKey:configured?rules.promoBannerImageKey||null:null,promoBannerUrl:configured&&rules.promoBannerImageKey&&/^https:\/\/[^/]+/.test(base)?base+'/'+rules.promoBannerImageKey.split('/').map(encodeURIComponent).join('/'):null,
+   promoBannerImageKey:banners[0]||null,promoBannerUrl:imageUrl(banners[0]),promoBannerImages:banners.map(key=>({key,url:imageUrl(key)})),
    accepting:configured?rules.accepting:false,days:configured?rules.days:[],notice:configured?(rules.notice||''):'',minimumOrderCents:configured?(rules.minimumOrderCents||0):0,deliveryFeeEnabled:configured&&rules.deliveryFeeEnabled===true,deliveryFeeCents:configured&&rules.deliveryFeeEnabled===true?(rules.deliveryFeeCents||0):0,
    shareDeliveryLocation:configured?rules.shareDeliveryLocation===true:false,deliveryPaused:configured?!!rules.deliveryPaused:false,todayDeliveryPaused:!!todayDeliveryPaused,
    open:!!open,label:!configured?'营业信息未配置':!rules.accepting?'暂停接单':rules.deliveryPaused?'暂停全部配送':!deliveryReady?'配送未配置':open?(todayDeliveryPaused?'营业中 · 今日暂停配送，请核对其他日期':'营业中'):'休息中',timeZone:'Asia/Shanghai'}
@@ -78,8 +83,13 @@ export async function businessSettingsRoute(req,res,url,pool) {
  }
  let body;try{body=await bodyJson(req)}catch(e){response(res,400,{error:e.message});return true}
  const keys=body&&typeof body==='object'&&!Array.isArray(body)?Object.keys(body):[]
- if(!keys.includes('expectedRevision')||keys.length<2||keys.some(k=>!['expectedRevision','accepting','days','notice','homeSubtitle','promoBannerImageKey','minimumOrderCents','deliveryFeeEnabled','deliveryFeeCents','shareDeliveryLocation','noteTags','placeholderStyle','placeholderImageKey'].includes(k))||!(body.expectedRevision===null||typeof body.expectedRevision==='string'&&/^[a-f0-9]{32}$/.test(body.expectedRevision))){response(res,400,{error:'invalid_business_patch'});return true}
+ if(!keys.includes('expectedRevision')||keys.length<2||keys.some(k=>!['expectedRevision','accepting','days','notice','homeSubtitle','promoBannerImageKey','promoBannerImageKeys','minimumOrderCents','deliveryFeeEnabled','deliveryFeeCents','shareDeliveryLocation','noteTags','placeholderStyle','placeholderImageKey'].includes(k))||!(body.expectedRevision===null||typeof body.expectedRevision==='string'&&/^[a-f0-9]{32}$/.test(body.expectedRevision))){response(res,400,{error:'invalid_business_patch'});return true}
  if(Object.hasOwn(body,'promoBannerImageKey')&&body.promoBannerImageKey!==null&&!await verifyProductImage(pool,store.id,body.promoBannerImageKey)){response(res,400,{error:'invalid_promo_banner_image'});return true}
+ if(Object.hasOwn(body,'promoBannerImageKeys')){
+   const items=body.promoBannerImageKeys
+   if(!Array.isArray(items)||items.length>10||items.some(key=>typeof key!=='string'||!promoKey.test(key))||new Set(items).size!==items.length){response(res,400,{error:'invalid_promo_banner_list'});return true}
+   for(const key of items)if(!await verifyProductImage(pool,store.id,key)){response(res,400,{error:'invalid_promo_banner_image'});return true}
+ }
  if(Object.hasOwn(body,'placeholderImageKey')&&body.placeholderImageKey!==null&&!await verifyProductImage(pool,store.id,body.placeholderImageKey)){response(res,400,{error:'invalid_placeholder_image'});return true}
  const client=await pool.connect()
  try {
@@ -89,8 +99,11 @@ export async function businessSettingsRoute(req,res,url,pool) {
    const {rows}=await client.query('SELECT configuration,md5(configuration::text) AS revision FROM store_delivery_rules WHERE store_id=$1 FOR UPDATE',[store.id])
    if((rows[0]?.revision||null)!==body.expectedRevision){await client.query('ROLLBACK');response(res,409,{error:'business_settings_changed_refresh'});return true}
    const configuration={...(rows[0]?.configuration||{accepting:false,days:Array.from({length:7},()=>({enabled:true,start:'09:00',end:'21:00'})),areas:[],slots:[]}),...Object.fromEntries(keys.filter(k=>k!=='expectedRevision').map(k=>[k,body[k]]))}
+   // Keep legacy single-image clients coherent with the ordered carousel list.
+   if(Object.hasOwn(body,'promoBannerImageKeys'))configuration.promoBannerImageKey=body.promoBannerImageKeys[0]||null
+   else if(Object.hasOwn(body,'promoBannerImageKey'))configuration.promoBannerImageKeys=body.promoBannerImageKey?[body.promoBannerImageKey]:[]
    if(!validRules(configuration)){await client.query('ROLLBACK');response(res,400,{error:'invalid_business_settings'});return true}
-   if(configuration.promoBannerImageKey&&!/^https:\/\/[^/]+/.test(process.env.IMAGE_PUBLIC_BASE_URL||'')){await client.query('ROLLBACK');response(res,503,{error:'promo_banner_public_image_base_required'});return true}
+   if(bannerKeys(configuration).length&&!/^https:\/\/[^/]+/.test(process.env.IMAGE_PUBLIC_BASE_URL||'')){await client.query('ROLLBACK');response(res,503,{error:'promo_banner_public_image_base_required'});return true}
    if(configuration.placeholderStyle==='custom'&&!/^https:\/\/[^/]+/.test(process.env.IMAGE_PUBLIC_BASE_URL||'')){await client.query('ROLLBACK');response(res,503,{error:'placeholder_public_image_base_required'});return true}
    if(configuration.placeholderStyle==='custom'&&!Object.hasOwn(body,'placeholderImageKey')&&!await verifyProductImage(client,store.id,configuration.placeholderImageKey)){await client.query('ROLLBACK');response(res,409,{error:'placeholder_image_unavailable'});return true}
    const saved=await client.query(`INSERT INTO store_delivery_rules(store_id,configuration) VALUES($1,$2::jsonb)
