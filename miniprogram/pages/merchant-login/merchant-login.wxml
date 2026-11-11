@@ -1,7 +1,7 @@
 <view class="merchant-login-page">
   <view class="merchant-login-card">
-    <view class="merchant-login-title">账号与登录</view>
-    <view class="merchant-login-desc">登录后由服务器核实店铺权限。已有权限的成员可进入工作台；新成员须凭店主提供的一次性邀请码加入。</view>
+    <view class="merchant-login-title">{{shareInvitation ? "店铺成员邀请" : "账号与登录"}}</view>
+    <view class="merchant-login-desc">{{shareInvitation ? "你收到了加入商家团队的邀请。使用自己的微信账号登录后，确认加入即可。" : "登录后由服务器核实店铺权限。已有权限的成员可进入工作台；新成员须凭店主提供的一次性邀请码加入。"}}</view>
     <view wx:if="{{cloudOnly}}" class="merchant-login-desc">当前店铺 {{storeSlug}} · 可信Staging已由构建配置固定，无需输入地址或Token。</view>
     <block wx:if="{{!cloudOnly}}">
     <view class="merchant-login-label">后端地址</view>
@@ -14,10 +14,12 @@
     <button wx:if="{{authenticated}}" bindtap="logout">退出本机商家登录</button>
   </view>
   <view class="merchant-login-card">
-    <view class="merchant-login-title">使用邀请码加入店铺</view>
+    <view class="merchant-login-title">{{shareInvitation ? "确认加入店铺" : "使用邀请码加入店铺"}}</view>
     <view class="merchant-login-desc">请先使用自己的微信登录。邀请码只能使用一次，24小时后失效。</view>
-    <input class="merchant-login-input" maxlength="32" value="{{joinCode}}" bindinput="onJoinCodeInput" placeholder="输入店主发给你的邀请码" />
-    <button disabled="{{busy || memberBusy}}" loading="{{memberBusy}}" bindtap="redeemMemberInvitation">加入商家工作台</button>
+    <view wx:if="{{inviteStoreMismatch}}" class="merchant-login-result">邀请店铺与当前店铺不一致，无法加入。</view>
+    <input wx:if="{{!shareInvitation}}" class="merchant-login-input" maxlength="32" value="{{joinCode}}" bindinput="onJoinCodeInput" placeholder="输入店主发给你的邀请码" />
+    <view wx:else class="merchant-login-desc">已收到邀请码 · 无需手动输入</view>
+    <button disabled="{{busy || memberBusy || inviteStoreMismatch}}" loading="{{memberBusy}}" bindtap="redeemMemberInvitation">{{shareInvitation ? "确认加入商家团队" : "加入商家工作台"}}</button>
     <view wx:if="{{memberStatus}}" class="merchant-login-result">{{memberStatus}}</view>
   </view>
   <view wx:if="{{showLocalDev}}" class="merchant-login-card">
