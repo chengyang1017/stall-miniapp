@@ -62,3 +62,6 @@
 /* Align the minimum-order edit action at the far right. */
 .merchant-minimum-current{flex:1;min-width:0;font-size:30rpx;font-weight:600;color:var(--brand-text)}
 .merchant-minimum-row>.merchant-save{margin-left:auto!important;flex-shrink:0}
+
+/* Storefront subtitle editor */
+.merchant-subtitle-input{margin-top:20rpx;width:100%;box-sizing:border-box}
