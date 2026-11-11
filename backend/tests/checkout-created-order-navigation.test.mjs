@@ -40,6 +40,7 @@ function fixture({live=true,switchFailure=false}={}){
   supportIdentity:()=>identity,
   cloudCartConfig:()=>({storeSlug:'stall-test'}),
   getSelectedAddress:()=>address,
+  deliveryStoreKey:()=> 'https://unit.test/stall-test',
   resolveDeliveryArea:()=>rules.areas[0],
   deliveryAddressReason:()=>'',
   cloudDeliveryReason:()=>'',
