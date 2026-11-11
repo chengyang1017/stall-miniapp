@@ -40,6 +40,23 @@
       <navigator class="merchant-item merchant-last" url="/pages/admin-note-tags/admin-note-tags"><view class="merchant-item-symbol">✎</view><view class="merchant-item-text"><view class="merchant-item-name">备注标签</view><view class="merchant-item-desc">管理下单快捷备注</view></view><text class="merchant-arrow">›</text></navigator>
     </view>
 
+    <view class="merchant-section-title">店铺首页展示</view>
+    <view class="merchant-minimum">
+      <view class="merchant-setting-heading">首页副标题</view>
+      <view class="merchant-setting-desc">显示在首页店铺名称下方，最多50个字符；留空可恢复默认文案。</view>
+      <view wx:if="{{!homeSubtitleEditing}}" class="merchant-minimum-row">
+        <text class="merchant-minimum-current">{{homeSubtitle}}</text>
+        <button class="merchant-save" size="mini" bindtap="beginHomeSubtitleEdit" disabled="{{!settingsReady || homeSubtitleSaving}}">编辑</button>
+      </view>
+      <view wx:else>
+        <input class="merchant-minimum-input merchant-subtitle-input" maxlength="50" value="{{homeSubtitleDraft}}" bindinput="onHomeSubtitleInput" placeholder="精选好物 · 便捷选购" disabled="{{homeSubtitleSaving}}" />
+        <view class="merchant-minimum-row">
+          <button class="merchant-save" size="mini" bindtap="saveHomeSubtitle" loading="{{homeSubtitleSaving}}" disabled="{{homeSubtitleSaving || !settingsReady}}">保存</button>
+          <button size="mini" bindtap="cancelHomeSubtitleEdit" disabled="{{homeSubtitleSaving}}">取消</button>
+        </view>
+      </view>
+    </view>
+
     <view class="merchant-section-title">经营设置</view>
     <view class="merchant-minimum">
       <view class="merchant-setting-heading">起送金额</view>
