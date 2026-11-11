@@ -7,7 +7,6 @@
     </view>
   </view>
 
-  <view class="cart-sync-status" aria-live="polite"><text>{{quantityPending ? '数量校验中，金额待确认' : cloudLoading ? '正在同步商品，已有内容保留' : deliveryLoading ? '正在核对配送规则' : (cloudMode && amountState !== 'confirmed') ? '价格待确认，请刷新核对' : ''}}</text></view>
   <view wx:if="{{cloudMode && quantityError}}" class="cart-sync-error">{{quantityError}}</view>
   <view wx:if="{{cloudMode && cloudError}}" class="cart-sync-error">{{cloudError}}</view>
   <view wx:if="{{cloudMode && deliveryError}}" class="cart-sync-error">{{deliveryError}}</view>
