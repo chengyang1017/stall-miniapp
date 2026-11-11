@@ -11,6 +11,8 @@ Page({
     loginBusy:false,loginStatus:'',logoutBusy:false,loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:'',loginMethod:'wechat',phoneNumber:'',smsCode:'',smsBusy:false,smsLoginBusy:false,customerPhoneSessionActive:false,customerPhoneLoginBusy:false,customerPhoneLoginStatus:'',phonePreview:CLOUD_ONLY,previewApi:PUBLIC_API_BASE},
   loginSerial:0,
   serial:0,
+  avatarToken:'',
+  avatarPayload:'',
   merchantSerial:0,merchantContext:'',
   merchantOpening:false,
   keepLoginOpen(){},
@@ -189,7 +191,8 @@ Page({
       if(!r.confirm)return
       const cfg=getCloudContext()
       ++this.loginSerial;++this.serial;++this.merchantSerial
-      this.setData({logoutBusy:true,loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,loginBusy:false,merchantAuthorized:false,accountName:'未登录',accountSubtitle:'登录后管理订单与配送',supportUnread:null})
+      this.avatarToken='';this.avatarPayload=''
+      this.setData({logoutBusy:true,avatarPhotoPath:'',loggedIn:false,loginPanel:false,phoneOnboarding:false,phoneBindBusy:false,loginBusy:false,merchantAuthorized:false,accountName:'未登录',accountSubtitle:'登录后管理订单与配送',supportUnread:null})
       try{if(cfg)await logoutCurrentSession(cfg.apiBase)}
       finally{
         this.setData({logoutBusy:false})
@@ -237,14 +240,16 @@ Page({
       success:(response:any)=>{
         if(serial!==this.serial||getSessionToken()!==token||response.statusCode!==200)return
         if(!response.data||typeof response.data.dataBase64!=='string'||!['image/jpeg','image/png'].includes(response.data.mimeType))return
+        const payload=response.data.mimeType+':'+response.data.dataBase64
+        if(this.avatarToken===token&&this.avatarPayload===payload&&this.data.avatarPhotoPath)return
         const extension=response.data.mimeType==='image/png'?'png':'jpg'
         const file=wx.env.USER_DATA_PATH+'/customer-profile-header-'+Date.now()+'.'+extension
         wx.getFileSystemManager().writeFile({filePath:file,data:response.data.dataBase64,encoding:'base64',
-          success:()=>{if(serial===this.serial&&getSessionToken()===token)this.setData({avatarPhotoPath:file})}})
+          success:()=>{if(serial===this.serial&&getSessionToken()===token){this.avatarToken=token;this.avatarPayload=payload;this.setData({avatarPhotoPath:file})}}})
       }
     })
   },
-  async onShow(){this.refreshPhoneSession();this.refreshLibraryCounts();const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',avatarPhotoPath:'',accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){const token=getSessionToken();if(token)this.loadAvatarForHeader(token,cfg.apiBase,serial);authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
+  async onShow(){this.refreshPhoneSession();this.refreshLibraryCounts();const loggedIn=!!getSessionToken();this.setData({loggedIn,accountName:loggedIn?(cachedCustomerNickname()||'微信用户'):'未登录',avatarStyle:loggedIn?this.data.avatarStyle:'violet',...(!loggedIn||this.avatarToken!==getSessionToken()?{avatarPhotoPath:''}:{}),accountSubtitle:loggedIn?'微信身份已连接':'登录后管理订单与配送'});const serial=++this.serial,identity=supportIdentity(),cfg=supportConfig();this.setData({cloudSupport:!!cfg,...this.merchantContext===identity?{}:{supportUnread:null}});this.checkMerchant();if(loggedIn&&cfg){const token=getSessionToken();if(token)this.loadAvatarForHeader(token,cfg.apiBase,serial);authorizedGet(cfg.apiBase,'/v1/customer/profile').then(p=>{if(serial===this.serial&&getSessionToken()){const name=String(p.nickname||'').trim();cacheCustomerNickname(name);this.setData({accountName:name||'微信用户',avatarStyle:['violet','blue','green','peach'].includes(p.avatarStyle)?p.avatarStyle:'violet'})}}).catch(()=>{})}if(!cfg)return;try{const r=await customerSupportGet('unread');if(serial===this.serial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){/* No local fallback or fabricated unread count. */}},
   onHide(){this.serial++;this.merchantSerial++;this.loginSerial++;this.setData({loginBusy:false,phoneOnboarding:false,phoneBindBusy:false,phoneBindStatus:''})},
   onUnload(){this.serial++;this.merchantSerial++;this.loginSerial++},
   openOrders(e:any) {
