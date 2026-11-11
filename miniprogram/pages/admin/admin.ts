@@ -1,5 +1,6 @@
 import { getMinimumOrder, saveMinimumOrder } from '../../modules/merchant/demo/settings'
 import { getCloudContext } from '../../modules/shared/runtime/context'
+import { uploadMerchantImage } from '../../utils/cloudMerchantImage'
 import { merchantBusiness, patchMerchantBusiness, businessContextKey } from '../../modules/merchant/api/business'
 import { fetchMerchantOrderSummary } from '../../modules/merchant/api/orders'
 import { loadWorkflowOrders } from '../../modules/merchant/demo/orders'
@@ -16,7 +17,7 @@ Page({
  // Page-local proof only: bound to API, store and session; shows reuse a short-lived shared proof or recheck the server.
  accessSerial:0,accessContext:'',
  revision:null as string|null, serial:0,pendingSerial:0, loadedContext:'',supportSerial:0,supportTimer:0 as any,
- data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,homeSubtitle:'精选好物 · 便捷选购',homeSubtitleDraft:'',homeSubtitleEditing:false,homeSubtitleSaving:false,deliveryFeeEnabled:false,deliveryFeeInput:'0.00',deliveryFeeEditing:false,deliveryFeeSaving:false,pendingNewOrderCount:null as number|null,unpaidOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',shareDeliveryLocation:false,trackingSaving:false,cloudMode:false},
+ data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,homeSubtitle:'精选好物 · 便捷选购',homeSubtitleDraft:'',homeSubtitleEditing:false,homeSubtitleSaving:false,promoBannerUrl:'',promoBannerImageKey:null as string|null,promoBannerBusy:false,deliveryFeeEnabled:false,deliveryFeeInput:'0.00',deliveryFeeEditing:false,deliveryFeeSaving:false,pendingNewOrderCount:null as number|null,unpaidOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',shareDeliveryLocation:false,trackingSaving:false,cloudMode:false},
  async onShow(){
   const cfg=getCloudContext(),serial=++this.accessSerial,identity=supportIdentity()
   const retained=this.accessContext===identity&&this.data.workspaceAuthorized||!!cfg&&hasRecentMerchantPermission(cfg.apiBase,cfg.storeSlug)
@@ -62,12 +63,50 @@ Page({
   }catch(_){if(context===businessContextKey()){this.setData({settingsReady:false,settingsError:'首页文案保存失败，请刷新确认当前设置'});this.refreshMinimum()}}
   finally{this.setData({homeSubtitleSaving:false})}
  },
+ async savePromoBanner(key:string|null){
+  const cfg=getCloudContext(),context=businessContextKey()
+  if(!cfg||!this.data.settingsReady||context!==this.loadedContext)throw Error('settings_not_ready')
+  const revision=await patchMerchantBusiness(cfg,this.revision,{promoBannerImageKey:key})
+  if(context!==businessContextKey())return
+  this.revision=revision
+  const settings=await merchantBusiness(cfg)
+  if(context!==businessContextKey())return
+  if(settings.revision!==revision)throw Error('configuration_changed')
+  this.revision=settings.revision||null
+  this.setData({promoBannerImageKey:settings.promoBannerImageKey||null,promoBannerUrl:settings.promoBannerUrl||''})
+ },
+ uploadPromoBanner(){
+  if(this.data.promoBannerBusy||!this.data.settingsReady||this.data.settingsSaving||this.data.homeSubtitleSaving)return
+  const cfg=getCloudContext(),context=businessContextKey()
+  if(!cfg||context!==this.loadedContext)return
+  wx.chooseImage({count:1,sizeType:['compressed'],sourceType:['album','camera'],success:async (result:any)=>{
+   const file=result.tempFilePaths?.[0];if(!file||context!==businessContextKey())return
+   this.setData({promoBannerBusy:true})
+   try{
+     const key=await uploadMerchantImage(cfg,file)
+     if(context!==businessContextKey())return
+     await this.savePromoBanner(key)
+     if(context===businessContextKey())wx.showToast({title:'宣传图已保存',icon:'success'})
+   }catch(_){if(context===businessContextKey()){wx.showToast({title:'上传未完成，请重试',icon:'none'});this.refreshMinimum()}}
+   finally{if(context===businessContextKey())this.setData({promoBannerBusy:false})}
+  }})
+ },
+ hidePromoBanner(){
+  if(this.data.promoBannerBusy||!this.data.settingsReady||!this.data.promoBannerImageKey)return
+  wx.showModal({title:'隐藏宣传横幅',content:'隐藏后顾客首页不再显示这张宣传图。',confirmText:'隐藏',success:async (result:any)=>{
+   if(!result.confirm)return
+   const context=businessContextKey();this.setData({promoBannerBusy:true})
+   try{await this.savePromoBanner(null);if(context===businessContextKey())wx.showToast({title:'已隐藏',icon:'success'})}
+   catch(_){if(context===businessContextKey()){wx.showToast({title:'操作失败，请刷新',icon:'none'});this.refreshMinimum()}}
+   finally{if(context===businessContextKey())this.setData({promoBannerBusy:false})}
+  }})
+ },
  onMinimumOrderInput(e:any){if(!this.data.settingsSaving)this.setData({minimumOrderInput:String(e.detail.value||'')})},
  async refreshMinimum(){
   const cfg=getCloudContext(),serial=++this.serial,context=businessContextKey();this.loadedContext=context
   this.setData({cloudMode:!!cfg,settingsLoading:!!cfg,settingsReady:!cfg,settingsError:'',minimumOrderInput:cfg?'':getMinimumOrder().toFixed(2)})
   if(!cfg)return
-  try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==businessContextKey())return;this.revision=r.revision||null;this.setData({minimumOrderInput:(r.minimumOrderCents/100).toFixed(2),deliveryFeeEnabled:r.deliveryFeeEnabled===true,deliveryFeeInput:(Math.max(0,r.deliveryFeeCents||0)/100).toFixed(2),deliveryFeeEditing:false,shareDeliveryLocation:r.shareDeliveryLocation===true,homeSubtitle:r.homeSubtitle||'精选好物 · 便捷选购',homeSubtitleDraft:r.homeSubtitle||'精选好物 · 便捷选购',homeSubtitleEditing:false,settingsReady:true})}
+  try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==businessContextKey())return;this.revision=r.revision||null;this.setData({minimumOrderInput:(r.minimumOrderCents/100).toFixed(2),deliveryFeeEnabled:r.deliveryFeeEnabled===true,deliveryFeeInput:(Math.max(0,r.deliveryFeeCents||0)/100).toFixed(2),deliveryFeeEditing:false,shareDeliveryLocation:r.shareDeliveryLocation===true,homeSubtitle:r.homeSubtitle||'精选好物 · 便捷选购',homeSubtitleDraft:r.homeSubtitle||'精选好物 · 便捷选购',homeSubtitleEditing:false,promoBannerUrl:r.promoBannerUrl||'',promoBannerImageKey:r.promoBannerImageKey||null,settingsReady:true})}
   catch(_){if(serial===this.serial&&context===businessContextKey())this.setData({settingsError:'云端起送金额读取失败，请检查权限后重试'})}
   finally{if(serial===this.serial&&context===businessContextKey())this.setData({settingsLoading:false})}
  },
