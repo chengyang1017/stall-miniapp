@@ -12,6 +12,29 @@ import { loginWithWechat } from '../../modules/shared/runtime/auth'
 
 const newAddressId = () => `addr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
+// Keep public feedback actionable while never including request payloads, tokens or raw server errors.
+function cloudAddressFailureMessage(error:unknown):string {
+  const raw=String(error instanceof Error?error.message:error)
+  if(/http_401_|not_logged_in|login_required|identity_changed/i.test(raw))
+    return '微信登录已失效，请验证登录后重试；输入已保留'
+  if(/http_403_/.test(raw))return '当前账号没有保存地址的权限；输入已保留'
+  if(/http_404_/.test(raw))return '店铺地址服务暂不可用，请核对测试后端；输入已保留'
+  if(/http_409_address_area_not_configured/.test(raw))
+    return '商家配送地区已变化，请刷新后重新选择；输入已保留'
+  if(/http_409_address_changed_refresh/.test(raw))
+    return '地址已被其他操作修改，请刷新地址列表后编辑；输入已保留'
+  if(/http_409_address_create_conflict/.test(raw))
+    return '地址保存请求发生冲突，请先刷新列表核对；输入已保留'
+  if(/http_409_/.test(raw))return '地址保存发生版本冲突，请刷新列表核对；输入已保留'
+  if(/http_400_invalid_address|http_400_invalid_coordinates|http_400_invalid_address_fields/.test(raw))
+    return '地址数据未通过服务器格式校验，请核对地图位置与填写内容；输入已保留'
+  if(/http_413_/.test(raw))return '地址数量或输入内容超过服务端限制；输入已保留'
+  if(/http_429_/.test(raw))return '地址请求过于频繁，请稍后再试；输入已保留'
+  if(/http_503_/.test(raw))return '服务器地址保存异常（503），请联系管理员检查日志；输入已保留'
+  if(/http_5\d\d_/.test(raw))return '地址服务暂时异常，请先刷新列表核对；输入已保留'
+  return '保存结果未收到确认，请先刷新地址列表核对，不要连续重复提交；输入已保留'
+}
+
 Page({
   phoneAddressSerial:0,phoneWriteSerial:0,phoneCreateKey:'',phoneCreateFingerprint:'',
   disposed:false,writeSerial:0,addressIdentity:'',createRequest:{fingerprint:'',key:''},
@@ -155,7 +178,7 @@ Page({
       return true
     }catch(e){if(current()){
       if(/http_40[13]/.test(String(e)))this.setData({addresses:[]})
-      this.setData({addressSync:'failed',addressFeedback:String(e).includes('409')?'地址已变化，请刷新核对；输入已保留':'保存未确认，请检查网络或登录后重试；输入已保留',addressTiming:{...this.data.addressTiming,writeMs:Date.now()-start}})
+      this.setData({addressSync:'failed',addressFeedback:cloudAddressFailureMessage(e),addressTiming:{...this.data.addressTiming,writeMs:Date.now()-start}})
     }return false}finally{if(current())this.setData({addressBusy:false})}
   },
   addressAllowed(address:SavedAddress):boolean {
