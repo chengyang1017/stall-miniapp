@@ -30,7 +30,7 @@ page{background:#f6f3ff;color:#30243f}
 .address-action-btn{background:#f7f4fc!important;color:#79698e!important}
 .address-danger-btn{color:#bb5264!important;background:#fff2f4!important}
 .address-actions button[disabled]{opacity:.45}
-.address-form-card{padding:24rpx 24rpx 28rpx;margin-top:23rpx}
+.address-form-card{width:100%;box-sizing:border-box;padding:24rpx 24rpx 28rpx;margin-top:23rpx}
 .address-form-head{display:flex;align-items:center;gap:12rpx}
 .address-form-symbol{display:flex;align-items:center;justify-content:center;flex:0 0 48rpx;width:48rpx;height:48rpx;border-radius:15rpx;background:#eee6ff;color:#7137db;font-size:34rpx;line-height:1}
 .address-form-title{font-size:30rpx;font-weight:700;color:#352446}
@@ -45,18 +45,18 @@ page{background:#f6f3ff;color:#30243f}
 .address-select-chosen{color:#352746}
 .address-area-hint{margin-top:11rpx;padding:11rpx 14rpx;border-radius:12rpx;background:#f2ebfd;color:#7447b0;font-size:22rpx;line-height:1.55}
 .address-select-arrow{font-size:30rpx;color:#9f8cb8}
-.address-map-row{border-top:1rpx solid #f0edf8;padding-top:22rpx;display:flex;align-items:center;justify-content:space-between;gap:15rpx}
+.address-map-row{width:100%;box-sizing:border-box;border-top:1rpx solid #f0edf8;padding-top:22rpx;display:flex;align-items:center;justify-content:space-between;gap:16rpx}
 .address-map-copy{flex:1;min-width:0}
 .address-map-copy .address-field-label{margin:0}
 .address-map-caption{font-size:21rpx;color:#93869f;line-height:1.45;margin-top:7rpx}
-.address-map-button{margin:0!important;min-width:130rpx;min-height:64rpx;line-height:63rpx!important;border-radius:15rpx;background:#eee8fc!important;color:#7137db!important;font-size:23rpx!important;padding:0 13rpx!important}
+.address-map-button{display:flex;align-items:center;justify-content:center;flex:0 0 140rpx;width:140rpx!important;height:68rpx!important;min-width:0!important;min-height:0!important;box-sizing:border-box;margin:0!important;padding:0 8rpx!important;line-height:1.2!important;border-radius:15rpx;background:#eee8fc!important;color:#7137db!important;font-size:23rpx!important}
 .address-map-preview{background:#f8f4ff;border-radius:13rpx;padding:15rpx 17rpx;margin-top:16rpx;color:#6c5b85;font-size:22rpx;line-height:1.55;overflow-wrap:anywhere}
 .address-map-preview text{display:block}
 .address-map-reminder{color:#9d83bd;margin-top:8rpx}
 .address-feedback{font-size:23rpx;color:#6f47b3;line-height:1.5;padding:14rpx 0}
-.address-save-btn{margin-top:28rpx!important;background:linear-gradient(135deg,#9559ee,#4930c3)!important;color:#fff!important;border-radius:18rpx!important;height:88rpx!important;line-height:88rpx!important;font-weight:700!important;font-size:28rpx!important}
+.address-save-btn{display:flex;align-items:center;justify-content:center;width:100%!important;box-sizing:border-box;margin:24rpx 0 0!important;padding:0 20rpx!important;background:linear-gradient(135deg,#9559ee,#4930c3)!important;color:#fff!important;border-radius:18rpx!important;height:88rpx!important;line-height:1.2!important;font-weight:700!important;font-size:28rpx!important}
 .address-save-btn[disabled]{opacity:.48}
-.address-cancel-btn{height:75rpx!important;line-height:75rpx!important;border-radius:17rpx!important;background:#f4effb!important;color:#765f9d!important;margin-top:12rpx!important;font-size:25rpx!important}
+.address-cancel-btn{display:flex;align-items:center;justify-content:center;width:100%!important;box-sizing:border-box;height:75rpx!important;line-height:1.2!important;border-radius:17rpx!important;background:#f4effb!important;color:#765f9d!important;margin:12rpx 0 0!important;font-size:25rpx!important}
 .address-phone-testing{padding:24rpx;margin-top:27rpx}
 .address-testing-head{display:flex;justify-content:space-between;align-items:center;gap:12rpx}
 .address-testing-title{font-size:27rpx;font-weight:700;color:#3e3050}
