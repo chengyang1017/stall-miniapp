@@ -27,6 +27,7 @@
 
 /* Merchant-managed promotion banner; entirely absent without an uploaded image. */
 .home-promo-banner{width:100%;height:180rpx;overflow:hidden;border-radius:24rpx;margin:12rpx 0}
+ .home-promo-banner swiper-item{width:100%;height:100%}
 .home-promo-image{display:block;width:100%;height:100%}
 
 /* Only one deal fills the row; two or more retain the original compact scrolling cards. */
