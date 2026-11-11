@@ -1,6 +1,6 @@
 <view class="merchant-login-page">
   <view class="merchant-login-card">
-    <view class="merchant-login-title">商家登录</view>
+    <view class="merchant-login-title">账号与登录</view>
     <view class="merchant-login-desc">登录后由服务器核实店铺权限。已有权限的成员可进入工作台；新成员须凭店主提供的一次性邀请码加入。</view>
     <view wx:if="{{cloudOnly}}" class="merchant-login-desc">当前店铺 {{storeSlug}} · 可信Staging已由构建配置固定，无需输入地址或Token。</view>
     <block wx:if="{{!cloudOnly}}">
@@ -12,13 +12,6 @@
     <button type="primary" loading="{{busy}}" disabled="{{busy}}" bindtap="loginWechat">微信登录并验证商家身份</button>
     <view class="merchant-login-result">{{status}}</view>
     <button wx:if="{{authenticated}}" bindtap="logout">退出本机商家登录</button>
-  </view>
-  <view wx:if="{{canInvite}}" class="merchant-login-card">
-    <view class="merchant-login-title">成员权限管理</view>
-    <view class="merchant-login-desc">店主可邀请一位成员成为商家管理员。对方使用自己的微信登录后输入邀请码，无需共享店主账号。</view>
-    <button loading="{{memberBusy}}" disabled="{{memberBusy}}" bindtap="createMemberInvitation">生成一次性邀请码</button>
-    <view wx:if="{{invitationCode}}" class="merchant-login-result">{{invitationCode}}</view>
-    <button wx:if="{{invitationCode}}" bindtap="copyMemberInvitation">复制邀请码</button>
   </view>
   <view class="merchant-login-card">
     <view class="merchant-login-title">使用邀请码加入店铺</view>
