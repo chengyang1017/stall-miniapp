@@ -37,7 +37,7 @@
     <text class="deals-subtitle">{{dealsHasMore ? '更多优惠 · 向右滑 ›' : (discountedProducts.length > 2 ? '向右滑查看更多 ›' : '精选优惠商品')}}</text>
   </view>
   <scroll-view wx:if="{{discountedProducts.length}}" scroll-x class="deals-scroll" show-scrollbar="{{false}}" lower-threshold="100" bindscrolltolower="loadMoreDeals" enhanced="{{true}}">
-    <view class="deals-track">
+    <view class="deals-track {{discountedProducts.length === 1 ? 'deals-track-single' : ''}}">
       <view wx:for="{{discountedProducts}}" wx:key="id" class="deal-product" data-trace-list="discountedProducts" data-trace-key="{{item.id}}">
         <render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="home" list-name="discountedProducts" row-key="{{item.id}}"/>
         <view class="deal-product-content" data-id="{{item.id}}" bindtap="openProduct" role="button">
