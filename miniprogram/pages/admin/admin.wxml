@@ -40,6 +40,9 @@
       <navigator class="merchant-item merchant-last" url="/pages/admin-note-tags/admin-note-tags"><view class="merchant-item-symbol">✎</view><view class="merchant-item-text"><view class="merchant-item-name">备注标签</view><view class="merchant-item-desc">管理下单快捷备注</view></view><text class="merchant-arrow">›</text></navigator>
     </view>
 
+    <view class="merchant-section-title">成员管理</view>
+    <navigator class="merchant-item" url="/pages/merchant-login/merchant-login"><view class="merchant-item-symbol">👥</view><view class="merchant-item-text"><view class="merchant-item-name">成员与权限管理</view><view class="merchant-item-desc">邀请其他微信账号加入商家工作台 · 店主授权</view></view><text class="merchant-arrow">›</text></navigator>
+
     <view class="merchant-section-title">经营设置</view>
     <view class="merchant-minimum">
       <view class="merchant-setting-heading">起送金额</view>
