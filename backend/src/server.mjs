@@ -70,6 +70,7 @@ if(process.env.PAYMENT_DB_ENV==='isolated-test'){
   const avatarBucketPresent=!!process.env.S3_AVATAR_BUCKET
   const avatarCredentialsPresent=!!process.env.S3_ENDPOINT&&!!process.env.S3_ACCESS_KEY_ID&&!!process.env.S3_SECRET_ACCESS_KEY
   console.log('Staging avatar storage readiness',avatarBucketPresent?'private_bucket_named':'private_bucket_missing',avatarCredentialsPresent?'s3_credentials_present':'s3_credentials_missing')
+  console.log('Staging product image readiness',process.env.S3_BUCKET?'product_bucket_named':'product_bucket_missing',avatarCredentialsPresent?'s3_endpoint_and_credentials_present':'s3_endpoint_or_credentials_missing',/^https:\/\/[^/]+/.test(process.env.IMAGE_PUBLIC_BASE_URL||'')?'public_image_base_present':'public_image_base_missing')
   // Diagnostics report only booleans. Never log credentials or phone numbers.
   const mapping=process.env.CUSTOMER_ACCOUNT_MAPPING_ENABLED==='true'
   const phoneBinding=mapping&&process.env.WECHAT_PHONE_BIND_ENABLED==='true'
