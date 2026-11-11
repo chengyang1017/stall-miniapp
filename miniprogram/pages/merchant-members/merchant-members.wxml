@@ -5,12 +5,13 @@
   <block wx:if="{{!loading && !error}}">
     <view class="members-card">
       <view class="members-card-title">邀请新成员</view>
-      <view class="members-desc">生成邀请码发给对方。对方使用自己的微信账号登录并输入邀请码，即可加入工作台。</view>
+      <view class="members-desc">生成一次性邀请后，直接发送给微信好友。对方打开邀请、微信登录并确认加入即可。</view>
       <button class="members-primary" loading="{{busy}}" disabled="{{busy}}" bindtap="createInvitation">生成邀请码</button>
       <view wx:if="{{invitationCode}}" class="members-invitation">
         <text selectable="true">{{invitationCode}}</text>
         <button size="mini" bindtap="copyInvitation">复制</button>
       </view>
+      <button wx:if="{{invitationCode}}" open-type="share" class="members-primary">发送邀请给微信好友</button>
       <view wx:if="{{invitationMessage}}" class="members-hint">{{invitationMessage}}</view>
     </view>
     <view class="members-card">
