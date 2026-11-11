@@ -40,22 +40,12 @@
   </view>
   <view wx:if="{{cloudMode && !livePayEnabled && sandboxUiEnabled}}" class="checkout-section checkout-payment">
     <view class="section-head"><text class="section-icon">¥</text><text>支付方式</text><text class="payment-test-tag">测试环境</text></view>
-    <view class="payment-explainer">选择测试渠道，提交订单后在订单详情获取 Stripe 外部付款链接。</view>
+    <view class="payment-explainer">本店仅展示微信支付测试渠道。提交订单后，在订单详情获取 Stripe 外部测试链接；这不是微信原生收款。</view>
     <view class="payment-options">
       <view class="payment-option {{sandboxChannel === 'wechat_pay' ? 'payment-option-active' : ''}}" data-channel="wechat_pay" bindtap="chooseSandboxChannel" accessibilityLabel="微信支付测试" role="radio" aria-checked="{{sandboxChannel === 'wechat_pay'}}">
         <view class="payment-mark payment-mark-wechat">微</view>
         <view class="payment-copy"><view class="payment-name">微信支付</view><view class="payment-desc">Stripe 外部测试 · 非微信原生支付</view></view>
         <view class="payment-radio"><view wx:if="{{sandboxChannel === 'wechat_pay'}}" class="payment-radio-dot"></view></view>
-      </view>
-      <view class="payment-option {{sandboxChannel === 'alipay' ? 'payment-option-active' : ''}}" data-channel="alipay" bindtap="chooseSandboxChannel" accessibilityLabel="支付宝测试" role="radio" aria-checked="{{sandboxChannel === 'alipay'}}">
-        <view class="payment-mark payment-mark-alipay">支</view>
-        <view class="payment-copy"><view class="payment-name">支付宝</view><view class="payment-desc">Stripe 外部测试</view></view>
-        <view class="payment-radio"><view wx:if="{{sandboxChannel === 'alipay'}}" class="payment-radio-dot"></view></view>
-      </view>
-      <view class="payment-option {{sandboxChannel === 'card' ? 'payment-option-active' : ''}}" data-channel="card" bindtap="chooseSandboxChannel" accessibilityLabel="银行卡测试" role="radio" aria-checked="{{sandboxChannel === 'card'}}">
-        <view class="payment-mark payment-mark-card">卡</view>
-        <view class="payment-copy"><view class="payment-name">银行卡</view><view class="payment-desc">Stripe Card 外部测试</view></view>
-        <view class="payment-radio"><view wx:if="{{sandboxChannel === 'card'}}" class="payment-radio-dot"></view></view>
       </view>
     </view>
     <view class="payment-notice"><text class="payment-notice-icon">ⓘ</text><text>提交订单不会扣款，付款状态以服务端核验为准。具体渠道是否可用由测试服务决定。</text></view>
