@@ -58,14 +58,16 @@
     </view>
 
     <view class="merchant-section-title">首页宣传横幅</view>
-    <navigator class="merchant-item" url="/pages/admin-banner/admin-banner">
-      <view class="merchant-item-symbol">🖼️</view>
-      <view class="merchant-item-text">
-        <view class="merchant-item-name">管理宣传横幅</view>
-        <view class="merchant-item-desc">{{settingsReady ? ('已上传 ' + promoBanners.length + ' / 10 张 · 点击管理') : '添加、排序或更换首页宣传图'}}</view>
-      </view>
-      <text class="merchant-arrow">›</text>
-    </navigator>
+    <view class="merchant-group">
+      <navigator class="merchant-item merchant-last" url="/pages/admin-banner/admin-banner">
+        <view class="merchant-item-symbol">🖼️</view>
+        <view class="merchant-item-text">
+          <view class="merchant-item-name">管理宣传横幅</view>
+          <view class="merchant-item-desc">{{settingsReady ? ('已上传 ' + promoBanners.length + ' / 10 张 · 点击管理') : '添加、排序或更换首页宣传图'}}</view>
+        </view>
+        <text class="merchant-arrow">›</text>
+      </navigator>
+    </view>
 
     <view class="merchant-section-title">经营设置</view>
     <view class="merchant-minimum">
@@ -89,9 +91,9 @@
       <view class="merchant-setting-desc">默认关闭。开启后，仍需配送人员为当前订单主动授权共享；关闭会阻止新的位置上传并隐藏坐标。</view>
     </view>
     <view class="merchant-section-title">服务与数据</view>
-    <navigator class="merchant-item" url="/pages/merchant-reviews/merchant-reviews"><view class="merchant-item-text"><view class="merchant-item-name">商品评价</view><view class="merchant-item-desc">查看评分、回复与举报 · 审核由平台负责</view></view><text class="merchant-arrow">›</text></navigator>
-    <navigator class="merchant-item" url="/pages/store-code/store-code"><view class="merchant-item-text"><view class="merchant-item-name">店铺小程序码</view><view class="merchant-item-desc">微信官方码 · 保存、分享与打印图片</view></view><text class="merchant-arrow">›</text></navigator>
     <view class="merchant-group">
+      <navigator class="merchant-item" url="/pages/merchant-reviews/merchant-reviews"><view class="merchant-item-symbol">⭐</view><view class="merchant-item-text"><view class="merchant-item-name">商品评价</view><view class="merchant-item-desc">查看评分、回复与举报 · 审核由平台负责</view></view><text class="merchant-arrow">›</text></navigator>
+      <navigator class="merchant-item" url="/pages/store-code/store-code"><view class="merchant-item-symbol">📱</view><view class="merchant-item-text"><view class="merchant-item-name">店铺小程序码</view><view class="merchant-item-desc">微信官方码 · 保存、分享与打印图片</view></view><text class="merchant-arrow">›</text></navigator>
       <navigator class="merchant-item" url="/pages/admin-analytics/admin-analytics"><view class="merchant-item-symbol">📊</view><view class="merchant-item-text"><view class="merchant-item-name">经营分析</view><view class="merchant-item-desc">销售趋势、商品表现与经营报表</view></view><text class="merchant-arrow">›</text></navigator>
       <navigator class="merchant-item" url="/pages/support-inbox/support-inbox"><view class="merchant-item-symbol">✉️</view><view class="merchant-item-text"><view class="merchant-item-name">客服消息</view><view class="merchant-item-desc">查看与回复顾客咨询<text wx:if="{{cloudMode}}"> · 未读 {{supportUnread === null ? '—' : supportUnread}}</text><text wx:if="{{supportError}}"> · {{supportError}}</text></view></view><text class="merchant-arrow">›</text></navigator>
       <navigator class="merchant-item" url="/pages/merchant-members/merchant-members"><view class="merchant-item-symbol">👥</view><view class="merchant-item-text"><view class="merchant-item-name">成员与权限管理</view><view class="merchant-item-desc">邀请商家成员、查看及撤销授权</view></view><text class="merchant-arrow">›</text></navigator>
