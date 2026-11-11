@@ -1,21 +1,10 @@
 <view class="address-page">
-  <view class="address-heading">
-    <view class="address-heading-main">
-      <view class="address-heading-title">收货地址</view>
-      <view class="address-heading-desc">管理常用地址，方便下单配送</view>
-    </view>
-    <view class="address-heading-count">{{addresses.length}} 个地址</view>
-  </view>
-
-  <view wx:if="{{cloudMode}}" class="address-cloud-state">
-    <view class="address-cloud-dot"></view>
-    <text class="address-cloud-text">{{deliveryBusy ? '正在同步配送区域与地址…' : '云端地址 · 按当前店铺配送范围校验'}}</text>
-    <button class="address-text-button" size="mini" bindtap="login" disabled="{{addressBusy}}">验证登录</button>
-  </view>
-  <view wx:if="{{!cloudMode}}" class="address-hint">当前为本机演示地址，不会同步到其他设备。</view>
   <view wx:if="{{deliveryError}}" class="address-alert">
     <view class="address-alert-text">{{deliveryError}}</view>
-    <button size="mini" class="address-text-button" bindtap="refresh" disabled="{{deliveryBusy}}">重试</button>
+    <view class="address-alert-actions">
+      <button size="mini" class="address-text-button" bindtap="refresh" disabled="{{deliveryBusy}}">重试</button>
+      <button wx:if="{{cloudMode}}" size="mini" class="address-text-button" bindtap="login" disabled="{{addressBusy}}">重新登录</button>
+    </view>
   </view>
 
   <view class="address-section-head">
@@ -97,8 +86,6 @@
     <button class="address-save-btn" bindtap="save" loading="{{addressBusy}}" disabled="{{addressBusy || (cloudMode && (deliveryBusy || deliveryError))}}">{{addressBusy ? (addressSync === 'confirmed' ? '已保存，正在同步列表…' : '保存中…') : (editingId ? '保存修改' : '保存地址')}}</button>
     <button wx:if="{{editingId}}" class="address-cancel-btn" bindtap="clearForm" disabled="{{addressBusy}}">取消编辑</button>
   </view>
-
-  <view class="address-bottom-note">{{cloudMode ? '地址按顾客身份和店铺隔离保存，历史订单中的地址不会随此处修改。' : '演示地址仅保存在本机微信，不会同步到其他设备。'}}</view>
 
   <view wx:if="{{phoneAddressLoading || phoneAddressStatus || phoneAddressList.length}}" class="address-phone-testing">
     <view class="address-testing-head">
