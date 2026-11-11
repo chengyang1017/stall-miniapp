@@ -28,6 +28,7 @@ function jsonError(e,res) { return send(res,e.message==='too_large'?413:400,{err
 function objectClient() {
   if (!process.env.S3_BUCKET || !process.env.S3_ENDPOINT || !process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY) return null
   return new S3Client({ region: process.env.S3_REGION || 'auto', endpoint: process.env.S3_ENDPOINT,
+    forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true', requestChecksumCalculation: 'WHEN_REQUIRED',
     credentials: { accessKeyId: process.env.S3_ACCESS_KEY_ID, secretAccessKey: process.env.S3_SECRET_ACCESS_KEY } })
 }
 async function imageExists(pool,storeId,key) { return verifyProductImage(pool,storeId,key) }

@@ -58,9 +58,11 @@
   </view>
   <view wx:if="{{discountedProducts.length && (dealsHasMore || dealError)}}" class="deals-load-more" bindtap="loadMoreDeals">{{dealError || (dealBusy ? '正在加载更多优惠…' : '继续向右滑，发现更多优惠 ›')}}</view>
 </view>
-<view wx:if="{{promoBannerUrl}}" class="home-promo-banner">
-  <image class="home-promo-image" src="{{promoBannerUrl}}" mode="aspectFill" lazy-load="{{true}}"/>
-</view>
+<swiper wx:if="{{promoBanners.length}}" class="home-promo-banner" autoplay="{{promoBanners.length > 1}}" circular="{{promoBanners.length > 1}}" interval="4500" duration="450" indicator-dots="{{promoBanners.length > 1}}" indicator-color="rgba(255,255,255,0.55)" indicator-active-color="#ffffff">
+  <swiper-item wx:for="{{promoBanners}}" wx:key="key">
+    <image class="home-promo-image" src="{{item.url}}" mode="aspectFill" lazy-load="{{true}}"/>
+  </swiper-item>
+</swiper>
 <view class="quick-grid">
 <view bindtap="goCategories">
 <text>✦</text>全部商品</view>

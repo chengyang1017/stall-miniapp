@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { validRules, verifyDelivery } from '../src/deliveryRules.mjs'
+import { validRules, verifyDelivery, businessView } from '../src/deliveryRules.mjs'
 
 const serverNow=new Date('2026-10-28T04:00:00.000Z')
 const buildRules = () => ({
@@ -19,6 +19,33 @@ function mock(rules, exists=true) {
   const queries=[]
   return {queries, client:{ async query(sql,params){queries.push({sql,params});if(sql==='SELECT clock_timestamp() AS now')return {rows:[{now:new Date(serverNow)}]};assert.equal(sql,'SELECT configuration FROM store_delivery_rules WHERE store_id=$1 FOR SHARE');return {rows: exists ? [{configuration:rules}] : []} } }}
 }
+
+const imageKey=i=>'stores/00000000-0000-0000-0000-000000000001/products/'+String(i).padStart(8,'0')+'-0000-0000-0000-000000000001.jpg'
+
+test('banner settings accept ten ordered verified-key shapes and reject invalid lists',()=>{
+ const a=buildRules()
+ a.promoBannerImageKeys=Array.from({length:10},(_,i)=>imageKey(i))
+ assert.equal(validRules(a),true)
+ a.promoBannerImageKeys.push(imageKey(10))
+ assert.equal(validRules(a),false)
+ a.promoBannerImageKeys=[imageKey(1),imageKey(1)]
+ assert.equal(validRules(a),false)
+ a.promoBannerImageKeys=['https://example.com/foreign.jpg']
+ assert.equal(validRules(a),false)
+ a.promoBannerImageKeys=[]
+ assert.equal(validRules(a),true)
+})
+test('legacy single banner is still shown until an explicit list replaces it',()=>{
+ const a=buildRules();a.promoBannerImageKey=imageKey(1)
+ const old=businessView(a,serverNow)
+ assert.deepEqual(old.promoBannerImages.map(b=>b.key),[imageKey(1)])
+ a.promoBannerImageKeys=[imageKey(2),imageKey(1)]
+ const current=businessView(a,serverNow)
+ assert.deepEqual(current.promoBannerImages.map(b=>b.key),[imageKey(2),imageKey(1)])
+ assert.equal(current.promoBannerImageKey,imageKey(2))
+ a.promoBannerImageKeys=[]
+ assert.deepEqual(businessView(a,serverNow).promoBannerImages,[])
+})
 
 test('valid delivery configuration is accepted',()=>{
   assert.equal(validRules(buildRules()),true)
