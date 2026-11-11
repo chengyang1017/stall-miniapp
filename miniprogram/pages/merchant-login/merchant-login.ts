@@ -87,7 +87,7 @@ Page({
     const cfg=getCloudContext(),token=wx.getStorageSync(TOKEN_KEY)
     if(!cfg||typeof token!=='string'||!token)throw Error('请先完成微信登录')
     return new Promise((resolve,reject)=>wx.request({
-      url:cfg.apiBase.replace(/\\/$/,'')+'/v1/merchant/stores/'+encodeURIComponent(cfg.storeSlug)+'/member-invitations'+path,
+      url:cfg.apiBase.replace(/[/]+$/,'')+'/v1/merchant/stores/'+encodeURIComponent(cfg.storeSlug)+'/member-invitations'+path,
       method:'POST',timeout:15000,data,
       header:{Authorization:'Bearer '+token,'content-type':'application/json'},
       success:(r:any)=>r.statusCode>=200&&r.statusCode<300?resolve(r.data):reject(Error(String(r.data?.error||'http_'+r.statusCode))),
