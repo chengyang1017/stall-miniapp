@@ -44,3 +44,24 @@
 .profile-avatar.avatar-violet{background:linear-gradient(150deg,#e5c5fa,#8e64d7,#5131b9)}.profile-avatar.avatar-blue{background:linear-gradient(150deg,#d8eaff,#77b5f3,#2873ba)}.profile-avatar.avatar-green{background:linear-gradient(150deg,#d7f5e1,#78c999,#288153)}.profile-avatar.avatar-peach{background:linear-gradient(150deg,#ffe4d8,#f2a18b,#c86659)}
 
 .profile-avatar{overflow:hidden}.profile-avatar-photo{width:100%;height:100%;display:block;border-radius:50%}
+
+/* Shared personal-center type scale: 30rpx headings, 27rpx rows, 23rpx secondary text.
+   Fixed icon and chevron boxes avoid mixed glyph sizes shifting the labels. */
+.profile-links .service-row,.account-controls .service-row{min-height:92rpx;gap:16rpx;box-sizing:border-box;font-size:27rpx}
+.profile-links .service-icon,.account-controls .service-icon,.merchant-entry .profile-merchant-icon{
+  display:flex;align-items:center;justify-content:center;flex:0 0 44rpx;
+  width:44rpx;height:44rpx;line-height:1;font-size:34rpx;font-weight:400;color:#7942dd;
+}
+.profile-row-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:27rpx;font-weight:500;color:#342747;line-height:1.4}
+.profile-row-count{flex-shrink:0;white-space:nowrap;font-size:23rpx;font-weight:400;color:#8c809e}
+.profile-row-arrow{flex:0 0 18rpx;width:18rpx;text-align:right;line-height:1;font-size:27rpx;font-weight:400;color:#a096af}
+.merchant-entry{gap:16rpx;font-size:27rpx}
+.merchant-entry .profile-merchant-title{font-size:28rpx;font-weight:650;line-height:1.4;color:#342747}
+.merchant-entry .muted{display:block;margin-top:6rpx;font-size:23rpx;line-height:1.5}
+.merchant-entry>.profile-chevron{flex:0 0 18rpx;font-size:27rpx;line-height:1;text-align:right}
+.profile-body .surface .section-heading{font-size:30rpx;line-height:1.45}
+.help-grid{gap:6rpx}
+.help-grid>navigator,.help-grid>view{display:flex;align-items:center;flex-direction:column;gap:5rpx;min-width:0;font-size:24rpx;line-height:1.4}
+.help-grid .help-icon{display:flex;align-items:center;justify-content:center;width:52rpx;height:52rpx;margin:0;font-size:36rpx;line-height:1;color:#7942dd}
+.help-grid .help-label{display:block;width:100%;margin:0;font-size:24rpx;line-height:1.4;color:#3a2b4c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.help-grid .muted{display:block;margin:0;font-size:20rpx;line-height:1.4;color:#8c809e}
