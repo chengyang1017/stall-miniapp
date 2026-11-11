@@ -26,7 +26,7 @@
     <view wx:if="{{receipt.sandbox}}" class="receipt-mode-note">Stripe Sandbox 测试交易 · 非真实付款</view>
     <view wx:else class="receipt-live-note">微信支付已通过服务器核验 · 非税务发票</view>
     <view class="receipt-order-id">订单 {{receipt.orderId}}</view>
-    <view wx:for="{{receipt.items}}" wx:key="index" wx:for-item="line" class="receipt-line">
+    <view wx:for="{{receipt.items}}" wx:key="productId" wx:for-item="line" class="receipt-line">
       <text class="receipt-product-name">{{line.name}} × {{line.quantity}}</text>
       <text>¥{{line.lineTotalText}}</text>
     </view>
