@@ -116,6 +116,10 @@ Page({
   },
   async redeemMemberInvitation(){
     if(this.data.memberBusy||this.data.busy||this.data.inviteStoreMismatch)return
+    if(!wx.getStorageSync(TOKEN_KEY)){
+      this.setData({memberStatus:'请先点击上方微信登录，再确认加入。'})
+      return
+    }
     const code=this.data.joinCode.trim()
     if(!/^[A-Za-z0-9_-]{32}$/.test(code)){this.setData({memberStatus:'请填写店主提供的完整邀请码'});return}
     this.setData({memberBusy:true,memberStatus:''})
@@ -125,6 +129,13 @@ Page({
       await this.verifyExisting(false)
     }catch(e:any){this.setData({memberStatus:'加入失败：'+String(e.message||e)})}
     finally{this.setData({memberBusy:false})}
+  },
+  openAuthorizedWorkspace(){
+    if(!this.data.authenticated||this.data.busy)return
+    const cfg=getCloudContext()
+    if(!cfg)return
+    wx.setStorageSync('stall_merchant_home_preference_v1',cfg.apiBase+'|'+cfg.storeSlug)
+    wx.navigateTo({url:'/pages/admin/admin'})
   },
   async logout() {
     if(this.data.busy)return
