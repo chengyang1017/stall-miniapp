@@ -36,12 +36,12 @@
 .deals-empty{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12rpx;min-height:106rpx;padding:12rpx 18rpx;box-sizing:border-box;border-radius:18rpx;background:#ffffff25;color:#fff;font-size:25rpx}
 .deals-empty-link{font-size:23rpx;color:#fff;font-weight:650;white-space:nowrap}
 .feature-swiper{height:190rpx;margin-top:20rpx}
-.feature-banner,.category-banner{position:relative;display:flex;align-items:center;justify-content:space-between;overflow:hidden;background:radial-gradient(at 70% 100%,#ec8bbd,transparent 75%),linear-gradient(120deg,#9d41df,#6536dc);border-radius:28rpx;color:#fff;padding:24rpx 30rpx;height:190rpx;box-sizing:border-box;margin-top:20rpx}
+.feature-banner{position:relative;display:flex;align-items:center;justify-content:space-between;overflow:hidden;background:radial-gradient(at 70% 100%,#ec8bbd,transparent 75%),linear-gradient(120deg,#9d41df,#6536dc);border-radius:28rpx;color:#fff;padding:24rpx 30rpx;height:190rpx;box-sizing:border-box;margin-top:20rpx}
 .feature-swiper .feature-banner{margin:0;height:190rpx}
 .feature-banner image{width:180rpx;height:150rpx;flex-shrink:0;margin-left:20rpx;border-radius:24rpx}
 .feature-label{font-size:21rpx;background:#ffffff25;padding:5rpx 16rpx;border-radius:20rpx}
 .feature-title{font-size:36rpx;font-weight:750;margin:14rpx 0;max-width:390rpx;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.feature-banner view>view:last-child,.category-banner view:last-child{font-size:24rpx;color:#f6e9ff}
+.feature-banner view>view:last-child{font-size:24rpx;color:#f6e9ff}
 .feature-art{font-size:100rpx;color:#f9d7ff}
 .category{min-width:94rpx;max-width:160rpx;overflow:hidden;text-overflow:ellipsis;text-align:center;border-radius:23rpx;background:#fff;padding:15rpx 12rpx;font-size:23rpx;color:#54416a}
 .category text{display:block;font-size:35rpx;color:#9b72df;margin-bottom:8rpx}
@@ -55,8 +55,7 @@
 .side-category text{font-size:33rpx;color:#8652da}
 .side-category.active text{color:white}
 .category-content{flex:1;min-width:0}
-.category-banner{height:195rpx;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:10rpx;margin:0;padding:24rpx}
-.category-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8rpx;font-size:23rpx;margin-top:26rpx;font-weight:650}
+.category-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8rpx;font-size:23rpx;margin-top:14rpx;font-weight:650}
 .category-toolbar>view{color:#807192;font-size:21rpx;flex-shrink:0}
 .category-toolbar>text{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .filter-line{color:#8054bf;font-size:23rpx;padding:18rpx 0}
