@@ -56,6 +56,14 @@ export async function customerAddressRoute(req,res,url,pool,verifiedCustomerSubj
    else await db.query('UPDATE customer_addresses SET is_default=true,version=version+1,updated_at=clock_timestamp() WHERE store_id=$1 AND customer_subject=$2 AND id=$3',[store.id,subject,m[2]])
   }
   await db.query('COMMIT');reply(res,200,{ok:true});return true
- }catch(e){if(db)await db.query('ROLLBACK').catch(()=>{});reply(res,e.status||503,{error:e.status?e.message:'address_service_unavailable'})}finally{db?.release()}
+ }catch(e){
+  if(db)await db.query('ROLLBACK').catch(()=>{})
+  if(!e?.status||e.status>=500){
+   // Safe operational diagnostics only: never log request payloads, addresses, tokens or SQL values.
+   const sqlState=typeof e?.code==='string'&&/^[0-9A-Z]{5}$/.test(e.code)?e.code:'unknown'
+   console.error('customer_address_save_error',JSON.stringify({method:req.method,status:e?.status||503,sqlState,withId:!!m[2]}))
+  }
+  reply(res,e.status||503,{error:e.status?e.message:'address_service_unavailable'})
+ }finally{db?.release()}
  return true
 }
