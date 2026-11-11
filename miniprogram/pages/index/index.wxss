@@ -8,8 +8,6 @@
 .feature-swiper .feature-banner{height:164rpx}
 .feature-banner{height:164rpx;margin-top:12rpx;padding:18rpx 26rpx}
 .feature-banner image{height:130rpx}
-.quick-grid{gap:12rpx;margin:14rpx 0}
-.quick-grid>view{border-radius:20rpx;padding:12rpx 0}
 
 /* Compact store trading status, replacing the tall generic notice row. */
 .home-catalog .store-status-strip{display:flex;align-items:center;gap:9rpx;min-height:42rpx;margin:4rpx 2rpx 10rpx;padding:0 10rpx;box-sizing:border-box;overflow:hidden}
