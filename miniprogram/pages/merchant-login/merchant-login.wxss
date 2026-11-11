@@ -1,3 +1,27 @@
 .merchant-login-page{min-height:100vh;box-sizing:border-box;padding:28rpx;background:var(--brand-background)}.merchant-login-card{background:#fff;border-radius:20rpx;padding:30rpx;margin-bottom:24rpx}.merchant-login-title{font-size:36rpx;font-weight:650;color:var(--brand-text);margin-bottom:14rpx}.merchant-login-desc{font-size:25rpx;color:var(--brand-muted);line-height:1.7;margin-bottom:26rpx}.merchant-login-label{font-size:26rpx;color:var(--brand-border);margin:14rpx 0}.merchant-login-input{height:88rpx;background:var(--brand-background);padding:0 20rpx;border-radius:12rpx;margin-bottom:22rpx;font-size:28rpx}.merchant-login-result{font-size:25rpx;color:var(--brand-border);line-height:1.6;margin:22rpx 0}
 
 @import "../../styles/merchant-theme.wxss";
+
+
+/* Account & permissions: owner-only member management uses the same card/brand scale. */
+.merchant-login-title{font-size:32rpx}
+.merchant-login-result{color:var(--brand-muted)}
+.merchant-login-page .merchant-team-card{padding:30rpx}
+.merchant-team-section{padding-top:22rpx;margin-top:24rpx;border-top:1rpx solid var(--brand-border)}
+.merchant-team-title{font-size:28rpx;font-weight:700;color:var(--brand-text);margin-bottom:10rpx}
+.merchant-team-count{font-size:23rpx;font-weight:400;color:var(--brand-muted)}
+.merchant-team-section .merchant-login-desc{margin-bottom:18rpx;font-size:23rpx}
+.merchant-team-primary,.merchant-team-share{background:var(--brand-primary)!important;color:#fff!important;border-radius:15rpx;font-size:26rpx!important}
+.merchant-team-share{margin-top:12rpx}
+.merchant-team-invitation{display:flex;align-items:center;gap:12rpx;margin-top:18rpx;padding:14rpx;border-radius:14rpx;background:var(--brand-background)}
+.merchant-team-invitation text{flex:1;min-width:0;font-size:23rpx;color:var(--brand-primary-dark);overflow-wrap:anywhere}
+.merchant-team-invitation button{margin:0}
+.merchant-team-member{display:flex;align-items:center;gap:16rpx;min-height:96rpx;border-bottom:1rpx solid var(--brand-border);padding:13rpx 0}
+.merchant-team-avatar{display:flex;align-items:center;justify-content:center;flex:0 0 62rpx;width:62rpx;height:62rpx;border-radius:18rpx;background:var(--brand-primary-soft);color:var(--brand-primary);font-size:32rpx}
+.merchant-team-meta{flex:1;min-width:0}
+.merchant-team-name{font-size:27rpx;font-weight:600;color:var(--brand-text);word-break:break-all}
+.merchant-team-role{font-size:22rpx;color:var(--brand-muted);margin-top:5rpx}
+.merchant-team-remove{margin:0!important;color:#b34355!important;background:#fff3f6!important;font-size:24rpx}
+.merchant-team-refresh{margin:22rpx 0 0!important;color:var(--brand-primary)!important;background:var(--brand-primary-soft)!important;font-size:24rpx}
+.merchant-team-loading,.merchant-team-empty,.merchant-team-error{font-size:24rpx;padding:22rpx 0;text-align:center;color:var(--brand-muted)}
+.merchant-team-error{color:#b34355}

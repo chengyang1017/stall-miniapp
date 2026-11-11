@@ -13,7 +13,6 @@
     "pages/admin/admin",
     "pages/admin-banner/admin-banner",
     "pages/merchant-login/merchant-login",
-    "pages/merchant-members/merchant-members",
     "pages/cart/cart",
     "pages/checkout/checkout",
     "pages/admin-billing/admin-billing",
