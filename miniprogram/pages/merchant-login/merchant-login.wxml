@@ -13,6 +13,20 @@
     <view class="merchant-login-result">{{status}}</view>
     <button wx:if="{{authenticated}}" bindtap="logout">退出本机商家登录</button>
   </view>
+  <view wx:if="{{canInvite}}" class="merchant-login-card">
+    <view class="merchant-login-title">成员权限管理</view>
+    <view class="merchant-login-desc">店主可邀请一位成员成为商家管理员。对方使用自己的微信登录后输入邀请码，无需共享店主账号。</view>
+    <button loading="{{memberBusy}}" disabled="{{memberBusy}}" bindtap="createMemberInvitation">生成一次性邀请码</button>
+    <view wx:if="{{invitationCode}}" class="merchant-login-result">{{invitationCode}}</view>
+    <button wx:if="{{invitationCode}}" bindtap="copyMemberInvitation">复制邀请码</button>
+  </view>
+  <view class="merchant-login-card">
+    <view class="merchant-login-title">使用邀请码加入店铺</view>
+    <view class="merchant-login-desc">请先使用自己的微信登录。邀请码只能使用一次，24小时后失效。</view>
+    <input class="merchant-login-input" maxlength="32" value="{{joinCode}}" bindinput="onJoinCodeInput" placeholder="输入店主发给你的邀请码" />
+    <button disabled="{{busy || memberBusy}}" loading="{{memberBusy}}" bindtap="redeemMemberInvitation">加入商家工作台</button>
+    <view wx:if="{{memberStatus}}" class="merchant-login-result">{{memberStatus}}</view>
+  </view>
   <view wx:if="{{showLocalDev}}" class="merchant-login-card">
     <view class="merchant-login-title">本地开发测试</view>
     <view class="merchant-login-desc">仅开发者工具连接本机 stall-demo 时显示，不属于正式微信登录。</view>
