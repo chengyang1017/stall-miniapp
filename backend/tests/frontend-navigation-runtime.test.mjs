@@ -21,7 +21,7 @@ function handler(file, method, following, context) {
   assert.ok(end > start, `${file}: ${method} boundary not found`)
   // The source is TypeScript: erase only the inline `x:any` callback annotation
   // present in merchant account verification before evaluating the isolated handler.
-  const body = code.slice(start,end).trim().replace(/,\s*$/, '').replace(/\(([A-Za-z_$][\w$]*):any\)/g,'($1')
+  const body = code.slice(start,end).trim().replace(/,\s*$/, '').replace(/\(([A-Za-z_$][\w$]*):any\)/g,'($1)')
   return vm.runInNewContext(`({${body}}).${method}`, context, {filename:file})
 }
 const profile = 'miniprogram/pages/profile/profile.ts'
