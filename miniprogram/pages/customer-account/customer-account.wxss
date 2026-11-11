@@ -34,3 +34,6 @@ page{background:#f7f5fb}
 .hero-avatar-button .avatar-photo{width:100%;height:100%;border-radius:50%}
 
 .phone-state{font-size:22rpx;color:#8b7fa0;white-space:nowrap}
+
+/* Center WeChat button label independently of platform line-height defaults. */
+.account-content .save-button{display:flex;align-items:center;justify-content:center;box-sizing:border-box;line-height:normal!important;padding:0 20rpx;text-align:center}
