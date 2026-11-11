@@ -38,9 +38,9 @@ test('profile and checkout WXML remain balanced',()=>{
  for(const xml of [profile,checkout]){
   const stripped=xml.replace(/<!--[\s\S]*?-->/g,'')
   for(const tag of ['view','text','navigator','button','picker','image']){
-   const opens=(stripped.match(new RegExp('<'+tag+'(?=[\\s>])','g'))||[]).length
+   const opens=(stripped.match(new RegExp('<'+tag+'(?=[\\s/>])','g'))||[]).length
    const closes=(stripped.match(new RegExp('</'+tag+'>','g'))||[]).length
-   const self=(stripped.match(new RegExp('<'+tag+'[^>]*\\/>','g'))||[]).length
+   const self=(stripped.match(new RegExp('<'+tag+'(?=[\\s/>])[^>]*\\/>','g'))||[]).length
    assert.equal(opens,closes+self,tag)
   }
  }
