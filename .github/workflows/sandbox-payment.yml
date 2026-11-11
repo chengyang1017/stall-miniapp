@@ -38,7 +38,7 @@ jobs:
       - name: Sandbox lifecycle integration tests (isolated PGlite)
         run: npm run test:payment:lifecycle --prefix backend
       - name: Customer address SQL create and idempotency regression (isolated PGlite)
-        run: node --test backend/tests/customer-address-route-pglite.test.mjs
+        run: node --test backend/tests/customer-address-route-pglite.test.mjs backend/tests/address-save-error-messages.test.mjs
       - name: Install frontend dependencies
         run: npm ci
       - name: Frontend validation
