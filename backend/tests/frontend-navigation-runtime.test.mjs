@@ -19,7 +19,9 @@ function handler(file, method, following, context) {
   const start = found.index + found[0].indexOf(method) - (found[0].includes('async ') ? 6 : 0)
   const end = code.indexOf(following, start)
   assert.ok(end > start, `${file}: ${method} boundary not found`)
-  const body = code.slice(start,end).trim().replace(/,\s*$/, '')
+  // The source is TypeScript: erase only the inline `x:any` callback annotation
+  // present in merchant account verification before evaluating the isolated handler.
+  const body = code.slice(start,end).trim().replace(/,\s*$/, '').replace(/\(([A-Za-z_$][\w$]*):any\)/g,'($1')
   return vm.runInNewContext(`({${body}}).${method}`, context, {filename:file})
 }
 const profile = 'miniprogram/pages/profile/profile.ts'
@@ -44,7 +46,7 @@ function makeProfile(authorizedGet) {
     supportIdentity:()=>identity}
   const p = {data:{merchantAuthorized:true,supportUnread:0},merchantSerial:0,merchantOpening:false,serial:0,
     setData(v){Object.assign(this.data,v)}}
-  p.openMerchant = handler(profile,'openMerchant','loadAvatarForHeader(',globals)
+  p.openMerchant = handler(profile,'openMerchant','restoreHeaderAvatar(',globals)
   p.onHide = handler(profile,'onHide','  onUnload',globals)
   return {p,calls,storage,setIdentity:x=>{identity=x}}
 }
@@ -99,7 +101,7 @@ test('profile: session identity changes invalidate a pending authorization',asyn
 function makeLogin(authorizedGet){
   const calls=[], storage=new Map()
   const wx={setStorageSync:(k,v)=>storage.set(k,v),navigateTo:args=>calls.push(args.url)}
-  const p={pageVisible:true,operationSerial:0,data:{apiBase:'https://test.example',storeSlug:'demo',busy:false},setData(v){Object.assign(this.data,v)},config:()=>true}
+  const p={pageVisible:true,operationSerial:0,membersSerial:0,data:{apiBase:'https://test.example',storeSlug:'demo',busy:false},setData(v){Object.assign(this.data,v)},config:()=>true}
   p.verifyExisting=handler(login,'verifyExisting','async loginWechat()', {wx,authorizedGet,requestIdentity:()=> 'same-test-identity'})
   return {p,calls,storage}
 }

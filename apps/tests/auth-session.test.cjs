@@ -40,6 +40,18 @@ function start(f,active) {
   return promise
 }
 const success = request=>request.success({statusCode:200,data:{token:newToken,cacheScope:'c'.repeat(64)}})
+// Account verification reads both store access and /v1/auth/me to establish the role.
+// Use manager for these navigation tests so owner-only member list fetch is not triggered.
+async function completeMerchantVerification(f,index){
+  const category=f.requests[index]
+  assert.ok(category&&category.url.includes('/categories'))
+  category.success({statusCode:200,data:{items:[]}})
+  await new Promise(setImmediate)
+  const membership=f.requests[index+1]
+  assert.ok(membership&&membership.url.endsWith('/v1/auth/me'))
+  membership.success({statusCode:200,data:{stores:[{slug:'sample',role:'manager'}]}})
+  await new Promise(setImmediate)
+}
 test('current WeChat login saves the verified response and cache scope',async()=>{
   const f=fixture(),p=start(f);f.logins[0].success({code:'synthetic-code'});success(f.requests[0]);await p
   assert.equal(f.storage.get(TOKEN),newToken);assert.equal(f.storage.get(SCOPE),'c'.repeat(64))
@@ -104,7 +116,7 @@ for(const target of ['combined','merchant']) {
     const pending=f.page.logout();f.page.onHide();f.storage.set(TOKEN,newToken);f.page.onShow()
     f.requests[0].success({statusCode:200,data:{}});await pending
     assert.equal(f.storage.get(TOKEN),newToken);assert.equal(f.page.data.busy,true)
-    f.requests[1].success({statusCode:200,data:{items:[]}});await new Promise(setImmediate)
+    await completeMerchantVerification(f,1)
     assert.equal(f.page.data.authenticated,true);assert.equal(f.page.data.busy,false)
   })
   test(`${target} merchant login: hidden page cannot authenticate or navigate after permission response`,async()=>{
@@ -118,7 +130,7 @@ for(const target of ['combined','merchant']) {
     const f=fixture(target,true);f.page.pageVisible=true
     f.page.setData({apiBase:'https://staging.invalid',storeSlug:'sample'})
     const pending=f.page.verifyExisting(true);assert.equal(f.calls.length,0)
-    f.requests[0].success({statusCode:200,data:{items:[]}});await pending
+    await completeMerchantVerification(f,0);await pending
     assert.equal(f.page.data.authenticated,true);assert.deepEqual(f.calls,['/pages/admin/admin'])
   })
   test(`${target} merchant login: old finally cannot release a newer page verification`,async()=>{
@@ -127,7 +139,7 @@ for(const target of ['combined','merchant']) {
     const old=f.page.verifyExisting();f.page.onHide();f.page.onShow()
     assert.equal(f.requests.length,2);f.requests[0].fail(Error('offline'));await old
     assert.equal(f.page.data.busy,true);assert.equal(f.page.data.authenticated,false)
-    f.requests[1].success({statusCode:200,data:{items:[]}});await new Promise(setImmediate)
+    await completeMerchantVerification(f,1)
     assert.equal(f.page.data.busy,false);assert.equal(f.page.data.authenticated,true)
     assert.equal(f.calls.length,0)
   })
