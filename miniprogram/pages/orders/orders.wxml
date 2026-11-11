@@ -1,5 +1,4 @@
 <view class="customer-orders-page">
-  <view class="customer-orders-title">我的订单</view>
   <view wx:if="{{phoneOrdersLoading || phoneOrdersStatus || phoneOrders.length}}" class="customer-order-card">
     <view class="customer-orders-title">手机号顾客历史订单（只读）</view>
     <view wx:if="{{!phoneOrdersLoading && phoneOrdersStatus}}" class="customer-orders-tip">{{phoneOrdersStatus}}</view>
