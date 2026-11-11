@@ -32,10 +32,6 @@
 <image class="category-icon" src="{{selectedCategory === item.id ? item.iconActivePath : item.iconPath}}" mode="aspectFit"/><text class="side-category-label">{{item.name}}</text></view>
 </scroll-view>
 <view class="category-content">
-<view class="category-banner">
-<view class="feature-title">{{categoryTitle}}</view>
-<view>发现你需要的好物</view>
-</view>
 <view class="category-toolbar">
 <text>{{categoryTitle}} · 已加载 {{products.length}} 件</text>
 <view bindtap="sortProducts">{{sortMode==='asc'?'价格↑':sortMode==='desc'?'价格↓':'综合排序'}}⌄</view>
