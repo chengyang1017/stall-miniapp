@@ -30,6 +30,7 @@ import http from 'node:http'
 import { supportRoute } from './support.mjs'
 import { merchantArchivesRoute } from './merchantArchives.mjs'
 import { merchantMemberInvitationsRoute } from './merchantMemberInvitations.mjs'
+import { merchantMembersRoute } from './merchantMembers.mjs'
 import { imageManagementRoute } from './imageManagement.mjs'
 import { customerAddressRoute } from './customerAddresses.mjs'
 import { Pool } from 'pg'
@@ -143,6 +144,7 @@ const server = http.createServer(async (req, res) => {
     if (await customerWechatIdentityLinkRoute(req,res,url,pool)) return
     if (await storeEntryRoute(req,res,url,pool)) return
     if (await supportRoute(req,res,url,pool)) return
+    if (await merchantMembersRoute(req,res,url,pool)) return
     if (await merchantMemberInvitationsRoute(req,res,url,pool)) return
     if (await merchantArchivesRoute(req,res,url,pool)) return
     if (await imageManagementRoute(req,res,url,pool)) return
