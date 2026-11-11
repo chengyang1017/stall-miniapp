@@ -40,9 +40,6 @@
       <navigator class="merchant-item merchant-last" url="/pages/admin-note-tags/admin-note-tags"><view class="merchant-item-symbol">✎</view><view class="merchant-item-text"><view class="merchant-item-name">备注标签</view><view class="merchant-item-desc">管理下单快捷备注</view></view><text class="merchant-arrow">›</text></navigator>
     </view>
 
-    <view class="merchant-section-title">成员管理</view>
-    <navigator class="merchant-item" url="/pages/merchant-members/merchant-members"><view class="merchant-item-symbol">👥</view><view class="merchant-item-text"><view class="merchant-item-name">成员与权限管理</view><view class="merchant-item-desc">邀请其他微信账号加入商家工作台 · 店主授权</view></view><text class="merchant-arrow">›</text></navigator>
-
     <view class="merchant-section-title">经营设置</view>
     <view class="merchant-minimum">
       <view class="merchant-setting-heading">起送金额</view>
@@ -70,6 +67,7 @@
     <view class="merchant-group">
       <navigator class="merchant-item" url="/pages/admin-analytics/admin-analytics"><view class="merchant-item-symbol">📊</view><view class="merchant-item-text"><view class="merchant-item-name">经营分析</view><view class="merchant-item-desc">销售趋势、商品表现与经营报表</view></view><text class="merchant-arrow">›</text></navigator>
       <navigator class="merchant-item" url="/pages/support-inbox/support-inbox"><view class="merchant-item-symbol">✉️</view><view class="merchant-item-text"><view class="merchant-item-name">客服消息</view><view class="merchant-item-desc">查看与回复顾客咨询<text wx:if="{{cloudMode}}"> · 未读 {{supportUnread === null ? '—' : supportUnread}}</text><text wx:if="{{supportError}}"> · {{supportError}}</text></view></view><text class="merchant-arrow">›</text></navigator>
+      <navigator class="merchant-item" url="/pages/merchant-members/merchant-members"><view class="merchant-item-symbol">👥</view><view class="merchant-item-text"><view class="merchant-item-name">成员与权限管理</view><view class="merchant-item-desc">邀请商家成员、查看及撤销授权</view></view><text class="merchant-arrow">›</text></navigator>
       <navigator class="merchant-item merchant-last" url="/pages/admin-backup/admin-backup"><view class="merchant-item-symbol">💾</view><view class="merchant-item-text"><view class="merchant-item-name">数据备份与恢复</view><view class="merchant-item-desc">导出与导入商家数据</view></view><text class="merchant-arrow">›</text></navigator>
     </view>
     <view class="merchant-footnote">部分功能仍在逐步接入云端；操作结果以实际保存状态为准。</view>
