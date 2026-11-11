@@ -24,6 +24,36 @@ Page({
   draftStorageKey(){const cfg=cloudCartConfig();return cfg?(getSessionToken()?DRAFT_KEY+':'+cloudCacheSuffix(cfg.storeSlug):''):DRAFT_KEY+':demo'},
   restoreDraft(){this.checkoutContext=supportIdentity();const key=this.draftStorageKey(),draft=key?wx.getStorageSync(key):null;this.setData({note:draft&&typeof draft.note==='string'?draft.note:'',selectedAddress:null,hasAddress:false,selectedSlotId:'',noteShortcuts:[]})},
   cloudSerial:0,
+  createdOrderId:'',
+  createdOrderContext:'',
+  // After order creation, checkout is no longer a valid Back destination.
+  // Put the Orders tab beneath the detail page so WeChat payment Back
+  // returns to the existing order list, never an obsolete checkout form.
+  openCreatedCloudOrder(orderId:string,context:string){
+    if(context!==supportIdentity()||!/^[-0-9a-f]{36}$/i.test(orderId))return
+    const detailUrl='/pages/order-detail/order-detail?id='+encodeURIComponent(orderId)+
+      (LIVE_WECHAT_PAY_ENABLED?'':'&sandboxChannel='+this.data.sandboxChannel)
+    wx.switchTab({
+      url:'/pages/orders/orders',
+      success:()=>{
+        if(context!==supportIdentity())return
+        wx.navigateTo({
+          url:detailUrl,
+          fail:()=>wx.showToast({title:'请在订单列表打开刚创建的订单',icon:'none'})
+        })
+      },
+      fail:()=>{
+        if(context!==supportIdentity())return
+        // The fallback still removes checkout from the Back stack.
+        wx.redirectTo({
+          url:detailUrl,
+          fail:()=>wx.showModal({title:'订单已创建',
+            content:'请从底部「订单」查看刚创建的订单，不要重复下单。',
+            showCancel:false})
+        })
+      }
+    })
+  },
   // CHECKOUT_NOTE_SHORTCUTS_V1
   toggleNoteShortcut(e: any) {
     const label = String(e.currentTarget.dataset.label || '')
@@ -139,6 +169,14 @@ Page({
   async submitCloudOrder() {
     if(CLOUD_ONLY&&(!LIVE_WECHAT_PAY_ENABLED&&!PAYMENT_SANDBOX_UI_ENABLED||LIVE_WECHAT_PAY_ENABLED&&PAYMENT_SANDBOX_UI_ENABLED)){this.setData({cloudError:'本店支付配置尚未准备好，暂不能提交订单'});return}
     if(this.data.orderSubmitting)return
+    if(this.createdOrderId&&this.createdOrderContext===supportIdentity()){
+      this.openCreatedCloudOrder(this.createdOrderId,this.createdOrderContext)
+      return
+    }
+    if(this.createdOrderId&&this.createdOrderContext!==supportIdentity()){
+      this.createdOrderId=''
+      this.createdOrderContext=''
+    }
     if(this.checkoutContext!==supportIdentity()){this.restoreDraft();await this.refreshCloudCheckout();return}
     if(this.data.cloudBusy||this.data.cloudError||this.data.deliveryError)return
     if(!this.data.minimumReached){wx.showToast({title:'未达到起送金额，请刷新核对',icon:'none'});return}
@@ -163,8 +201,11 @@ Page({
       const result=await createCloudOrder({address:{receiverName:address.receiverName,phone:address.phone,areaId:area.id,
         detail:address.detail,latitude:address.latitude,longitude:address.longitude},slot:{id:slot.id,date},note:String(this.data.note||'')})
       if(submittedContext!==supportIdentity())return
+      this.createdOrderId=result.orderId
+      this.createdOrderContext=submittedContext
       wx.showModal({title:'订单已创建（待支付）',content:'订单号：'+result.orderId+'\n服务端金额：¥'+(Number(result.totalCents)/100).toFixed(2)+(result.inventoryExpiresAt?'\n有限库存预留至：'+formatPublishTime(result.inventoryExpiresAt,'Asia/Shanghai')+' 北京时间（UTC+8），未支付会释放。':'')+'\n尚未扣款，请勿当作付款成功。',showCancel:false,
-        success:()=>{if(submittedSerial===this.cloudSerial&&submittedContext===supportIdentity())wx.navigateTo({url:'/pages/order-detail/order-detail?id='+encodeURIComponent(result.orderId)+(LIVE_WECHAT_PAY_ENABLED?'':'&sandboxChannel='+this.data.sandboxChannel)})}})
+        success:()=>{if(submittedSerial===this.cloudSerial&&submittedContext===supportIdentity())this.openCreatedCloudOrder(result.orderId,submittedContext)},
+        fail:()=>{if(submittedSerial===this.cloudSerial&&submittedContext===supportIdentity())this.openCreatedCloudOrder(result.orderId,submittedContext)}})
     }catch(e:any){
       if(submittedContext!==supportIdentity())return
       const message=String(e&&e.message||e)
