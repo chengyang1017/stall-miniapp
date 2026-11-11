@@ -93,8 +93,6 @@ page {
 .cart-item-content .quantity { flex-shrink:0; }
 .cart-image-slot .stall-placeholder-choice-shell {width:150rpx;height:150rpx;min-width:150rpx;max-width:150rpx;} .cart-image-slot .stall-placeholder-choice-shell > view { transform:scale(1.136);transform-origin:top left;}
 
-/* Reserved sync slot avoids inserting/removing 160rpx empty-state padding above rows. */
-.cart-sync-status { height:44rpx; line-height:44rpx; font-size:23rpx; color:#77877d; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .cart-sync-error { padding:12rpx 0; color:#a44; font-size:24rpx; }
 
 /* Native tabBar owns the safe area. The webview footer sits directly above it. */
