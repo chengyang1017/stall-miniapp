@@ -1,66 +1,67 @@
-page{background:#f4f6f5;color:#18251f}
+/* Unified with the purple customer brand; warnings retain distinct warning colors. */
+page{background:#f6f3ff;color:#2e243c}
 .checkout-page{padding:20rpx 26rpx 0;box-sizing:border-box}
-.checkout-section{padding:30rpx 28rpx;background:#fff;border-radius:25rpx;margin-bottom:20rpx;box-shadow:0 7rpx 30rpx rgba(25,68,40,.035)}
-.section-head{display:flex;align-items:center;gap:12rpx;font-weight:700;font-size:31rpx;color:#183125;margin-bottom:26rpx}
-.section-icon{width:46rpx;height:46rpx;border-radius:13rpx;background:#eaf5ee;color:#188052;display:flex;align-items:center;justify-content:center;font-size:29rpx}
-.section-count,.optional{margin-left:auto;font-weight:400;font-size:23rpx;color:#929d96}
+.checkout-section{padding:30rpx 28rpx;background:#fff;border-radius:25rpx;margin-bottom:20rpx;box-shadow:0 7rpx 30rpx rgba(85,47,141,.065)}
+.section-head{display:flex;align-items:center;gap:12rpx;font-weight:700;font-size:31rpx;color:#2e243c;margin-bottom:26rpx}
+.section-icon{width:46rpx;height:46rpx;border-radius:13rpx;background:#eee5fc;color:#7137db;display:flex;align-items:center;justify-content:center;font-size:29rpx}
+.section-count,.optional{margin-left:auto;font-weight:400;font-size:23rpx;color:#9083a3}
 .checkout-address{display:flex;align-items:center;min-height:88rpx;gap:12rpx}
 .address-main{flex:1;min-width:0}
-.address-person{font-size:30rpx;font-weight:650;color:#263e30}
-.address-phone{font-size:25rpx;font-weight:400;color:#738078;margin-left:12rpx}
-.address-location{font-size:25rpx;line-height:1.6;color:#687b6f;margin-top:12rpx;word-break:break-all}
-.address-empty{font-size:27rpx;color:#188052;flex:1}
-.chevron{font-size:43rpx;color:#abb6ad;font-weight:300}
-.time-summary{font-size:24rpx;background:#eaf7ef;color:#287b51;padding:20rpx 22rpx;border-radius:14rpx;line-height:1.5;margin-bottom:25rpx}
-.date-label{font-size:25rpx;color:#6a776e;margin:16rpx 0}
-.date-select{min-height:85rpx;background:#f6f8f7;border:1rpx solid #edf0ee;border-radius:16rpx;padding:0 24rpx;display:flex;align-items:center;justify-content:space-between;font-size:29rpx;color:#22392c;margin-bottom:22rpx}
+.address-person{font-size:30rpx;font-weight:650;color:#342746}
+.address-phone{font-size:25rpx;font-weight:400;color:#8b7c9e;margin-left:12rpx}
+.address-location{font-size:25rpx;line-height:1.6;color:#8b7d9d;margin-top:12rpx;word-break:break-all}
+.address-empty{font-size:27rpx;color:#7137db;flex:1}
+.chevron{font-size:43rpx;color:#a79abb;font-weight:300}
+.time-summary{font-size:24rpx;background:#eee8fc;color:#7040c2;padding:20rpx 22rpx;border-radius:14rpx;line-height:1.5;margin-bottom:25rpx}
+.date-label{font-size:25rpx;color:#87799b;margin:16rpx 0}
+.date-select{min-height:85rpx;background:#f7f4fc;border:1rpx solid #e8dff4;border-radius:16rpx;padding:0 24rpx;display:flex;align-items:center;justify-content:space-between;font-size:29rpx;color:#302340;margin-bottom:22rpx}
 .slot-options{display:flex;flex-direction:column;gap:14rpx}
-.slot-choice{display:flex;align-items:center;justify-content:space-between;padding:22rpx 25rpx;border:2rpx solid #eef1ef;border-radius:18rpx;background:#fafbfa}
-.slot-selected{border-color:#228758;background:#eff9f2}
+.slot-choice{display:flex;align-items:center;justify-content:space-between;padding:22rpx 25rpx;border:2rpx solid #e8def4;border-radius:18rpx;background:#fcfaff}
+.slot-selected{border-color:#7137db;background:#f1e9ff}
 .slot-main{display:flex;flex-direction:column;gap:9rpx}
-.slot-label{font-size:28rpx;font-weight:650;color:#263d2f}
-.slot-hours{font-size:24rpx;color:#738077}
-.slot-radio{border:2rpx solid #c4d2c9;width:34rpx;height:34rpx;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.slot-selected .slot-radio{border-color:#238758}
-.slot-dot{background:#238758;border-radius:50%;width:18rpx;height:18rpx}
+.slot-label{font-size:28rpx;font-weight:650;color:#352748}
+.slot-hours{font-size:24rpx;color:#8c7f9c}
+.slot-radio{border:2rpx solid #c6b5db;width:34rpx;height:34rpx;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.slot-selected .slot-radio{border-color:#7137db}
+.slot-dot{background:#7137db;border-radius:50%;width:18rpx;height:18rpx}
 .no-slots{color:#926c28;background:#fff8e8;padding:24rpx;border-radius:15rpx;font-size:25rpx;line-height:1.6}
-.delivery-note{color:#218052;font-size:23rpx;margin-top:17rpx;line-height:1.5}
+.delivery-note{color:#7141b3;font-size:23rpx;margin-top:17rpx;line-height:1.5}
 .delivery-warning,.checkout-alert{color:#af523d;background:#fff3ed;border-radius:14rpx;padding:20rpx;font-size:24rpx;line-height:1.6;margin:14rpx 0}
-.checkout-retry{color:#18784c;margin-left:17rpx;text-decoration:underline}
+.checkout-retry{color:#7137db;margin-left:17rpx;text-decoration:underline}
 .product-line,.price-line{display:flex;align-items:flex-start;justify-content:space-between;gap:20rpx;padding:17rpx 0;font-size:27rpx}
-.product-name{flex:1;color:#35483c}
-.product-count{color:#89978d}
-.product-price{font-weight:650;color:#263e30;white-space:nowrap}
-.price-line{color:#748278;border-top:1rpx solid #f1f3f2;font-size:25rpx}
-.price-line text:last-child{color:#344e3d}
+.product-name{flex:1;color:#342747}
+.product-count{color:#90839f}
+.product-price{font-weight:650;color:#342746;white-space:nowrap}
+.price-line{color:#877b99;border-top:1rpx solid #eee7f5;font-size:25rpx}
+.price-line text:last-child{color:#392a4b}
 .minimum-status{font-size:23rpx;color:#98743d;margin-top:10rpx}
 .checkout-note-presets{display:flex;flex-wrap:wrap;gap:12rpx;margin-bottom:19rpx}
-.checkout-note-chip{border-radius:999rpx;padding:11rpx 21rpx;background:#eff7f1;color:#237b50;font-size:23rpx}
-.note-input{width:100%;box-sizing:border-box;min-height:130rpx;background:#f6f8f7;border-radius:16rpx;padding:21rpx 23rpx;color:#273e2e;font-size:26rpx;line-height:1.6}
+.checkout-note-chip{border-radius:999rpx;padding:11rpx 21rpx;background:#f1e9ff;color:#7137db;font-size:23rpx}
+.note-input{width:100%;box-sizing:border-box;min-height:130rpx;background:#f7f4fc;border-radius:16rpx;padding:21rpx 23rpx;color:#352746;font-size:26rpx;line-height:1.6}
 .checkout-bottom-space{height:190rpx}
-.checkout-bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:20rpx 30rpx; padding-bottom:calc(20rpx + env(safe-area-inset-bottom));box-shadow:0 -8rpx 30rpx rgba(27,54,35,.075);display:flex;align-items:center;gap:18rpx;z-index:10}
+.checkout-bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:20rpx 30rpx; padding-bottom:calc(20rpx + env(safe-area-inset-bottom));box-shadow:0 -8rpx 30rpx rgba(76,45,138,.10);display:flex;align-items:center;gap:18rpx;z-index:10}
 .bottom-amount{flex:1;min-width:0}
-.bottom-caption{font-size:21rpx;color:#87948a}
-.bottom-price{font-size:39rpx;color:#188354;font-weight:750;margin-top:4rpx}
-.place-order{margin:0!important;background:#1a8554!important;color:#fff!important;border-radius:17rpx!important;font-size:28rpx!important;font-weight:650!important;padding:0 49rpx!important;height:86rpx!important;line-height:86rpx!important}
-.place-order[disabled]{background:#aebfb4!important;color:#fff!important}
+.bottom-caption{font-size:21rpx;color:#8c7d9d}
+.bottom-price{font-size:39rpx;color:#7137db;font-weight:750;margin-top:4rpx}
+.place-order{margin:0!important;background:linear-gradient(135deg,#9559ee,#4430bd)!important;color:#fff!important;border-radius:17rpx!important;font-size:28rpx!important;font-weight:650!important;padding:0 49rpx!important;height:86rpx!important;line-height:86rpx!important}
+.place-order[disabled]{background:#c6b9d7!important;color:#fff!important}
 
 /* Payment selection: deliberate full-width radio rows, consistent with delivery slots. */
 .checkout-payment .section-head{margin-bottom:12rpx}
-.payment-test-tag{margin-left:auto;border-radius:999rpx;background:#edf5f0;color:#278255;font-size:21rpx;font-weight:500;padding:7rpx 15rpx}
-.payment-explainer{color:#728078;font-size:24rpx;line-height:1.6;margin-bottom:22rpx}
+.payment-test-tag{margin-left:auto;border-radius:999rpx;background:#eee5fc;color:#7137db;font-size:21rpx;font-weight:500;padding:7rpx 15rpx}
+.payment-explainer{color:#8c7d9d;font-size:24rpx;line-height:1.6;margin-bottom:22rpx}
 .payment-options{display:flex;flex-direction:column;gap:14rpx}
-.payment-option{display:flex;align-items:center;gap:19rpx;min-height:110rpx;padding:15rpx 20rpx;border:2rpx solid #edf1ee;border-radius:18rpx;background:#fbfcfb;box-sizing:border-box}
-.payment-option-active{border-color:#218657;background:#eff9f2}
+.payment-option{display:flex;align-items:center;gap:19rpx;min-height:110rpx;padding:15rpx 20rpx;border:2rpx solid #e6dcf2;border-radius:18rpx;background:#fcfaff;box-sizing:border-box}
+.payment-option-active{border-color:#7137db;background:#f1e9ff}
 .payment-mark{flex-shrink:0;width:65rpx;height:65rpx;border-radius:16rpx;display:flex;align-items:center;justify-content:center;font-size:26rpx;font-weight:700}
-.payment-mark-wechat{background:#e5f5e9;color:#168744}
+.payment-mark-wechat{background:#eee5fc;color:#7137db}
 .payment-mark-alipay{background:#e6f3ff;color:#176fc1}
 .payment-mark-card{background:#ecedf8;color:#575e9e}
 .payment-copy{min-width:0;flex:1}
-.payment-name{font-size:28rpx;font-weight:650;color:#233a2b}
-.payment-desc{font-size:22rpx;color:#86958b;line-height:1.4;margin-top:6rpx}
-.payment-radio{width:34rpx;height:34rpx;flex-shrink:0;border:2rpx solid #c2d0c6;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.payment-option-active .payment-radio{border-color:#238758}
-.payment-radio-dot{width:18rpx;height:18rpx;background:#238758;border-radius:50%}
-.payment-notice{display:flex;align-items:flex-start;gap:12rpx;margin-top:22rpx;color:#77887c;font-size:22rpx;line-height:1.65}
-.payment-notice-icon{color:#218657;font-size:26rpx;line-height:1.3}
+.payment-name{font-size:28rpx;font-weight:650;color:#342746}
+.payment-desc{font-size:22rpx;color:#9286a1;line-height:1.4;margin-top:6rpx}
+.payment-radio{width:34rpx;height:34rpx;flex-shrink:0;border:2rpx solid #c6b5db;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.payment-option-active .payment-radio{border-color:#7137db}
+.payment-radio-dot{width:18rpx;height:18rpx;background:#7137db;border-radius:50%}
+.payment-notice{display:flex;align-items:flex-start;gap:12rpx;margin-top:22rpx;color:#897d99;font-size:22rpx;line-height:1.65}
+.payment-notice-icon{color:#7137db;font-size:26rpx;line-height:1.3}

@@ -49,15 +49,16 @@
 .category.active text{color:white}
 .share-shop,.load-more{margin:24rpx auto;font-size:24rpx;color:#7842d0;background:#eee6fb;border-radius:30rpx}
 .category-page{padding:0 18rpx 30rpx}
-.category-layout{display:flex;gap:18rpx;align-items:flex-start}
-.category-sidebar{width:184rpx;flex:0 0 184rpx;height:calc(100vh - 390rpx);background:#f1ecfa;border-radius:26rpx;padding-top:8rpx}
-.side-category{display:flex;align-items:center;gap:12rpx;margin:10rpx 6rpx;padding:23rpx 14rpx;border-radius:24rpx;font-size:25rpx;overflow-wrap:anywhere}
+.category-layout{display:flex;gap:22rpx;align-items:flex-start}
+.category-sidebar{width:194rpx;flex:0 0 194rpx;height:calc(100vh - 390rpx);background:#f1ecfa;border-radius:26rpx;padding-top:10rpx;box-sizing:border-box}
+.side-category{display:flex;align-items:center;gap:9rpx;margin:12rpx 7rpx;padding:22rpx 10rpx;min-height:90rpx;box-sizing:border-box;border-radius:24rpx;font-size:23rpx;overflow:hidden}
 .side-category text{font-size:33rpx;color:#8652da}
 .side-category.active text{color:white}
 .category-content{flex:1;min-width:0}
 .category-banner{height:195rpx;display:block;margin:0;padding:24rpx}
 .category-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8rpx;font-size:23rpx;margin-top:26rpx;font-weight:650}
 .category-toolbar>view{color:#807192;font-size:21rpx;flex-shrink:0}
+.category-toolbar>text{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .filter-line{color:#8054bf;font-size:23rpx;padding:18rpx 0}
 .category-content .product-grid{grid-template-columns:1fr;gap:16rpx}
 .category-content .product{min-height:146rpx;padding:16rpx}
@@ -69,7 +70,8 @@
 .category-content .product-description{font-size:22rpx}
 
 
-.category .category-icon{display:block;width:38rpx;height:38rpx;margin:0 auto 10rpx}.side-category .category-icon{width:36rpx;height:36rpx;flex:0 0 36rpx}
+.category .category-icon{display:block;width:38rpx;height:38rpx;margin:0 auto 10rpx}.side-category .category-icon{width:30rpx;height:30rpx;flex:0 0 30rpx}
+.side-category .side-category-label{display:block;flex:1;min-width:0;font-size:23rpx;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .product-media-unavailable{filter:grayscale(1);opacity:.65}
 .sold-out-badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(30,30,30,.72);color:#fff;font-size:21rpx;padding:8rpx 13rpx;border-radius:10rpx;white-space:nowrap}
