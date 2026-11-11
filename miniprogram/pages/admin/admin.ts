@@ -16,7 +16,7 @@ Page({
  // Page-local proof only: bound to API, store and session; shows reuse a short-lived shared proof or recheck the server.
  accessSerial:0,accessContext:'',
  revision:null as string|null, serial:0,pendingSerial:0, loadedContext:'',supportSerial:0,supportTimer:0 as any,
- data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,deliveryFeeEnabled:false,deliveryFeeInput:'0.00',deliveryFeeEditing:false,deliveryFeeSaving:false,pendingNewOrderCount:null as number|null,unpaidOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',shareDeliveryLocation:false,trackingSaving:false,cloudMode:false},
+ data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,homeSubtitle:'精选好物 · 便捷选购',homeSubtitleDraft:'',homeSubtitleEditing:false,homeSubtitleSaving:false,deliveryFeeEnabled:false,deliveryFeeInput:'0.00',deliveryFeeEditing:false,deliveryFeeSaving:false,pendingNewOrderCount:null as number|null,unpaidOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',shareDeliveryLocation:false,trackingSaving:false,cloudMode:false},
  async onShow(){
   const cfg=getCloudContext(),serial=++this.accessSerial,identity=supportIdentity()
   const retained=this.accessContext===identity&&this.data.workspaceAuthorized||!!cfg&&hasRecentMerchantPermission(cfg.apiBase,cfg.storeSlug)
@@ -43,12 +43,31 @@ Page({
  async refreshSupport(){clearTimeout(this.supportTimer);const serial=++this.supportSerial,identity=supportIdentity();this.setData({supportError:''});if(!getCloudContext())return;try{const r=await merchantSupportGet('unread');if(serial===this.supportSerial&&identity===supportIdentity())this.setData({supportUnread:r.unread})}catch(_){if(serial===this.supportSerial&&identity===supportIdentity())this.setData({supportError:'未读读取失败，进入客服重试'})}finally{if(serial===this.supportSerial)this.supportTimer=setTimeout(()=>this.refreshSupport(),30000)}},
  onHide(){this.accessSerial++;this.serial++;this.pendingSerial++;this.supportSerial++;clearTimeout(this.supportTimer);this.setData({accessLoading:false})},
  onUnload(){this.accessSerial++;this.serial++;this.pendingSerial++;this.supportSerial++;clearTimeout(this.supportTimer)},
+ onHomeSubtitleInput(e:any){if(!this.data.homeSubtitleSaving)this.setData({homeSubtitleDraft:String(e.detail.value||'').slice(0,50)})},
+ beginHomeSubtitleEdit(){if(this.data.settingsReady&&!this.data.homeSubtitleSaving)this.setData({homeSubtitleDraft:this.data.homeSubtitle,homeSubtitleEditing:true})},
+ cancelHomeSubtitleEdit(){if(!this.data.homeSubtitleSaving)this.setData({homeSubtitleEditing:false,homeSubtitleDraft:this.data.homeSubtitle})},
+ async saveHomeSubtitle(){
+  if(this.data.homeSubtitleSaving||this.data.settingsLoading||this.data.settingsSaving||!this.data.settingsReady)return
+  const subtitle=String(this.data.homeSubtitleDraft||'').trim()
+  if(subtitle.length>50||/[\u0000-\u001f\u007f]/.test(subtitle)){wx.showToast({title:'文案最多50字且不能包含控制字符',icon:'none'});return}
+  const cfg=getCloudContext(),context=businessContextKey()
+  if(!cfg||context!==this.loadedContext){this.refreshMinimum();return}
+  this.setData({homeSubtitleSaving:true,settingsError:''})
+  try{
+    const revision=await patchMerchantBusiness(cfg,this.revision,{homeSubtitle:subtitle})
+    if(context!==businessContextKey())return
+    this.revision=revision
+    this.setData({homeSubtitle:subtitle||'精选好物 · 便捷选购',homeSubtitleEditing:false})
+    wx.showToast({title:'首页文案已保存',icon:'success'})
+  }catch(_){if(context===businessContextKey()){this.setData({settingsReady:false,settingsError:'首页文案保存失败，请刷新确认当前设置'});this.refreshMinimum()}}
+  finally{this.setData({homeSubtitleSaving:false})}
+ },
  onMinimumOrderInput(e:any){if(!this.data.settingsSaving)this.setData({minimumOrderInput:String(e.detail.value||'')})},
  async refreshMinimum(){
   const cfg=getCloudContext(),serial=++this.serial,context=businessContextKey();this.loadedContext=context
   this.setData({cloudMode:!!cfg,settingsLoading:!!cfg,settingsReady:!cfg,settingsError:'',minimumOrderInput:cfg?'':getMinimumOrder().toFixed(2)})
   if(!cfg)return
-  try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==businessContextKey())return;this.revision=r.revision||null;this.setData({minimumOrderInput:(r.minimumOrderCents/100).toFixed(2),deliveryFeeEnabled:r.deliveryFeeEnabled===true,deliveryFeeInput:(Math.max(0,r.deliveryFeeCents||0)/100).toFixed(2),deliveryFeeEditing:false,shareDeliveryLocation:r.shareDeliveryLocation===true,settingsReady:true})}
+  try{const r=await merchantBusiness(cfg);if(serial!==this.serial||context!==businessContextKey())return;this.revision=r.revision||null;this.setData({minimumOrderInput:(r.minimumOrderCents/100).toFixed(2),deliveryFeeEnabled:r.deliveryFeeEnabled===true,deliveryFeeInput:(Math.max(0,r.deliveryFeeCents||0)/100).toFixed(2),deliveryFeeEditing:false,shareDeliveryLocation:r.shareDeliveryLocation===true,homeSubtitle:r.homeSubtitle||'精选好物 · 便捷选购',homeSubtitleDraft:r.homeSubtitle||'精选好物 · 便捷选购',homeSubtitleEditing:false,settingsReady:true})}
   catch(_){if(serial===this.serial&&context===businessContextKey())this.setData({settingsError:'云端起送金额读取失败，请检查权限后重试'})}
   finally{if(serial===this.serial&&context===businessContextKey())this.setData({settingsLoading:false})}
  },
