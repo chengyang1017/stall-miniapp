@@ -89,11 +89,9 @@
       <button size="mini" bindtap="forgetProductCreation" disabled="{{cloudBusy || saveBusy || inventoryBusy}}">已核对列表，放弃重试</button>
     </view>
     <button type="primary" bindtap="saveFromForm" loading="{{saveBusy}}" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">{{saved ? '内容已保存' : (draftId ? '发布为正式商品' : '保存商品')}}</button>
-    <button bindtap="saveDraft" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">{{draftId ? '保存草稿更新' : '保存草稿'}}</button>
-    <text wx:if="{{editId}}" class="product-schedule-hint">保存草稿会另存当前内容，原正式商品不变；不带库存余额，发布时需重新设置库存并创建新商品。</text>
+    <button wx:if="{{!editId || draftId || copyMode}}" bindtap="saveDraft" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved || cloudError}}">{{draftId ? '保存草稿更新' : '保存草稿'}}</button>
+    <text wx:if="{{editId && draftId}}" class="product-schedule-hint">保存草稿会另存当前内容，原正式商品不变；不带库存余额，发布时需重新设置库存并创建新商品。</text>
     <button wx:if="{{draftId}}" bindtap="cancelCopy" disabled="{{cloudBusy || saveBusy || inventoryBusy}}">返回商品列表</button>
     <button wx:if="{{copyMode}}" bindtap="cancelCopy" disabled="{{cloudBusy || saveBusy || inventoryBusy}}">{{saved ? '返回商品列表' : '取消复制，返回列表'}}</button>
-    <button wx:if="{{editId && !copyMode}}" bindtap="resetForm" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}">取消编辑</button>
-    <button wx:if="{{editId && !copyMode}}" class="product-form-delete-action" bindtap="deleteFromForm" type="warn" disabled="{{cloudBusy || saveBusy || inventoryBusy || saved}}">删除商品</button>
   </view>
 </view>
