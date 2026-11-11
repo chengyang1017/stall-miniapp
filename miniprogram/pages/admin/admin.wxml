@@ -78,14 +78,14 @@
 
     <view class="merchant-section-title">配送收费</view>
     <view class="merchant-minimum">
-      <view class="merchant-minimum-row merchant-setting-toggle-row"><text class="merchant-setting-toggle-label">收取固定配送费</text><switch checked="{{deliveryFeeEnabled}}" color="#16865d" disabled="{{!cloudMode || !settingsReady || settingsSaving || trackingSaving || deliveryFeeSaving}}" bindchange="toggleDeliveryFee"/></view>
+      <view class="merchant-minimum-row merchant-setting-toggle-row"><text class="merchant-setting-toggle-label">收取固定配送费</text><switch checked="{{deliveryFeeEnabled}}" color="#7137db" disabled="{{!cloudMode || !settingsReady || settingsSaving || trackingSaving || deliveryFeeSaving}}" bindchange="toggleDeliveryFee"/></view>
       <view class="merchant-setting-desc">默认免费配送；开启后每单按固定金额收费。起送金额仍按商品小计计算。</view>
       <view wx:if="{{!deliveryFeeEditing}}" class="merchant-minimum-row"><text class="merchant-minimum-current merchant-setting-amount">每单 ¥{{deliveryFeeInput}}</text><button class="merchant-save" size="mini" bindtap="beginDeliveryFeeEdit" disabled="{{!cloudMode || !settingsReady || settingsSaving || deliveryFeeSaving}}">编辑</button></view>
       <view wx:else class="merchant-minimum-row"><text class="merchant-yen">¥</text><input class="merchant-minimum-input" type="digit" placeholder="0.00" value="{{deliveryFeeInput}}" bindinput="onDeliveryFeeInput" disabled="{{deliveryFeeSaving}}"/><button class="merchant-save" size="mini" bindtap="saveDeliveryFee" disabled="{{deliveryFeeSaving}}">保存</button><button size="mini" bindtap="cancelDeliveryFeeEdit" disabled="{{deliveryFeeSaving}}">取消</button></view>
     </view>
     <view class="merchant-section-title">配送位置隐私</view>
     <view class="merchant-minimum">
-      <view class="merchant-minimum-row merchant-setting-toggle-row"><text class="merchant-setting-toggle-label">允许顾客查看配送实时位置</text><switch checked="{{shareDeliveryLocation}}" disabled="{{!cloudMode || !settingsReady || settingsSaving || trackingSaving}}" bindchange="toggleTrackingVisibility" color="#16865d"/></view>
+      <view class="merchant-minimum-row merchant-setting-toggle-row"><text class="merchant-setting-toggle-label">允许顾客查看配送实时位置</text><switch checked="{{shareDeliveryLocation}}" disabled="{{!cloudMode || !settingsReady || settingsSaving || trackingSaving}}" bindchange="toggleTrackingVisibility" color="#7137db"/></view>
       <view class="merchant-setting-desc">默认关闭。开启后，仍需配送人员为当前订单主动授权共享；关闭会阻止新的位置上传并隐藏坐标。</view>
     </view>
     <view class="merchant-section-title">服务与数据</view>
