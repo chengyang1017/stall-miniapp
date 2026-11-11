@@ -11,6 +11,7 @@ const weekdays=s=>s.weekdays===undefined?[0,1,2,3,4,5,6]:s.weekdays
 export function validRules(c){
  if(!c||typeof c!=='object'||Array.isArray(c)||typeof c.accepting!=='boolean'||!Array.isArray(c.days)||c.days.length!==7||!Array.isArray(c.areas)||c.areas.length>30||!Array.isArray(c.slots)||c.slots.length>30) return false
  if(c.notice!==undefined&&(typeof c.notice!=='string'||c.notice.length>200))return false
+ if(c.homeSubtitle!==undefined&&(typeof c.homeSubtitle!=='string'||c.homeSubtitle.length>50||/[\u0000-\u001f\u007f]/.test(c.homeSubtitle)))return false
  if(c.noteTags!==undefined&&(!Array.isArray(c.noteTags)||c.noteTags.length>30||!c.noteTags.every(t=>typeof t==='string'&&t.trim()===t&&t.length>0&&t.length<=20&&!/[\u0000-\u001f\u007f]/.test(t))||new Set(c.noteTags).size!==c.noteTags.length))return false
  if(c.placeholderStyle!==undefined&&!styles.includes(c.placeholderStyle))return false
  if(c.placeholderImageKey!==undefined&&c.placeholderImageKey!==null&&(typeof c.placeholderImageKey!=='string'||!/^stores\/[0-9a-f-]{36}\/products\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(c.placeholderImageKey)))return false
@@ -49,6 +50,7 @@ export function businessView(rules,now=new Date(),storeName='') {
  const todayDeliveryPaused=configured&&(rules.specialDates||[]).some(x=>x.date===date&&x.paused)
  const imageKey=configured?rules.placeholderImageKey||null:null,base=(process.env.IMAGE_PUBLIC_BASE_URL||'').replace(/\/+$/,'')
  return {storeName,configured,noteTags:configured?rules.noteTags||[]:[],placeholderStyle:configured?rules.placeholderStyle||'premium':'premium',placeholderImageKey:imageKey,customPlaceholderUrl:imageKey&&/^https:\/\/[^/]+/.test(base)?base+'/'+imageKey.split('/').map(encodeURIComponent).join('/'):null,
+   homeSubtitle:configured?(rules.homeSubtitle||'精选好物 · 便捷选购'):'精选好物 · 便捷选购',
    accepting:configured?rules.accepting:false,days:configured?rules.days:[],notice:configured?(rules.notice||''):'',minimumOrderCents:configured?(rules.minimumOrderCents||0):0,deliveryFeeEnabled:configured&&rules.deliveryFeeEnabled===true,deliveryFeeCents:configured&&rules.deliveryFeeEnabled===true?(rules.deliveryFeeCents||0):0,
    shareDeliveryLocation:configured?rules.shareDeliveryLocation===true:false,deliveryPaused:configured?!!rules.deliveryPaused:false,todayDeliveryPaused:!!todayDeliveryPaused,
    open:!!open,label:!configured?'营业信息未配置':!rules.accepting?'暂停接单':rules.deliveryPaused?'暂停全部配送':!deliveryReady?'配送未配置':open?(todayDeliveryPaused?'营业中 · 今日暂停配送，请核对其他日期':'营业中'):'休息中',timeZone:'Asia/Shanghai'}
@@ -74,7 +76,7 @@ export async function businessSettingsRoute(req,res,url,pool) {
  }
  let body;try{body=await bodyJson(req)}catch(e){response(res,400,{error:e.message});return true}
  const keys=body&&typeof body==='object'&&!Array.isArray(body)?Object.keys(body):[]
- if(!keys.includes('expectedRevision')||keys.length<2||keys.some(k=>!['expectedRevision','accepting','days','notice','minimumOrderCents','deliveryFeeEnabled','deliveryFeeCents','shareDeliveryLocation','noteTags','placeholderStyle','placeholderImageKey'].includes(k))||!(body.expectedRevision===null||typeof body.expectedRevision==='string'&&/^[a-f0-9]{32}$/.test(body.expectedRevision))){response(res,400,{error:'invalid_business_patch'});return true}
+ if(!keys.includes('expectedRevision')||keys.length<2||keys.some(k=>!['expectedRevision','accepting','days','notice','homeSubtitle','minimumOrderCents','deliveryFeeEnabled','deliveryFeeCents','shareDeliveryLocation','noteTags','placeholderStyle','placeholderImageKey'].includes(k))||!(body.expectedRevision===null||typeof body.expectedRevision==='string'&&/^[a-f0-9]{32}$/.test(body.expectedRevision))){response(res,400,{error:'invalid_business_patch'});return true}
  if(Object.hasOwn(body,'placeholderImageKey')&&body.placeholderImageKey!==null&&!await verifyProductImage(pool,store.id,body.placeholderImageKey)){response(res,400,{error:'invalid_placeholder_image'});return true}
  const client=await pool.connect()
  try {
