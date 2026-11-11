@@ -17,7 +17,7 @@ Page({
  // Page-local proof only: bound to API, store and session; shows reuse a short-lived shared proof or recheck the server.
  accessSerial:0,accessContext:'',
  revision:null as string|null, serial:0,pendingSerial:0, loadedContext:'',supportSerial:0,supportTimer:0 as any,
- data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,homeSubtitle:'精选好物 · 便捷选购',homeSubtitleDraft:'',homeSubtitleEditing:false,homeSubtitleSaving:false,promoBannerUrl:'',promoBannerImageKey:null as string|null,promoBannerBusy:false,deliveryFeeEnabled:false,deliveryFeeInput:'0.00',deliveryFeeEditing:false,deliveryFeeSaving:false,pendingNewOrderCount:null as number|null,unpaidOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',shareDeliveryLocation:false,trackingSaving:false,cloudMode:false},
+ data:{canOpenCustomer:CAN_OPEN_CUSTOMER,workspaceAuthorized:false,accessLoading:false,accessError:'',supportUnread:null as number|null,supportError:'',minimumOrderInput:'0.00',minimumEditing:false,homeSubtitle:'精选好物 · 便捷选购',homeSubtitleDraft:'',homeSubtitleEditing:false,homeSubtitleSaving:false,promoBannerUrl:'',promoBannerImageKey:null as string|null,promoBannerBusy:false,promoBannerError:'',deliveryFeeEnabled:false,deliveryFeeInput:'0.00',deliveryFeeEditing:false,deliveryFeeSaving:false,pendingNewOrderCount:null as number|null,unpaidOrderCount:null as number|null,pendingLoading:false,pendingError:'',settingsLoading:false,settingsSaving:false,settingsReady:false,settingsError:'',shareDeliveryLocation:false,trackingSaving:false,cloudMode:false},
  async onShow(){
   const cfg=getCloudContext(),serial=++this.accessSerial,identity=supportIdentity()
   const retained=this.accessContext===identity&&this.data.workspaceAuthorized||!!cfg&&hasRecentMerchantPermission(cfg.apiBase,cfg.storeSlug)
@@ -67,13 +67,30 @@ Page({
   const cfg=getCloudContext(),context=businessContextKey()
   if(!cfg||!this.data.settingsReady||context!==this.loadedContext)throw Error('settings_not_ready')
   const revision=await patchMerchantBusiness(cfg,this.revision,{promoBannerImageKey:key})
-  if(context!==businessContextKey())return
+  if(context!==businessContextKey())throw Error('merchant_context_changed')
   this.revision=revision
   const settings=await merchantBusiness(cfg)
-  if(context!==businessContextKey())return
+  if(context!==businessContextKey())throw Error('merchant_context_changed')
   if(settings.revision!==revision)throw Error('configuration_changed')
+  if((settings.promoBannerImageKey||null)!==key)throw Error('banner_not_saved')
   this.revision=settings.revision||null
   this.setData({promoBannerImageKey:settings.promoBannerImageKey||null,promoBannerUrl:settings.promoBannerUrl||''})
+ },
+ bannerErrorText(error:any,stage:string):string{
+  const raw=String(error?.message||error||'unknown')
+  if(/image_must_be_under_5mb/.test(raw))return '图片不能超过5MB，请压缩后上传'
+  if(/unsupported_image_format/.test(raw))return '请使用 JPG、PNG 或 WebP 图片'
+  if(/invalid_upload_request_key|upload_request_conflict/.test(raw))return '上传请求冲突，请重新选择图片'
+  if(/object_storage_not_configured|storage_not_configured|image_storage_check_unavailable/.test(raw))return '测试服务器的图片存储尚未就绪，请检查对象存储配置'
+  if(/image_upload_not_verified|image_verification_failed|invalid_promo_banner_image/.test(raw))return '图片未通过服务器校验，请检查存储权限后重试'
+  if(/promo_banner_public_image_base_required/.test(raw))return '图片公开访问地址未配置，暂时无法展示横幅'
+  if(/http_401|not_logged_in/.test(raw))return '商家登录已过期，请重新登录'
+  if(/http_403/.test(raw))return '当前账号没有上传或修改店铺图片的权限'
+  if(/http_409|configuration_changed/.test(raw))return '店铺设置已变化，请刷新后重新上传'
+  if(/http_413/.test(raw))return '图片太大，服务器拒绝上传'
+  if(/http_503/.test(raw))return '图片服务暂不可用，请检查测试后端配置'
+  if(/merchant_context_changed/.test(raw))return '店铺或登录身份已切换，请重新进入'
+  return stage+'失败：'+raw.slice(0,100)
  },
  uploadPromoBanner(){
   if(this.data.promoBannerBusy||!this.data.settingsReady||this.data.settingsSaving||this.data.homeSubtitleSaving)return
@@ -81,23 +98,30 @@ Page({
   if(!cfg||context!==this.loadedContext)return
   wx.chooseImage({count:1,sizeType:['compressed'],sourceType:['album','camera'],success:async (result:any)=>{
    const file=result.tempFilePaths?.[0];if(!file||context!==businessContextKey())return
-   this.setData({promoBannerBusy:true})
+   let stage='上传图片'
+   this.setData({promoBannerBusy:true,promoBannerError:''})
    try{
      const key=await uploadMerchantImage(cfg,file)
      if(context!==businessContextKey())return
+     stage='保存横幅'
      await this.savePromoBanner(key)
      if(context===businessContextKey())wx.showToast({title:'宣传图已保存',icon:'success'})
-   }catch(_){if(context===businessContextKey()){wx.showToast({title:'上传未完成，请重试',icon:'none'});this.refreshMinimum()}}
+   }catch(error){if(context===businessContextKey()){
+     const detail=this.bannerErrorText(error,stage)
+     this.setData({promoBannerError:detail})
+     wx.showToast({title:'操作失败，查看下方原因',icon:'none'})
+     this.refreshMinimum()
+   }}
    finally{if(context===businessContextKey())this.setData({promoBannerBusy:false})}
-  }})
+  },fail:(error:any)=>{if(!/cancel/i.test(String(error?.errMsg||'')))this.setData({promoBannerError:'选择图片失败：'+String(error?.errMsg||'请检查相册权限')})}})
  },
  hidePromoBanner(){
   if(this.data.promoBannerBusy||!this.data.settingsReady||!this.data.promoBannerImageKey)return
   wx.showModal({title:'隐藏宣传横幅',content:'隐藏后顾客首页不再显示这张宣传图。',confirmText:'隐藏',success:async (result:any)=>{
    if(!result.confirm)return
-   const context=businessContextKey();this.setData({promoBannerBusy:true})
+   const context=businessContextKey();this.setData({promoBannerBusy:true,promoBannerError:''})
    try{await this.savePromoBanner(null);if(context===businessContextKey())wx.showToast({title:'已隐藏',icon:'success'})}
-   catch(_){if(context===businessContextKey()){wx.showToast({title:'操作失败，请刷新',icon:'none'});this.refreshMinimum()}}
+   catch(error){if(context===businessContextKey()){this.setData({promoBannerError:this.bannerErrorText(error,'隐藏横幅')});this.refreshMinimum()}}
    finally{if(context===businessContextKey())this.setData({promoBannerBusy:false})}
   }})
  },
