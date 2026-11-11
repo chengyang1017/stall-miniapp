@@ -16,26 +16,26 @@
 <!-- 优惠券与积分功能预留，待商家需要后恢复；订单从底部导航进入。 -->
 <view class="surface profile-links">
 <navigator class="service-row" url="/pages/addresses/addresses">
-<text class="service-icon">⌖</text>收货地址<text class="value">›</text>
+<text class="service-icon">⌖</text><text class="profile-row-label">收货地址</text><text class="profile-row-arrow">›</text>
 </navigator>
 <view class="service-row" bindtap="openFavorites">
-<text class="service-icon">♡</text>我的收藏<text class="value">{{favoriteCount === null ? '—' : favoriteCount}} ›</text>
+<text class="service-icon">♡</text><text class="profile-row-label">我的收藏</text><text class="profile-row-count">{{favoriteCount === null ? '—' : favoriteCount}}</text><text class="profile-row-arrow">›</text>
 </view>
 <view class="service-row" bindtap="openHistory">
-<text class="service-icon">◷</text>浏览记录<text class="value">{{historyCount === null ? '—' : historyCount}} ›</text>
+<text class="service-icon">◷</text><text class="profile-row-label">浏览记录</text><text class="profile-row-count">{{historyCount === null ? '—' : historyCount}}</text><text class="profile-row-arrow">›</text>
 </view>
 <navigator class="service-row" url="/pages/sandbox-receipts/sandbox-receipts">
-<text class="service-icon">▤</text>我的测试电子小票<text class="value">›</text>
+<text class="service-icon">▤</text><text class="profile-row-label">我的测试电子小票</text><text class="profile-row-arrow">›</text>
 </navigator>
 <navigator class="service-row" url="/pages/customer-reviews/customer-reviews">
-<text class="service-icon">☆</text>我的商品评价<text class="value">›</text>
+<text class="service-icon">☆</text><text class="profile-row-label">我的商品评价</text><text class="profile-row-arrow">›</text>
 </navigator>
 </view>
-<view wx:if="{{canJoinMerchant && !merchantAuthorized}}" class="surface merchant-entry" bindtap="openMerchantJoin"><text class="service-icon">♧</text><view><view>加入商家团队</view><text class="muted">使用店主邀请码获得商家权限</text></view><text class="profile-chevron">›</text></view>
+<view wx:if="{{canJoinMerchant && !merchantAuthorized}}" class="surface merchant-entry" bindtap="openMerchantJoin"><text class="service-icon profile-merchant-icon">♧</text><view><view class="profile-merchant-title">加入商家团队</view><text class="muted">使用店主邀请码获得商家权限</text></view><text class="profile-chevron">›</text></view>
 <view wx:if="{{merchantAuthorized}}" class="surface merchant-entry" bindtap="openMerchant">
-<text class="service-icon">♧</text>
+<text class="service-icon profile-merchant-icon">♧</text>
 <view>
-<view>商家工作台</view>
+<view class="profile-merchant-title">商家工作台</view>
 <text class="muted">在线管理店铺与商品</text>
 </view>
 <text class="profile-chevron">›</text>
@@ -44,20 +44,20 @@
 <view class="section-heading">帮助与服务</view>
 <view class="help-grid">
 <navigator url="/pages/customer-support-chat/customer-support-chat">
-<text>♧</text>联系商家<view wx:if="{{cloudSupport && supportUnread !== null}}" class="muted">未读 {{supportUnread}}</view>
+<text class="help-icon">♧</text><text class="help-label">联系商家</text><view wx:if="{{cloudSupport && supportUnread !== null}}" class="muted">未读 {{supportUnread}}</view>
 </navigator>
 <view data-kind="faq" bindtap="serviceInfo">
-<text>?</text>常见问题</view>
+<text class="help-icon">?</text><text class="help-label">常见问题</text></view>
 <navigator url="/pages/customer-support-chat/customer-support-chat">
-<text>♧</text>意见反馈</navigator>
+<text class="help-icon">♧</text><text class="help-label">意见反馈</text></navigator>
 <view data-kind="about" bindtap="serviceInfo">
-<text>ⓘ</text>关于我们</view>
+<text class="help-icon">ⓘ</text><text class="help-label">关于我们</text></view>
 </view>
 </view>
-<view wx:if="{{customerPhoneSessionActive}}" class="surface account-controls"><view class="service-row"><text class="service-icon">✓</text>手机号顾客身份已连接<text class="value">独立会话</text></view><view class="service-row" bindtap="logoutPhoneSession"><text class="service-icon">⇥</text>退出手机号顾客会话<text class="value">›</text></view></view>
+<view wx:if="{{customerPhoneSessionActive}}" class="surface account-controls"><view class="service-row"><text class="service-icon">✓</text><text class="profile-row-label">手机号顾客身份已连接</text><text class="profile-row-count">独立会话</text></view><view class="service-row" bindtap="logoutPhoneSession"><text class="service-icon">⇥</text><text class="profile-row-label">退出手机号顾客会话</text><text class="profile-row-arrow">›</text></view></view>
 <view class="surface account-controls">
 <navigator class="service-row" url="/pages/customer-settings/customer-settings">
-<text class="service-icon">⚙</text>设置与隐私<text class="value">›</text>
+<text class="service-icon">⚙</text><text class="profile-row-label">设置与隐私</text><text class="profile-row-arrow">›</text>
 </navigator>
 </view>
 <view wx:if="{{phonePreview}}" class="notice">Staging 真机预览 · 非生产环境</view>
