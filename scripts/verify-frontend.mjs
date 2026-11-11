@@ -14,6 +14,7 @@ const tests = [
   'backend/tests/build-role-contracts.test.mjs',
   'backend/tests/frontend-navigation.test.mjs',
   'backend/tests/frontend-navigation-flows.test.mjs',
+  'backend/tests/checkout-created-order-navigation.test.mjs',
   'backend/tests/frontend-navigation-guards.test.mjs',
   'backend/tests/frontend-navigation-lifecycle.test.mjs',
   'backend/tests/frontend-navigation-orders-phase6.test.mjs',
