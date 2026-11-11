@@ -6,6 +6,12 @@ Page({
   visible:false,serial:0,
   data:{loading:true,busy:false,error:'',members:[] as Member[],invitationCode:'',invitationMessage:'',storeName:''},
   onShow(){this.visible=true;this.refresh()},
+  onShareAppMessage(){
+    const cfg=getCloudContext(),code=this.data.invitationCode
+    if(!cfg||!/^[A-Za-z0-9_-]{32}$/.test(code)||cfg.storeSlug!==this.data.storeName)
+      return {title:'商家工作台',path:'/pages/index/index'}
+    return {title:'邀请你加入店铺商家团队',path:'/pages/merchant-login/merchant-login?invite='+encodeURIComponent(code)+'&store='+encodeURIComponent(cfg.storeSlug)}
+  },
   onHide(){this.visible=false;this.serial++},
   onUnload(){this.visible=false;this.serial++},
   async refresh(){
@@ -39,7 +45,7 @@ Page({
       const data=await this.request('POST','/member-invitations')
       if(!this.visible||serial!==this.serial||identity!==requestIdentity())return
       if(typeof data?.invitationCode!=='string')throw Error('invalid_invitation_response')
-      this.setData({invitationCode:data.invitationCode,invitationMessage:'有效期24小时，仅限一人使用。请私下发送给对方。'})
+      this.setData({invitationCode:data.invitationCode,invitationMessage:'有效期24小时，仅限一人使用。可以直接发送给微信好友。'})
     }catch(e:any){if(this.visible&&serial===this.serial)this.setData({invitationMessage:'生成失败：'+String(e?.message||'unknown')})}
     finally{if(this.visible&&serial===this.serial)this.setData({busy:false})}
   },
