@@ -51,6 +51,7 @@ page{background:#f6f3ff;color:#30243f}
 .address-input:focus{border-color:#a57deb}
 .address-select{display:flex;align-items:center;justify-content:space-between;gap:10rpx;color:#92849e}
 .address-select-chosen{color:#352746}
+.address-area-hint{margin-top:11rpx;padding:11rpx 14rpx;border-radius:12rpx;background:#f2ebfd;color:#7447b0;font-size:22rpx;line-height:1.55}
 .address-select-arrow{font-size:30rpx;color:#9f8cb8}
 .address-map-row{border-top:1rpx solid #f0edf8;padding-top:22rpx;display:flex;align-items:center;justify-content:space-between;gap:15rpx}
 .address-map-copy{flex:1;min-width:0}

@@ -18,7 +18,7 @@ Page({
   deliverySerial:0,cloudRules:null as CloudDeliveryRules|null,deliveryContext:'',
   data: {
     phoneAddressList:[] as Array<{id:string;receiverName:string;phone:string;area:string;detail:string;isDefault:boolean;version:number;deliveryAreaId:string;latitude:number|null;longitude:number|null;locationName:string;mapAddress:string}>,phoneAddressStatus:'',phoneAddressLoading:false,phoneWriteBusy:false,phoneEditId:'',phoneEditVersion:0,phoneName:'',phoneNumber:'',phoneAreaId:'',phoneDetail:'',
-    addressBusy:false,addressListSync:false,addressSync:'idle',addressFeedback:'',addressTiming:{validationMs:0,writeMs:0,listMs:0},
+    addressBusy:false,addressListSync:false,addressSync:'idle',addressFeedback:'',areaHint:'',addressTiming:{validationMs:0,writeMs:0,listMs:0},
     addresses: [] as Array<SavedAddress & {deliveryIssue?:string}>,
     cloudMode:false,deliveryBusy:false,deliveryError:'',deliveryStatus:'',deliveryAreaId:'',
     areas: [] as PublicDeliveryArea[],
@@ -166,25 +166,42 @@ Page({
     if(issue){wx.showModal({title:'暂不可配送',content:issue,showCancel:false});return false}
     return true
   },
-  changeName(e: WechatMiniprogram.Input) { this.setData({receiverName:e.detail.value}) },
-  changePhone(e: WechatMiniprogram.Input) { this.setData({phone:e.detail.value}) },
-  changeDetail(e: WechatMiniprogram.Input) { this.setData({detail:e.detail.value}) },
+  changeName(e: WechatMiniprogram.Input) { this.setData({receiverName:e.detail.value,addressFeedback:''}) },
+  changePhone(e: WechatMiniprogram.Input) { this.setData({phone:e.detail.value,addressFeedback:''}) },
+  changeDetail(e: WechatMiniprogram.Input) { this.setData({detail:e.detail.value,addressFeedback:''}) },
   changeArea(e: any) {
     const area = this.data.areas[Number(e.detail.value)]
-    if (area) this.setData({area:area.name,deliveryAreaId:area.id})
+    if (area && area.enabled) this.setData({area:area.name,deliveryAreaId:area.id,areaHint:'',addressFeedback:''})
   },
   chooseMapLocation() {
+    const identity=supportIdentity()
     wx.chooseLocation({
       success: (result) => {
-        const latitude = Number(result.latitude)
-        const longitude = Number(result.longitude)
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        if(this.disposed||identity!==supportIdentity())return
+        const latitude=Number(result.latitude),longitude=Number(result.longitude)
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+          latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
           wx.showToast({ title: '地图返回的位置无效', icon: 'none' })
           return
         }
-        const locationName = String(result.name || '')
-        const mapAddress = String(result.address || '')
-        this.setData({ latitude, longitude, locationName, mapAddress })
+        const locationName=String(result.name||'').trim()
+        const mapAddress=String(result.address||'').trim()
+        // Map coordinates and the merchant's configured deliveryAreaId are separate.
+        // A unique text match is only a suggestion; final coverage is checked at checkout.
+        const text=[mapAddress,locationName].join(' ')
+        const matches=this.data.areas.filter((a:PublicDeliveryArea)=>a.enabled&&
+          typeof a.name==='string'&&a.name.trim().length>=2&&text.includes(a.name.trim()))
+        const match=matches.length===1?matches[0]:null
+        const unselected=!this.data.deliveryAreaId
+        const mappedArea=unselected&&match?{area:match.name,deliveryAreaId:match.id}:{}
+        const detailSuggestion=[mapAddress,locationName].filter(Boolean).join(' ').trim().slice(0,150)
+        const detail=this.data.detail.trim()?this.data.detail:detailSuggestion
+        const areaHint=!this.data.areas.length?'地图定位成功，但商家尚无可选配送地区':
+          unselected&&match?'已根据地图信息匹配「'+match.name+'」，请核对配送地区':
+          unselected?'地图位置已选，请再从上方选择商家可配送地区':
+          match&&match.id!==this.data.deliveryAreaId?'地图位置可能属于「'+match.name+'」，请检查当前配送地区':
+          '地图位置已选，配送范围仍以下单时的服务器校验为准'
+        this.setData({latitude,longitude,locationName,mapAddress,detail,...mappedArea,areaHint,addressFeedback:''})
       },
       fail: (error) => {
         const message = String((error && error.errMsg) || '')
@@ -201,10 +218,10 @@ Page({
     const address = loadAddresses().find(a=>a.id===String(e.currentTarget.dataset.id))
     if (!address) return
     const region=this.data.cloudMode?resolveDeliveryArea(address,this.cloudRules?.areas||[],this.deliveryContext):undefined
-    this.setData({deliveryAreaId:region?.id||'',editingId:address.id,receiverName:address.receiverName,phone:address.phone,area:region?.name||address.area,detail:address.detail,latitude:address.latitude == null ? null : address.latitude,longitude:address.longitude == null ? null : address.longitude,locationName:address.locationName || '',mapAddress:address.mapAddress || ''})
+    this.setData({deliveryAreaId:region?.id||'',editingId:address.id,receiverName:address.receiverName,phone:address.phone,area:region?.name||address.area,detail:address.detail,latitude:address.latitude == null ? null : address.latitude,longitude:address.longitude == null ? null : address.longitude,locationName:address.locationName || '',mapAddress:address.mapAddress || '',areaHint:'',addressFeedback:''})
   },
   clearForm() {
-    this.setData({deliveryAreaId:'',editingId:'',receiverName:'',phone:'',area:'',detail:'',latitude:null,longitude:null,locationName:'',mapAddress:''})
+    this.setData({deliveryAreaId:'',editingId:'',receiverName:'',phone:'',area:'',detail:'',latitude:null,longitude:null,locationName:'',mapAddress:'',areaHint:'',addressFeedback:''})
   },
   async save() {
     if(this.data.addressBusy)return
@@ -213,12 +230,15 @@ Page({
     const phone=this.data.phone.trim()
     const area=this.data.area
     const detail=this.data.detail.trim()
-    if (!receiverName || !phone || !area || !detail) { wx.showToast({title:'请填写完整地址',icon:'none'}); return }
-    if (!/^1[3-9]\d{9}$/.test(phone)) { wx.showToast({title:'手机号格式错误',icon:'none'}); return }
     const cfg=getCloudContext()
+    const invalid=(message:string)=>{this.setData({addressFeedback:message});wx.showToast({title:message.length>17?message.slice(0,17):message,icon:'none',duration:2200})}
+    if(!receiverName){invalid('请填写收货人姓名');return}
+    if(!phone){invalid('请填写联系电话');return}
+    if(!/^1[3-9]\d{9}$/.test(phone)){invalid('请输入正确的11位手机号');return}
+    if(!area||cfg&&!this.data.deliveryAreaId){invalid('请先选择配送地区，地图选点不等于可配送区域');return}
+    if(!detail){invalid('请填写详细地址和门牌信息');return}
     const candidate:SavedAddress={id:'',receiverName,phone,area,detail,isDefault:false,latitude:this.data.latitude??undefined,longitude:this.data.longitude??undefined,
       ...(cfg?{deliveryAreaId:this.data.deliveryAreaId,deliveryStoreKey:this.deliveryContext}:{})}
-    if(cfg&&!this.data.deliveryAreaId){wx.showToast({title:'请选择当前云端区域',icon:'none'});return}
     if(cfg){
       if(this.data.editingId&&!loadAddresses().some(a=>a.id===this.data.editingId)){wx.showToast({title:'地址已变化，请刷新核对',icon:'none'});return}
       const current=loadAddresses().find(a=>a.id===this.data.editingId),body={receiverName,phone,deliveryAreaId:this.data.deliveryAreaId,detail,latitude:this.data.latitude,longitude:this.data.longitude,locationName:this.data.locationName,mapAddress:this.data.mapAddress}
