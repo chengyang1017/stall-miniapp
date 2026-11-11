@@ -1,6 +1,6 @@
 page{background:#f7f6fb;color:#352843}
 .members-page{padding:24rpx 26rpx 65rpx}
-.members-intro{padding:12rpx 4rpx 22rpx}
+.members-intro{padding:2rpx 4rpx 18rpx}
 .members-heading{font-size:35rpx;font-weight:700;color:#342548}
 .members-subheading{font-size:23rpx;color:#8f829e;margin-top:10rpx}
 .members-card{padding:27rpx;border-radius:24rpx;background:#fff;margin-bottom:20rpx;box-shadow:0 5rpx 20rpx rgba(75,43,113,.04)}
