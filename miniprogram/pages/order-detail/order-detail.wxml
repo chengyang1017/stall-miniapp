@@ -42,11 +42,9 @@
       <view wx:if="{{sandboxActionText}}" class="order-detail-muted">{{sandboxActionText}}</view>
       <view wx:if="{{sandbox.resumeCheckout}}">
         <view class="order-detail-muted">当前待付款渠道：{{sandbox.resumeCheckout.channelText}}。可继续使用原 Stripe Checkout 测试会话。</view>
-        <button type="primary" bindtap="copyActiveSandboxCheckout">继续付款 · 复制原测试链接</button>
-        <view class="order-detail-muted">更换支付方式</view>
-        <button size="mini" data-channel="wechat_pay" bindtap="switchSandboxChannel" disabled="{{sandboxActionBusy || sandbox.resumeCheckout.channel === 'wechat_pay'}}">微信测试</button>
-        <button size="mini" data-channel="alipay" bindtap="switchSandboxChannel" disabled="{{sandboxActionBusy || sandbox.resumeCheckout.channel === 'alipay'}}">支付宝测试</button>
-        <button size="mini" data-channel="card" bindtap="switchSandboxChannel" disabled="{{sandboxActionBusy || sandbox.resumeCheckout.channel === 'card'}}">银行卡测试</button>
+        <button wx:if="{{sandbox.resumeCheckout.channel === 'wechat_pay'}}" type="primary" bindtap="copyActiveSandboxCheckout">继续微信测试 · 复制原链接</button>
+        <view wx:else class="order-detail-muted">该历史测试渠道不再提供新的付款入口。可先核验并取消当前未付款会话，再改用微信支付测试；已收款或待核对的交易不会重复扣款。</view>
+        <button wx:if="{{sandbox.resumeCheckout.channel !== 'wechat_pay'}}" type="primary" data-channel="wechat_pay" bindtap="switchSandboxChannel" disabled="{{sandboxActionBusy}}">改用微信支付测试</button>
         <button size="mini" bindtap="cancelSandboxPayment" disabled="{{sandboxActionBusy}}">仅取消当前测试付款</button>
       </view>
       <view wx:elif="{{sandbox.attempts.length && (sandbox.attempts[sandbox.attempts.length-1].status === 'creating' || sandbox.attempts[sandbox.attempts.length-1].status === 'processing' || sandbox.attempts[sandbox.attempts.length-1].status === 'review')}}">
@@ -55,13 +53,9 @@
       <view wx:else>
         <view wx:if="{{sandbox.retryChannel}}" class="order-detail-muted">
           {{sandbox.retryLabel}}。上次选择：{{sandbox.retryChannelText}}。
-          重新尝试会创建新的 Stripe Sandbox 测试付款会话，不会自动扣款。
+          如需再次付款，只能重新创建微信支付的 Stripe Sandbox 测试会话，不会自动扣款。
         </view>
-        <button wx:if="{{sandbox.retryChannel}}" type="primary" disabled="{{sandboxActionBusy || sandboxUnavailable}}" bindtap="retrySandboxCheckout">重新尝试 {{sandbox.retryChannelText}}</button>
-        <view wx:if="{{sandbox.retryChannel}}" class="order-detail-muted">也可以改选其他支付方式：</view>
-        <button size="mini" data-channel="wechat_pay" disabled="{{sandboxActionBusy || sandboxUnavailable}}" bindtap="openSandboxCheckout">微信支付测试链接</button>
-        <button size="mini" data-channel="alipay" disabled="{{sandboxActionBusy || sandboxUnavailable}}" bindtap="openSandboxCheckout">支付宝测试链接</button>
-        <button size="mini" data-channel="card" disabled="{{sandboxActionBusy || sandboxUnavailable}}" bindtap="openSandboxCheckout">银行卡测试链接</button>
+        <button type="primary" data-channel="wechat_pay" disabled="{{sandboxActionBusy || sandboxUnavailable}}" bindtap="openSandboxCheckout">获取微信支付测试链接</button>
       </view>
     </view>
     <view wx:if="{{cloudMode && !livePayEnabled && sandboxUiEnabled && !phoneReadOnly}}" class="order-detail-card payment-history-card">
