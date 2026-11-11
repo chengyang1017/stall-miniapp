@@ -39,20 +39,24 @@
     <textarea class="note-input" maxlength="200" placeholder="有需要交代给商家的事项？" value="{{note}}" bindinput="updateNote" auto-height />
   </view>
   <view wx:if="{{cloudMode && !livePayEnabled && sandboxUiEnabled}}" class="checkout-section checkout-payment">
-    <view class="section-head"><text class="section-icon">¥</text><text>支付方式</text><text class="payment-test-tag">测试环境</text></view>
-    <view class="payment-explainer">本店仅展示微信支付测试渠道。提交订单后，在订单详情获取 Stripe 外部测试链接；这不是微信原生收款。</view>
+    <view class="section-head"><text class="section-icon">¥</text><text>支付方式</text><text class="payment-test-tag">仅供测试</text></view>
+    <view class="payment-explainer">当前为支付功能测试，不会产生真实收款。</view>
     <view class="payment-options">
       <view class="payment-option {{sandboxChannel === 'wechat_pay' ? 'payment-option-active' : ''}}" data-channel="wechat_pay" bindtap="chooseSandboxChannel" accessibilityLabel="微信支付测试" role="radio" aria-checked="{{sandboxChannel === 'wechat_pay'}}">
         <view class="payment-mark payment-mark-wechat">微</view>
-        <view class="payment-copy"><view class="payment-name">微信支付</view><view class="payment-desc">Stripe 外部测试 · 非微信原生支付</view></view>
+        <view class="payment-copy"><view class="payment-name">微信支付（测试）</view><view class="payment-desc">在订单详情获取外部测试链接</view></view>
         <view class="payment-radio"><view wx:if="{{sandboxChannel === 'wechat_pay'}}" class="payment-radio-dot"></view></view>
       </view>
     </view>
-    <view class="payment-notice"><text class="payment-notice-icon">ⓘ</text><text>提交订单不会扣款，付款状态以服务端核验为准。具体渠道是否可用由测试服务决定。</text></view>
+    <view class="payment-notice"><text class="payment-notice-icon">ⓘ</text><text>这是隔离测试流程，不代表微信支付已开通。付款状态以测试服务核验为准。</text></view>
   </view>
   <view wx:if="{{cloudMode && livePayEnabled}}" class="checkout-section checkout-payment">
     <view class="section-head"><text class="section-icon">¥</text><text>付款方式</text></view>
-    <view class="payment-explainer">本店仅支持微信支付。下单后在订单详情进入微信收银台付款，实际结果以服务端确认为准。</view>
+    <view class="payment-option payment-option-active">
+      <view class="payment-mark payment-mark-wechat">微</view>
+      <view class="payment-copy"><view class="payment-name">微信支付</view><view class="payment-desc">下单后在订单详情完成付款</view></view>
+      <view class="payment-radio"><view class="payment-radio-dot"></view></view>
+    </view>
   </view>
   <view wx:if="{{cloudMode && !livePayEnabled && !sandboxUiEnabled}}" class="checkout-section checkout-payment">
     <view class="section-head"><text class="section-icon">¥</text><text>付款方式</text></view>
