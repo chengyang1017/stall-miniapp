@@ -30,7 +30,7 @@
     </view>
     <view wx:if="{{cloudMode && livePayEnabled && !phoneReadOnly && order.paymentStatus === 'unpaid' && order.fulfillmentStatus === 'new'}}" class="order-detail-card">
       <view class="order-detail-title">微信支付</view>
-      <view class="order-detail-muted">可使用微信零钱或已绑定银行卡。付款状态以微信支付服务端核验为准。</view>
+      <view class="order-detail-muted">使用微信支付完成付款。付款状态以微信支付服务端核验为准。</view>
       <button type="primary" loading="{{livePaymentBusy}}" disabled="{{livePaymentBusy}}" bindtap="payWithWechat">立即微信支付</button>
       <button size="mini" loading="{{livePaymentBusy}}" disabled="{{livePaymentBusy}}" bindtap="refreshWechatPayment">刷新付款状态</button>
       <view wx:if="{{livePaymentText}}" class="order-detail-muted">{{livePaymentText}}</view>
