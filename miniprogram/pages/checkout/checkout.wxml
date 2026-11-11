@@ -43,7 +43,7 @@
     <view class="payment-explainer">当前为支付功能测试，不会产生真实收款。</view>
     <view class="payment-options">
       <view class="payment-option {{sandboxChannel === 'wechat_pay' ? 'payment-option-active' : ''}}" data-channel="wechat_pay" bindtap="chooseSandboxChannel" accessibilityLabel="微信支付测试" role="radio" aria-checked="{{sandboxChannel === 'wechat_pay'}}">
-        <view class="payment-mark payment-mark-wechat">微</view>
+        <view class="payment-mark payment-mark-wechat"><image class="wechat-pay-logo" src="/assets/payment/wechat-pay-mark.svg" mode="aspectFit" accessibilityLabel="微信支付"/></view>
         <view class="payment-copy"><view class="payment-name">微信支付（测试）</view><view class="payment-desc">在订单详情获取外部测试链接</view></view>
         <view class="payment-radio"><view wx:if="{{sandboxChannel === 'wechat_pay'}}" class="payment-radio-dot"></view></view>
       </view>
@@ -53,7 +53,7 @@
   <view wx:if="{{cloudMode && livePayEnabled}}" class="checkout-section checkout-payment">
     <view class="section-head"><text class="section-icon">¥</text><text>付款方式</text></view>
     <view class="payment-option payment-option-active">
-      <view class="payment-mark payment-mark-wechat">微</view>
+      <view class="payment-mark payment-mark-wechat"><image class="wechat-pay-logo" src="/assets/payment/wechat-pay-mark.svg" mode="aspectFit" accessibilityLabel="微信支付"/></view>
       <view class="payment-copy"><view class="payment-name">微信支付</view><view class="payment-desc">下单后在订单详情完成付款</view></view>
       <view class="payment-radio"><view class="payment-radio-dot"></view></view>
     </view>
