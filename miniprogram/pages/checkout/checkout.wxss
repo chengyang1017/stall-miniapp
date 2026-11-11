@@ -65,3 +65,12 @@ page{background:#f6f3ff;color:#2e243c}
 .payment-radio-dot{width:18rpx;height:18rpx;background:#7137db;border-radius:50%}
 .payment-notice{display:flex;align-items:flex-start;gap:12rpx;margin-top:22rpx;color:#897d99;font-size:22rpx;line-height:1.65}
 .payment-notice-icon{color:#7137db;font-size:26rpx;line-height:1.3}
+
+/* Payment method is compact and retains branded purple selection around the authentic green mark. */
+.checkout-payment{padding:22rpx 24rpx}
+.checkout-payment .section-head{margin-bottom:10rpx}
+.checkout-payment .payment-explainer{font-size:23rpx;line-height:1.5;margin-bottom:16rpx}
+.checkout-payment .payment-option{min-height:92rpx;padding:12rpx 16rpx;gap:14rpx}
+.checkout-payment .payment-mark-wechat{width:60rpx;height:60rpx;background:transparent;border-radius:0}
+.checkout-payment .wechat-pay-logo{display:block;width:60rpx;height:60rpx}
+.checkout-payment .payment-notice{margin-top:14rpx;font-size:21rpx;line-height:1.55}
