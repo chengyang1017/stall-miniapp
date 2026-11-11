@@ -94,7 +94,29 @@
     </view>
   </view>
 
-<view class="surface cart-services"><view class="service-row" bindtap="couponInfo"><text class="service-icon">♧</text><text>优惠券</text><text class="value">暂未开通 ›</text></view><navigator class="service-row" url="/pages/addresses/addresses"><text class="service-icon">♧</text><text>配送方式</text><text class="value">按地址核对 ›</text></navigator><view class="cart-delivery-note">{{deliveryError || deliveryInfo}}</view><view class="service-row"><text class="service-icon">♧</text><text>订单备注</text><input maxlength="200" value="{{orderNote}}" bindinput="updateCartNote" placeholder="口味、配送等要求"/></view></view><view class="surface cart-breakdown"><view class="section-heading">费用明细</view><view class="service-row"><text>已选商品（{{selectedCount}} 件）</text><text class="value">{{quantityPending || amountState !== 'confirmed' ? '金额待确认' : '¥' + selectedTotalText}}</text></view><view class="service-row"><text>配送费</text><text class="value">结算时按地址核对</text></view><view class="service-row"><text>优惠券</text><text class="value">未使用</text></view><view class="cart-pay-summary"><text>商品合计</text><text>{{quantityPending || amountState !== 'confirmed' ? '待确认' : '¥' + selectedTotalText}}</text></view><view class="notice">应付总额以结算页及服务器下单校验为准</view></view>
+<view class="surface cart-services">
+  <!-- 商家目前未启用优惠券，保留源码便于以后恢复。
+  <view class="service-row" bindtap="couponInfo"><text class="service-icon">♧</text><text>优惠券</text><text class="value">暂未开通 ›</text></view>
+  -->
+  <navigator class="service-row" url="/pages/addresses/addresses">
+    <text class="service-icon">♧</text><text>配送方式</text><text class="value">按地址核对 ›</text>
+  </navigator>
+  <view class="cart-delivery-note">{{deliveryError || deliveryInfo}}</view>
+  <view class="service-row">
+    <text class="service-icon">♧</text><text>订单备注</text>
+    <input maxlength="200" value="{{orderNote}}" bindinput="updateCartNote" placeholder="口味、配送等要求"/>
+  </view>
+</view>
+<view class="surface cart-breakdown">
+  <view class="section-heading">费用明细</view>
+  <view class="service-row"><text>已选商品（{{selectedCount}} 件）</text><text class="value">{{quantityPending || amountState !== 'confirmed' ? '金额待确认' : '¥' + selectedTotalText}}</text></view>
+  <view class="service-row"><text>配送费</text><text class="value">结算时按地址核对</text></view>
+  <!-- 商家目前未启用优惠券，费用明细不显示未使用项。
+  <view class="service-row"><text>优惠券</text><text class="value">未使用</text></view>
+  -->
+  <view class="cart-pay-summary"><text>商品合计</text><text>{{quantityPending || amountState !== 'confirmed' ? '待确认' : '¥' + selectedTotalText}}</text></view>
+  <view class="notice">应付总额以结算页及服务器下单校验为准</view>
+</view>
   <view class="footer cart-footer-compact" data-trace-list="footer" data-trace-key="cart-footer">
     <render-probe style="display:none" wx:if="{{uiTraceEnabled}}" page-name="cart" list-name="footer" row-key="cart-footer" />
     <view class="cart-footer-main">
