@@ -12,13 +12,20 @@ function validBase(base: string): boolean {
 Page({
   pageVisible: false, operationSerial: 0,
   data: { apiBase: '', storeSlug: '', devToken: '', showLocalDev: false,cloudOnly:CLOUD_ONLY,
-    busy: false, authenticated: false, canInvite:false,invitationCode:'',joinCode:'',memberBusy:false,memberStatus:'',status: '尚未验证商家身份' },
+    busy: false, authenticated: false, canInvite:false,invitationCode:'',joinCode:'',invitationStore:'',shareInvitation:false,inviteStoreMismatch:false,memberBusy:false,memberStatus:'',status: '尚未验证商家身份' },
+  onLoad(options:{invite?:string;store?:string}){
+    const code=typeof options?.invite==='string'?options.invite:''
+    const store=typeof options?.store==='string'?options.store:''
+    if(/^[A-Za-z0-9_-]{32}$/.test(code)&&/^[a-z0-9][a-z0-9-]{1,62}$/.test(store))
+      this.setData({joinCode:code,invitationStore:store,shareInvitation:true})
+  },
   onShow() {
     this.pageVisible = true
     const config = CLOUD_ONLY ? getCloudContext() : wx.getStorageSync(CONFIG_KEY) as any
     const apiBase = config && typeof config.apiBase === 'string' ? config.apiBase : ''
     const storeSlug = config && typeof config.storeSlug === 'string' ? config.storeSlug : ''
-    this.setData({ apiBase, storeSlug, authenticated: false,canInvite:false,invitationCode:'',memberStatus:'', showLocalDev: localDevAllowed(apiBase) && storeSlug === 'stall-demo' })
+    const mismatch=!!this.data.shareInvitation&&this.data.invitationStore!==storeSlug
+    this.setData({ apiBase, storeSlug, authenticated: false,canInvite:false,invitationCode:'',inviteStoreMismatch:mismatch,memberStatus:mismatch?'这份邀请属于其他店铺，无法用于当前小程序。':'', showLocalDev: localDevAllowed(apiBase) && storeSlug === 'stall-demo' })
     if (apiBase && storeSlug && wx.getStorageSync(TOKEN_KEY)) this.verifyExisting()
   },
   onHide() { this.pageVisible = false; this.operationSerial++; this.setData({busy:false,authenticated:false,canInvite:false,invitationCode:'',devToken:''}) },
@@ -71,6 +78,7 @@ Page({
       await loginWithWechat(this.data.apiBase, () => this.pageVisible && serial === this.operationSerial)
       if (!this.pageVisible || serial !== this.operationSerial) return
       this.setData({ busy: false })
+      if(this.data.shareInvitation){this.setData({status:'微信身份已验证，请确认加入店铺。'});return}
       await this.verifyExisting(true)
     } catch (_) { if(this.pageVisible && serial === this.operationSerial)this.setData({ busy: false, status: '微信登录失败或当前店铺/会话已变化，请核对后重试' }) }
   },
@@ -107,13 +115,13 @@ Page({
     if(this.data.invitationCode)wx.setClipboardData({data:this.data.invitationCode})
   },
   async redeemMemberInvitation(){
-    if(this.data.memberBusy)return
+    if(this.data.memberBusy||this.data.busy||this.data.inviteStoreMismatch)return
     const code=this.data.joinCode.trim()
     if(!/^[A-Za-z0-9_-]{32}$/.test(code)){this.setData({memberStatus:'请填写店主提供的完整邀请码'});return}
     this.setData({memberBusy:true,memberStatus:''})
     try{
       await this.memberRequest('/redeem',{invitationCode:code})
-      this.setData({joinCode:'',memberStatus:'加入成功，可以进入商家工作台。'})
+      this.setData({joinCode:'',shareInvitation:false,memberStatus:'加入成功，可以进入商家工作台。'})
       await this.verifyExisting(false)
     }catch(e:any){this.setData({memberStatus:'加入失败：'+String(e.message||e)})}
     finally{this.setData({memberBusy:false})}
