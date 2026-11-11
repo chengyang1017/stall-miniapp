@@ -7,6 +7,7 @@
     "pages/admin-backup/admin-backup": "merchant",
     "pages/admin/admin": "merchant",
     "pages/merchant-login/merchant-login": "merchant",
+    "pages/merchant-members/merchant-members": "merchant",
     "pages/cart/cart": "customer",
     "pages/checkout/checkout": "customer",
     "pages/admin-billing/admin-billing": "merchant",
@@ -95,6 +96,7 @@
         "pages/admin-backup/admin-backup",
         "pages/admin/admin",
         "pages/merchant-login/merchant-login",
+        "pages/merchant-members/merchant-members",
         "pages/cart/cart",
         "pages/checkout/checkout",
         "pages/admin-billing/admin-billing",
@@ -163,6 +165,7 @@
       "pages": [
         "pages/admin/admin",
         "pages/merchant-login/merchant-login",
+        "pages/merchant-members/merchant-members",
         "pages/admin-products/admin-products",
         "pages/admin-product-form/admin-product-form",
         "pages/admin-categories/admin-categories",
