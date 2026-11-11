@@ -12,16 +12,16 @@ function validBase(base: string): boolean {
 Page({
   pageVisible: false, operationSerial: 0,
   data: { apiBase: '', storeSlug: '', devToken: '', showLocalDev: false,cloudOnly:CLOUD_ONLY,
-    busy: false, authenticated: false, status: '尚未验证商家身份' },
+    busy: false, authenticated: false, canInvite:false,invitationCode:'',joinCode:'',memberBusy:false,memberStatus:'',status: '尚未验证商家身份' },
   onShow() {
     this.pageVisible = true
     const config = CLOUD_ONLY ? getCloudContext() : wx.getStorageSync(CONFIG_KEY) as any
     const apiBase = config && typeof config.apiBase === 'string' ? config.apiBase : ''
     const storeSlug = config && typeof config.storeSlug === 'string' ? config.storeSlug : ''
-    this.setData({ apiBase, storeSlug, authenticated: false, showLocalDev: localDevAllowed(apiBase) && storeSlug === 'stall-demo' })
+    this.setData({ apiBase, storeSlug, authenticated: false,canInvite:false,invitationCode:'',memberStatus:'', showLocalDev: localDevAllowed(apiBase) && storeSlug === 'stall-demo' })
     if (apiBase && storeSlug && wx.getStorageSync(TOKEN_KEY)) this.verifyExisting()
   },
-  onHide() { this.pageVisible = false; this.operationSerial++; this.setData({busy:false,authenticated:false,devToken:''}) },
+  onHide() { this.pageVisible = false; this.operationSerial++; this.setData({busy:false,authenticated:false,canInvite:false,invitationCode:'',devToken:''}) },
   onUnload() { this.onHide() },
   onBaseInput(e: any) { if(this.data.busy)return; const apiBase = String(e.detail.value || '').trim(); this.setData({ apiBase, showLocalDev: localDevAllowed(apiBase) && this.data.storeSlug === 'stall-demo', authenticated: false }) },
   onSlugInput(e: any) { if(this.data.busy)return; const storeSlug = String(e.detail.value || '').trim().toLowerCase(); this.setData({ storeSlug, showLocalDev: localDevAllowed(this.data.apiBase) && storeSlug === 'stall-demo', authenticated: false }) },
@@ -48,7 +48,10 @@ Page({
       const result = await authorizedGet(apiBase, `${basePath}/categories`)
       if (!current()) return
       if (!result || !Array.isArray(result.items)) throw new Error('invalid_response')
-      this.setData({ authenticated: true, status: `已登录，具有 ${this.data.storeSlug} 店铺访问权限` })
+      const membership=await authorizedGet(apiBase,'/v1/auth/me')
+      if(!current())return
+      const store=Array.isArray(membership?.stores)?membership.stores.find((x:any)=>x.slug===storeSlug):null
+      this.setData({ authenticated: true,canInvite:store?.role==='owner', status: `已登录，具有 ${this.data.storeSlug} 店铺访问权限` })
       // Passive session verification must not navigate away from Account & Permissions.
       // Only an explicit login action chooses the merchant workspace.
       if (openWorkspace) {
@@ -57,7 +60,7 @@ Page({
       }
     } catch (_) {
       if (!current()) return
-      this.setData({ authenticated: false, status: '登录未通过或会话已失效，请重新登录' })
+      this.setData({ authenticated: false,canInvite:false,status: '当前账号尚未获得商家权限。若已收到店主邀请码，可在下方加入店铺。' })
     } finally { if(this.pageVisible && serial === this.operationSerial)this.setData({ busy: false }) }
   },
   async loginWechat() {
@@ -79,6 +82,42 @@ Page({
       await this.verifyExisting(true)
     } catch (_) { this.setData({ authenticated: false, status: '测试会话无效或已失效' }) }
   },
+  onJoinCodeInput(e:any){this.setData({joinCode:String(e?.detail?.value||'').trim().slice(0,32),memberStatus:''})},
+  async memberRequest(path:string,data:any):Promise<any>{
+    const cfg=getCloudContext(),token=wx.getStorageSync(TOKEN_KEY)
+    if(!cfg||typeof token!=='string'||!token)throw Error('请先完成微信登录')
+    return new Promise((resolve,reject)=>wx.request({
+      url:cfg.apiBase.replace(/[/]+$/,'')+'/v1/merchant/stores/'+encodeURIComponent(cfg.storeSlug)+'/member-invitations'+path,
+      method:'POST',timeout:15000,data,
+      header:{Authorization:'Bearer '+token,'content-type':'application/json'},
+      success:(r:any)=>r.statusCode>=200&&r.statusCode<300?resolve(r.data):reject(Error(String(r.data?.error||'http_'+r.statusCode))),
+      fail:()=>reject(Error('网络请求失败'))
+    }))
+  },
+  async createMemberInvitation(){
+    if(!this.data.canInvite||this.data.memberBusy)return
+    this.setData({memberBusy:true,memberStatus:'',invitationCode:''})
+    try{
+      const r=await this.memberRequest('',{})
+      if(r?.invitationCode)this.setData({invitationCode:r.invitationCode,memberStatus:'邀请码24小时内有效，仅可使用一次。'})
+    }catch(e:any){this.setData({memberStatus:'生成失败：'+String(e.message||e)})}
+    finally{this.setData({memberBusy:false})}
+  },
+  copyMemberInvitation(){
+    if(this.data.invitationCode)wx.setClipboardData({data:this.data.invitationCode})
+  },
+  async redeemMemberInvitation(){
+    if(this.data.memberBusy)return
+    const code=this.data.joinCode.trim()
+    if(!/^[A-Za-z0-9_-]{32}$/.test(code)){this.setData({memberStatus:'请填写店主提供的完整邀请码'});return}
+    this.setData({memberBusy:true,memberStatus:''})
+    try{
+      await this.memberRequest('/redeem',{invitationCode:code})
+      this.setData({joinCode:'',memberStatus:'加入成功，可以进入商家工作台。'})
+      await this.verifyExisting(false)
+    }catch(e:any){this.setData({memberStatus:'加入失败：'+String(e.message||e)})}
+    finally{this.setData({memberBusy:false})}
+  },
   async logout() {
     if(this.data.busy)return
     const serial=++this.operationSerial
@@ -89,7 +128,7 @@ Page({
     finally{
       if(wx.getStorageSync(TOKEN_KEY)===token){
         wx.removeStorageSync('stall_merchant_home_preference_v1');wx.removeStorageSync(TOKEN_KEY);wx.removeStorageSync('stall_server_cache_scope_v1');clearSessionCaches()
-        if(this.pageVisible&&serial===this.operationSerial)this.setData({authenticated:false,devToken:'',status:revoked?'服务器会话已撤销，已退出登录':'已退出本机登录；服务器会话撤销未确认，请检查网络'})
+        if(this.pageVisible&&serial===this.operationSerial)this.setData({authenticated:false,canInvite:false,invitationCode:'',devToken:'',status:revoked?'服务器会话已撤销，已退出登录':'已退出本机登录；服务器会话撤销未确认，请检查网络'})
       }
       if(this.pageVisible&&serial===this.operationSerial)this.setData({busy:false})
     }

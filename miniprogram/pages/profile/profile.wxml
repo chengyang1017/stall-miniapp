@@ -31,6 +31,7 @@
 <text class="service-icon">☆</text>我的商品评价<text class="value">›</text>
 </navigator>
 </view>
+<view wx:if="{{canJoinMerchant && !merchantAuthorized}}" class="surface merchant-entry" bindtap="openMerchantJoin"><text class="service-icon">♧</text><view><view>加入商家团队</view><text class="muted">使用店主邀请码获得商家权限</text></view><text class="profile-chevron">›</text></view>
 <view wx:if="{{merchantAuthorized}}" class="surface merchant-entry" bindtap="openMerchant">
 <text class="service-icon">♧</text>
 <view>
