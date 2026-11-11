@@ -72,6 +72,8 @@
           <text>{{area || '请选择可配送地区'}}</text><text class="address-select-arrow">⌄</text>
         </view>
       </picker>
+      <view wx:if="{{areaHint}}" class="address-area-hint">{{areaHint}}</view>
+      <view wx:if="{{cloudMode && !deliveryBusy && !deliveryError && !areas.length}}" class="address-area-hint">商家尚未配置可配送地区，请联系商家。</view>
     </view>
     <view class="address-field">
       <text class="address-field-label">详细地址 <text class="address-required">*</text></text>
