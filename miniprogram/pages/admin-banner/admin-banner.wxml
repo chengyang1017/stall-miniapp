@@ -30,7 +30,7 @@
       <view wx:else class="merchant-promo-empty">尚未上传 · 首页自动隐藏</view>
       <view wx:if="{{promoBannerError}}" class="merchant-setting-desc merchant-promo-error">{{promoBannerError}}</view>
       <view class="merchant-promo-actions merchant-promo-footer">
-        <button class="merchant-save" size="mini" bindtap="uploadPromoBanner" loading="{{promoBannerBusy}}" disabled="{{promoBannerBusy || promoBanners.length >= 10 || !settingsReady || settingsSaving || homeSubtitleSaving}}">添加横幅</button>
+        <button class="merchant-save" size="mini" bindtap="uploadPromoBanner" loading="{{promoBannerBusy}}" disabled="{{promoBannerBusy || promoBanners.length >= 10 || !settingsReady}}">添加横幅</button>
         <button wx:if="{{promoBanners.length}}" size="mini" bindtap="hidePromoBanner" disabled="{{promoBannerBusy || !settingsReady}}">全部隐藏</button>
       </view>
   </view>
